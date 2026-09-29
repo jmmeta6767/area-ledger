@@ -1398,7 +1398,7 @@ document.addEventListener('click',function(e){
     if(target)syncGuaranteeExpense(target);
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
-  else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
+  else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});S.boq=(S.boq||[]).filter(function(x){return x.pid!==id;});[S.quotes,S.bills,S.receipts].forEach(function(list){list.forEach(function(d){if(d.pid===id)d.pid='';});});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
   else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='settings'){U.sheet={kind:'settings'};U.confirm=null;render();}
