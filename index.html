@@ -218,6 +218,13 @@ th{color:var(--muted);font-weight:500}
 @media(max-width:560px){.doc-create{grid-template-columns:1fr}.doc-create .btn{margin:0}}
  .doc-item{display:grid;grid-template-columns:2fr .7fr .8fr 1fr;gap:7px;margin:8px 0}.doc-item input{min-width:0}
 @media(max-width:560px){.doc-item{grid-template-columns:1fr 1fr}.doc-item input:first-child{grid-column:1/-1}}
+/* AREA Ledger preview theme */
+body{background:#f3f5f6}.hd{background:#24333d;color:#fff}.hd-in{min-height:96px}.hd .stripe{height:0}.settings-ico{display:flex!important;flex-direction:column;align-items:center;gap:2px;color:#fff!important}.settings-ico span{font-size:1.25rem}.settings-ico small{font-size:.72rem}
+.preview-project{display:grid;grid-template-columns:31% 69%;background:#13232d;color:#fff;border-radius:0 0 20px 20px;overflow:hidden;margin:0 -16px 16px}.preview-photo{min-height:205px;background:linear-gradient(145deg,#d9e0e3,#aeb9bf);display:flex;align-items:center;justify-content:center}.photo-placeholder svg{width:70px;height:70px;opacity:.25}.preview-project-body{padding:22px 20px}.preview-project .eyebrow{display:inline-block;color:#ffc238;font-weight:800;margin-bottom:8px}.preview-project h2{font-size:1.35rem;line-height:1.35;margin:0 0 5px}.preview-project p{color:#d5dce0;margin:0 0 14px}.preview-project-actions{display:grid;grid-template-columns:1fr .65fr;gap:9px}.btn.dark{background:#344651;color:#fff;border-color:#344651}
+.balance-card{background:#fff;border-radius:18px;padding:22px;border-left:7px solid #e9ad24;box-shadow:0 8px 24px rgba(28,42,50,.05);margin:14px 0}.balance-title{display:flex;gap:16px;align-items:center}.balance-icon{font-size:2rem;color:#e9ad24}.balance-title small{display:block;color:var(--muted)}.balance-title b{display:block;font-size:2.25rem;line-height:1.15;margin-top:3px}.balance-cols{display:grid;grid-template-columns:repeat(4,1fr);margin-top:22px}.balance-cols span{padding:0 14px;border-right:1px solid var(--line);color:var(--muted);font-size:.78rem}.balance-cols span:first-child{padding-left:0}.balance-cols span:last-child{border:0}.balance-cols b{display:block;color:var(--ink);font-size:1rem;margin-top:4px}.balance-cols b.in{color:var(--in)}.balance-cols b.out{color:var(--out)}
+.preview-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}.preview-kpis button{background:#fff;border:0;border-radius:15px;padding:14px;text-align:left;box-shadow:0 5px 18px rgba(28,42,50,.05)}.preview-kpis small,.preview-kpis em{display:block;color:var(--muted);font-style:normal;font-size:.76rem}.preview-kpis b{display:block;font-size:1.05rem;margin:4px 0}.kicon{display:inline-flex;width:34px;height:34px;border-radius:9px;align-items:center;justify-content:center;margin-bottom:9px}.kicon.blue{background:#e5f7ff;color:#168cc0}.kicon.pink{background:#ffeaf1;color:#db4779}.kicon.amber{background:#fff3dc;color:#dc8b12}.kicon.green{background:#e7f7f1;color:#16876d}
+.ledger-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:18px 0 10px}.ledger-tabs button{border:0;background:#fff;padding:11px 5px;border-radius:8px;font-weight:700;color:var(--muted)}.ledger-tabs button.on{background:#efb323;color:#17242c}.ledger-feed{background:#fff;border-radius:16px;overflow:hidden}.feed-head{display:flex;justify-content:space-between;padding:13px 16px;background:#fff4d5;font-weight:800}.ledger-feed .row{margin:0;border:0;border-bottom:1px solid var(--line);border-radius:0}.quick-actions{margin:14px 0 8px}
+@media(max-width:620px){.preview-project{grid-template-columns:1fr}.preview-photo{min-height:150px}.preview-project-body{padding:17px}.balance-cols{grid-template-columns:1fr 1fr;gap:14px}.balance-cols span{border:0;padding:0}.preview-kpis{grid-template-columns:1fr 1fr}.balance-title b{font-size:1.9rem}}
 </style>
 </head>
 <body>
@@ -489,7 +496,7 @@ function newDraft(type,pid){
 /* ---------- หน้าจอ ---------- */
 function header(title,back){
   return '<div class="hd"><div class="hd-in">'+(back?'<button class="ghost" data-act="back" aria-label="ย้อนกลับ">'+ic('back').replace('<svg','<svg width="24" height="24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"')+'</button>':'')+
-    (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost" data-act="settings">ตั้งค่า</button></div><div class="stripe"></div></div>';
+    (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost settings-ico" data-act="settings"><span>⚙</span><small>ตั้งค่า</small></button>'</div><div class="stripe"></div></div>';
 }
 function rowTx(t,showProj){
   var d=dueInfo(t),tags='';
@@ -506,39 +513,20 @@ function rowTx(t,showProj){
 
 function vHome(){
   if(!S.projects.length&&!S.tx.length){
-    return '<div class="cash"><small>ยินดีต้อนรับ</small><div class="big num" style="font-size:1.7rem">เริ่มบันทึกบัญชีหน้างาน</div><div class="muted">ข้อมูลเก็บไว้ในเครื่องนี้ ไม่หายจนกว่าจะลบเอง</div></div>'+
-      '<div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการแรก</button>'+'<button class="btn" data-act="restoreOpen">กู้คืนจากข้อมูลสำรอง</button></div>';
+    return '<div class="cash"><small>ยินดีต้อนรับ</small><div class="big num" style="font-size:1.7rem">เริ่มบันทึกบัญชีหน้างาน</div><div class="muted">ข้อมูลเก็บไว้ในเครื่องนี้ ไม่หายจนกว่าจะลบเอง</div></div><div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการแรก</button><button class="btn" data-act="restoreOpen">กู้คืนจากข้อมูลสำรอง</button></div>';
   }
-  var mk=today().slice(0,7),inM=0,outM=0;
-  S.tx.forEach(function(t){if(t.date.slice(0,7)===mk){if(t.type==='in')inM+=base(t);else outM+=base(t);}});
-  var rec=sumNet(pending('in')),pay=sumNet(pending('out'));
-  var watch=S.projects.filter(function(p){return budgetPct(p)>=.85;});
-  var cs2=cashSplit();
-  var ending=S.projects.filter(function(p){return p.endDate&&dd(today(),p.endDate)<=30;});
-  var soon=S.tx.filter(function(t){var d=dueInfo(t);return d&&d.days<=7;}).sort(function(a,b){return a.due<b.due?-1:1;});
-  var recent=S.tx.slice().sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,5);
-  var nudge='';
-  if(S.tx.length>=5&&(!S.lastBackup||Date.now()-S.lastBackup>30*86400000))nudge='<button class="row" data-act="backup" style="margin-top:0"><div class="l"><b>ยังไม่ได้สำรองข้อมูลเลย หรือนานเกิน 30 วัน</b><small>แตะเพื่อสำรองไว้กันข้อมูลหาย</small></div></button>';
-  var active=S.projects.find(function(p){return (p.status||'active')==='active';})||S.projects[0]||null,ast=active?stats(active.id):null;
-  var statusName={active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'};
-  var hero=active?'<button class="project-hero" data-act="openProj" data-id="'+active.id+'"><div class="project-hero-kicker">โครงการปัจจุบัน <span class="status-pill">'+esc(statusName[active.status||'active']||'กำลังดำเนินการ')+'</span></div><b>'+esc(active.name)+'</b><small>'+esc(active.location||active.client||'แตะเพื่อดูรายละเอียดโครงการ')+'</small><span class="hero-link">ดูรายละเอียดโครงการ →</span></button>':'';
-  var h=nudge+hero+'<div class="cash cash-modern"><small>เงินคงเหลือตามรายการ</small><div class="big num">'+fmt(cashBalance())+'</div>'+
-   '<div class="mrow"><span>เดือนนี้ รับ <b class="in num">'+fmt(inM)+'</b></span><span>จ่าย <b class="out num">'+fmt(outM)+'</b></span><span>กำไรเบื้องต้น <b class="num">'+fmt(inM-outM)+'</b></span></div><div class="mrow" style="margin-top:8px"><span>ในบัญชี <b class="num">'+fmt(cs2.bank)+'</b></span><span>เงินสดในมือ <b class="num">'+fmt(cs2.cash)+'</b></span></div></div>';
-  var ro0=retOpen(),retTotal=ro0.reduce(function(a,p){return a+p.retAmt;},0);
-  h+='<div class="kpi4"><button data-act="go" data-v="list"><small>รับเงิน</small><b class="in">'+fmt(S.tx.filter(function(t){return t.type==="in"&&t.paid;}).reduce(function(a,t){return a+net(t);},0))+'</b><span>'+S.tx.filter(function(t){return t.type==="in"&&t.paid;}).length+' รายการ</span></button>'+
-     '<button data-act="go" data-v="list"><small>จ่ายเงิน</small><b class="out">'+fmt(S.tx.filter(function(t){return t.type==="out"&&t.paid;}).reduce(function(a,t){return a+net(t);},0))+'</b><span>'+S.tx.filter(function(t){return t.type==="out"&&t.paid;}).length+' รายการ</span></button>'+
-     '<button data-act="go" data-v="due"><small>ค้างจ่าย</small><b class="out">'+fmt(pay)+'</b><span>'+pending("out").length+' รายการ</span></button>'+
-     '<button data-act="go" data-v="due"><small>เงินประกันรอคืน</small><b>'+fmt(retTotal)+'</b><span>'+ro0.length+' โครงการ</span></button></div>';
-  var ro=retOpen();
-  h+='<div class="sec"><h2>ต้องจับตา</h2>';
-  if(!watch.length&&!soon.length&&!ending.length)h+='<div class="empty">ยังไม่มีงบใกล้เกินหรือยอดใกล้ครบกำหนด</div>';
-  watch.forEach(function(p){var x=budgetPct(p);h+='<button class="proj" data-act="openProj" data-id="'+p.id+'"><div class="top"><b>'+esc(p.name)+'</b><span class="num '+(x>=1?'out':'muted')+'">'+Math.round(x*100)+'% ของงบ</span></div><div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div></button>';});
-  ending.forEach(function(p){h+='<button class="proj" data-act="openProj" data-id="'+p.id+'"><div class="top"><b>'+esc(p.name)+'</b><span>'+endTag(p)+'</span></div><div class="muted" style="font-size:.86rem">สิ้นสุดสัญญา '+dfull(p.endDate)+'</div></button>';});
-  soon.slice(0,4).forEach(function(t){h+=rowTx(t,true);});
-  var cb={},ct=0;S.tx.forEach(function(t){if(t.type==='out'){var b0=base(t);cb[t.cat]=(cb[t.cat]||0)+b0;ct+=b0;}});
-  h+='</div><div class="sec"><h2>สัดส่วนค่าใช้จ่าย <span class="muted" style="font-weight:400;font-size:.85rem">ทุกโครงการ</span></h2>'+donut(cb,ct)+'</div><div class="sec"><h2>รายการล่าสุด <button class="link" data-act="go" data-v="list">ดูทั้งหมด</button></h2>';
-  recent.forEach(function(t){h+=rowTx(t,true);});
-  h+='</div><div class="sec quick-actions"><button class="btn pri" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="go" data-v="report">ดูรายงานกำไรและกระแสเงินสด</button></div>';
+  var mk=today().slice(0,7),inM=0,outM=0;S.tx.forEach(function(t){if((t.date||'').slice(0,7)===mk){if(t.type==='in')inM+=base(t);else outM+=base(t);}});
+  var paidIn=S.tx.filter(function(t){return t.type==='in'&&t.paid;}),paidOut=S.tx.filter(function(t){return t.type==='out'&&t.paid;}),pay=pending('out'),ro=retOpen(),cs=cashSplit();
+  var active=S.projects.find(function(p){return (p.status||'active')==='active';})||S.projects[0],ps=active?stats(active.id):null;
+  var projectCard=active?'<section class="preview-project"><div class="preview-photo"><div class="photo-placeholder">'+ic('build')+'</div></div><div class="preview-project-body"><span class="eyebrow">▣ โครงการ</span><h2>'+esc(active.name)+'</h2><p>'+esc(active.location||active.client||'ติดตามรายรับ–รายจ่ายหน้างาน')+'</p><div class="preview-project-actions"><button class="btn pri" data-act="openProj" data-id="'+active.id+'">▣ ดูรายละเอียด</button><button class="btn dark" data-act="editProj" data-id="'+active.id+'">แก้ไข</button></div></div></section>':'';
+  var balance=cashBalance();
+  var h=projectCard+'<section class="balance-card"><div class="balance-title"><span class="balance-icon">◉</span><div><small>เงินคงเหลือตามรายการ</small><b class="num">'+fmt(balance)+'</b></div></div><div class="balance-cols"><span>เดือนนี้ รับแล้ว<b class="in">'+fmt(inM)+'</b></span><span>จ่ายแล้ว<b class="out">'+fmt(outM)+'</b></span><span>รับ − จ่ายเดือนนี้<b class="'+(inM-outM>=0?'in':'out')+'">'+fmt(inM-outM)+'</b></span><span>ในบัญชี<b>'+fmt(cs.bank)+'</b></span></div></section>';
+  h+='<section class="preview-kpis"><button data-act="go" data-v="list"><span class="kicon blue">▣</span><small>รับเงินแล้ว</small><b class="in">'+fmt(paidIn.reduce(function(a,t){return a+net(t);},0))+'</b><em>'+paidIn.length+' รายการ</em></button><button data-act="go" data-v="list"><span class="kicon pink">▣</span><small>จ่ายเงินแล้ว</small><b class="out">'+fmt(paidOut.reduce(function(a,t){return a+net(t);},0))+'</b><em>'+paidOut.length+' รายการ</em></button><button data-act="go" data-v="due"><span class="kicon amber">▤</span><small>ค้างจ่าย</small><b class="out">'+fmt(sumNet(pay))+'</b><em>ค้างรับ '+fmt(sumNet(pending("in")))+'</em></button><button data-act="go" data-v="due"><span class="kicon green">♢</span><small>เงินประกันรอคืน</small><b>'+fmt(ro.reduce(function(a,p){return a+p.retAmt;},0))+'</b><em>'+ro.length+' โครงการ</em></button></section>';
+  var list=S.tx.slice().sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
+  h+='<div class="ledger-tabs"><button class="on">ทั้งหมด ('+list.length+')</button><button data-act="go" data-v="list">รับเงิน ('+S.tx.filter(function(t){return t.type==="in";}).length+')</button><button data-act="go" data-v="list">จ่ายเงิน ('+S.tx.filter(function(t){return t.type==="out";}).length+')</button><button data-act="go" data-v="due">ค้าง ('+(pending("in").length+pending("out").length)+')</button></div>';
+  h+='<section class="ledger-feed"><div class="feed-head"><span>รายการล่าสุด</span><button class="link" data-act="go" data-v="list">ดูทั้งหมด</button></div>';
+  if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';else list.slice(0,9).forEach(function(t){h+=rowTx(t,true);});
+  h+='</section><div class="quick-actions"><button class="btn pri" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="go" data-v="report">รายงานบัญชี</button></div>';
   return h;
 }
 
