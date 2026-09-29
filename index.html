@@ -209,6 +209,11 @@ th{color:var(--muted);font-weight:500}
 .kpi4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 18px}.kpi4 button{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:left;min-height:96px}.kpi4 small,.kpi4 span{display:block;color:var(--muted);font-size:.78rem}.kpi4 b{display:block;font-size:1.12rem;margin:6px 0}
 @media(min-width:700px){.kpi4{grid-template-columns:repeat(4,1fr)}}
  .mini-status{display:inline-block;background:#eef1f2;border-radius:999px;padding:3px 7px;font-size:.72rem;color:var(--ink);white-space:nowrap}
+/* business documents */
+.doc-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:14px 0 16px}.doc-head b{display:block;font-size:1.15rem}.doc-head small{color:var(--muted)}.doc-new{width:auto!important;padding:10px 14px!important}.doc-row{margin-bottom:8px}
+.quote-paper{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin:12px 0 30px}.quote-top{display:flex;justify-content:space-between;gap:18px;border-bottom:3px solid #efaa2c;padding-bottom:16px}.quote-brand{display:flex;gap:12px;align-items:center;min-width:0}.quote-brand img{width:64px;height:64px;object-fit:cover;border-radius:12px}.quote-brand b,.quote-brand small{display:block}.quote-brand small{color:var(--muted);font-size:.76rem;line-height:1.45}.quote-title{text-align:right}.quote-title b{display:block;font-size:1.55rem}.quote-title span{color:var(--muted);letter-spacing:.08em}.quote-meta{display:grid;grid-template-columns:1fr auto;gap:20px;padding:18px 0}.quote-meta b,.quote-meta span,.quote-meta small{display:block}.quote-meta small{color:var(--muted)}.quote-table{width:100%;border-collapse:collapse}.quote-table th{background:#20282d;color:#fff}.quote-table th,.quote-table td{padding:10px 8px;border:1px solid #dfe2e3;text-align:left;font-size:.86rem}.quote-total{margin:18px 0 0 auto;max-width:330px}.quote-total>div{display:flex;justify-content:space-between;padding:7px 0}.quote-total .grand{border-top:2px solid #20282d;font-size:1.15rem}.quote-total>small{display:block;text-align:right;color:var(--muted);padding:7px 0}.quote-note{border-top:1px solid var(--line);padding-top:14px;margin-top:18px}.quote-note p{white-space:pre-wrap;color:var(--muted)}.quote-sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;text-align:center;margin-top:46px;line-height:1.8}.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.quote-paper{padding:14px}.quote-top{display:block}.quote-title{text-align:left;margin-top:14px}.quote-meta{grid-template-columns:1fr}.quote-table{min-width:620px}.quote-paper{overflow-x:auto}.quick-actions{grid-template-columns:1fr}}
+@media print{body{background:#fff}.header,.nav,.no-print{display:none!important}.quote-paper{border:0;box-shadow:none;margin:0;padding:0}.quote-table{min-width:0}main{padding:0!important;max-width:none!important}}
 </style>
 </head>
 <body>
@@ -526,7 +531,7 @@ function vHome(){
   var cb={},ct=0;S.tx.forEach(function(t){if(t.type==='out'){var b0=base(t);cb[t.cat]=(cb[t.cat]||0)+b0;ct+=b0;}});
   h+='</div><div class="sec"><h2>สัดส่วนค่าใช้จ่าย <span class="muted" style="font-weight:400;font-size:.85rem">ทุกโครงการ</span></h2>'+donut(cb,ct)+'</div><div class="sec"><h2>รายการล่าสุด <button class="link" data-act="go" data-v="list">ดูทั้งหมด</button></h2>';
   recent.forEach(function(t){h+=rowTx(t,true);});
-  h+='</div><div class="sec"><button class="btn" data-act="go" data-v="report">ดูรายงานกำไรและกระแสเงินสด</button></div>';
+  h+='</div><div class="sec quick-actions"><button class="btn pri" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="go" data-v="report">ดูรายงานกำไรและกระแสเงินสด</button></div>';
   return h;
 }
 
@@ -805,6 +810,24 @@ function vPrint(){
   });
   return h+'</table></div></div>';
 }
+function vDocs(){
+  var qs=(S.quotes||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
+  var h='<div class="doc-head"><div><b>เอกสารธุรกิจ</b><small>ใบเสนอราคาและเอกสารสำหรับลูกค้า</small></div><button class="btn pri doc-new" data-act="newQuote">+ ใบเสนอราคา</button></div>';
+  if(!qs.length)return h+'<div class="empty">ยังไม่มีใบเสนอราคา แตะ “+ ใบเสนอราคา” เพื่อสร้างเอกสารแรก</div>';
+  qs.forEach(function(q){var total=(+q.qty||0)*(+q.unitPrice||0);h+='<button class="row doc-row" data-act="quoteView" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'ใบเสนอราคา')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small></div><div class="r"><span class="num">'+fmt(total)+'</span><span>'+esc(q.project||'')+'</span></div></button>';});
+  return h;
+}
+function vQuotePrint(){
+  var q=(S.quotes||[]).find(function(x){return x.id===U.quoteId;});if(!q)return '<div class="empty">ไม่พบใบเสนอราคา</div>';
+  var b=S.business||{},sub=(+q.qty||0)*(+q.unitPrice||0),vat=b.vatRegistered?sub*.07:0,total=sub+vat;
+  return '<div class="quote-paper"><div class="quote-top"><div class="quote-brand"><img src="area-logo-header.jpg" alt="AREA"><div><b>'+esc(b.legalName||S.brand||'AREA MAIBAB')+'</b><small>'+esc(b.address||'')+'</small><small>เลขประจำตัวผู้เสียภาษี '+esc(b.taxId||'-')+' · โทร '+esc(b.phone||'-')+'</small></div></div><div class="quote-title"><b>ใบเสนอราคา</b><span>QUOTATION</span></div></div>'+
+   '<div class="quote-meta"><div><small>ลูกค้า / หน่วยงาน</small><b>'+esc(q.customer)+'</b><span>'+esc(q.project||'')+'</span></div><div><small>เลขที่</small><b>'+esc(q.no)+'</b><small>วันที่ '+dstr(q.date)+'</small></div></div>'+
+   '<table class="quote-table"><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>จำนวนเงิน</th></tr><tr><td>1</td><td>'+esc(q.description)+'</td><td class="num">'+(+q.qty||0)+'</td><td>'+esc(q.unit||'')+'</td><td class="num">'+fmt(+q.unitPrice||0)+'</td><td class="num">'+fmt(sub)+'</td></tr></table>'+
+   '<div class="quote-total"><div><span>รวมเป็นเงิน</span><b class="num">'+fmt(sub)+'</b></div>'+(b.vatRegistered?'<div><span>VAT 7%</span><b class="num">'+fmt(vat)+'</b></div>':'<small>กิจการไม่ได้จดทะเบียนภาษีมูลค่าเพิ่ม</small>')+'<div class="grand"><span>ยอดสุทธิ</span><b class="num">'+fmt(total)+'</b></div></div>'+
+   (q.note?'<div class="quote-note"><b>หมายเหตุ / เงื่อนไข</b><p>'+esc(q.note)+'</p></div>':'')+
+   '<div class="quote-sign"><div>ผู้เสนอราคา<br><br>____________________<br>'+esc(b.legalName||S.brand||'')+'</div><div>ผู้อนุมัติ / ลูกค้า<br><br>____________________<br>วันที่ ____ / ____ / ______</div></div>'+
+   '<div class="stack no-print"><button class="btn pri" data-act="doPrint">พิมพ์ / บันทึก PDF</button><button class="btn" data-act="editQuote" data-id="'+q.id+'">แก้ไขใบเสนอราคา</button></div></div>';
+}
 /* ---------- แผ่นล่าง (sheet) ---------- */
 function sheetHtml(){
   var sh=U.sheet;if(!sh){U._sk='';return '';}
@@ -860,7 +883,7 @@ function sheetHtml(){
      '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
      '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
-     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="newQuote">ใบเสนอราคา</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
+     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บในเครื่องนี้ถาวรจนกว่าจะลบเอง (ไม่ซิงค์ข้ามเครื่อง) '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
   }else if(sh.kind==='quote'){
     var q=sh.id?(S.quotes||[]).find(function(x){return x.id===sh.id;}):null;
@@ -915,6 +938,8 @@ function render(){
   else if(v==='due'){title='ค้างรับและค้างจ่าย';body=vDue();}
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
+  else if(v==='docs'){title='เอกสาร';body=vDocs();back=true;}
+  else if(v==='quoteprint'){title='ใบเสนอราคา';body=vQuotePrint();back=true;}
   var tabs=[['home','home','แดชบอร์ด'],['list','list','รายการ'],['add','plus',''],['projects','build','โครงการ'],['due','clock','ค้างรับจ่าย']];
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
@@ -923,7 +948,7 @@ function render(){
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report');nav+='<button class="'+(on?'on':'')+'" data-act="go" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span></button>';}
   });
   nav+='</div></nav>';
-  var nonav=(v==='add'||v==='print');if(nonav)nav='';
+  var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+(U.storageBad?'<div class="prev" style="border-color:var(--out);color:var(--ink)"><b>เบราว์เซอร์นี้ไม่ยอมเก็บข้อมูลถาวร</b> ข้อมูลอาจหายเมื่อปิดแอพ ให้ใช้ "สำรองข้อมูล" ในตั้งค่าเป็นประจำ</div>':'')+body+'</main>'+nav+sheetHtml();U.anim=0;
 }
@@ -935,6 +960,8 @@ document.addEventListener('click',function(e){
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
   if(a==='go')go(v);
   else if(a==='back'&&U.view==='print'){go('report');}
+  else if(a==='back'&&U.view==='quoteprint'){go('docs');}
+  else if(a==='back'&&U.view==='docs'){go('home');}
   else if(a==='back'&&U.view==='report'){go('home');}
   else if(a==='back'){U.draft=null;go(U.pid&&U.view==='add'&&U.from==='project'?'project':(U.from||(S.role==='foreman'?'list':'home')));}
   else if(a==='newTx'){U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();}
@@ -993,12 +1020,14 @@ document.addEventListener('click',function(e){
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
   else if(a==='newQuote'){U.sheet={kind:'quote',id:null};render();}
+  else if(a==='quoteView'){U.quoteId=id;U.sheet=null;go('quoteprint');}
+  else if(a==='editQuote'){U.sheet={kind:'quote',id:id};render();}
   else if(a==='saveQuote'){
     var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:document.getElementById('qdate').value||today(),customer:document.getElementById('qcust').value.trim(),project:document.getElementById('qproj').value.trim(),description:document.getElementById('qdesc').value.trim(),qty:parseFloat(document.getElementById('qqty').value)||1,unit:document.getElementById('qunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('qprice').value)||0,note:document.getElementById('qnote').value.trim()};
     if(!q.customer){toast('กรอกชื่อลูกค้าก่อน');return;}
     if(!q.description){toast('กรอกรายละเอียดก่อน');return;}
     var qi=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qi>-1)S.quotes[qi]=q;else S.quotes.push(q);
-    persist();U.sheet=null;render();toast('บันทึกใบเสนอราคาแล้ว');
+    persist();U.sheet=null;U.quoteId=q.id;go('quoteprint');toast('บันทึกใบเสนอราคาแล้ว');
   }
   else if(a==='role'){S.role=v;persist();U.view=v==='foreman'?'list':'home';render();}
   else if(a==='saveOpen'){
