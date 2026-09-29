@@ -423,7 +423,7 @@ function migrate(o){
   if(!o.docSeq)o.docSeq={quote:0,bill:0,receipt:0};
   (o.projects||[]).forEach(function(p){
     if(p.deliveryDate===undefined)p.deliveryDate='';
-    if(p.retPaidDate===undefined)p.retPaidDate='';
+    if(p.retPaidDate===undefined)p.retPaidDate='';if(p.retRecvDate===undefined)p.retRecvDate='';
     var gx=(o.tx||[]).find(function(t){return t.pid===p.id&&t.type==='out'&&((t.sub||'').trim()==='ประกันสัญญา'||t.id==='guarantee-expense-'+p.id);});
     if(!p.retPaidDate&&gx&&gx.date)p.retPaidDate=gx.date;
     if(p.deliveryDate)p.retDue=addYearsIso(p.deliveryDate,2);
@@ -846,8 +846,8 @@ function vProject(){
     h+='<div class="kv"><span>จำนวนที่จ่ายออกแล้ว</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
        '<div class="kv"><span>วันที่จ่ายเงินประกัน</span><span>'+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</span></div>'+
        '<div class="kv"><span>วันที่ส่งมอบงาน</span><span>'+(p.deliveryDate?dstr(p.deliveryDate):'ยังไม่ระบุ')+'</span></div><div class="kv"><span>ครบกำหนดรับคืน (ส่งมอบ + 2 ปี)</span><span>'+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+' '+(p.retRecv?'':retTag(p))+'</span></div>'+
-       '<div class="kv"><span>สถานะ</span><span>'+(p.retRecv?'<b class="in">ได้รับคืนแล้ว และบันทึกเป็นรายรับ</b>':'<b class="out">นับเป็นค่าใช้จ่ายแล้ว</b> · รอรับคืนหลังส่งมอบครบ 2 ปี')+'</span></div>';
-    if(!p.retRecv)h+='<div class="stack"><button class="btn" data-act="retRecv" data-id="'+p.id+'">ได้รับเงินประกันคืนแล้ว</button></div>';
+       '<div class="kv"><span>สถานะ</span><span>'+(p.retRecv?'<b class="in">ได้รับคืนแล้ว'+(p.retRecvDate?' '+dstr(p.retRecvDate):'')+' และบันทึกเป็นรายรับ</b>':'<b class="out">นับเป็นค่าใช้จ่ายแล้ว</b> · รอรับคืนหลังส่งมอบครบ 2 ปี')+'</span></div>';
+    if(!p.retRecv){var rd=retDays(p);if(rd!==null&&rd<=0)h+='<div class="stack"><button class="btn pri" data-act="retRecv" data-id="'+p.id+'">บันทึกรับเงินประกันคืนแล้ว</button></div>';else h+='<div class="muted" style="margin-top:12px;font-size:.88rem">ยังบันทึกรับคืนไม่ได้ · '+(rd===null?'กรอกวันที่ส่งมอบงานก่อน':'เหลืออีก '+rd+' วัน')+'</div>';}
   }else h+='<div class="empty">ยังไม่ได้บันทึกเงินประกันสัญญา แตะ "แก้ไขโครงการ" เพื่อเพิ่ม</div>';
   h+='</div>';
   var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
@@ -874,7 +874,7 @@ function vDue(){
     var list=retOpen().sort(function(a,b){return (a.retDue||'9')<(b.retDue||'9')?-1:1;});
     var h='<div class="sec master-due-card"><h2>เงินประกันที่จ่ายแล้ว · รอรับคืน <span class="num">'+fmt(list.reduce(function(a,p){return a+p.retAmt;},0))+'</span></h2>';
     if(!list.length)h+='<div class="empty">ไม่มีเงินประกันที่รอคืน</div>';
-    list.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>รับคืนได้วันที่ '+(p.retDue?dstr(p.retDue):'รอระบุวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
+    list.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>'+(p.deliveryDate?'ส่งมอบ '+dstr(p.deliveryDate)+' · ':'')+'รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
     return h+'</div>';
   }
   return block('in','ลูกหนี้ (เงินค้างรับจากเจ้าของงาน)')+block('out','เจ้าหนี้ (ค้างจ่ายร้านวัสดุและช่าง)')+retBlock()+'<p class="muted" style="font-size:.85rem;margin-top:16px">เงินประกันนับเป็นค่าใช้จ่ายตั้งแต่วันที่จ่ายออก และจะบันทึกเป็นรายรับอีกครั้งเมื่อได้รับคืนจริงหลังส่งมอบครบ 2 ปี</p>';
@@ -1258,8 +1258,12 @@ document.addEventListener('click',function(e){
   else if(a==='retRecv'){
     var rp=proj(id);
     if(rp&&rp.retAmt>0&&!rp.retRecv){
-      rp.retRecv=true;
-      S.tx.push({id:uid(),date:today(),type:'in',amount:rp.retAmt,cat:'เงินประกันสัญญา',pid:rp.id,partner:rp.client||'',vat:false,wht:false,paid:true,due:'',photo:'',note:'รับคืนเงินประกันสัญญา'});
+      var rd=retDays(rp);
+      if(rd===null){toast('กรอกวันที่ส่งมอบงานก่อน');return;}
+      if(rd>0){toast('ยังไม่ครบกำหนดรับคืน เหลืออีก '+rd+' วัน');return;}
+      var oldRefund=S.tx.find(function(t){return t.pid===rp.id&&t.type==='in'&&((t.cat||'')==='เงินประกันสัญญา'||(t.note||'').indexOf('รับคืนเงินประกันสัญญา')>=0);});
+      rp.retRecv=true;rp.retRecvDate=today();
+      if(!oldRefund)S.tx.push({id:'guarantee-refund-'+rp.id,date:today(),type:'in',amount:rp.retAmt,cat:'เงินประกันสัญญา',sub:'รับคืนเงินประกัน',pid:rp.id,partner:rp.client||'',pay:'transfer',vat:false,wht:false,paid:true,due:'',photo:'',note:'รับคืนเงินประกันสัญญาหลังส่งมอบครบ 2 ปี'});
       persist();render();toast('บันทึกรับเงินประกันคืนแล้ว');
     }
   }
