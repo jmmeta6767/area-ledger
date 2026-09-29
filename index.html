@@ -1839,12 +1839,12 @@ function sheetHtml(){
      '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
   }else if(sh.kind==='bizdoc'){
-    var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind);
+    var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind),docPid=(q&&q.pid)||U.docProjectPid||'',docProj=docPid?proj(docPid):null;
     b='<h3>'+(q?'แก้ไข':'สร้าง')+tt[0]+'</h3>'+
      '<div class="field"><label for="dno">เลขที่เอกสาร</label><input id="dno" type="text" value="'+esc(q?q.no:(kind==='bill'?'BL-':kind==='receipt'?'RC-':'QT-')+today().replace(/-/g,''))+'"></div>'+
      '<div class="field"><label for="ddate">วันที่</label><input id="ddate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
-     '<div class="field"><label for="dcust">ชื่อลูกค้า / หน่วยงาน</label><input id="dcust" type="text" value="'+esc(q?q.customer:'')+'"></div>'+
-     '<div class="field"><label for="dproj">โครงการ / งาน</label><input id="dproj" type="text" value="'+esc(q?q.project:'')+'"></div>'+
+     '<div class="field"><label for="dcust">ชื่อลูกค้า / หน่วยงาน</label><input id="dcust" type="text" value="'+esc(q?q.customer:(docProj?docProj.client||'':''))+'"></div>'+
+     '<div class="field"><label for="dproj">โครงการ / งาน</label><input id="dproj" type="text" value="'+esc(q?q.project:(docProj?docProj.name:''))+'"'+(docProj?' readonly':'')+'></div>'+
      '<div class="field"><span class="lbl">รายการ</span>'+[0,1,2].map(function(i){var x=q?docItems(q)[i]:null;return '<div class="doc-item"><input id="ddesc'+i+'" type="text" placeholder="รายละเอียดรายการ" value="'+esc(x?x.description:'')+'"><input id="dqty'+i+'" type="number" inputmode="decimal" placeholder="จำนวน" value="'+esc(x?x.qty:(i===0?1:''))+'"><input id="dunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x?x.unit:(i===0?'งาน':''))+'"><input id="dprice'+i+'" type="number" inputmode="decimal" placeholder="ราคา/หน่วย" value="'+esc(x?x.unitPrice:'')+'"></div>';}).join('')+'</div>'+
      '<div class="field"><label for="ddisc">ส่วนลด (บาท)</label><input id="ddisc" type="number" inputmode="decimal" value="'+esc(q?q.discount||'':'')+'"></div>'+
      '<div class="field"><label for="dwht">หัก ณ ที่จ่าย (%)</label><input id="dwht" type="number" inputmode="decimal" value="'+esc(q?q.whtRate||'':'')+'" placeholder="เช่น 3"></div>'+
@@ -1852,12 +1852,12 @@ function sheetHtml(){
      '<div class="field"><label for="dnote">หมายเหตุ / เงื่อนไข</label><textarea id="dnote" rows="3">'+esc(q?q.note:'')+'</textarea></div>'+
      '<div class="stack"><button class="btn pri" data-act="saveBizDoc" data-kind="'+kind+'" data-id="'+(q?q.id:'')+'">บันทึก'+tt[0]+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='quote'){
-    var q=sh.id?(S.quotes||[]).find(function(x){return x.id===sh.id;}):null;
+    var q=sh.id?(S.quotes||[]).find(function(x){return x.id===sh.id;}):null,qPid=(q&&q.pid)||U.docProjectPid||'',qProj=qPid?proj(qPid):null;
     b='<h3>'+(q?'แก้ไขใบเสนอราคา':'สร้างใบเสนอราคา')+'</h3>'+
      '<div class="field"><label for="qno">เลขที่ใบเสนอราคา</label><input id="qno" type="text" value="'+esc(q?q.no:'QT-'+today().replace(/-/g,''))+'"></div>'+
      '<div class="field"><label for="qdate">วันที่</label><input id="qdate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
-     '<div class="field"><label for="qcust">ชื่อลูกค้า / หน่วยงาน</label><input id="qcust" type="text" value="'+esc(q?q.customer:'')+'"></div>'+
-     '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:'')+'"></div>'+
+     '<div class="field"><label for="qcust">ชื่อลูกค้า / หน่วยงาน</label><input id="qcust" type="text" value="'+esc(q?q.customer:(qProj?qProj.client||'':''))+'"></div>'+
+     '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:(qProj?qProj.name:''))+'"'+(qProj?' readonly':'')+'></div>'+
      '<div class="field"><label for="qdesc">รายละเอียดงาน / สินค้า</label><textarea id="qdesc" rows="4">'+esc(q?q.description:'')+'</textarea></div>'+
      '<div class="field"><label for="qqty">จำนวน</label><input id="qqty" type="number" inputmode="decimal" value="'+esc(q?q.qty:1)+'"></div>'+
      '<div class="field"><label for="qunit">หน่วย</label><input id="qunit" type="text" value="'+esc(q?q.unit:'งาน')+'"></div>'+
@@ -2061,30 +2061,32 @@ document.addEventListener('click',function(e){
   else if(a==='newBill'){U.appMenu=false;U.sheet={kind:'bizdoc',docKind:'bill',id:null};render();}
   else if(a==='newReceipt'){U.appMenu=false;U.sheet={kind:'bizdoc',docKind:'receipt',id:null};render();}
   else if(a==='docView'){U.docKind=el.dataset.kind||'quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
-  else if(a==='editDoc'){U.sheet={kind:'bizdoc',docKind:el.dataset.kind||'bill',id:id};render();}
+  else if(a==='editDoc'){var ed=(docCollection(el.dataset.kind||'bill')||[]).find(function(x){return x.id===id;});if(ed&&ed.pid)U.docProjectPid=ed.pid;U.sheet={kind:'bizdoc',docKind:el.dataset.kind||'bill',id:id};render();}
   else if(a==='convertDoc'){
     var target=el.dataset.kind,sourceKind=U.docKind||'quote',src=(docCollection(sourceKind)||[]).find(function(x){return x.id===id;});if(!src){toast('ไม่พบเอกสารต้นทาง');return;}
     var list=docCollection(target),prefix=target==='bill'?'BL-':'RC-',existing=list.find(function(x){return x.sourceId===src.id&&x.sourceKind===sourceKind;});
     if(existing){U.docKind=target;U.docId=existing.id;go('quoteprint');toast('เปิดเอกสารที่สร้างไว้แล้ว');return;}
-    var d={id:uid(),no:nextDocNo(target),date:today(),customer:src.customer,project:src.project,items:docItems(src).map(function(x){return Object.assign({},x);}),description:src.description,qty:src.qty,unit:src.unit,unitPrice:src.unitPrice,discount:+src.discount||0,whtRate:+src.whtRate||0,dueDate:src.dueDate||'',note:src.note||'',sourceId:src.id,sourceKind:sourceKind};
+    var d={id:uid(),no:nextDocNo(target),date:today(),customer:src.customer,project:src.project,pid:src.pid||'',items:docItems(src).map(function(x){return Object.assign({},x);}),description:src.description,qty:src.qty,unit:src.unit,unitPrice:src.unitPrice,discount:+src.discount||0,whtRate:+src.whtRate||0,dueDate:src.dueDate||'',note:src.note||'',sourceId:src.id,sourceKind:sourceKind};
     list.push(d);
     if(target==='receipt'){
       var amt=docCalc(d).total,b=S.business||{};
       var dup=S.tx.find(function(t){return t.docId===d.id;});
-      if(!dup)S.tx.push({id:uid(),date:today(),type:'in',amount:Math.round(amt*100)/100,cat:'รับเงินค่างวดงาน',sub:'รับเงินตาม '+d.no,pid:'',partner:d.customer||'',vat:!!b.vatRegistered,wht:false,paid:true,due:'',pay:'transfer',photo:'',note:'สร้างอัตโนมัติจากใบวางบิล '+(src.no||''),docId:d.id});
+      if(!dup)S.tx.push({id:uid(),date:today(),type:'in',amount:Math.round(amt*100)/100,cat:'รับเงินค่างวดงาน',sub:'รับเงินตาม '+d.no,pid:d.pid||'',partner:d.customer||'',vat:!!b.vatRegistered,wht:false,paid:true,due:'',pay:'transfer',photo:'',note:'สร้างอัตโนมัติจากใบวางบิล '+(src.no||''),docId:d.id});
     }
     persist();U.docKind=target;U.docId=d.id;U.sheet=null;go('quoteprint');toast(target==='bill'?'สร้างใบวางบิลแล้ว':'บันทึกรับเงินและสร้างใบเสร็จแล้ว');
   }
   else if(a==='saveBizDoc'){
     var kind=el.dataset.kind||'bill',list=docCollection(kind),items=[0,1,2].map(function(i){return {description:document.getElementById('ddesc'+i).value.trim(),qty:parseFloat(document.getElementById('dqty'+i).value)||0,unit:document.getElementById('dunit'+i).value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('dprice'+i).value)||0};}).filter(function(x){return x.description;});
-    var d={id:id||uid(),no:document.getElementById('dno').value.trim()||nextDocNo(kind),date:document.getElementById('ddate').value||today(),customer:document.getElementById('dcust').value.trim(),project:document.getElementById('dproj').value.trim(),items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('ddisc').value)||0,whtRate:parseFloat(document.getElementById('dwht').value)||0,dueDate:document.getElementById('ddue').value||'',note:document.getElementById('dnote').value.trim()};
+    var oldDoc=id?list.find(function(x){return x.id===id;}):null,linkedPid=(oldDoc&&oldDoc.pid)||U.docProjectPid||'',linkedProj=linkedPid?proj(linkedPid):null;
+    var d={id:id||uid(),no:document.getElementById('dno').value.trim()||nextDocNo(kind),date:document.getElementById('ddate').value||today(),customer:document.getElementById('dcust').value.trim()||(linkedProj?linkedProj.client||'':''),project:document.getElementById('dproj').value.trim()||(linkedProj?linkedProj.name:''),pid:linkedPid,items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('ddisc').value)||0,whtRate:parseFloat(document.getElementById('dwht').value)||0,dueDate:document.getElementById('ddue').value||'',note:document.getElementById('dnote').value.trim(),sourceId:oldDoc?oldDoc.sourceId||'':'',sourceKind:oldDoc?oldDoc.sourceKind||'':''};
     if(!d.customer||!items.length){toast('กรอกลูกค้าและอย่างน้อย 1 รายการ');return;}
     var di=list.findIndex(function(x){return x.id===d.id;});if(di>-1)list[di]=d;else list.push(d);persist();U.sheet=null;U.docKind=kind;U.docId=d.id;go('quoteprint');toast('บันทึก'+docTitle(kind)[0]+'แล้ว');
   }
   else if(a==='quoteView'){U.docKind='quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
-  else if(a==='editQuote'){U.sheet={kind:'quote',id:id};render();}
+  else if(a==='editQuote'){var eq=(S.quotes||[]).find(function(x){return x.id===id;});if(eq&&eq.pid)U.docProjectPid=eq.pid;U.sheet={kind:'quote',id:id};render();}
   else if(a==='saveQuote'){
-    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:document.getElementById('qdate').value||today(),customer:document.getElementById('qcust').value.trim(),project:document.getElementById('qproj').value.trim(),description:document.getElementById('qdesc').value.trim(),qty:parseFloat(document.getElementById('qqty').value)||1,unit:document.getElementById('qunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('qprice').value)||0,note:document.getElementById('qnote').value.trim()};
+    var oldQ=id?(S.quotes||[]).find(function(x){return x.id===id;}):null,quotePid=(oldQ&&oldQ.pid)||U.docProjectPid||'',quoteProj=quotePid?proj(quotePid):null;
+    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:document.getElementById('qdate').value||today(),customer:document.getElementById('qcust').value.trim()||(quoteProj?quoteProj.client||'':''),project:document.getElementById('qproj').value.trim()||(quoteProj?quoteProj.name:''),pid:quotePid,description:document.getElementById('qdesc').value.trim(),qty:parseFloat(document.getElementById('qqty').value)||1,unit:document.getElementById('qunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('qprice').value)||0,note:document.getElementById('qnote').value.trim()};
     if(!q.customer){toast('กรอกชื่อลูกค้าก่อน');return;}
     if(!q.description){toast('กรอกรายละเอียดก่อน');return;}
     var qi=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qi>-1)S.quotes[qi]=q;else S.quotes.push(q);
