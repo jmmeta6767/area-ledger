@@ -1303,6 +1303,19 @@ body.wallpaper-on .mgroup{
 @media(prefers-color-scheme:dark){
  .dash-chart-card{background:rgba(26,35,45,.96)}.category-chart i{background:#2b3540}
 }
+
+/* QUOTATION INPUT FORM — mobile document editor */
+.quote-editor{display:grid;gap:10px}.quote-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--m-line)}.quote-editor-head small{display:block;color:var(--m-mut);font-size:9px}.quote-editor-head h3{margin:1px 0 0;font-size:18px}
+.quote-editor-meta{display:grid;grid-template-columns:1.35fr 1fr .7fr;gap:8px}.quote-editor-meta .field{margin:0}
+.quote-editor-section{border-top:1px solid var(--m-line);padding-top:10px;display:grid;gap:9px}.quote-section-title{display:flex;justify-content:space-between;align-items:center;gap:8px}.quote-section-title>span{font-weight:800;font-size:12px}.quote-section-title>button{border:0;background:transparent;color:#1786b8;font-weight:750;font-size:10px}
+.quote-item-list{display:grid;gap:8px}.quote-item-card{border:1px solid var(--m-line);border-radius:12px;padding:9px;background:var(--m-card)}.quote-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.quote-item-top b{font-size:10px}.quote-item-top button{border:0;background:transparent;color:#b8402b;font-size:9px}.quote-item-card input{width:100%;min-height:39px;border:1px solid var(--m-line);border-radius:9px;background:var(--m-bg);color:var(--m-ink);padding:8px}.quote-desc{margin-bottom:7px}.quote-item-grid{display:grid;grid-template-columns:.7fr .7fr 1.2fr;gap:6px}
+.quote-total-editor{grid-template-columns:1fr 1fr;align-items:start}.quote-form-total{border-radius:12px;background:#f8f9f8;padding:8px 10px}.quote-form-total>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:10px}.quote-form-total .grand{border-top:1px solid var(--m-line);margin-top:3px;padding-top:8px;font-size:13px;color:#1986bd}
+.quote-esign{display:flex!important;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--m-line);padding:10px 0!important;color:var(--m-ink)!important}.quote-esign b,.quote-esign small{display:block}.quote-esign b{font-size:11px}.quote-esign small{font-size:8px;color:var(--m-mut)}.quote-esign input{display:none}.quote-esign i{width:42px;height:24px;border-radius:999px;background:#cfd5d8;position:relative;flex:none}.quote-esign i:after{content:"";position:absolute;width:20px;height:20px;left:2px;top:2px;border-radius:50%;background:#fff;transition:.16s}.quote-esign input:checked+i{background:#3ea8d5}.quote-esign input:checked+i:after{transform:translateX(18px)}
+.quote-attach{display:grid;gap:7px}.quote-attach>span{font-size:11px;font-weight:800}.quote-attach>label{width:120px;height:88px;border:1px dashed #b8c3c9;border-radius:11px;display:grid;place-items:center;color:#2c92bf;font-size:10px;background:#fbfcfc}.quote-attach>input{display:none}.quote-attach-preview{display:flex;align-items:center;gap:8px}.quote-attach-preview img{width:88px;height:70px;object-fit:cover;border-radius:9px;border:1px solid var(--m-line)}.quote-attach-preview button{border:0;background:#fff0ed;color:#a34131;border-radius:8px;padding:7px 9px;font-size:9px}
+.quote-editor-save{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:sticky;bottom:0;background:var(--m-card);padding-top:8px}
+.quote-doc-attachment img{max-width:240px;max-height:180px;object-fit:contain;margin-top:8px;border:1px solid var(--m-line);border-radius:8px}
+@media(max-width:430px){.quote-editor-meta{grid-template-columns:1fr 1fr}.quote-editor-meta .field:first-child{grid-column:1/-1}.quote-total-editor{grid-template-columns:1fr}.quote-item-grid{grid-template-columns:.7fr .8fr 1.1fr}.quote-editor-save{grid-template-columns:1fr}.quote-editor-head h3{font-size:16px}}
+@media(prefers-color-scheme:dark){.quote-form-total{background:#222d38}.quote-item-card{background:#1a232d}}
 </style>
 </head>
 <body>
@@ -2139,7 +2152,8 @@ function vBusinessDoc(){
    '<table class="quote-table"><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>จำนวนเงิน</th></tr>'+items.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(x.description)+'</td><td class="num">'+(+x.qty||0)+'</td><td>'+esc(x.unit||'')+'</td><td class="num">'+fmt(+x.unitPrice||0)+'</td><td class="num">'+fmt((+x.qty||0)*(+x.unitPrice||0))+'</td></tr>';}).join('')+'</table>'+
    '<div class="quote-total"><div><span>รวมเป็นเงิน</span><b class="num">'+fmt(calc.sub)+'</b></div>'+(calc.discount?'<div><span>ส่วนลด</span><b class="num">−'+fmt(calc.discount)+'</b></div>':'')+(b.vatRegistered?'<div><span>VAT 7%</span><b class="num">'+fmt(calc.vat)+'</b></div>':'<small>กิจการไม่ได้จดทะเบียนภาษีมูลค่าเพิ่ม</small>')+(calc.wht?'<div><span>หัก ณ ที่จ่าย '+(+q.whtRate||0)+'%</span><b class="num">−'+fmt(calc.wht)+'</b></div>':'')+'<div class="grand"><span>ยอดสุทธิ</span><b class="num">'+fmt(calc.total)+'</b></div>'+(q.dueDate?'<small>ครบกำหนดชำระ '+dstr(q.dueDate)+'</small>':'')+'</div>'+
    (q.note?'<div class="quote-note"><b>หมายเหตุ / เงื่อนไข</b><p>'+esc(q.note)+'</p></div>':'')+
-   '<div class="quote-sign"><div>ผู้จัดทำเอกสาร<br><br>____________________<br>'+esc(b.legalName||S.brand||'')+'</div><div>'+(kind==='receipt'?'ผู้รับเงิน / ผู้ชำระเงิน':'ผู้รับเอกสาร / ลูกค้า')+'<br><br>____________________<br>วันที่ ____ / ____ / ______</div></div>'+
+   (q.attachment?'<div class="quote-note"><b>ไฟล์แนบ</b><div class="quote-doc-attachment"><img src="'+q.attachment+'" alt="ไฟล์แนบเอกสาร"></div></div>':'')+
+   (q.eSign===false?'':'<div class="quote-sign"><div>ผู้จัดทำเอกสาร<br><br>____________________<br>'+esc(b.legalName||S.brand||'')+'</div><div>'+(kind==='receipt'?'ผู้รับเงิน / ผู้ชำระเงิน':'ผู้รับเอกสาร / ลูกค้า')+'<br><br>____________________<br>วันที่ ____ / ____ / ______</div></div>')+
    '<div class="stack no-print">'+
    (kind==='quote'?'<button class="btn pri" data-act="convertDoc" data-kind="bill" data-id="'+q.id+'">สร้างใบวางบิลจากใบนี้</button>':'')+
    (kind==='bill'?'<button class="btn pri" data-act="convertDoc" data-kind="receipt" data-id="'+q.id+'">รับเงินและออกใบเสร็จ</button>':'')+
@@ -2245,18 +2259,26 @@ function sheetHtml(){
      '<div class="field"><label for="dnote">หมายเหตุ / เงื่อนไข</label><textarea id="dnote" rows="3">'+esc(q?q.note:'')+'</textarea></div>'+
      '<div class="stack"><button class="btn pri" data-act="saveBizDoc" data-kind="'+kind+'" data-id="'+(q?q.id:'')+'">บันทึก'+tt[0]+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='quote'){
-    var q=sh.id?(S.quotes||[]).find(function(x){return x.id===sh.id;}):null,qPid=(q&&q.pid)||U.docProjectPid||'',qProj=qPid?proj(qPid):null;
-    b='<h3>'+(q?'แก้ไขใบเสนอราคา':'สร้างใบเสนอราคา')+'</h3>'+
-     '<div class="field"><label for="qno">เลขที่ใบเสนอราคา</label><input id="qno" type="text" value="'+esc(q?q.no:'QT-'+today().replace(/-/g,''))+'"></div>'+
-     '<div class="field"><label for="qdate">วันที่</label><input id="qdate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
-     '<div class="field"><label for="qcust">ชื่อลูกค้า / หน่วยงาน</label><input id="qcust" type="text" value="'+esc(q?q.customer:(qProj?qProj.client||'':''))+'"></div>'+
-     '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:(qProj?qProj.name:''))+'"'+(qProj?' readonly':'')+'></div>'+
-     '<div class="field"><label for="qdesc">รายละเอียดงาน / สินค้า</label><textarea id="qdesc" rows="4">'+esc(q?q.description:'')+'</textarea></div>'+
-     '<div class="field"><label for="qqty">จำนวน</label><input id="qqty" type="number" inputmode="decimal" value="'+esc(q?q.qty:1)+'"></div>'+
-     '<div class="field"><label for="qunit">หน่วย</label><input id="qunit" type="text" value="'+esc(q?q.unit:'งาน')+'"></div>'+
-     '<div class="field"><label for="qprice">ราคา/หน่วย (บาท)</label><input id="qprice" type="number" inputmode="decimal" value="'+esc(q?q.unitPrice:'')+'"></div>'+
-     '<div class="field"><label for="qnote">หมายเหตุ / เงื่อนไข</label><textarea id="qnote" rows="3">'+esc(q?q.note:'')+'</textarea></div>'+
-     '<div class="stack"><button class="btn pri" data-act="saveQuote" data-id="'+(q?q.id:'')+'">บันทึกใบเสนอราคา</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+    var q=sh.id?(S.quotes||[]).find(function(x){return x.id===sh.id;}):null,qPid=(q&&q.pid)||U.docProjectPid||'',qProj=qPid?proj(qPid):null,qItems=docItems(q||{}),qCount=Math.max(1,Math.min(8,U.quoteItemCount||(qItems.length||1)));
+    U.quoteItemCount=qCount;
+    var qCredit=q&&q.creditDays!==undefined?q.creditDays:0,qDisc=q&&q.discount?q.discount:0,qESign=q?q.eSign!==false:true;
+    b='<div class="quote-editor">'+
+      '<div class="quote-editor-head"><div><small>เอกสารขาย</small><h3>'+(q?'แก้ไขใบเสนอราคา':'สร้างใบเสนอราคา')+'</h3></div><span class="doc-status pend">'+(q?'แก้ไขเอกสาร':'ร่างใหม่')+'</span></div>'+
+      '<div class="quote-editor-meta"><div class="field"><label for="qno">เลขที่ใบเสนอราคา</label><input id="qno" type="text" value="'+esc(q?q.no:'QT-'+today().replace(/-/g,''))+'"></div>'+
+      '<div class="field"><label for="qdate">วันที่เอกสาร</label><input id="qdate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
+      '<div class="field"><label for="qcredit">เครดิต (วัน)</label><input id="qcredit" type="number" min="0" inputmode="numeric" value="'+esc(qCredit)+'"></div></div>'+
+      '<section class="quote-editor-section"><div class="quote-section-title"><span>ลูกค้า / โครงการ</span></div>'+
+      '<div class="field"><label for="qcust">ชื่อลูกค้า / หน่วยงาน</label><input id="qcust" type="text" value="'+esc(q?q.customer:(qProj?qProj.client||'':''))+'" placeholder="กรอกชื่อลูกค้า"></div>'+
+      '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:(qProj?qProj.name:''))+'"'+(qProj?' readonly':'')+' placeholder="ระบุโครงการ"></div></section>'+
+      '<section class="quote-editor-section"><div class="quote-section-title"><span>สินค้า / บริการ</span><button data-act="quoteAddItem">＋ เพิ่มรายการ</button></div>'+
+      '<div class="quote-item-list">'+Array.from({length:qCount}).map(function(_,i){var x=qItems[i]||{};return '<div class="quote-item-card"><div class="quote-item-top"><b>รายการ '+(i+1)+'</b>'+(i>0?'<button data-act="quoteRemoveItem" data-v="'+i+'">ลบ</button>':'')+'</div><input id="qdesc'+i+'" class="quote-desc" type="text" placeholder="รายละเอียดสินค้า / บริการ" value="'+esc(x.description||'')+'"><div class="quote-item-grid"><input id="qqty'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="จำนวน" value="'+esc(x.qty!==undefined?x.qty:(i===0?1:''))+'"><input id="qunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x.unit||'งาน')+'"><input id="qprice'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="ราคา/หน่วย" value="'+esc(x.unitPrice||'')+'"></div></div>';}).join('')+'</div></section>'+
+      '<section class="quote-editor-section quote-total-editor"><div class="field"><label for="qdiscount">ส่วนลดรวม (บาท)</label><input id="qdiscount" type="number" inputmode="decimal" min="0" step="any" value="'+esc(qDisc)+'" placeholder="0"></div>'+
+      '<div class="quote-form-total"><div><span>รวมเป็นเงิน</span><b id="qformSub">฿0</b></div><div><span>ส่วนลดรวม</span><b id="qformDisc">฿0</b></div><div><span>จำนวนเงินหลังหักส่วนลด</span><b id="qformAfter">฿0</b></div>'+(S.business&&S.business.vatRegistered?'<div><span>VAT 7%</span><b id="qformVat">฿0</b></div>':'')+'<div class="grand"><span>รวมทั้งสิ้น</span><b id="qformTotal">฿0</b></div></div></section>'+
+      '<section class="quote-editor-section"><div class="quote-section-title"><span>รายละเอียดเพิ่มเติม</span></div><textarea id="qnote" rows="3" placeholder="เงื่อนไขการชำระเงิน ระยะเวลาส่งมอบ หมายเหตุ">'+esc(q?q.note:'')+'</textarea>'+
+      '<label class="quote-esign"><span><b>ลายเซ็นอิเล็กทรอนิกส์และตรายาง</b><small>แสดงส่วนลงนามในเอกสาร</small></span><input id="qesign" type="checkbox"'+(qESign?' checked':'')+'><i></i></label>'+
+      '<div class="quote-attach"><span>ไฟล์แนบ</span>'+(q&&q.attachment?'<div class="quote-attach-preview"><img src="'+q.attachment+'" alt="ไฟล์แนบ"><button data-act="quoteRemoveAttach">ลบไฟล์แนบ</button></div>':'<label for="quoteAttach">📷 เพิ่มรูป / ไฟล์แนบ</label>')+'<input id="quoteAttach" type="file" accept="image/*" capture="environment"></div></section>'+
+      '<div class="quote-editor-save"><button class="btn pri" data-act="saveQuote" data-id="'+(q?q.id:'')+'">บันทึกใบเสนอราคา</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>'+
+    '</div>';
   }else if(sh.kind==='install'){
     b='<h3>ติดตั้งบน iPhone</h3><ol style="padding-left:22px;line-height:1.7;margin:10px 0">'+
       '<li>เปิดลิงก์แอพนี้ใน <b>Safari</b> (ไม่ใช่ในแอพ Claude)</li>'+
@@ -2336,7 +2358,7 @@ function render(){
   var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
   document.body.classList.toggle('wallpaper-on',wall);
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;
+  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);
 }
 
 /* ---------- เหตุการณ์ ---------- */
@@ -2469,7 +2491,10 @@ document.addEventListener('click',function(e){
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';persist();render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
-  else if(a==='newQuote'){U.appMenu=false;U.sheet={kind:'quote',id:null};render();}
+  else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
+  else if(a==='quoteAddItem'){U.quoteItemCount=Math.min(8,(U.quoteItemCount||1)+1);render();}
+  else if(a==='quoteRemoveItem'){U.quoteItemCount=Math.max(1,(U.quoteItemCount||1)-1);render();}
+  else if(a==='quoteRemoveAttach'){U.quoteAttachment='';if(U.sheet&&U.sheet.id){var qa=(S.quotes||[]).find(function(x){return x.id===U.sheet.id;});if(qa)qa.attachment='';}render();}
   else if(a==='newBill'){U.appMenu=false;U.sheet={kind:'bizdoc',docKind:'bill',id:null};render();}
   else if(a==='newReceipt'){U.appMenu=false;U.sheet={kind:'bizdoc',docKind:'receipt',id:null};render();}
   else if(a==='docView'){U.docKind=el.dataset.kind||'quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
@@ -2496,13 +2521,22 @@ document.addEventListener('click',function(e){
     persist();U.sheet=null;U.docKind=kind;U.docId=d.id;go('quoteprint');toast('บันทึก'+docTitle(kind)[0]+'แล้ว');
   }
   else if(a==='quoteView'){U.docKind='quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
-  else if(a==='editQuote'){var eq=(S.quotes||[]).find(function(x){return x.id===id;});if(eq&&eq.pid)U.docProjectPid=eq.pid;U.sheet={kind:'quote',id:id};render();}
+  else if(a==='editQuote'){var eq=(S.quotes||[]).find(function(x){return x.id===id;});if(eq&&eq.pid)U.docProjectPid=eq.pid;U.quoteItemCount=Math.max(1,docItems(eq||{}).length);U.quoteAttachment=eq&&eq.attachment||'';U.sheet={kind:'quote',id:id};render();}
   else if(a==='saveQuote'){
     var oldQ=id?(S.quotes||[]).find(function(x){return x.id===id;}):null,quotePid=(oldQ&&oldQ.pid)||U.docProjectPid||'',quoteProj=quotePid?proj(quotePid):null;
-    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:document.getElementById('qdate').value||today(),customer:document.getElementById('qcust').value.trim()||(quoteProj?quoteProj.client||'':''),project:document.getElementById('qproj').value.trim()||(quoteProj?quoteProj.name:''),pid:quotePid,description:document.getElementById('qdesc').value.trim(),qty:parseFloat(document.getElementById('qqty').value)||1,unit:document.getElementById('qunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('qprice').value)||0,note:document.getElementById('qnote').value.trim()};
+    var qiCount=Math.max(1,Math.min(8,U.quoteItemCount||1)),items=[];
+    for(var qi0=0;qi0<qiCount;qi0++){
+      var de=document.getElementById('qdesc'+qi0),qe=document.getElementById('qqty'+qi0),ue=document.getElementById('qunit'+qi0),pe=document.getElementById('qprice'+qi0);
+      if(!de)continue;var desc=de.value.trim(),qty=parseFloat(qe&&qe.value)||0,unit=(ue&&ue.value.trim())||'งาน',price=parseFloat(pe&&pe.value)||0;
+      if(desc)items.push({description:desc,qty:qty||1,unit:unit,unitPrice:price});
+    }
+    var creditDays=Math.max(0,parseInt(document.getElementById('qcredit').value||'0',10)||0),qDate=document.getElementById('qdate').value||today(),dueDate='';
+    if(creditDays){var qd0=new Date(qDate+'T00:00:00');qd0.setDate(qd0.getDate()+creditDays);dueDate=ymd(qd0);}
+    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:qDate,customer:document.getElementById('qcust').value.trim()||(quoteProj?quoteProj.client||'':''),project:document.getElementById('qproj').value.trim()||(quoteProj?quoteProj.name:''),pid:quotePid,items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('qdiscount').value)||0,creditDays:creditDays,dueDate:dueDate,eSign:!!document.getElementById('qesign').checked,attachment:(oldQ&&oldQ.attachment)||U.quoteAttachment||'',note:document.getElementById('qnote').value.trim()};
     if(!q.customer){toast('กรอกชื่อลูกค้าก่อน');return;}
-    if(!q.description){toast('กรอกรายละเอียดก่อน');return;}
-    var qi=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qi>-1)S.quotes[qi]=q;else S.quotes.push(q);
+    if(!items.length){toast('เพิ่มสินค้า/บริการอย่างน้อย 1 รายการ');return;}
+    var qix=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qix>-1)S.quotes[qix]=q;else S.quotes.push(q);
+    U.quoteAttachment='';U.quoteItemCount=1;
     persist();U.sheet=null;U.docKind='quote';U.docId=q.id;U.quoteId=q.id;go('quoteprint');toast('บันทึกใบเสนอราคาแล้ว');
   }
   else if(a==='role'){S.role=v;persist();U.view=v==='foreman'?'list':'home';render();}
@@ -2521,13 +2555,25 @@ document.addEventListener('click',function(e){
     else toast(done?'คัดลอกแล้ว':'แตะค้างที่ข้อความแล้วเลือกคัดลอก');
   }
 });
+function quoteFormCalc(){
+  if(!document.getElementById('qformTotal'))return;
+  var c=Math.max(1,Math.min(8,U.quoteItemCount||1)),sub=0;
+  for(var i=0;i<c;i++){var q=document.getElementById('qqty'+i),p=document.getElementById('qprice'+i);sub+=(parseFloat(q&&q.value)||0)*(parseFloat(p&&p.value)||0);}
+  var disc=Math.max(0,parseFloat((document.getElementById('qdiscount')||{}).value)||0),after=Math.max(0,sub-disc),vat=(S.business&&S.business.vatRegistered)?after*.07:0,total=after+vat;
+  var map={qformSub:sub,qformDisc:disc,qformAfter:after,qformVat:vat,qformTotal:total};Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=fmt(map[id],1);});
+}
 document.addEventListener('input',function(e){
+  if(/^q(qty|price)\d+$/.test(e.target.id)||e.target.id==='qdiscount'){quoteFormCalc();}
   if(e.target.id==='rsbox'){U.rsText=e.target.value;return;}
   var f=e.target.dataset&&e.target.dataset.f;if(!f||!U.draft)return;
   U.draft[f]=e.target.value;
   if(f==='amount'){var pv=document.getElementById('prev');if(pv)pv.innerHTML=prevText(U.draft);var af=document.getElementById('amtfmt');if(af){var av=parseFloat(U.draft.amount);af.textContent=av>0?fmt(av,1):'';}}
 });
-document.addEventListener('change',function(e){if(e.target&&e.target.id==='pdel'){var rd=document.getElementById('prd');if(rd)rd.value=addYearsIso(e.target.value,2);return;}if(e.target&&e.target.dataset&&e.target.dataset.f==='homePid'){U.homePid=e.target.value;try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}render();return;}
+document.addEventListener('change',function(e){
+  if(e.target&&e.target.id==='quoteAttach'&&e.target.files&&e.target.files[0]){
+    var qf=e.target.files[0],qr=new FileReader();qr.onload=function(){var qim=new Image();qim.onload=function(){var M=1200,k=Math.min(1,M/Math.max(qim.width,qim.height)),w=Math.round(qim.width*k),h=Math.round(qim.height*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(qim,0,0,w,h);U.quoteAttachment=c.toDataURL('image/jpeg',.72);render();};qim.src=qr.result;};qr.readAsDataURL(qf);return;
+  }
+  if(e.target&&e.target.id==='pdel'){var rd=document.getElementById('prd');if(rd)rd.value=addYearsIso(e.target.value,2);return;}if(e.target&&e.target.dataset&&e.target.dataset.f==='homePid'){U.homePid=e.target.value;try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}render();return;}
   var el=e.target,f=el.dataset&&el.dataset.f;
   if(f==='fpid'){U.filter.pid=el.value;render();return;}
   if(f==='fcat'){U.filter.cat=el.value;U.filter.sub='';render();return;}
