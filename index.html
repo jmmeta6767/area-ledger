@@ -1341,6 +1341,19 @@ body.wallpaper-on .mgroup{
  .rd-corner{border-left-width:24mm;border-top-width:24mm}
  .rd-top{gap:16mm}.rd-sign{margin-top:38mm}
 }
+
+/* QUOTATION PRINT/PDF V2 — sample-inspired A4 layout */
+.quote-editor-meta{grid-template-columns:1.35fr 1fr .7fr .9fr}
+.quote-item-grid{grid-template-columns:.62fr .65fr 1fr .9fr}
+.doc-output-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rd-table th:nth-child(1){width:4%}.rd-table th:nth-child(2){width:43%}.rd-table th:nth-child(3){width:8%}.rd-table th:nth-child(4){width:7%}.rd-table th:nth-child(5){width:13%}.rd-table th:nth-child(6){width:11%}.rd-table th:nth-child(7){width:14%}
+.rd-paper.pdf-export{width:210mm!important;max-width:210mm!important;min-height:297mm!important;margin:0!important;padding:12mm 13mm!important;box-shadow:none!important;border:0!important;overflow:visible!important;background:#fff!important}
+.rd-paper.pdf-export .no-print{display:none!important}
+@media(max-width:430px){
+  .quote-editor-meta{grid-template-columns:1fr 1fr}.quote-editor-meta .field:first-child{grid-column:1/-1}
+  .quote-item-grid{grid-template-columns:1fr 1fr}.quote-item-grid input:nth-child(3),.quote-item-grid input:nth-child(4){grid-column:auto}
+  .doc-output-actions{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -2130,10 +2143,15 @@ function nextDocNo(kind){
   var pre=kind==='bill'?'BL':kind==='receipt'?'RC':'QT',y=today().slice(0,4),m=today().slice(5,7);
   return pre+'-'+y+m+'-'+String(S.docSeq[kind]).padStart(4,'0');
 }
-function docItems(q){return Array.isArray(q.items)&&q.items.length?q.items:[{description:q.description||'',qty:+q.qty||1,unit:q.unit||'งาน',unitPrice:+q.unitPrice||0}];}
+function docItems(q){
+  var rows=Array.isArray(q.items)&&q.items.length?q.items:[{description:q.description||'',qty:+q.qty||1,unit:q.unit||'งาน',unitPrice:+q.unitPrice||0,discount:0}];
+  return rows.map(function(x){return {description:x.description||'',qty:+x.qty||0,unit:x.unit||'งาน',unitPrice:+x.unitPrice||0,discount:Math.max(0,+x.discount||0)};});
+}
 function docCalc(q){
-  var sub=docItems(q).reduce(function(a,x){return a+(+x.qty||0)*(+x.unitPrice||0);},0),disc=Math.max(0,+q.discount||0),after=Math.max(0,sub-disc),b=S.business||{},vat=b.vatRegistered?after*.07:0,wht=Math.max(0,+q.whtRate||0)?after*(+q.whtRate/100):0;
-  return {sub:sub,discount:disc,after:after,vat:vat,wht:wht,total:after+vat-wht};
+  var rows=docItems(q),sub=0,lineDiscount=0;
+  rows.forEach(function(x){var gross=(+x.qty||0)*(+x.unitPrice||0),d=Math.min(gross,Math.max(0,+x.discount||0));sub+=gross;lineDiscount+=d;});
+  var globalDiscount=Math.max(0,+q.discount||0),discount=Math.min(sub,lineDiscount+globalDiscount),after=Math.max(0,sub-discount),b=S.business||{},vat=b.vatRegistered?after*.07:0,wht=Math.max(0,+q.whtRate||0)?after*(+q.whtRate/100):0;
+  return {sub:sub,lineDiscount:lineDiscount,globalDiscount:globalDiscount,discount:discount,after:after,vat:vat,wht:wht,total:after+vat-wht};
 }
 function thaiIntText(n){
   n=Math.floor(Math.abs(Number(n)||0));if(n===0)return 'ศูนย์';
@@ -2214,10 +2232,10 @@ function vBusinessDoc(){
   return '<div class="quote-paper rd-paper">'+
    '<div class="rd-corner"></div>'+
    '<div class="rd-top"><div class="rd-company"><img src="area-logo-header.jpg" alt="AREA"><b>'+esc(b.legalName||S.brand||'AREA MAIBAB')+'</b><span>'+esc(branch)+'</span><p>'+esc(b.address||'')+'</p><p>เลขประจำตัวผู้เสียภาษี '+esc(b.taxId||'-')+'</p><p>'+(b.phone?'โทร. '+esc(b.phone):'')+(b.email?' · '+esc(b.email):'')+'</p></div>'+
-   '<div class="rd-dochead"><h1>'+tt[0]+'</h1><small>'+tt[1]+'</small><div class="rd-docmeta"><span>เลขที่</span><b>'+esc(q.no||'-')+'</b><span>วันที่</span><b>'+dstr(q.date)+'</b>'+(q.seller?'<span>ผู้ขาย</span><b>'+esc(q.seller)+'</b>':'')+'</div></div></div>'+
+   '<div class="rd-dochead"><h1>'+tt[0]+'</h1><small>'+tt[1]+'</small><div class="rd-docmeta"><span>เลขที่</span><b>'+esc(q.no||'-')+'</b><span>วันที่</span><b>'+dstr(q.date)+'</b>'+(q.creditDays?'<span>เครดิต</span><b>'+esc(q.creditDays)+' วัน</b>':'')+(q.seller?'<span>ผู้ขาย</span><b>'+esc(q.seller)+'</b>':'')+'</div></div></div>'+
    (isTax?'<div class="rd-tax-flag">ใบกำกับภาษีแบบเต็มรูป</div>':'')+
-   '<div class="rd-customer"><b>ลูกค้า</b><h2>'+esc(q.customer||'-')+'</h2>'+(q.customerAddress?'<p>'+esc(q.customerAddress)+'</p>':'')+'<div class="rd-customer-tax">'+customerTax+'</div>'+(q.project?'<p><strong>โครงการ:</strong> '+esc(q.project)+'</p>':'')+'</div>'+
-   '<table class="quote-table rd-table"><thead><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคาต่อหน่วย</th><th>มูลค่า</th></tr></thead><tbody>'+items.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td class="rd-desc">'+esc(x.description).replace(/\n/g,'<br>')+'</td><td class="num">'+(+x.qty||0)+'</td><td>'+esc(x.unit||'')+'</td><td class="num">'+fmt(+x.unitPrice||0)+'</td><td class="num">'+fmt((+x.qty||0)*(+x.unitPrice||0))+'</td></tr>';}).join('')+'</tbody></table>'+
+   '<div class="rd-customer"><b>ลูกค้า</b><h2>'+esc(q.customer||'-')+'</h2>'+(q.customerAddress?'<p>'+esc(q.customerAddress)+'</p>':'')+'<div class="rd-customer-tax">'+customerTax+'</div>'+(q.project?'<p><strong>โครงการ:</strong> '+esc(q.project)+'</p>':'')+(q.warehouse?'<p><strong>สถานที่ส่งมอบ:</strong> '+esc(q.warehouse)+'</p>':'')+'</div>'+
+   '<table class="quote-table rd-table"><thead><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคาต่อหน่วย</th><th>ส่วนลด</th><th>มูลค่า</th></tr></thead><tbody>'+items.map(function(x,i){var gross=(+x.qty||0)*(+x.unitPrice||0),ld=Math.min(gross,Math.max(0,+x.discount||0));return '<tr><td>'+(i+1)+'</td><td class="rd-desc">'+esc(x.description).replace(/\n/g,'<br>')+'</td><td class="num">'+(+x.qty||0)+'</td><td>'+esc(x.unit||'')+'</td><td class="num">'+fmt(+x.unitPrice||0)+'</td><td class="num">'+(ld?fmt(ld):'-')+'</td><td class="num">'+fmt(gross-ld)+'</td></tr>';}).join('')+'</tbody></table>'+
    '<div class="rd-summary"><div class="rd-words">('+bahtText(calc.total)+')</div><div class="quote-total"><div><span>รวมเป็นเงิน</span><b class="num">'+fmt(calc.sub)+'</b></div>'+(calc.discount?'<div><span>ส่วนลดรวม</span><b class="num">−'+fmt(calc.discount)+'</b></div>':'')+'<div><span>จำนวนเงินหลังหักส่วนลด</span><b class="num">'+fmt(calc.after)+'</b></div>'+(b.vatRegistered?'<div><span>ภาษีมูลค่าเพิ่ม 7%</span><b class="num">'+fmt(calc.vat)+'</b></div>':'')+(calc.wht?'<div><span>หัก ณ ที่จ่าย '+(+q.whtRate||0)+'%</span><b class="num">−'+fmt(calc.wht)+'</b></div>':'')+'<div class="grand"><span>รวมทั้งสิ้น</span><b class="num">'+fmt(calc.total)+'</b></div>'+(q.dueDate?'<small>ครบกำหนดชำระ '+dstr(q.dueDate)+'</small>':'')+'</div></div>'+
    (legalNote?'<div class="rd-legal-note">'+legalNote+'</div>':'')+
    (q.note?'<div class="quote-note rd-note"><b>หมายเหตุ / เงื่อนไข</b><p>'+esc(q.note)+'</p></div>':'')+
@@ -2226,7 +2244,7 @@ function vBusinessDoc(){
    '<div class="stack no-print">'+
    (kind==='quote'?'<button class="btn pri" data-act="convertDoc" data-kind="bill" data-id="'+q.id+'">สร้างใบวางบิลจากใบนี้</button>':'')+
    (kind==='bill'?'<button class="btn pri" data-act="convertDoc" data-kind="receipt" data-id="'+q.id+'">รับเงินและออกใบเสร็จ</button>':'')+
-   '<button class="btn pri" data-act="doPrint">พิมพ์ / บันทึกเป็น PDF</button><button class="btn" data-act="editDoc" data-kind="'+kind+'" data-id="'+q.id+'">แก้ไขเอกสาร</button></div></div>';
+   '<div class="doc-output-actions"><button class="btn pri" data-act="doPrint">สั่งพิมพ์</button><button class="btn" data-act="downloadDocPdf" data-kind="'+kind+'" data-id="'+q.id+'">ดาวน์โหลด PDF</button></div><button class="btn" data-act="editDoc" data-kind="'+kind+'" data-id="'+q.id+'">แก้ไขเอกสาร</button></div></div>';
 }
 function vQuotePrint(){
   var q=(S.quotes||[]).find(function(x){return x.id===U.quoteId;});if(!q)return '<div class="empty">ไม่พบใบเสนอราคา</div>';
@@ -2339,17 +2357,18 @@ function sheetHtml(){
       '<div class="quote-editor-head"><div><small>เอกสารขาย</small><h3>'+(q?'แก้ไขใบเสนอราคา':'สร้างใบเสนอราคา')+'</h3></div><span class="doc-status pend">'+(q?'แก้ไขเอกสาร':'ร่างใหม่')+'</span></div>'+
       '<div class="quote-editor-meta"><div class="field"><label for="qno">เลขที่ใบเสนอราคา</label><input id="qno" type="text" value="'+esc(q?q.no:'QT-'+today().replace(/-/g,''))+'"></div>'+
       '<div class="field"><label for="qdate">วันที่เอกสาร</label><input id="qdate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
-      '<div class="field"><label for="qcredit">เครดิต (วัน)</label><input id="qcredit" type="number" min="0" inputmode="numeric" value="'+esc(qCredit)+'"></div></div>'+
+      '<div class="field"><label for="qcredit">เครดิต (วัน)</label><input id="qcredit" type="number" min="0" inputmode="numeric" value="'+esc(qCredit)+'"></div>'+
+      '<div class="field"><label for="qstatus">สถานะ</label><select id="qstatus"><option value="pending"'+(!q||!q.status||q.status==='pending'?' selected':'')+'>รออนุมัติ</option><option value="draft"'+(q&&q.status==='draft'?' selected':'')+'>ฉบับร่าง</option><option value="approved"'+(q&&q.status==='approved'?' selected':'')+'>อนุมัติแล้ว</option><option value="rejected"'+(q&&q.status==='rejected'?' selected':'')+'>ไม่อนุมัติ</option></select></div></div>'+
       '<section class="quote-editor-section"><div class="quote-section-title"><span>ลูกค้า / โครงการ</span></div>'+
       '<div class="field"><label for="qcust">ชื่อลูกค้า / หน่วยงาน</label><input id="qcust" type="text" value="'+esc(q?q.customer:(qProj?qProj.client||'':''))+'" placeholder="กรอกชื่อลูกค้า"></div>'+
       '<div class="field"><label for="qaddr">ที่อยู่ลูกค้า</label><textarea id="qaddr" rows="2" placeholder="ที่อยู่สำหรับเอกสาร">'+esc(q?q.customerAddress||'':'')+'</textarea></div>'+
       '<div class="quote-customer-grid"><div class="field"><label for="qtax">เลขประจำตัวผู้เสียภาษีลูกค้า</label><input id="qtax" inputmode="numeric" maxlength="13" value="'+esc(q?q.customerTaxId||'':'')+'" placeholder="13 หลัก (ถ้ามี)"></div><div class="field"><label for="qbranch">สาขา</label><input id="qbranch" value="'+esc(q?q.customerBranch||'':'')+'" placeholder="สำนักงานใหญ่ / สาขา..."></div></div>'+
       '<label class="quote-check"><input id="qcustvat" type="checkbox"'+(q&&q.customerVatRegistered?' checked':'')+'><span>ลูกค้าจดทะเบียน VAT</span></label>'+
-      '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:(qProj?qProj.name:''))+'"'+(qProj?' readonly':'')+' placeholder="ระบุโครงการ"></div>'+
+      '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:(qProj?qProj.name:''))+'"'+(qProj?' readonly':'')+' placeholder="ระบุโครงการ"></div>'+'<div class="field"><label for="qwarehouse">คลังสินค้า / สถานที่ส่งมอบ</label><input id="qwarehouse" type="text" value="'+esc(q?q.warehouse||'':'')+'" placeholder="ไม่บังคับ"></div>'+
       '<div class="field"><label for="qseller">ผู้ขาย / ผู้เสนอราคา</label><input id="qseller" type="text" value="'+esc(q?q.seller||'':'')+'" placeholder="ชื่อผู้จัดทำ/ผู้ขาย"></div>'+
       '<div class="doc-law-note">ใบเสนอราคาเป็นเอกสารเสนอราคา ไม่ใช่ใบกำกับภาษี เมื่อออกใบเสร็จ/ใบกำกับภาษี ระบบจะตรวจข้อมูลที่จำเป็นตามสถานะ VAT ของกิจการ</div></section>'+
       '<section class="quote-editor-section"><div class="quote-section-title"><span>สินค้า / บริการ</span><button data-act="quoteAddItem">＋ เพิ่มรายการ</button></div>'+
-      '<div class="quote-item-list">'+Array.from({length:qCount}).map(function(_,i){var x=qItems[i]||{};return '<div class="quote-item-card"><div class="quote-item-top"><b>รายการ '+(i+1)+'</b>'+(i>0?'<button data-act="quoteRemoveItem" data-v="'+i+'">ลบ</button>':'')+'</div><textarea id="qdesc'+i+'" class="quote-desc" rows="3" placeholder="รายละเอียดสินค้า / บริการ">'+esc(x.description||'')+'</textarea><div class="quote-item-grid"><input id="qqty'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="จำนวน" value="'+esc(x.qty!==undefined?x.qty:(i===0?1:''))+'"><input id="qunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x.unit||'งาน')+'"><input id="qprice'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="ราคา/หน่วย" value="'+esc(x.unitPrice||'')+'"></div></div>';}).join('')+'</div></section>'+
+      '<div class="quote-item-list">'+Array.from({length:qCount}).map(function(_,i){var x=qItems[i]||{};return '<div class="quote-item-card"><div class="quote-item-top"><b>รายการ '+(i+1)+'</b>'+(i>0?'<button data-act="quoteRemoveItem" data-v="'+i+'">ลบ</button>':'')+'</div><textarea id="qdesc'+i+'" class="quote-desc" rows="3" placeholder="รายละเอียดสินค้า / บริการ">'+esc(x.description||'')+'</textarea><div class="quote-item-grid"><input id="qqty'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="จำนวน" value="'+esc(x.qty!==undefined?x.qty:(i===0?1:''))+'"><input id="qunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x.unit||'งาน')+'"><input id="qprice'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="ราคา/หน่วย" value="'+esc(x.unitPrice||'')+'"><input id="qlineDisc'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="ส่วนลด" value="'+esc(x.discount||'')+'"></div></div>';}).join('')+'</div></section>'+
       '<section class="quote-editor-section quote-total-editor"><div class="field"><label for="qdiscount">ส่วนลดรวม (บาท)</label><input id="qdiscount" type="number" inputmode="decimal" min="0" step="any" value="'+esc(qDisc)+'" placeholder="0"></div>'+
       '<div class="quote-form-total"><div><span>รวมเป็นเงิน</span><b id="qformSub">฿0</b></div><div><span>ส่วนลดรวม</span><b id="qformDisc">฿0</b></div><div><span>จำนวนเงินหลังหักส่วนลด</span><b id="qformAfter">฿0</b></div>'+(S.business&&S.business.vatRegistered?'<div><span>VAT 7%</span><b id="qformVat">฿0</b></div>':'')+'<div class="grand"><span>รวมทั้งสิ้น</span><b id="qformTotal">฿0</b></div></div></section>'+
       '<section class="quote-editor-section"><div class="quote-section-title"><span>รายละเอียดเพิ่มเติม</span></div><textarea id="qnote" rows="3" placeholder="เงื่อนไขการชำระเงิน ระยะเวลาส่งมอบ หมายเหตุ">'+esc(q?q.note:'')+'</textarea>'+
@@ -2382,6 +2401,30 @@ function csvText(){
     rows.push([t.date,t.type==='in'?'รายรับ':'รายจ่าย',t.cat,t.sub||'',pname(t.pid),t.partner,t.amount,base(t).toFixed(2),vatOf(t).toFixed(2),whtOf(t).toFixed(2),net(t).toFixed(2),t.paid?'ชำระแล้ว':'ค้าง',t.paid?(t.pay==='cash'?'เงินสด':'โอน'):'',t.due,t.note]);
   });
   return rows.map(function(r){return r.map(function(c){var s=String(c==null?'':c);return /[",\n\t]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}).join('\n');
+}
+
+
+function safeDocFileName(s){return String(s||'AREA-document').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim().slice(0,90);}
+function loadHtml2Pdf(done){
+  if(window.html2pdf){done(true);return;}
+  if(window._html2pdfLoading){window._html2pdfQueue=window._html2pdfQueue||[];window._html2pdfQueue.push(done);return;}
+  window._html2pdfLoading=true;window._html2pdfQueue=[done];
+  var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';sc.async=true;
+  sc.onload=function(){window._html2pdfLoading=false;(window._html2pdfQueue||[]).splice(0).forEach(function(fn){fn(!!window.html2pdf);});};
+  sc.onerror=function(){window._html2pdfLoading=false;(window._html2pdfQueue||[]).splice(0).forEach(function(fn){fn(false);});};
+  document.head.appendChild(sc);
+}
+function downloadBusinessDocPdf(kind,id){
+  var q=(docCollection(kind)||[]).find(function(x){return x.id===id;})||(docCollection(U.docKind||'quote')||[]).find(function(x){return x.id===U.docId;});
+  var el=document.querySelector('.rd-paper');if(!q||!el){toast('ไม่พบเอกสารสำหรับสร้าง PDF');return;}
+  toast('กำลังสร้าง PDF…');
+  loadHtml2Pdf(function(ok){
+    if(!ok){toast('โหลดตัวสร้าง PDF ไม่สำเร็จ เปิดหน้าพิมพ์แทน');try{window.print();}catch(e){}return;}
+    var tt=docTitle(kind)[0],name=safeDocFileName(tt+'-'+(q.no||today())+'.pdf');
+    el.classList.add('pdf-export');
+    var opt={margin:0,filename:name,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}};
+    window.html2pdf().set(opt).from(el).save().then(function(){el.classList.remove('pdf-export');toast('ดาวน์โหลด PDF แล้ว');}).catch(function(){el.classList.remove('pdf-export');toast('สร้าง PDF ไม่สำเร็จ ลองสั่งพิมพ์แทน');});
+  });
 }
 
 /* ---------- วาดหน้า ---------- */
@@ -2501,6 +2544,7 @@ document.addEventListener('click',function(e){
   else if(a==='exportProjectPdf'){U.exportPid=id;U.printFrom=U.view;go('print');}
   else if(a==='pdfView'){U.printFrom=U.view;go('print');}
   else if(a==='doPrint'){try{window.print();}catch(x){toast('เครื่องนี้สั่งพิมพ์ไม่ได้');}}
+  else if(a==='downloadDocPdf'){downloadBusinessDocPdf(el.dataset.kind||U.docKind||'quote',id||U.docId);}
   else if(a==='openTx'){U.sheet={kind:'tx',id:id};U.confirm=null;render();}
   else if(a==='editDueTx'){U.sheet={kind:'dueEdit',id:id};U.confirm=null;render();}
   else if(a==='saveDueTx'){
@@ -2605,13 +2649,13 @@ document.addEventListener('click',function(e){
     var oldQ=id?(S.quotes||[]).find(function(x){return x.id===id;}):null,quotePid=(oldQ&&oldQ.pid)||U.docProjectPid||'',quoteProj=quotePid?proj(quotePid):null;
     var qiCount=Math.max(1,Math.min(8,U.quoteItemCount||1)),items=[];
     for(var qi0=0;qi0<qiCount;qi0++){
-      var de=document.getElementById('qdesc'+qi0),qe=document.getElementById('qqty'+qi0),ue=document.getElementById('qunit'+qi0),pe=document.getElementById('qprice'+qi0);
-      if(!de)continue;var desc=de.value.trim(),qty=parseFloat(qe&&qe.value)||0,unit=(ue&&ue.value.trim())||'งาน',price=parseFloat(pe&&pe.value)||0;
-      if(desc)items.push({description:desc,qty:qty||1,unit:unit,unitPrice:price});
+      var de=document.getElementById('qdesc'+qi0),qe=document.getElementById('qqty'+qi0),ue=document.getElementById('qunit'+qi0),pe=document.getElementById('qprice'+qi0),lde=document.getElementById('qlineDisc'+qi0);
+      if(!de)continue;var desc=de.value.trim(),qty=parseFloat(qe&&qe.value)||0,unit=(ue&&ue.value.trim())||'งาน',price=parseFloat(pe&&pe.value)||0,lineDiscount=Math.max(0,parseFloat(lde&&lde.value)||0);
+      if(desc)items.push({description:desc,qty:qty||1,unit:unit,unitPrice:price,discount:lineDiscount});
     }
     var creditDays=Math.max(0,parseInt(document.getElementById('qcredit').value||'0',10)||0),qDate=document.getElementById('qdate').value||today(),dueDate='';
     if(creditDays){var qd0=new Date(qDate+'T00:00:00');qd0.setDate(qd0.getDate()+creditDays);dueDate=ymd(qd0);}
-    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:qDate,customer:document.getElementById('qcust').value.trim()||(quoteProj?quoteProj.client||'':''),customerAddress:document.getElementById('qaddr').value.trim(),customerTaxId:document.getElementById('qtax').value.trim(),customerBranch:document.getElementById('qbranch').value.trim(),customerVatRegistered:!!document.getElementById('qcustvat').checked,seller:document.getElementById('qseller').value.trim(),project:document.getElementById('qproj').value.trim()||(quoteProj?quoteProj.name:''),pid:quotePid,items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('qdiscount').value)||0,creditDays:creditDays,dueDate:dueDate,eSign:!!document.getElementById('qesign').checked,attachment:(oldQ&&oldQ.attachment)||U.quoteAttachment||'',note:document.getElementById('qnote').value.trim()};
+    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:qDate,customer:document.getElementById('qcust').value.trim()||(quoteProj?quoteProj.client||'':''),customerAddress:document.getElementById('qaddr').value.trim(),customerTaxId:document.getElementById('qtax').value.trim(),customerBranch:document.getElementById('qbranch').value.trim(),customerVatRegistered:!!document.getElementById('qcustvat').checked,seller:document.getElementById('qseller').value.trim(),project:document.getElementById('qproj').value.trim()||(quoteProj?quoteProj.name:''),warehouse:document.getElementById('qwarehouse').value.trim(),status:document.getElementById('qstatus').value||'pending',pid:quotePid,items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('qdiscount').value)||0,creditDays:creditDays,dueDate:dueDate,eSign:!!document.getElementById('qesign').checked,attachment:(oldQ&&oldQ.attachment)||U.quoteAttachment||'',note:document.getElementById('qnote').value.trim()};
     if(!q.customer){toast('กรอกชื่อลูกค้าก่อน');return;}
     if(!items.length){toast('เพิ่มสินค้า/บริการอย่างน้อย 1 รายการ');return;}
     var qix=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qix>-1)S.quotes[qix]=q;else S.quotes.push(q);
@@ -2637,12 +2681,13 @@ document.addEventListener('click',function(e){
 function quoteFormCalc(){
   if(!document.getElementById('qformTotal'))return;
   var c=Math.max(1,Math.min(8,U.quoteItemCount||1)),sub=0;
-  for(var i=0;i<c;i++){var q=document.getElementById('qqty'+i),p=document.getElementById('qprice'+i);sub+=(parseFloat(q&&q.value)||0)*(parseFloat(p&&p.value)||0);}
-  var disc=Math.max(0,parseFloat((document.getElementById('qdiscount')||{}).value)||0),after=Math.max(0,sub-disc),vat=(S.business&&S.business.vatRegistered)?after*.07:0,total=after+vat;
+  var lineDisc=0;
+  for(var i=0;i<c;i++){var q=document.getElementById('qqty'+i),p=document.getElementById('qprice'+i),ld=document.getElementById('qlineDisc'+i),gross=(parseFloat(q&&q.value)||0)*(parseFloat(p&&p.value)||0);sub+=gross;lineDisc+=Math.min(gross,Math.max(0,parseFloat(ld&&ld.value)||0));}
+  var disc=Math.min(sub,lineDisc+Math.max(0,parseFloat((document.getElementById('qdiscount')||{}).value)||0)),after=Math.max(0,sub-disc),vat=(S.business&&S.business.vatRegistered)?after*.07:0,total=after+vat;
   var map={qformSub:sub,qformDisc:disc,qformAfter:after,qformVat:vat,qformTotal:total};Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=fmt(map[id],1);});
 }
 document.addEventListener('input',function(e){
-  if(/^q(qty|price)\d+$/.test(e.target.id)||e.target.id==='qdiscount'){quoteFormCalc();}
+  if(/^q(qty|price|lineDisc)\d+$/.test(e.target.id)||e.target.id==='qdiscount'){quoteFormCalc();}
   if(e.target.id==='rsbox'){U.rsText=e.target.value;return;}
   var f=e.target.dataset&&e.target.dataset.f;if(!f||!U.draft)return;
   U.draft[f]=e.target.value;
