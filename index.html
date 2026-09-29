@@ -1410,6 +1410,39 @@ body.wallpaper-on .mgroup{
  .expense-donut-legend b{font-size:8.5px}
 }
 @media(prefers-color-scheme:dark){.expense-donut:after{background:#1a232d}}
+
+/* MOBILE READABILITY QA 2026-09-30 — balanced dashboard typography */
+@media(max-width:430px){
+  .mdash-period{font-size:14px!important;line-height:1.3}
+  .mdash-stats{gap:10px!important}
+  .mdash-stats>button{min-height:132px!important;padding:14px 12px!important;border-radius:16px!important}
+  .mdash-stats>button>span:not(.mdash-stat-icon){font-size:13px!important;line-height:1.35!important}
+  .mdash-stats>button>b{font-size:20px!important;line-height:1.15!important;margin-top:8px!important}
+  .mdash-stats>button>small{font-size:10px!important;line-height:1.35!important;margin-top:7px!important}
+  .mdash-stat-icon{width:42px!important;height:42px!important}
+  .dash-charts.donut-only{margin-top:18px!important}
+  .dash-chart-head{align-items:end!important;margin-bottom:9px!important}
+  .dash-chart-head b{font-size:17px!important;line-height:1.25!important}
+  .dash-chart-head small{font-size:11px!important;line-height:1.3!important;margin-top:2px!important}
+  .dash-chart-head button{font-size:11px!important;white-space:nowrap!important}
+  .dash-chart-card{padding:14px 12px 16px!important;border-radius:18px!important}
+  .dash-chart-card h3{font-size:14px!important;line-height:1.35!important;margin:0 0 10px!important}
+  .expense-donut-wrap{grid-template-columns:170px minmax(0,1fr)!important;gap:14px!important;padding:4px 2px 6px!important;align-items:center!important}
+  .expense-donut{width:170px!important}
+  .expense-donut span{font-size:11px!important;line-height:1.25!important}
+  .expense-donut b{font-size:17px!important;line-height:1.15!important;margin-top:4px!important;white-space:nowrap!important}
+  .expense-donut-legend{grid-template-columns:1fr!important;gap:10px!important;min-width:0!important}
+  .expense-donut-legend>span{grid-template-columns:9px minmax(0,1fr) auto!important;gap:7px!important;font-size:10.5px!important;line-height:1.25!important;min-width:0!important}
+  .expense-donut-legend>span>span{font-size:10.5px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+  .expense-donut-legend b{font-size:10.5px!important;white-space:nowrap!important}
+  .expense-donut-legend i{width:9px!important;height:9px!important}
+}
+@media(max-width:375px){
+  .expense-donut-wrap{grid-template-columns:150px minmax(0,1fr)!important;gap:10px!important}
+  .expense-donut{width:150px!important}
+  .expense-donut b{font-size:15px!important}
+  .expense-donut-legend>span,.expense-donut-legend>span>span,.expense-donut-legend b{font-size:9.5px!important}
+}
 </style>
 </head>
 <body>
