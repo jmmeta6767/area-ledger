@@ -400,6 +400,8 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .control-title{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.control-title h2{margin:0}.control-title small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}.control-risk{padding:4px 8px;border-radius:999px;font-size:.72rem;font-weight:800;white-space:nowrap}.control-risk.ok{background:#e7f5ed;color:#1c7448}.control-risk.warn{background:#fff3d8;color:#a66a00}.control-risk.bad{background:#ffe9e5;color:#a23f32}.control-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.control-grid>div{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}.control-grid span,.control-grid small,.control-grid b{display:block}.control-grid span{font-size:.75rem;color:var(--muted)}.control-grid b{font-size:1rem;margin:3px 0}.control-grid small{font-size:.68rem;color:var(--muted)}.control-reason{margin:10px 0 0;font-size:.78rem;color:var(--muted)}
 /* V2.5 BOQ ↔ Actual */
 .boq-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.boq-head h2{margin:0}.boq-head small{display:block;color:var(--muted);font-size:.75rem;margin-top:2px}.btn.mini{width:auto;min-height:32px;padding:6px 10px;font-size:.78rem}.boq-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:10px 0}.boq-summary span{padding:7px 8px;border-radius:8px;background:var(--card);border:1px solid var(--line);font-size:.72rem;color:var(--muted)}.boq-summary b{display:block;color:var(--ink);font-size:.86rem;margin-top:2px}.boq-row{width:100%;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 0;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink)}.boq-row>div:last-child{text-align:right}.boq-row b,.boq-row small{display:block}.boq-row b{font-size:.82rem}.boq-row small{font-size:.68rem;color:var(--muted);margin-top:2px}
+/* V2.6 Contract revenue installments */
+.revenue-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:10px 0}.revenue-grid>div{padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--card)}.revenue-grid span,.revenue-grid b{display:block}.revenue-grid span{font-size:.7rem;color:var(--muted)}.revenue-grid b{font-size:.9rem;margin-top:3px}.revenue-row{width:100%;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 0;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink)}.revenue-row>div:last-child{text-align:right}.revenue-row b,.revenue-row small{display:block}.revenue-row b{font-size:.82rem}.revenue-row small{font-size:.68rem;color:var(--muted);margin-top:2px}
 </style>
 </head>
 <body>
@@ -656,6 +658,12 @@ function boqActual(item){
   rows.forEach(function(t){if(t.paid)actual+=base(t);else committed+=base(t);});
   return {actual:actual,committed:committed,total:actual+committed,rows:rows.length};
 }
+function projectRevenueControl(p){
+  var rows=S.tx.filter(function(t){return t.pid===p.id&&t.type==='in'&&(t.cat==='งวดงาน'||t.cat==='มัดจำ');}),received=0,pending=0;
+  rows.forEach(function(t){if(t.paid)received+=net(t);else pending+=net(t);});
+  var billed=received+pending,contract=+p.contract||0,unbilled=contract-billed;
+  return {rows:rows,received:received,pending:pending,billed:billed,unbilled:unbilled,progress:contract?billed/contract:0};
+}
 function projectBoq(pid){return (S.boq||[]).filter(function(x){return x.pid===pid;});}
 function boqSummary(pid){
   var b=0,a=0,c=0;
@@ -895,6 +903,10 @@ function vProject(){
     h+='<div class="boq-summary"><span>งบ <b>'+fmt(bqs.budget)+'</b></span><span>Actual <b>'+fmt(bqs.actual)+'</b></span><span>Commit <b>'+fmt(bqs.committed)+'</b></span><span>คงเหลือ <b class="'+(bqs.remaining<0?'out':'in')+'">'+fmt(bqs.remaining)+'</b></span></div>';
     bq.forEach(function(x){var m=boqActual(x),budget=+x.budget||0,rem=budget-m.total,pc=budget?m.total/budget:0;h+='<button class="boq-row" data-act="editBoq" data-id="'+x.id+'"><div><b>'+esc(x.description)+'</b><small>'+esc(x.cat||'ทุกหมวด')+(x.sub?' · '+esc(x.sub):'')+' · '+m.rows+' รายการบัญชี</small></div><div><b class="'+(rem<0?'out':'')+'">'+fmt(m.total)+' / '+fmt(budget)+'</b><small>'+(budget?Math.round(pc*100)+'% ใช้งบ':'ยังไม่ตั้งงบ')+'</small></div></button>';});
   }
+  h+='</div>';
+  var rc=projectRevenueControl(p);
+  h+='<div class="sec master-detail-card revenue-panel"><div class="boq-head"><div><h2>งวดงาน / รายรับตามสัญญา</h2><small>มูลค่าสัญญา → วางงวด → ค้างรับ → รับเงินจริง</small></div><button class="btn mini pri" data-act="newInstallment" data-id="'+p.id+'">+ งวดงาน</button></div><div class="revenue-grid"><div><span>มูลค่าสัญญา</span><b>'+fmt(p.contract)+'</b></div><div><span>วางงวดแล้ว</span><b>'+fmt(rc.billed)+'</b></div><div><span>รับเงินจริง</span><b class="in">'+fmt(rc.received)+'</b></div><div><span>ค้างรับ</span><b>'+fmt(rc.pending)+'</b></div><div><span>ยังไม่วางงวด</span><b class="'+(rc.unbilled<0?'out':'')+'">'+fmt(rc.unbilled)+'</b></div><div><span>Financial progress</span><b>'+Math.round(rc.progress*100)+'%</b></div></div>';
+  if(!rc.rows.length)h+='<div class="empty compact">ยังไม่มีงวดงาน</div>';else rc.rows.slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}).forEach(function(t){var di=dueInfo(t);h+='<button class="revenue-row" data-act="openTx" data-id="'+t.id+'"><div><b>'+esc(t.sub||t.note||'งวดงาน')+'</b><small>'+dstr(t.date)+(t.due?' · ครบกำหนด '+dstr(t.due):'')+'</small></div><div><b class="'+(t.paid?'in':'')+'">'+fmt(net(t))+'</b><small>'+(t.paid?'รับแล้ว':(di&&di.late?'เลยกำหนด '+(-di.days)+' วัน':'ค้างรับ'))+'</small></div></button>';});
   h+='</div>';
   h+='<div class="sec master-detail-card"><h2>เงินประกันสัญญา / เงินประกันผลงาน</h2>'+(p.retAmt?'<div class="ret-flow"><div class="done"><i>1</i><span>จ่ายเงินประกัน<small>'+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</small></span></div><div class="'+(p.deliveryDate?'done':'')+'"><i>2</i><span>ส่งมอบงาน<small>'+(p.deliveryDate?dstr(p.deliveryDate):'รอดำเนินการ')+'</small></span></div><div class="'+(p.retRecv?'done':(p.retDue&&retDays(p)<=0?'ready':''))+'"><i>3</i><span>รับเงินคืน<small>'+(p.retRecv?(p.retRecvDate?dstr(p.retRecvDate):'ได้รับคืนแล้ว'):(p.retDue?'ครบกำหนด '+dstr(p.retDue):'ส่งมอบ + 2 ปี'))+'</small></span></div></div>':'');
   if(p.retAmt>0){
@@ -1178,6 +1190,15 @@ function sheetHtml(){
      '<div class="stack"><button class="btn pri" data-act="saveProj" data-id="'+(p?p.id:'')+'">บันทึกโครงการ</button>'+
      (p?'<button class="btn dng'+(U.confirm==='p'+p.id?' sure':'')+'" data-act="delProj" data-id="'+p.id+'">'+(U.confirm==='p'+p.id?'แตะอีกครั้งเพื่อลบโครงการและรายการทั้งหมด':'ลบโครงการ')+'</button>':'')+
      '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+  }else if(sh.kind==='installment'){
+    var ip=proj(sh.pid||U.pid),existing=ip?projectRevenueControl(ip).rows:[],nextNo=existing.length+1;
+    b='<h3>เพิ่มงวดงาน</h3>'+
+     '<div class="field"><label for="ino">งวดที่</label><input id="ino" type="number" inputmode="numeric" min="1" value="'+nextNo+'"></div>'+
+     '<div class="field"><label for="iamt">ยอดเรียกเก็บ (บาท)</label><input id="iamt" type="number" inputmode="decimal" min="0" placeholder="0"></div>'+
+     '<div class="field"><label for="idate">วันที่วางงวด</label><input id="idate" type="date" value="'+today()+'"></div>'+
+     '<div class="field"><label for="idue">ครบกำหนดรับเงิน</label><input id="idue" type="date" value="'+addDays(30)+'"></div>'+
+     '<div class="field"><label for="inote">รายละเอียด / หมายเหตุ</label><textarea id="inote" rows="2" placeholder="เช่น งวดงานโครงสร้าง"></textarea></div>'+
+     '<div class="stack"><button class="btn pri" data-act="saveInstallment" data-pid="'+(ip?ip.id:'')+'">บันทึกเป็นค้างรับ</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='boq'){
     var bi=sh.id?(S.boq||[]).find(function(x){return x.id===sh.id;}):null,pid=sh.pid||(bi&&bi.pid)||U.pid||'';
     b='<h3>'+(bi?'แก้ไข BOQ':'เพิ่มรายการ BOQ')+'</h3>'+
@@ -1318,6 +1339,13 @@ document.addEventListener('click',function(e){
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
   else if(a==='ftype'){U.filter.type=v;render();}
   else if(a==='openProj'){U.from=null;go('project',{pid:id});}
+  else if(a==='newInstallment'){U.sheet={kind:'installment',pid:id};render();}
+  else if(a==='saveInstallment'){
+    var ipid=el.dataset.pid||U.pid||'',ipj=proj(ipid),ino=Math.max(1,parseInt(document.getElementById('ino').value||'1',10)),ia=parseFloat(document.getElementById('iamt').value)||0,idate=document.getElementById('idate').value||today(),idue=document.getElementById('idue').value||'',inote=(document.getElementById('inote').value||'').trim();
+    if(!ipj){toast('ไม่พบโครงการ');return;}if(!(ia>0)){toast('กรอกยอดงวดงานก่อน');return;}if(idue&&idue<idate){toast('วันครบกำหนดต้องไม่ก่อนวันที่วางงวด');return;}
+    S.tx.push({id:'installment-'+ipid+'-'+uid(),date:idate,type:'in',amount:ia,cat:'งวดงาน',sub:'งวดที่ '+ino,pay:'',pid:ipid,partner:ipj.client||'',vat:false,wht:false,paid:false,due:idue,photo:'',note:inote||('งวดงาน '+ino)});
+    persist();U.sheet=null;render();toast('สร้างงวดงานเป็นค้างรับแล้ว');
+  }
   else if(a==='newBoq'){U.sheet={kind:'boq',id:null,pid:id};render();}
   else if(a==='editBoq'){var eb=(S.boq||[]).find(function(x){return x.id===id;});if(eb){U.sheet={kind:'boq',id:id,pid:eb.pid};render();}}
   else if(a==='saveBoq'){
