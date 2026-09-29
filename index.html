@@ -396,14 +396,6 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 /* Cash reconciliation strip */
 .recon-strip{margin:6px 0 8px;padding:7px 9px;border-radius:9px;display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:6px;background:#eef7f2;border:1px solid #cfe6d8;color:#1f6243}.recon-strip>span{font-weight:900}.recon-strip>b{font-size:9.5px}.recon-strip>small{font-size:8px;color:#6e7b74}.recon-strip.bad{background:#fff1ef;border-color:#f1c6bf;color:#a13d31}
 @media(max-width:430px) and (max-height:950px){.recon-strip{padding:5px 7px;margin:4px 0 6px}.recon-strip>b{font-size:8.5px}.recon-strip>small{font-size:7px}}
-/* V2.4 Project Control Center */
-.control-title{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.control-title h2{margin:0}.control-title small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}.control-risk{padding:4px 8px;border-radius:999px;font-size:.72rem;font-weight:800;white-space:nowrap}.control-risk.ok{background:#e7f5ed;color:#1c7448}.control-risk.warn{background:#fff3d8;color:#a66a00}.control-risk.bad{background:#ffe9e5;color:#a23f32}.control-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.control-grid>div{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}.control-grid span,.control-grid small,.control-grid b{display:block}.control-grid span{font-size:.75rem;color:var(--muted)}.control-grid b{font-size:1rem;margin:3px 0}.control-grid small{font-size:.68rem;color:var(--muted)}.control-reason{margin:10px 0 0;font-size:.78rem;color:var(--muted)}
-/* V2.5 BOQ ↔ Actual */
-.boq-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.boq-head h2{margin:0}.boq-head small{display:block;color:var(--muted);font-size:.75rem;margin-top:2px}.btn.mini{width:auto;min-height:32px;padding:6px 10px;font-size:.78rem}.boq-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:10px 0}.boq-summary span{padding:7px 8px;border-radius:8px;background:var(--card);border:1px solid var(--line);font-size:.72rem;color:var(--muted)}.boq-summary b{display:block;color:var(--ink);font-size:.86rem;margin-top:2px}.boq-row{width:100%;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 0;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink)}.boq-row>div:last-child{text-align:right}.boq-row b,.boq-row small{display:block}.boq-row b{font-size:.82rem}.boq-row small{font-size:.68rem;color:var(--muted);margin-top:2px}
-/* V2.6 Contract revenue installments */
-.revenue-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:10px 0}.revenue-grid>div{padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--card)}.revenue-grid span,.revenue-grid b{display:block}.revenue-grid span{font-size:.7rem;color:var(--muted)}.revenue-grid b{font-size:.9rem;margin-top:3px}.revenue-row{width:100%;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 0;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink)}.revenue-row>div:last-child{text-align:right}.revenue-row b,.revenue-row small{display:block}.revenue-row b{font-size:.82rem}.revenue-row small{font-size:.68rem;color:var(--muted);margin-top:2px}
-/* V2.7 Project-linked accounting documents */
-.doc-project-filter{margin:8px 0}.doc-project-filter select{width:100%}.project-doc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.project-doc-grid span{padding:8px;border:1px solid var(--line);border-radius:9px;text-align:center;color:var(--muted);font-size:.68rem}.project-doc-grid b{display:block;color:var(--ink);font-size:1rem;margin-top:2px}.revenue-row-wrap{position:relative;border-top:1px solid var(--line);padding-right:82px}.revenue-row-wrap .revenue-row{border-top:0}.bill-mini{position:absolute;right:0;top:50%;transform:translateY(-50%);border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:5px 7px;font-size:.65rem;font-weight:700}
 </style>
 </head>
 <body>
@@ -432,11 +424,9 @@ function migrate(o){
   if(!o.business)o.business={legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
   if(o.business.legalNameEn===undefined)o.business.legalNameEn='';
   if(o.business.addressEn===undefined)o.business.addressEn='';
-  if(!Array.isArray(o.boq))o.boq=[];
   if(!Array.isArray(o.quotes))o.quotes=[];
   if(!Array.isArray(o.bills))o.bills=[];
   if(!Array.isArray(o.receipts))o.receipts=[];
-  [o.quotes,o.bills,o.receipts].forEach(function(list){list.forEach(function(d){if(d.pid===undefined)d.pid='';if(d.sourceTxId===undefined)d.sourceTxId='';});});
   if(!o.docSeq)o.docSeq={quote:0,bill:0,receipt:0};
   (o.projects||[]).forEach(function(p){
     if(p.deliveryDate===undefined)p.deliveryDate='';
@@ -482,7 +472,7 @@ function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).sli
 /* ---------- ข้อมูล ---------- */
 var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:''},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
 
-function emptyState(){return {projects:[],tx:[],boq:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},customSubs:{},updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 function idbOpen(){return new Promise(function(res,rej){try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){r.result.createObjectStore('kv');};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
 function idbSet(v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'state');t.oncomplete=function(){res(true);};t.onerror=function(){res(false);};t.onabort=function(){res(false);};});}).catch(function(){return false;});}
@@ -634,44 +624,6 @@ function stats(pid){
     else{s.outB+=base(t);s.byCat[t.cat]=(s.byCat[t.cat]||0)+base(t);var sk=t.sub||'ไม่ระบุรายละเอียด';var bs=s.bySub[t.cat]||(s.bySub[t.cat]={});bs[sk]=(bs[sk]||0)+base(t);if(t.paid)s.paidOut+=net(t);else s.payPend+=net(t);}
   });
   return s;
-}
-function projectControl(p){
-  var tx=S.tx.filter(function(t){return t.pid===p.id;}),actual=0,committed=0,cashDue30=0,cashIn30=0,lim=addDays(30);
-  tx.forEach(function(t){
-    var b=base(t),due=t.due||'';
-    if(t.type==='out'){
-      if(t.paid)actual+=b;else committed+=b;
-      if(!t.paid&&due&&due<=lim)cashDue30+=net(t);
-    }else if(!t.paid&&due&&due<=lim)cashIn30+=net(t);
-  });
-  var budget=+p.budget||0,contract=+p.contract||0,forecast=Math.max(actual+committed,budget?Math.min(budget,Math.max(actual+committed,actual)):actual+committed);
-  if(budget>0&&actual+committed<=budget)forecast=budget;
-  var profit=contract?contract-forecast:0,margin=contract?profit/contract:null,used=budget?(actual+committed)/budget:0,risk='ปกติ',reason='ต้นทุนอยู่ในกรอบ';
-  if(budget>0&&actual+committed>budget){risk='เสี่ยงสูง';reason='Actual + Committed เกินงบ';}
-  else if(budget>0&&used>=.85){risk='เฝ้าระวัง';reason='ใช้/ผูกพันงบตั้งแต่ 85% ขึ้นไป';}
-  else if(cashDue30>cashIn30&&cashDue30>0){risk='เฝ้าระวัง';reason='เงินจ่าย 30 วันมากกว่าเงินรับที่คาด';}
-  return {actualCost:actual,committedCost:committed,forecastCost:forecast,forecastProfit:profit,margin:margin,cashDue30d:cashDue30,cashIn30d:cashIn30,budgetUsed:used,risk:risk,reason:reason};
-}
-function boqActual(item){
-  var rows=S.tx.filter(function(t){
-    if(t.pid!==item.pid||t.type!=='out')return false;
-    if(item.sub)return (t.sub||'').trim()===item.sub;
-    return !item.cat||t.cat===item.cat;
-  }),actual=0,committed=0;
-  rows.forEach(function(t){if(t.paid)actual+=base(t);else committed+=base(t);});
-  return {actual:actual,committed:committed,total:actual+committed,rows:rows.length};
-}
-function projectRevenueControl(p){
-  var rows=S.tx.filter(function(t){return t.pid===p.id&&t.type==='in'&&(t.cat==='งวดงาน'||t.cat==='มัดจำ');}),received=0,pending=0;
-  rows.forEach(function(t){if(t.paid)received+=net(t);else pending+=net(t);});
-  var billed=received+pending,contract=+p.contract||0,unbilled=contract-billed;
-  return {rows:rows,received:received,pending:pending,billed:billed,unbilled:unbilled,progress:contract?billed/contract:0};
-}
-function projectBoq(pid){return (S.boq||[]).filter(function(x){return x.pid===pid;});}
-function boqSummary(pid){
-  var b=0,a=0,c=0;
-  projectBoq(pid).forEach(function(x){var m=boqActual(x);b+=+x.budget||0;a+=m.actual;c+=m.committed;});
-  return {budget:b,actual:a,committed:c,remaining:b-a-c};
 }
 function endTag(p){if(!p.endDate)return '';var d=dd(today(),p.endDate);return d<0?'<span class="tag late">เกินสัญญา '+(-d)+' วัน</span>':(d===0?'<span class="tag pend">ครบสัญญาวันนี้</span>':'<span class="tag pend">เหลือ '+d+' วัน</span>');}
 function contractText(p){
@@ -890,7 +842,7 @@ function vProjects(){
 
 function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
-  var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB,pc=projectControl(p);
+  var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div>';
   h+=contractBlock(p);
   h+='<div class="sec master-detail-card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span>ใช้งบไปแล้ว</span><b class="num">'+Math.round(x*100)+'%</b></div><div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
@@ -898,21 +850,6 @@ function vProject(){
   h+='<div class="grid4 master-detail-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(p.contract)+'</b></div><div><small>รับเงินแล้ว</small><b class="in">'+fmt(s.recd)+'</b></div>'+
     '<div><small>ค้างรับ</small><b>'+fmt(s.recPend)+'</b></div><div><small>ค้างจ่าย</small><b class="out">'+fmt(s.payPend)+'</b></div>'+
     '<div><small>กำไรที่คาด (สัญญา − งบ)</small><b>'+fmt(p.contract-p.budget)+'</b></div><div><small>กำไรตอนนี้ (รับ − จ่าย)</small><b class="'+(s.inB-s.outB>=0?'in':'out')+'">'+fmt(s.inB-s.outB)+'</b></div></div>';
-  h+='<div class="sec master-detail-card control-center"><div class="control-title"><div><h2>Project Control Center</h2><small>นำแกน Finance/Forecast/Risk จาก AREA Contractor AI มาปรับใช้กับ Ledger</small></div><span class="control-risk '+(pc.risk==='เสี่ยงสูง'?'bad':pc.risk==='เฝ้าระวัง'?'warn':'ok')+'">'+pc.risk+'</span></div><div class="control-grid"><div><span>Actual Cost</span><b>'+fmt(pc.actualCost)+'</b><small>จ่ายจริงแล้ว</small></div><div><span>Committed</span><b>'+fmt(pc.committedCost)+'</b><small>ค้างจ่าย/ผูกพัน</small></div><div><span>Forecast Cost</span><b>'+fmt(pc.forecastCost)+'</b><small>ประมาณการแบบอนุรักษ์นิยม</small></div><div><span>Forecast Profit</span><b class="'+(pc.forecastProfit>=0?'in':'out')+'">'+fmt(pc.forecastProfit)+'</b><small>'+(pc.margin===null?'ยังไม่มีมูลค่าสัญญา':(pc.margin*100).toFixed(1)+'% margin')+'</small></div><div><span>30 วัน จ่าย</span><b class="out">'+fmt(pc.cashDue30d)+'</b><small>จากรายการค้างที่มี Due date</small></div><div><span>30 วัน รับ</span><b class="in">'+fmt(pc.cashIn30d)+'</b><small>จากรายการค้างที่มี Due date</small></div></div><p class="control-reason">'+esc(pc.reason)+'</p></div>';
-  var bq=projectBoq(p.id),bqs=boqSummary(p.id);
-  h+='<div class="sec master-detail-card boq-panel"><div class="boq-head"><div><h2>BOQ ↔ ต้นทุนจริง</h2><small>Budget / Actual / Committed / Remaining ตามแนวคิดเดิมจาก AREA Contractor AI</small></div><button class="btn mini" data-act="newBoq" data-id="'+p.id+'">+ BOQ</button></div>';
-  if(!bq.length)h+='<div class="empty compact">ยังไม่มีรายการ BOQ · เพิ่มเฉพาะรายการหลักที่ต้องการควบคุมต้นทุน</div>';
-  else{
-    h+='<div class="boq-summary"><span>งบ <b>'+fmt(bqs.budget)+'</b></span><span>Actual <b>'+fmt(bqs.actual)+'</b></span><span>Commit <b>'+fmt(bqs.committed)+'</b></span><span>คงเหลือ <b class="'+(bqs.remaining<0?'out':'in')+'">'+fmt(bqs.remaining)+'</b></span></div>';
-    bq.forEach(function(x){var m=boqActual(x),budget=+x.budget||0,rem=budget-m.total,pc=budget?m.total/budget:0;h+='<button class="boq-row" data-act="editBoq" data-id="'+x.id+'"><div><b>'+esc(x.description)+'</b><small>'+esc(x.cat||'ทุกหมวด')+(x.sub?' · '+esc(x.sub):'')+' · '+m.rows+' รายการบัญชี</small></div><div><b class="'+(rem<0?'out':'')+'">'+fmt(m.total)+' / '+fmt(budget)+'</b><small>'+(budget?Math.round(pc*100)+'% ใช้งบ':'ยังไม่ตั้งงบ')+'</small></div></button>';});
-  }
-  h+='</div>';
-  var rc=projectRevenueControl(p);
-  h+='<div class="sec master-detail-card revenue-panel"><div class="boq-head"><div><h2>งวดงาน / รายรับตามสัญญา</h2><small>มูลค่าสัญญา → วางงวด → ค้างรับ → รับเงินจริง</small></div><button class="btn mini pri" data-act="newInstallment" data-id="'+p.id+'">+ งวดงาน</button></div><div class="revenue-grid"><div><span>มูลค่าสัญญา</span><b>'+fmt(p.contract)+'</b></div><div><span>วางงวดแล้ว</span><b>'+fmt(rc.billed)+'</b></div><div><span>รับเงินจริง</span><b class="in">'+fmt(rc.received)+'</b></div><div><span>ค้างรับ</span><b>'+fmt(rc.pending)+'</b></div><div><span>ยังไม่วางงวด</span><b class="'+(rc.unbilled<0?'out':'')+'">'+fmt(rc.unbilled)+'</b></div><div><span>Financial progress</span><b>'+Math.round(rc.progress*100)+'%</b></div></div>';
-  if(!rc.rows.length)h+='<div class="empty compact">ยังไม่มีงวดงาน</div>';else rc.rows.slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}).forEach(function(t){var di=dueInfo(t);h+='<div class="revenue-row-wrap"><button class="revenue-row" data-act="openTx" data-id="'+t.id+'"><div><b>'+esc(t.sub||t.note||'งวดงาน')+'</b><small>'+dstr(t.date)+(t.due?' · ครบกำหนด '+dstr(t.due):'')+'</small></div><div><b class="'+(t.paid?'in':'')+'">'+fmt(net(t))+'</b><small>'+(t.paid?'รับแล้ว':(di&&di.late?'เลยกำหนด '+(-di.days)+' วัน':'ค้างรับ'))+'</small></div></button>'+(!t.paid?'<button class="bill-mini" data-act="billFromInstallment" data-id="'+t.id+'">ออกใบวางบิล</button>':'')+'</div>';});
-  h+='</div>';
-  var pdq=(S.quotes||[]).filter(function(x){return x.pid===p.id;}),pdb=(S.bills||[]).filter(function(x){return x.pid===p.id;}),pdr=(S.receipts||[]).filter(function(x){return x.pid===p.id;});
-  h+='<div class="sec master-detail-card project-docs"><div class="boq-head"><div><h2>เอกสารบัญชีโครงการ</h2><small>Quotation → Billing Note → Receipt</small></div><button class="btn mini" data-act="openProjectDocs" data-id="'+p.id+'">เปิดเอกสาร</button></div><div class="project-doc-grid"><span>ใบเสนอราคา<b>'+pdq.length+'</b></span><span>ใบวางบิล<b>'+pdb.length+'</b></span><span>ใบเสร็จ<b>'+pdr.length+'</b></span></div></div>';
   h+='<div class="sec master-detail-card"><h2>เงินประกันสัญญา / เงินประกันผลงาน</h2>'+(p.retAmt?'<div class="ret-flow"><div class="done"><i>1</i><span>จ่ายเงินประกัน<small>'+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</small></span></div><div class="'+(p.deliveryDate?'done':'')+'"><i>2</i><span>ส่งมอบงาน<small>'+(p.deliveryDate?dstr(p.deliveryDate):'รอดำเนินการ')+'</small></span></div><div class="'+(p.retRecv?'done':(p.retDue&&retDays(p)<=0?'ready':''))+'"><i>3</i><span>รับเงินคืน<small>'+(p.retRecv?(p.retRecvDate?dstr(p.retRecvDate):'ได้รับคืนแล้ว'):(p.retDue?'ครบกำหนด '+dstr(p.retDue):'ส่งมอบ + 2 ปี'))+'</small></span></div></div>':'');
   if(p.retAmt>0){
     h+='<div class="kv"><span>จำนวนที่จ่ายออกแล้ว</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
@@ -1104,16 +1041,14 @@ function vPrint(){
   return h+'</table></div></div>';
 }
 function vDocs(){
-  var fp=U.docPid||'',flt=function(x){return !fp||x.pid===fp;};
-  var qs=(S.quotes||[]).filter(flt).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
-  var bs=(S.bills||[]).filter(flt).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
-  var rs=(S.receipts||[]).filter(flt).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
+  var qs=(S.quotes||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
+  var bs=(S.bills||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
+  var rs=(S.receipts||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
   function rows(list,kind){
     if(!list.length)return '<div class="empty compact">ยังไม่มีเอกสาร</div>';
-    return list.map(function(q){var total=docCalc(q).total;return '<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small></div><div class="r"><span class="num">'+fmt(total)+'</span><span>'+esc(q.project||'')+'</span></div></button>';}).join('');
+    return list.map(function(q){var total=(+q.qty||0)*(+q.unitPrice||0);return '<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small></div><div class="r"><span class="num">'+fmt(total)+'</span><span>'+esc(q.project||'')+'</span></div></button>';}).join('');
   }
-  return '<div class="doc-head master-doc-head"><div><b>เอกสารธุรกิจ</b><small>ใบเสนอราคา → ใบวางบิล → รับเงินจริง → ใบเสร็จ</small></div></div>'+
-   '<div class="doc-project-filter"><select data-f="docPid"><option value="">ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(fp===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div>'+
+  return '<div class="doc-head master-doc-head"><div><b>เอกสารธุรกิจ</b><small>สร้างจากข้อมูลบริษัทชุดเดียว ไม่ต้องกรอกซ้ำ</small></div></div>'+
    '<div class="doc-create master-doc-create"><button class="btn pri" data-act="newQuote">+ ใบเสนอราคา</button><button class="btn" data-act="newBill">+ ใบวางบิล</button><button class="btn" data-act="newReceipt">+ ใบเสร็จรับเงิน</button></div>'+
    '<div class="sec master-doc-card"><h2>ใบเสนอราคา <span class="muted">'+qs.length+' ฉบับ</span></h2>'+rows(qs,'quote')+'</div>'+
    '<div class="sec master-doc-card"><h2>ใบวางบิล <span class="muted">'+bs.length+' ฉบับ</span></h2>'+rows(bs,'bill')+'</div>'+
@@ -1197,23 +1132,6 @@ function sheetHtml(){
      '<div class="stack"><button class="btn pri" data-act="saveProj" data-id="'+(p?p.id:'')+'">บันทึกโครงการ</button>'+
      (p?'<button class="btn dng'+(U.confirm==='p'+p.id?' sure':'')+'" data-act="delProj" data-id="'+p.id+'">'+(U.confirm==='p'+p.id?'แตะอีกครั้งเพื่อลบโครงการและรายการทั้งหมด':'ลบโครงการ')+'</button>':'')+
      '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
-  }else if(sh.kind==='installment'){
-    var ip=proj(sh.pid||U.pid),existing=ip?projectRevenueControl(ip).rows:[],nextNo=existing.length+1;
-    b='<h3>เพิ่มงวดงาน</h3>'+
-     '<div class="field"><label for="ino">งวดที่</label><input id="ino" type="number" inputmode="numeric" min="1" value="'+nextNo+'"></div>'+
-     '<div class="field"><label for="iamt">ยอดเรียกเก็บ (บาท)</label><input id="iamt" type="number" inputmode="decimal" min="0" placeholder="0"></div>'+
-     '<div class="field"><label for="idate">วันที่วางงวด</label><input id="idate" type="date" value="'+today()+'"></div>'+
-     '<div class="field"><label for="idue">ครบกำหนดรับเงิน</label><input id="idue" type="date" value="'+addDays(30)+'"></div>'+
-     '<div class="field"><label for="inote">รายละเอียด / หมายเหตุ</label><textarea id="inote" rows="2" placeholder="เช่น งวดงานโครงสร้าง"></textarea></div>'+
-     '<div class="stack"><button class="btn pri" data-act="saveInstallment" data-pid="'+(ip?ip.id:'')+'">บันทึกเป็นค้างรับ</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
-  }else if(sh.kind==='boq'){
-    var bi=sh.id?(S.boq||[]).find(function(x){return x.id===sh.id;}):null,pid=sh.pid||(bi&&bi.pid)||U.pid||'';
-    b='<h3>'+(bi?'แก้ไข BOQ':'เพิ่มรายการ BOQ')+'</h3>'+
-     '<div class="field"><label for="bdesc">รายการ</label><input id="bdesc" type="text" value="'+esc(bi?bi.description:'')+'" placeholder="เช่น เหล็กโครงสร้าง"></div>'+
-     '<div class="field"><label for="bbudget">งบประมาณ (บาท)</label><input id="bbudget" type="number" inputmode="decimal" value="'+esc(bi?bi.budget:'')+'" placeholder="0"></div>'+
-     '<div class="field"><label for="bcat">จับคู่หมวดรายจ่าย</label><select id="bcat"><option value="">ทุกหมวด</option>'+CAT_OUT.map(function(c){return '<option value="'+esc(c)+'"'+(bi&&bi.cat===c?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></div>'+
-     '<div class="field"><label for="bsub">จับคู่รายละเอียดแบบตรงคำ (ถ้ามี)</label><input id="bsub" type="text" value="'+esc(bi?bi.sub:'')+'" placeholder="เช่น เหล็ก"></div>'+
-     '<div class="stack"><button class="btn pri" data-act="saveBoq" data-id="'+(bi?bi.id:'')+'" data-pid="'+pid+'">บันทึก BOQ</button>'+(bi?'<button class="btn dng" data-act="delBoq" data-id="'+bi.id+'">ลบรายการ BOQ</button>':'')+'<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='settings'){
     b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
@@ -1238,8 +1156,7 @@ function sheetHtml(){
      '<div class="field"><label for="dno">เลขที่เอกสาร</label><input id="dno" type="text" value="'+esc(q?q.no:(kind==='bill'?'BL-':kind==='receipt'?'RC-':'QT-')+today().replace(/-/g,''))+'"></div>'+
      '<div class="field"><label for="ddate">วันที่</label><input id="ddate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
      '<div class="field"><label for="dcust">ชื่อลูกค้า / หน่วยงาน</label><input id="dcust" type="text" value="'+esc(q?q.customer:'')+'"></div>'+
-     '<div class="field"><label for="dprojid">โครงการ</label><select id="dprojid"><option value="">ไม่ผูกโครงการ</option>'+S.projects.map(function(p){var sel=q&&q.pid===p.id;return '<option value="'+p.id+'"'+(sel?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div>'+
-     '<div class="field"><label for="dproj">ชื่อโครงการบนเอกสาร</label><input id="dproj" type="text" value="'+esc(q?q.project:'')+'"></div>'+
+     '<div class="field"><label for="dproj">โครงการ / งาน</label><input id="dproj" type="text" value="'+esc(q?q.project:'')+'"></div>'+
      '<div class="field"><span class="lbl">รายการ</span>'+[0,1,2].map(function(i){var x=q?docItems(q)[i]:null;return '<div class="doc-item"><input id="ddesc'+i+'" type="text" placeholder="รายละเอียดรายการ" value="'+esc(x?x.description:'')+'"><input id="dqty'+i+'" type="number" inputmode="decimal" placeholder="จำนวน" value="'+esc(x?x.qty:(i===0?1:''))+'"><input id="dunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x?x.unit:(i===0?'งาน':''))+'"><input id="dprice'+i+'" type="number" inputmode="decimal" placeholder="ราคา/หน่วย" value="'+esc(x?x.unitPrice:'')+'"></div>';}).join('')+'</div>'+
      '<div class="field"><label for="ddisc">ส่วนลด (บาท)</label><input id="ddisc" type="number" inputmode="decimal" value="'+esc(q?q.discount||'':'')+'"></div>'+
      '<div class="field"><label for="dwht">หัก ณ ที่จ่าย (%)</label><input id="dwht" type="number" inputmode="decimal" value="'+esc(q?q.whtRate||'':'')+'" placeholder="เช่น 3"></div>'+
@@ -1252,8 +1169,7 @@ function sheetHtml(){
      '<div class="field"><label for="qno">เลขที่ใบเสนอราคา</label><input id="qno" type="text" value="'+esc(q?q.no:'QT-'+today().replace(/-/g,''))+'"></div>'+
      '<div class="field"><label for="qdate">วันที่</label><input id="qdate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
      '<div class="field"><label for="qcust">ชื่อลูกค้า / หน่วยงาน</label><input id="qcust" type="text" value="'+esc(q?q.customer:'')+'"></div>'+
-     '<div class="field"><label for="qprojid">โครงการ</label><select id="qprojid"><option value="">ไม่ผูกโครงการ</option>'+S.projects.map(function(p){var sel=q&&q.pid===p.id;return '<option value="'+p.id+'"'+(sel?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div>'+
-     '<div class="field"><label for="qproj">ชื่อโครงการบนเอกสาร</label><input id="qproj" type="text" value="'+esc(q?q.project:'')+'"></div>'+
+     '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:'')+'"></div>'+
      '<div class="field"><label for="qdesc">รายละเอียดงาน / สินค้า</label><textarea id="qdesc" rows="4">'+esc(q?q.description:'')+'</textarea></div>'+
      '<div class="field"><label for="qqty">จำนวน</label><input id="qqty" type="number" inputmode="decimal" value="'+esc(q?q.qty:1)+'"></div>'+
      '<div class="field"><label for="qunit">หน่วย</label><input id="qunit" type="text" value="'+esc(q?q.unit:'งาน')+'"></div>'+
@@ -1323,7 +1239,7 @@ document.addEventListener('click',function(e){
   if(a==='go')go(v);
   else if(a==='back'&&U.view==='print'){go('report');}
   else if(a==='back'&&U.view==='quoteprint'){go('docs');}
-  else if(a==='back'&&U.view==='docs'){U.docPid='';go('home');}
+  else if(a==='back'&&U.view==='docs'){go('home');}
   else if(a==='back'&&U.view==='report'){go('home');}
   else if(a==='back'){U.draft=null;go(U.pid&&U.view==='add'&&U.from==='project'?'project':(U.from||(S.role==='foreman'?'list':'home')));}
   else if(a==='newTx'){U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();}
@@ -1348,23 +1264,6 @@ document.addEventListener('click',function(e){
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
   else if(a==='ftype'){U.filter.type=v;render();}
   else if(a==='openProj'){U.from=null;go('project',{pid:id});}
-  else if(a==='newInstallment'){U.sheet={kind:'installment',pid:id};render();}
-  else if(a==='saveInstallment'){
-    var ipid=el.dataset.pid||U.pid||'',ipj=proj(ipid),ino=Math.max(1,parseInt(document.getElementById('ino').value||'1',10)),ia=parseFloat(document.getElementById('iamt').value)||0,idate=document.getElementById('idate').value||today(),idue=document.getElementById('idue').value||'',inote=(document.getElementById('inote').value||'').trim();
-    if(!ipj){toast('ไม่พบโครงการ');return;}if(!(ia>0)){toast('กรอกยอดงวดงานก่อน');return;}if(idue&&idue<idate){toast('วันครบกำหนดต้องไม่ก่อนวันที่วางงวด');return;}
-    S.tx.push({id:'installment-'+ipid+'-'+uid(),date:idate,type:'in',amount:ia,cat:'งวดงาน',sub:'งวดที่ '+ino,pay:'',pid:ipid,partner:ipj.client||'',vat:false,wht:false,paid:false,due:idue,photo:'',note:inote||('งวดงาน '+ino)});
-    persist();U.sheet=null;render();toast('สร้างงวดงานเป็นค้างรับแล้ว');
-  }
-  else if(a==='newBoq'){U.sheet={kind:'boq',id:null,pid:id};render();}
-  else if(a==='editBoq'){var eb=(S.boq||[]).find(function(x){return x.id===id;});if(eb){U.sheet={kind:'boq',id:id,pid:eb.pid};render();}}
-  else if(a==='saveBoq'){
-    var bd=(document.getElementById('bdesc').value||'').trim(),bb=parseFloat(document.getElementById('bbudget').value)||0,bpid=el.dataset.pid||U.pid||'',bc=document.getElementById('bcat').value||'',bs=(document.getElementById('bsub').value||'').trim();
-    if(!bd){toast('กรอกรายการ BOQ ก่อน');return;}if(!(bb>=0)){toast('งบ BOQ ไม่ถูกต้อง');return;}
-    var bx=(S.boq||[]).find(function(x){return x.id===id;});
-    if(bx){Object.assign(bx,{description:bd,budget:bb,cat:bc,sub:bs});}else{S.boq.push({id:uid(),pid:bpid,description:bd,budget:bb,cat:bc,sub:bs});}
-    persist();U.sheet=null;render();toast('บันทึก BOQ แล้ว');
-  }
-  else if(a==='delBoq'){S.boq=(S.boq||[]).filter(function(x){return x.id!==id;});persist();U.sheet=null;render();toast('ลบ BOQ แล้ว');}
   else if(a==='retRecv'){
     var rp=proj(id);
     if(rp&&rp.retAmt>0&&!rp.retRecv){
@@ -1398,20 +1297,12 @@ document.addEventListener('click',function(e){
     if(target)syncGuaranteeExpense(target);
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
-  else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});S.boq=(S.boq||[]).filter(function(x){return x.pid!==id;});[S.quotes,S.bills,S.receipts].forEach(function(list){list.forEach(function(d){if(d.pid===id)d.pid='';});});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
+  else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
   else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='settings'){U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
-  else if(a==='openProjectDocs'){U.docPid=id;go('docs');}
-  else if(a==='billFromInstallment'){
-    var it=S.tx.find(function(t){return t.id===id;}),ip=it?proj(it.pid):null;if(!it||!ip){toast('ไม่พบงวดงาน');return;}
-    var ex=(S.bills||[]).find(function(x){return x.sourceTxId===it.id;});
-    if(ex){U.docKind='bill';U.docId=ex.id;U.sheet=null;go('quoteprint');toast('เปิดใบวางบิลเดิมแล้ว');return;}
-    var bd={id:uid(),no:nextDocNo('bill'),date:today(),customer:ip.client||it.partner||'',project:ip.name,pid:ip.id,sourceTxId:it.id,items:[{description:it.sub||it.note||'งวดงาน',qty:1,unit:'งวด',unitPrice:+it.amount||0}],description:it.sub||'งวดงาน',qty:1,unit:'งวด',unitPrice:+it.amount||0,discount:0,whtRate:0,dueDate:it.due||'',note:it.note||'',sourceId:it.id,sourceKind:'installment'};
-    S.bills.push(bd);persist();U.docKind='bill';U.docId=bd.id;U.sheet=null;go('quoteprint');toast('สร้างใบวางบิลจากงวดงานแล้ว');
-  }
   else if(a==='newQuote'){U.sheet={kind:'quote',id:null};render();}
   else if(a==='newBill'){U.sheet={kind:'bizdoc',docKind:'bill',id:null};render();}
   else if(a==='newReceipt'){U.sheet={kind:'bizdoc',docKind:'receipt',id:null};render();}
@@ -1421,28 +1312,25 @@ document.addEventListener('click',function(e){
     var target=el.dataset.kind,sourceKind=U.docKind||'quote',src=(docCollection(sourceKind)||[]).find(function(x){return x.id===id;});if(!src){toast('ไม่พบเอกสารต้นทาง');return;}
     var list=docCollection(target),prefix=target==='bill'?'BL-':'RC-',existing=list.find(function(x){return x.sourceId===src.id&&x.sourceKind===sourceKind;});
     if(existing){U.docKind=target;U.docId=existing.id;go('quoteprint');toast('เปิดเอกสารที่สร้างไว้แล้ว');return;}
-    var d={id:uid(),no:nextDocNo(target),date:today(),customer:src.customer,project:src.project,pid:src.pid||'',sourceTxId:src.sourceTxId||'',items:docItems(src).map(function(x){return Object.assign({},x);}),description:src.description,qty:src.qty,unit:src.unit,unitPrice:src.unitPrice,discount:+src.discount||0,whtRate:+src.whtRate||0,dueDate:src.dueDate||'',note:src.note||'',sourceId:src.id,sourceKind:sourceKind};
+    var d={id:uid(),no:nextDocNo(target),date:today(),customer:src.customer,project:src.project,items:docItems(src).map(function(x){return Object.assign({},x);}),description:src.description,qty:src.qty,unit:src.unit,unitPrice:src.unitPrice,discount:+src.discount||0,whtRate:+src.whtRate||0,dueDate:src.dueDate||'',note:src.note||'',sourceId:src.id,sourceKind:sourceKind};
     list.push(d);
     if(target==='receipt'){
-      var amt=docCalc(d).total,b=S.business||{},linked=d.sourceTxId?S.tx.find(function(t){return t.id===d.sourceTxId;}):null;
-      if(linked){linked.paid=true;linked.due='';linked.pay=linked.pay||'transfer';linked.docId=d.id;linked.receiptNo=d.no;}
-      else{
-        var dup=S.tx.find(function(t){return t.docId===d.id;});
-        if(!dup)S.tx.push({id:uid(),date:today(),type:'in',amount:Math.round(amt*100)/100,cat:'งวดงาน',sub:'รับเงินตาม '+d.no,pid:d.pid||'',partner:d.customer||'',vat:!!b.vatRegistered,wht:false,paid:true,due:'',pay:'transfer',photo:'',note:'สร้างอัตโนมัติจากใบวางบิล '+(src.no||''),docId:d.id});
-      }
+      var amt=docCalc(d).total,b=S.business||{};
+      var dup=S.tx.find(function(t){return t.docId===d.id;});
+      if(!dup)S.tx.push({id:uid(),date:today(),type:'in',amount:Math.round(amt*100)/100,cat:'รับเงินค่างวดงาน',sub:'รับเงินตาม '+d.no,pid:'',partner:d.customer||'',vat:!!b.vatRegistered,wht:false,paid:true,due:'',pay:'transfer',photo:'',note:'สร้างอัตโนมัติจากใบวางบิล '+(src.no||''),docId:d.id});
     }
     persist();U.docKind=target;U.docId=d.id;U.sheet=null;go('quoteprint');toast(target==='bill'?'สร้างใบวางบิลแล้ว':'บันทึกรับเงินและสร้างใบเสร็จแล้ว');
   }
   else if(a==='saveBizDoc'){
     var kind=el.dataset.kind||'bill',list=docCollection(kind),items=[0,1,2].map(function(i){return {description:document.getElementById('ddesc'+i).value.trim(),qty:parseFloat(document.getElementById('dqty'+i).value)||0,unit:document.getElementById('dunit'+i).value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('dprice'+i).value)||0};}).filter(function(x){return x.description;});
-    var dpid=(document.getElementById('dprojid')||{}).value||'',dp=proj(dpid);var d={id:id||uid(),no:document.getElementById('dno').value.trim()||nextDocNo(kind),date:document.getElementById('ddate').value||today(),customer:document.getElementById('dcust').value.trim()||(dp?dp.client:''),project:document.getElementById('dproj').value.trim()||(dp?dp.name:''),pid:dpid,items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('ddisc').value)||0,whtRate:parseFloat(document.getElementById('dwht').value)||0,dueDate:document.getElementById('ddue').value||'',note:document.getElementById('dnote').value.trim()};
+    var d={id:id||uid(),no:document.getElementById('dno').value.trim()||nextDocNo(kind),date:document.getElementById('ddate').value||today(),customer:document.getElementById('dcust').value.trim(),project:document.getElementById('dproj').value.trim(),items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('ddisc').value)||0,whtRate:parseFloat(document.getElementById('dwht').value)||0,dueDate:document.getElementById('ddue').value||'',note:document.getElementById('dnote').value.trim()};
     if(!d.customer||!items.length){toast('กรอกลูกค้าและอย่างน้อย 1 รายการ');return;}
     var di=list.findIndex(function(x){return x.id===d.id;});if(di>-1)list[di]=d;else list.push(d);persist();U.sheet=null;U.docKind=kind;U.docId=d.id;go('quoteprint');toast('บันทึก'+docTitle(kind)[0]+'แล้ว');
   }
   else if(a==='quoteView'){U.docKind='quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
   else if(a==='editQuote'){U.sheet={kind:'quote',id:id};render();}
   else if(a==='saveQuote'){
-    var qpid=(document.getElementById('qprojid')||{}).value||'',qp=proj(qpid);var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:document.getElementById('qdate').value||today(),customer:document.getElementById('qcust').value.trim()||(qp?qp.client:''),project:document.getElementById('qproj').value.trim()||(qp?qp.name:''),pid:qpid,description:document.getElementById('qdesc').value.trim(),qty:parseFloat(document.getElementById('qqty').value)||1,unit:document.getElementById('qunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('qprice').value)||0,note:document.getElementById('qnote').value.trim()};
+    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:document.getElementById('qdate').value||today(),customer:document.getElementById('qcust').value.trim(),project:document.getElementById('qproj').value.trim(),description:document.getElementById('qdesc').value.trim(),qty:parseFloat(document.getElementById('qqty').value)||1,unit:document.getElementById('qunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('qprice').value)||0,note:document.getElementById('qnote').value.trim()};
     if(!q.customer){toast('กรอกชื่อลูกค้าก่อน');return;}
     if(!q.description){toast('กรอกรายละเอียดก่อน');return;}
     var qi=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qi>-1)S.quotes[qi]=q;else S.quotes.push(q);
@@ -1476,7 +1364,6 @@ document.addEventListener('change',function(e){if(e.target&&e.target.id==='pdel'
   if(f==='fcat'){U.filter.cat=el.value;U.filter.sub='';render();return;}
   if(f==='fsub'){U.filter.sub=el.value;render();return;}
   if(f==='exp'){U.exportPid=el.value;return;}
-  if(f==='docPid'){U.docPid=el.value;render();return;}
   if(f&&U.draft){U.draft[f]=el.value;return;}
   if(el.id==='photoIn'&&el.files&&el.files[0]){
     var file=el.files[0],r=new FileReader();
