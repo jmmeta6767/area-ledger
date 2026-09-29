@@ -1003,6 +1003,13 @@ body.wallpaper-on .mgroup{
 .project-action-grid button{min-height:66px;border:1px solid var(--m-line);border-radius:13px;background:var(--m-card);padding:10px;text-align:left;color:var(--m-ink)}
 .project-action-grid b{display:block;font-size:.88rem}.project-action-grid small{display:block;margin-top:3px;font-size:.67rem;color:var(--m-mut)}
 @media(max-width:430px){.project-action-grid{gap:7px}.project-action-grid button{min-height:60px;padding:9px}}
+
+/* BILLING RECEIVABLE — billing note lifecycle */
+.doc-status,.doc-inline-status{display:inline-flex!important;align-items:center!important;width:max-content!important;padding:3px 7px!important;border-radius:999px!important;font-size:.68rem!important;font-weight:700!important}
+.doc-status.in,.doc-inline-status.in{background:#e7f5ed!important;color:#27724b!important}
+.doc-status.out,.doc-inline-status.out{background:#ffe9e5!important;color:#a23f32!important}
+.doc-status.pend,.doc-inline-status.pend{background:#fff3d8!important;color:#946200!important}
+.doc-inline-status{margin-top:5px!important}
 </style>
 </head>
 <body>
@@ -1728,7 +1735,7 @@ function vDocList(){
   var h='<div class="doc-list-head"><div><small>'+(projectFilter?esc(projectName):'เอกสารธุรกิจ')+'</small><h2>'+label+'</h2><span>'+list.length+' ฉบับ</span></div><button class="btn pri" data-act="'+act+'"'+(projectFilter?' data-pid="'+projectFilter+'"':'')+'>+ สร้างใหม่</button></div>';
   if(!list.length)return h+'<div class="empty">ยังไม่มี'+label+'</div>';
   h+='<div class="sec master-doc-card">';
-  list.forEach(function(q){var calc=docCalc(q);h+='<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small><small>'+esc(q.project||'')+'</small></div><div class="r"><span class="num">'+fmt(calc.total)+'</span><span>เปิดเอกสาร ›</span></div></button>';});
+  list.forEach(function(q){var calc=docCalc(q),st=kind==='bill'?billStatus(q):null;h+='<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small><small>'+esc(q.project||'')+'</small></div><div class="r"><span class="num">'+fmt(calc.total)+'</span>'+(st?'<span class="doc-status '+st.cls+'">'+esc(st.text)+'</span>':'<span>เปิดเอกสาร ›</span>')+'</div></button>';});
   return h+'</div>';
 }
 
@@ -1743,12 +1750,45 @@ function docCalc(q){
   var sub=docItems(q).reduce(function(a,x){return a+(+x.qty||0)*(+x.unitPrice||0);},0),disc=Math.max(0,+q.discount||0),after=Math.max(0,sub-disc),b=S.business||{},vat=b.vatRegistered?after*.07:0,wht=Math.max(0,+q.whtRate||0)?after*(+q.whtRate/100):0;
   return {sub:sub,discount:disc,after:after,vat:vat,wht:wht,total:after+vat-wht};
 }
+function billReceivable(bill){
+  if(!bill)return null;
+  return S.tx.find(function(t){return t.type==='in'&&(t.billId===bill.id||(t.docId===bill.id&&(t.cat==='รับเงินค่างวดงาน'||(t.note||'').indexOf('ใบวางบิล')>=0)));})||null;
+}
+function syncBillReceivable(bill){
+  if(!bill)return null;
+  var tx=billReceivable(bill),amt=Math.round(docCalc(bill).total*100)/100;
+  if(tx&&tx.paid)return tx; /* paid history is immutable */
+  var data={date:bill.date||today(),type:'in',amount:amt,cat:'รับเงินค่างวดงาน',sub:'ใบวางบิล '+(bill.no||''),pid:bill.pid||'',partner:bill.customer||'',vat:false,wht:false,paid:false,due:bill.dueDate||'',pay:'',photo:'',note:'ค้างรับจากใบวางบิล '+(bill.no||''),billId:bill.id,docId:bill.id};
+  if(tx){Object.assign(tx,data);return tx;}
+  tx=Object.assign({id:'bill-receivable-'+bill.id},data);S.tx.push(tx);return tx;
+}
+function settleBillReceivable(bill,receipt){
+  var tx=billReceivable(bill),amt=Math.round(docCalc(receipt||bill).total*100)/100;
+  if(!tx){
+    tx={id:'bill-receivable-'+bill.id,date:today(),type:'in',amount:amt,cat:'รับเงินค่างวดงาน',sub:'รับเงินตาม '+((receipt&&receipt.no)||bill.no||''),pid:(receipt&&receipt.pid)||bill.pid||'',partner:(receipt&&receipt.customer)||bill.customer||'',vat:false,wht:false,paid:true,due:'',pay:'transfer',photo:'',note:'รับเงินจากใบวางบิล '+(bill.no||''),billId:bill.id,receiptId:receipt?receipt.id:'',docId:receipt?receipt.id:bill.id};
+    S.tx.push(tx);
+  }else if(!tx.paid){
+    tx.paid=true;tx.date=(receipt&&receipt.date)||today();tx.amount=amt;tx.due='';tx.pay=tx.pay||'transfer';tx.pid=(receipt&&receipt.pid)||bill.pid||tx.pid||'';tx.partner=(receipt&&receipt.customer)||bill.customer||tx.partner||'';tx.sub='รับเงินตาม '+((receipt&&receipt.no)||bill.no||'');tx.note='รับเงินจากใบวางบิล '+(bill.no||'');tx.receiptId=receipt?receipt.id:'';tx.docId=receipt?receipt.id:tx.docId;
+  }
+  return tx;
+}
+function billStatus(bill){
+  var tx=billReceivable(bill);
+  if(tx&&tx.paid)return {cls:'in',text:'รับเงินแล้ว'};
+  if(bill.dueDate){
+    var d=dd(today(),bill.dueDate);
+    if(d<0)return {cls:'out',text:'เลยกำหนด '+(-d)+' วัน'};
+    if(d===0)return {cls:'out',text:'ครบกำหนดวันนี้'};
+    if(d<=7)return {cls:'pend',text:'ครบกำหนดใน '+d+' วัน'};
+  }
+  return {cls:'pend',text:'ค้างรับ'};
+}
 function docTitle(kind){return kind==='bill'?['ใบวางบิล','BILLING NOTE']:kind==='receipt'?['ใบเสร็จรับเงิน','RECEIPT']:['ใบเสนอราคา','QUOTATION'];}
 function vBusinessDoc(){
   var kind=U.docKind||'quote',q=(docCollection(kind)||[]).find(function(x){return x.id===U.docId;});if(!q)return '<div class="empty">ไม่พบเอกสาร</div>';
   var b=S.business||{},calc=docCalc(q),tt=docTitle(kind),items=docItems(q);
   return '<div class="quote-paper"><div class="quote-top"><div class="quote-brand"><img src="area-logo-header.jpg" alt="AREA"><div><b>'+esc(b.legalName||S.brand||'AREA MAIBAB')+'</b><small>'+esc(b.address||'')+'</small><small>เลขประจำตัวผู้เสียภาษี '+esc(b.taxId||'-')+' · โทร '+esc(b.phone||'-')+'</small></div></div><div class="quote-title"><b>'+tt[0]+'</b><span>'+tt[1]+'</span></div></div>'+
-   '<div class="quote-meta"><div><small>ลูกค้า / หน่วยงาน</small><b>'+esc(q.customer)+'</b><span>'+esc(q.project||'')+'</span></div><div><small>เลขที่</small><b>'+esc(q.no)+'</b><small>วันที่ '+dstr(q.date)+'</small>'+(q.sourceId?'<small>อ้างอิงจาก '+esc(q.sourceKind==='quote'?'ใบเสนอราคา':'ใบวางบิล')+'</small>':'')+'</div></div>'+
+   '<div class="quote-meta"><div><small>ลูกค้า / หน่วยงาน</small><b>'+esc(q.customer)+'</b><span>'+esc(q.project||'')+'</span></div><div><small>เลขที่</small><b>'+esc(q.no)+'</b><small>วันที่ '+dstr(q.date)+'</small>'+(q.sourceId?'<small>อ้างอิงจาก '+esc(q.sourceKind==='quote'?'ใบเสนอราคา':'ใบวางบิล')+'</small>':'')+(kind==='bill'?'<small class="doc-inline-status '+billStatus(q).cls+'">'+esc(billStatus(q).text)+'</small>':'')+'</div></div>'+
    '<table class="quote-table"><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>จำนวนเงิน</th></tr>'+items.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(x.description)+'</td><td class="num">'+(+x.qty||0)+'</td><td>'+esc(x.unit||'')+'</td><td class="num">'+fmt(+x.unitPrice||0)+'</td><td class="num">'+fmt((+x.qty||0)*(+x.unitPrice||0))+'</td></tr>';}).join('')+'</table>'+
    '<div class="quote-total"><div><span>รวมเป็นเงิน</span><b class="num">'+fmt(calc.sub)+'</b></div>'+(calc.discount?'<div><span>ส่วนลด</span><b class="num">−'+fmt(calc.discount)+'</b></div>':'')+(b.vatRegistered?'<div><span>VAT 7%</span><b class="num">'+fmt(calc.vat)+'</b></div>':'<small>กิจการไม่ได้จดทะเบียนภาษีมูลค่าเพิ่ม</small>')+(calc.wht?'<div><span>หัก ณ ที่จ่าย '+(+q.whtRate||0)+'%</span><b class="num">−'+fmt(calc.wht)+'</b></div>':'')+'<div class="grand"><span>ยอดสุทธิ</span><b class="num">'+fmt(calc.total)+'</b></div>'+(q.dueDate?'<small>ครบกำหนดชำระ '+dstr(q.dueDate)+'</small>':'')+'</div>'+
    (q.note?'<div class="quote-note"><b>หมายเหตุ / เงื่อนไข</b><p>'+esc(q.note)+'</p></div>':'')+
@@ -2068,10 +2108,9 @@ document.addEventListener('click',function(e){
     if(existing){U.docKind=target;U.docId=existing.id;go('quoteprint');toast('เปิดเอกสารที่สร้างไว้แล้ว');return;}
     var d={id:uid(),no:nextDocNo(target),date:today(),customer:src.customer,project:src.project,pid:src.pid||'',items:docItems(src).map(function(x){return Object.assign({},x);}),description:src.description,qty:src.qty,unit:src.unit,unitPrice:src.unitPrice,discount:+src.discount||0,whtRate:+src.whtRate||0,dueDate:src.dueDate||'',note:src.note||'',sourceId:src.id,sourceKind:sourceKind};
     list.push(d);
+    if(target==='bill')syncBillReceivable(d);
     if(target==='receipt'){
-      var amt=docCalc(d).total,b=S.business||{};
-      var dup=S.tx.find(function(t){return t.docId===d.id;});
-      if(!dup)S.tx.push({id:uid(),date:today(),type:'in',amount:Math.round(amt*100)/100,cat:'รับเงินค่างวดงาน',sub:'รับเงินตาม '+d.no,pid:d.pid||'',partner:d.customer||'',vat:!!b.vatRegistered,wht:false,paid:true,due:'',pay:'transfer',photo:'',note:'สร้างอัตโนมัติจากใบวางบิล '+(src.no||''),docId:d.id});
+      settleBillReceivable(src,d);
     }
     persist();U.docKind=target;U.docId=d.id;U.sheet=null;go('quoteprint');toast(target==='bill'?'สร้างใบวางบิลแล้ว':'บันทึกรับเงินและสร้างใบเสร็จแล้ว');
   }
@@ -2080,7 +2119,9 @@ document.addEventListener('click',function(e){
     var oldDoc=id?list.find(function(x){return x.id===id;}):null,linkedPid=(oldDoc&&oldDoc.pid)||U.docProjectPid||'',linkedProj=linkedPid?proj(linkedPid):null;
     var d={id:id||uid(),no:document.getElementById('dno').value.trim()||nextDocNo(kind),date:document.getElementById('ddate').value||today(),customer:document.getElementById('dcust').value.trim()||(linkedProj?linkedProj.client||'':''),project:document.getElementById('dproj').value.trim()||(linkedProj?linkedProj.name:''),pid:linkedPid,items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('ddisc').value)||0,whtRate:parseFloat(document.getElementById('dwht').value)||0,dueDate:document.getElementById('ddue').value||'',note:document.getElementById('dnote').value.trim(),sourceId:oldDoc?oldDoc.sourceId||'':'',sourceKind:oldDoc?oldDoc.sourceKind||'':''};
     if(!d.customer||!items.length){toast('กรอกลูกค้าและอย่างน้อย 1 รายการ');return;}
-    var di=list.findIndex(function(x){return x.id===d.id;});if(di>-1)list[di]=d;else list.push(d);persist();U.sheet=null;U.docKind=kind;U.docId=d.id;go('quoteprint');toast('บันทึก'+docTitle(kind)[0]+'แล้ว');
+    var di=list.findIndex(function(x){return x.id===d.id;});if(di>-1)list[di]=d;else list.push(d);
+    if(kind==='bill')syncBillReceivable(d);
+    persist();U.sheet=null;U.docKind=kind;U.docId=d.id;go('quoteprint');toast('บันทึก'+docTitle(kind)[0]+'แล้ว');
   }
   else if(a==='quoteView'){U.docKind='quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
   else if(a==='editQuote'){var eq=(S.quotes||[]).find(function(x){return x.id===id;});if(eq&&eq.pid)U.docProjectPid=eq.pid;U.sheet={kind:'quote',id:id};render();}
