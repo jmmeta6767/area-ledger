@@ -1443,6 +1443,59 @@ body.wallpaper-on .mgroup{
   .expense-donut b{font-size:15px!important}
   .expense-donut-legend>span,.expense-donut-legend>span>span,.expense-donut-legend b{font-size:9.5px!important}
 }
+
+/* MOBILE READABILITY QA V2 — chart scale and typography */
+.dash-charts.donut-only{margin-top:20px!important}
+.dash-chart-head{padding:0 2px 4px!important}
+.dash-chart-head b{font-size:18px!important;font-weight:800!important;letter-spacing:-.15px!important}
+.dash-chart-head small{font-size:12px!important;line-height:1.3!important;color:var(--m-mut)!important}
+.dash-chart-head button{min-height:44px!important;padding:8px 2px 8px 10px!important;font-size:12px!important;font-weight:750!important}
+.dash-chart-card.donut-card{padding:16px!important;border-radius:18px!important}
+.dash-chart-card.donut-card h3{font-size:15px!important;line-height:1.35!important;margin:0 0 14px!important;font-weight:750!important}
+.expense-donut-wrap{grid-template-columns:minmax(190px,250px) minmax(0,1fr)!important;gap:22px!important;padding:4px 6px 8px!important}
+.expense-donut{width:min(240px,100%)!important}
+.expense-donut span{font-size:13px!important;line-height:1.3!important}
+.expense-donut b{font-size:22px!important;line-height:1.15!important;margin-top:5px!important}
+.expense-donut-legend{gap:11px!important}
+.expense-donut-legend>span{grid-template-columns:10px minmax(0,1fr) auto!important;gap:8px!important;font-size:11px!important;line-height:1.3!important}
+.expense-donut-legend i{width:10px!important;height:10px!important}
+.expense-donut-legend b{font-size:11px!important;white-space:nowrap!important}
+
+@media(max-width:430px){
+  .dash-charts.donut-only{margin-top:18px!important}
+  .dash-chart-head b{font-size:17px!important}
+  .dash-chart-head small{font-size:11px!important}
+  .dash-chart-head button{font-size:11px!important}
+  .dash-chart-card.donut-card{padding:14px 12px 16px!important}
+  .dash-chart-card.donut-card h3{font-size:14px!important;margin-bottom:12px!important}
+  .expense-donut-wrap{
+    grid-template-columns:154px minmax(0,1fr)!important;
+    gap:12px!important;
+    padding:2px 0 4px!important;
+    align-items:center!important;
+  }
+  .expense-donut{width:154px!important}
+  .expense-donut:after{inset:25%!important}
+  .expense-donut>div{inset:26%!important;padding:4px!important}
+  .expense-donut span{font-size:10px!important}
+  .expense-donut b{font-size:16px!important;white-space:nowrap!important}
+  .expense-donut-legend{grid-template-columns:1fr!important;gap:8px!important;min-width:0!important}
+  .expense-donut-legend>span{
+    grid-template-columns:9px minmax(0,1fr) auto!important;
+    gap:6px!important;
+    font-size:10px!important;
+    min-width:0!important;
+  }
+  .expense-donut-legend>span:not(:has(b)){font-size:10px!important}
+  .expense-donut-legend b{font-size:10px!important}
+}
+@media(max-width:360px){
+  .expense-donut-wrap{grid-template-columns:140px minmax(0,1fr)!important;gap:9px!important}
+  .expense-donut{width:140px!important}
+  .expense-donut span{font-size:9.5px!important}
+  .expense-donut b{font-size:15px!important}
+  .expense-donut-legend>span,.expense-donut-legend b{font-size:9px!important}
+}
 </style>
 </head>
 <body>
