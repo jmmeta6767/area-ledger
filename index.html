@@ -1496,6 +1496,45 @@ body.wallpaper-on .mgroup{
   .expense-donut b{font-size:15px!important}
   .expense-donut-legend>span,.expense-donut-legend b{font-size:9px!important}
 }
+
+/* MOBILE DASHBOARD READABILITY FINAL — compact donut and accessible text */
+@media(max-width:430px){
+  .dash-charts.donut-only{margin:16px 0 10px!important}
+  .dash-chart-head{margin:0 2px 8px!important}
+  .dash-chart-head b{font-size:16px!important;font-weight:800!important}
+  .dash-chart-head small{font-size:11px!important}
+  .dash-chart-head button{font-size:11px!important;min-height:36px!important;padding:6px 2px 6px 10px!important}
+  .dash-chart-card{padding:13px 12px 14px!important;border-radius:16px!important}
+  .dash-chart-card h3{font-size:13px!important;margin-bottom:12px!important}
+  .expense-donut-wrap{
+    grid-template-columns:148px minmax(0,1fr)!important;
+    gap:12px!important;padding:0!important;align-items:center!important;
+  }
+  .expense-donut{width:148px!important;max-width:148px!important}
+  .expense-donut:after{inset:27%!important}
+  .expense-donut>div{inset:28%!important}
+  .expense-donut span{font-size:10.5px!important;line-height:1.2!important;white-space:nowrap!important}
+  .expense-donut b{font-size:16px!important;line-height:1.1!important;margin-top:4px!important}
+  .expense-donut-legend{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;min-width:0!important}
+  .expense-donut-legend>span{
+    display:grid!important;grid-template-columns:10px minmax(0,1fr) auto!important;
+    gap:6px!important;align-items:center!important;min-width:0!important;
+    font-size:10.5px!important;line-height:1.2!important;color:var(--m-mut)!important;
+  }
+  .expense-donut-legend>span i{width:9px!important;height:9px!important}
+  .expense-donut-legend>span b{font-size:10.5px!important;white-space:nowrap!important}
+  .mdash-stats>button{min-height:118px!important;padding:12px 11px!important}
+  .mdash-stats>button>span:not(.mdash-stat-icon){font-size:12px!important}
+  .mdash-stats>button>b{font-size:19px!important;margin-top:6px!important}
+  .mdash-stats>button>small{font-size:10px!important;margin-top:5px!important}
+}
+@media(max-width:374px){
+  .expense-donut-wrap{grid-template-columns:132px minmax(0,1fr)!important;gap:9px!important}
+  .expense-donut{width:132px!important;max-width:132px!important}
+  .expense-donut span{font-size:9.5px!important}
+  .expense-donut b{font-size:14px!important}
+  .expense-donut-legend>span,.expense-donut-legend>span b{font-size:9.5px!important}
+}
 </style>
 </head>
 <body>
