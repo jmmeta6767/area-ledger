@@ -834,12 +834,15 @@ function vBusinessDoc(){
   var kind=U.docKind||'quote',q=(docCollection(kind)||[]).find(function(x){return x.id===U.docId;});if(!q)return '<div class="empty">ไม่พบเอกสาร</div>';
   var b=S.business||{},sub=(+q.qty||0)*(+q.unitPrice||0),vat=b.vatRegistered?sub*.07:0,total=sub+vat,tt=docTitle(kind);
   return '<div class="quote-paper"><div class="quote-top"><div class="quote-brand"><img src="area-logo-header.jpg" alt="AREA"><div><b>'+esc(b.legalName||S.brand||'AREA MAIBAB')+'</b><small>'+esc(b.address||'')+'</small><small>เลขประจำตัวผู้เสียภาษี '+esc(b.taxId||'-')+' · โทร '+esc(b.phone||'-')+'</small></div></div><div class="quote-title"><b>'+tt[0]+'</b><span>'+tt[1]+'</span></div></div>'+
-   '<div class="quote-meta"><div><small>ลูกค้า / หน่วยงาน</small><b>'+esc(q.customer)+'</b><span>'+esc(q.project||'')+'</span></div><div><small>เลขที่</small><b>'+esc(q.no)+'</b><small>วันที่ '+dstr(q.date)+'</small></div></div>'+
+   '<div class="quote-meta"><div><small>ลูกค้า / หน่วยงาน</small><b>'+esc(q.customer)+'</b><span>'+esc(q.project||'')+'</span></div><div><small>เลขที่</small><b>'+esc(q.no)+'</b><small>วันที่ '+dstr(q.date)+'</small>'+(q.sourceId?'<small>อ้างอิงจาก '+esc(q.sourceKind==='quote'?'ใบเสนอราคา':'ใบวางบิล')+'</small>':'')+'</div></div>'+
    '<table class="quote-table"><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคา/หน่วย</th><th>จำนวนเงิน</th></tr><tr><td>1</td><td>'+esc(q.description)+'</td><td class="num">'+(+q.qty||0)+'</td><td>'+esc(q.unit||'')+'</td><td class="num">'+fmt(+q.unitPrice||0)+'</td><td class="num">'+fmt(sub)+'</td></tr></table>'+
    '<div class="quote-total"><div><span>รวมเป็นเงิน</span><b class="num">'+fmt(sub)+'</b></div>'+(b.vatRegistered?'<div><span>VAT 7%</span><b class="num">'+fmt(vat)+'</b></div>':'<small>กิจการไม่ได้จดทะเบียนภาษีมูลค่าเพิ่ม</small>')+'<div class="grand"><span>ยอดสุทธิ</span><b class="num">'+fmt(total)+'</b></div></div>'+
    (q.note?'<div class="quote-note"><b>หมายเหตุ / เงื่อนไข</b><p>'+esc(q.note)+'</p></div>':'')+
    '<div class="quote-sign"><div>ผู้จัดทำเอกสาร<br><br>____________________<br>'+esc(b.legalName||S.brand||'')+'</div><div>'+(kind==='receipt'?'ผู้รับเงิน / ผู้ชำระเงิน':'ผู้รับเอกสาร / ลูกค้า')+'<br><br>____________________<br>วันที่ ____ / ____ / ______</div></div>'+
-   '<div class="stack no-print"><button class="btn pri" data-act="doPrint">พิมพ์ / บันทึก PDF</button><button class="btn" data-act="editDoc" data-kind="'+kind+'" data-id="'+q.id+'">แก้ไขเอกสาร</button></div></div>';
+   '<div class="stack no-print">'+
+   (kind==='quote'?'<button class="btn pri" data-act="convertDoc" data-kind="bill" data-id="'+q.id+'">สร้างใบวางบิลจากใบนี้</button>':'')+
+   (kind==='bill'?'<button class="btn pri" data-act="convertDoc" data-kind="receipt" data-id="'+q.id+'">รับเงินและออกใบเสร็จ</button>':'')+
+   '<button class="btn" data-act="doPrint">พิมพ์ / บันทึก PDF</button><button class="btn" data-act="editDoc" data-kind="'+kind+'" data-id="'+q.id+'">แก้ไขเอกสาร</button></div></div>';
 }
 function vQuotePrint(){
   var q=(S.quotes||[]).find(function(x){return x.id===U.quoteId;});if(!q)return '<div class="empty">ไม่พบใบเสนอราคา</div>';
@@ -1061,6 +1064,19 @@ document.addEventListener('click',function(e){
   else if(a==='newReceipt'){U.sheet={kind:'bizdoc',docKind:'receipt',id:null};render();}
   else if(a==='docView'){U.docKind=el.dataset.kind||'quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
   else if(a==='editDoc'){U.sheet={kind:'bizdoc',docKind:el.dataset.kind||'bill',id:id};render();}
+  else if(a==='convertDoc'){
+    var target=el.dataset.kind,sourceKind=U.docKind||'quote',src=(docCollection(sourceKind)||[]).find(function(x){return x.id===id;});if(!src){toast('ไม่พบเอกสารต้นทาง');return;}
+    var list=docCollection(target),prefix=target==='bill'?'BL-':'RC-',existing=list.find(function(x){return x.sourceId===src.id&&x.sourceKind===sourceKind;});
+    if(existing){U.docKind=target;U.docId=existing.id;go('quoteprint');toast('เปิดเอกสารที่สร้างไว้แล้ว');return;}
+    var d={id:uid(),no:prefix+today().replace(/-/g,'')+'-'+String(list.length+1).padStart(3,'0'),date:today(),customer:src.customer,project:src.project,description:src.description,qty:src.qty,unit:src.unit,unitPrice:src.unitPrice,note:src.note||'',sourceId:src.id,sourceKind:sourceKind};
+    list.push(d);
+    if(target==='receipt'){
+      var amt=(+d.qty||0)*(+d.unitPrice||0),b=S.business||{};if(b.vatRegistered)amt*=1.07;
+      var dup=S.tx.find(function(t){return t.docId===d.id;});
+      if(!dup)S.tx.push({id:uid(),date:today(),type:'in',amount:Math.round(amt*100)/100,cat:'รับเงินค่างวดงาน',sub:'รับเงินตาม '+d.no,pid:'',partner:d.customer||'',vat:!!b.vatRegistered,wht:false,paid:true,due:'',pay:'transfer',photo:'',note:'สร้างอัตโนมัติจากใบวางบิล '+(src.no||''),docId:d.id});
+    }
+    persist();U.docKind=target;U.docId=d.id;U.sheet=null;go('quoteprint');toast(target==='bill'?'สร้างใบวางบิลแล้ว':'บันทึกรับเงินและสร้างใบเสร็จแล้ว');
+  }
   else if(a==='saveBizDoc'){
     var kind=el.dataset.kind||'bill',list=docCollection(kind),d={id:id||uid(),no:document.getElementById('dno').value.trim(),date:document.getElementById('ddate').value||today(),customer:document.getElementById('dcust').value.trim(),project:document.getElementById('dproj').value.trim(),description:document.getElementById('ddesc').value.trim(),qty:parseFloat(document.getElementById('dqty').value)||1,unit:document.getElementById('dunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('dprice').value)||0,note:document.getElementById('dnote').value.trim()};
     if(!d.customer||!d.description){toast('กรอกลูกค้าและรายละเอียดก่อน');return;}
