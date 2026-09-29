@@ -254,6 +254,11 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .master-list{padding-top:2px}.master-list-chips{margin-top:12px!important}.master-list-selects{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.master-list-selects select,.master-list-search{min-height:46px;border:1px solid #e6e9e8;border-radius:11px;background:#fff;color:#17202b;padding:9px 11px;font:inherit}.master-list-search{width:100%;margin-top:10px}.master-list-summary{display:flex;gap:18px;margin:14px 2px 8px;font-size:.92rem}.master-list>.row,.master-list>.tx-modern{background:#fff!important;border:0!important;border-bottom:1px solid #e6e9e8!important;border-radius:0!important;margin:0!important;padding:14px!important}.master-list>.row:first-of-type,.master-list>.tx-modern:first-of-type{border-radius:16px 16px 0 0!important}.master-list>.row:last-child,.master-list>.tx-modern:last-child{border-bottom:0!important;border-radius:0 0 16px 16px!important}
 @media(max-width:390px){.master-list-selects{grid-template-columns:1fr}.master-list-summary{gap:10px;font-size:.84rem;flex-wrap:wrap}}
 @media(prefers-color-scheme:dark){.master-list-selects select,.master-list-search,.master-list>.row,.master-list>.tx-modern{background:var(--card)!important;color:var(--ink)!important;border-color:var(--line)!important}}
+/* Master UI extension: project detail + reports */
+.master-detail-card,.master-report-card{background:#fff!important;border:0!important;border-radius:16px!important;margin:14px 0!important;padding:16px!important;overflow:hidden!important}.master-detail-card>h2,.master-report-card>h2{font-size:16px!important;margin:-16px -16px 14px!important;padding:13px 16px!important;background:#fdf1d0!important;color:#17202b!important}.master-detail-grid,.master-report-grid{gap:10px!important;margin:14px 0!important}.master-detail-grid>div,.master-report-grid>div{background:#fff!important;border:0!important;border-radius:14px!important;padding:14px!important;min-height:92px!important}.master-detail-grid small,.master-report-grid small{color:#6b7580!important}.master-detail-grid b,.master-report-grid b{font-variant-numeric:tabular-nums}
+.master-month-nav{display:grid!important;grid-template-columns:48px 1fr 48px!important;align-items:center!important;gap:8px!important;margin:14px 0!important;background:#fff!important;border-radius:14px!important;padding:8px!important}.master-month-nav button{min-height:44px!important;border:0!important;border-radius:10px!important;background:#f1f3f2!important;color:#17202b!important;font-size:24px!important}.master-month-nav b{text-align:center!important;color:#17202b!important}
+.master-report-card .wrapx{border-radius:12px!important;overflow:auto!important}.master-report-card table{min-width:500px}.master-report-card select{min-height:46px!important;border-radius:11px!important}
+@media(prefers-color-scheme:dark){.master-detail-card,.master-report-card,.master-detail-grid>div,.master-report-grid>div,.master-month-nav{background:var(--card)!important;color:var(--ink)!important}.master-detail-card>h2,.master-report-card>h2{background:#3a3016!important;color:var(--ink)!important}.master-month-nav button{background:var(--bg)!important;color:var(--ink)!important}.master-month-nav b{color:var(--ink)!important}}
 </style>
 </head>
 <body>
@@ -652,12 +657,12 @@ function vProject(){
   var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div>';
   h+=contractBlock(p);
-  h+='<div class="sec" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span>ใช้งบไปแล้ว</span><b class="num">'+Math.round(x*100)+'%</b></div><div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
+  h+='<div class="sec master-detail-card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span>ใช้งบไปแล้ว</span><b class="num">'+Math.round(x*100)+'%</b></div><div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
     '<div class="muted" style="font-size:.9rem">'+fmt(s.outB)+' จากงบ '+fmt(p.budget)+(left>=0?' เหลือ <b class="num">'+fmt(left)+'</b>':' เกินงบ <b class="num out">'+fmt(-left)+'</b>')+'</div></div>';
-  h+='<div class="grid4"><div><small>มูลค่าสัญญา</small><b>'+fmt(p.contract)+'</b></div><div><small>รับเงินแล้ว</small><b class="in">'+fmt(s.recd)+'</b></div>'+
+  h+='<div class="grid4 master-detail-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(p.contract)+'</b></div><div><small>รับเงินแล้ว</small><b class="in">'+fmt(s.recd)+'</b></div>'+
     '<div><small>ค้างรับ</small><b>'+fmt(s.recPend)+'</b></div><div><small>ค้างจ่าย</small><b class="out">'+fmt(s.payPend)+'</b></div>'+
     '<div><small>กำไรที่คาด (สัญญา − งบ)</small><b>'+fmt(p.contract-p.budget)+'</b></div><div><small>กำไรตอนนี้ (รับ − จ่าย)</small><b class="'+(s.inB-s.outB>=0?'in':'out')+'">'+fmt(s.inB-s.outB)+'</b></div></div>';
-  h+='<div class="sec"><h2>เงินประกันสัญญา</h2>';
+  h+='<div class="sec master-detail-card"><h2>เงินประกันสัญญา</h2>';
   if(p.retAmt>0){
     h+='<div class="kv"><span>จำนวนที่ถูกหักไว้</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
        '<div class="kv"><span>ครบกำหนดรับคืน</span><span>'+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+' '+(p.retRecv?'':retTag(p))+'</span></div>'+
@@ -666,10 +671,10 @@ function vProject(){
   }else h+='<div class="empty">ยังไม่ได้บันทึกเงินประกันสัญญา แตะ "แก้ไขโครงการ" เพื่อเพิ่ม</div>';
   h+='</div>';
   var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
-  h+='<div class="sec"><h2>ค่าใช้จ่ายตามหมวด</h2>';
+  h+='<div class="sec master-detail-card"><h2>ค่าใช้จ่ายตามหมวด</h2>';
   if(!cats.length)h+='<div class="empty">ยังไม่มีรายจ่าย</div>';
   h+=(cats.length?donut(s.byCat,s.outB):'')+catRows(cats,s.byCat,s.bySub,s.outB);
-  h+='</div><div class="sec"><h2>รายการของโครงการนี้</h2>';
+  h+='</div><div class="sec master-detail-card"><h2>รายการของโครงการนี้</h2>';
   var list=S.tx.filter(function(t){return t.pid===p.id;}).sort(function(a,b){return a.date<b.date?1:-1;});
   if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';
   list.forEach(function(t){h+=rowTx(t,false);});
@@ -711,20 +716,20 @@ function vReport(){
     svg+='<rect x="'+x+'" y="'+(110-ha)+'" width="20" height="'+ha+'" rx="2" fill="var(--in)"/><rect x="'+(x+22)+'" y="'+(110-hb)+'" width="20" height="'+hb+'" rx="2" fill="var(--out)"/><text x="'+(x+21)+'" y="130" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="Sarabun,sans-serif">'+mshort(c.m)+'</text>';
   });
   svg+='<line x1="0" y1="110.5" x2="320" y2="110.5" stroke="var(--line)"/></svg>';
-  var h='<div class="mnav"><button data-act="mprev" aria-label="เดือนก่อนหน้า">‹</button><b>'+mstr(mk)+'</b><button data-act="mnext" aria-label="เดือนถัดไป">›</button></div>';
-  h+='<div class="grid4"><div><small>รายรับ (ก่อน VAT)</small><b class="in">'+fmt(i)+'</b></div><div><small>รายจ่าย (ก่อน VAT)</small><b class="out">'+fmt(o)+'</b></div><div style="grid-column:1/-1;border-left:0;padding-left:2px"><small>กำไรเบื้องต้นของเดือน</small><b style="font-size:1.6rem" class="'+(i-o>=0?'in':'out')+'">'+fmt(i-o)+'</b></div></div>';
-  h+='<div class="sec"><h2>เงินเข้าและออกจริง 6 เดือน</h2>'+svg+'<div class="muted" style="font-size:.82rem"><span class="in">■</span> เงินเข้า  <span class="out">■</span> เงินออก (นับเฉพาะที่ชำระแล้ว หลังหัก ณ ที่จ่าย)</div></div>';
+  var h='<div class="mnav master-month-nav"><button data-act="mprev" aria-label="เดือนก่อนหน้า">‹</button><b>'+mstr(mk)+'</b><button data-act="mnext" aria-label="เดือนถัดไป">›</button></div>';
+  h+='<div class="grid4 master-report-grid"><div><small>รายรับ (ก่อน VAT)</small><b class="in">'+fmt(i)+'</b></div><div><small>รายจ่าย (ก่อน VAT)</small><b class="out">'+fmt(o)+'</b></div><div style="grid-column:1/-1;border-left:0;padding-left:2px"><small>กำไรเบื้องต้นของเดือน</small><b style="font-size:1.6rem" class="'+(i-o>=0?'in':'out')+'">'+fmt(i-o)+'</b></div></div>';
+  h+='<div class="sec master-report-card"><h2>เงินเข้าและออกจริง 6 เดือน</h2>'+svg+'<div class="muted" style="font-size:.82rem"><span class="in">■</span> เงินเข้า  <span class="out">■</span> เงินออก (นับเฉพาะที่ชำระแล้ว หลังหัก ณ ที่จ่าย)</div></div>';
   var cs=Object.keys(cat).sort(function(a,b){return cat[b]-cat[a];});
-  h+='<div class="sec"><h2>รายจ่ายตามหมวดของเดือนนี้</h2>';
+  h+='<div class="sec master-report-card"><h2>รายจ่ายตามหมวดของเดือนนี้</h2>';
   if(!cs.length)h+='<div class="empty">เดือนนี้ยังไม่มีรายจ่าย</div>';
   h+=(cs.length?donut(cat,o,mshort(mk)):'')+catRows(cs,cat,csub,o);
-  h+='</div><div class="sec"><h2>ภาษีของเดือนนี้ (ประมาณการ)</h2>'+
+  h+='</div><div class="sec master-report-card"><h2>ภาษีของเดือนนี้ (ประมาณการ)</h2>'+
    '<div class="kv"><span>VAT ขาย</span><span class="num">'+fmt(vi)+'</span></div><div class="kv"><span>VAT ซื้อ</span><span class="num">'+fmt(vo)+'</span></div><div class="kv"><span>VAT ที่ต้องนำส่งโดยประมาณ</span><span class="num">'+fmt(vi-vo)+'</span></div>'+
    '<div class="kv"><span>ลูกค้าหัก ณ ที่จ่ายเรา (เครดิตภาษี)</span><span class="num">'+fmt(wi)+'</span></div><div class="kv"><span>เราหัก ณ ที่จ่ายผู้อื่น (ต้องนำส่ง)</span><span class="num">'+fmt(wo)+'</span></div></div>';
-  h+='<div class="sec"><h2>กำไรรายโครงการ (ทั้งหมด)</h2><div class="wrapx"><table><tr><th>โครงการ</th><th>รับ</th><th>จ่าย</th><th>กำไร</th></tr>';
+  h+='<div class="sec master-report-card"><h2>กำไรรายโครงการ (ทั้งหมด)</h2><div class="wrapx"><table><tr><th>โครงการ</th><th>รับ</th><th>จ่าย</th><th>กำไร</th></tr>';
   S.projects.forEach(function(p){var s=stats(p.id);h+='<tr><td>'+esc(p.name)+'</td><td class="num">'+fmt(s.inB)+'</td><td class="num">'+fmt(s.outB)+'</td><td class="num '+(s.inB-s.outB>=0?'in':'out')+'"><b>'+fmt(s.inB-s.outB)+'</b></td></tr>';});
   h+='</table></div></div>'+
-   '<div class="sec"><h2>ส่งออกรายงาน</h2><label class="lbl" for="expid" style="margin-top:6px">ขอบเขตข้อมูล</label><select id="expid" data-f="exp"><option value="">ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+((U.exportPid||'')===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'+
+   '<div class="sec master-report-card"><h2>ส่งออกรายงาน</h2><label class="lbl" for="expid" style="margin-top:6px">ขอบเขตข้อมูล</label><select id="expid" data-f="exp"><option value="">ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+((U.exportPid||'')===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'+
    '<div class="stack"><button class="btn pri" data-act="xlsx">ส่งออก Excel (.xlsx)</button><button class="btn" data-act="pdfView">รายงาน PDF / พิมพ์</button><button class="btn" data-act="csv">คัดลอกเป็น CSV</button></div>'+
    '<div class="muted" style="font-size:.82rem;margin-top:10px">ไฟล์ Excel จะเปิดหน้าต่างแชร์ของมือถือ เลือก "บันทึกไปยังไฟล์" หรือส่งเข้า LINE ได้ ใช้ได้เมื่อเปิดจากลิงก์ที่โฮสต์เอง</div></div>';
   return h;
