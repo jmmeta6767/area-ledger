@@ -316,18 +316,27 @@ function restoreThaSalaKnown(){
   S.projects=[{id:pid,name:'อาคารอเนกประสงค์ หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม',client:'',contract:0,budget:0,contractNo:'',contractDate:'',startDate:'',endDate:'',retAmt:24750,retDue:'',retRecv:false}];
   var rows=[
     ['ค่าแรง',2475,'วิศวะคุมงาน (0.5%)',false,7],
-    ['ค่าของ',2980,'เหล็ก 16 มิล 10 เส้น',true,0],
-    ['ค่างานเอกสาร',463,'ตีตราสาร',true,0],
-    ['ค่าเช่าอื่นๆ',700,'เช่าเครื่องตัดถนน',true,0],
-    ['ค่าของ',2800,'ทราย',true,0],
-    ['ค่าของ',5580,'สี/ทินเนอร์',true,0],
-    ['ค่าของ',4264,'เอโบลท์ 20*500',true,0],
-    ['ค่าของ',1029,'ลวดเชื่อม',true,0]
+    ['ค่าของ',135513,'เหล็ก',true,0,''],
+    ['ค่าของ',2980,'เหล็ก 16 มิล 10 เส้น',true,0,''],
+    ['ค่างานเอกสาร',463,'ตีตราสาร',true,0,'2026-09-28'],
+    ['ค่าเช่าอื่นๆ',700,'เช่าเครื่องตัดถนน',true,0,'2026-09-28'],
+    ['ค่าของ',2800,'ทราย',true,0,'2026-09-28'],
+    ['ค่าของ',5580,'สี/ทินเนอร์',true,0,'2026-09-26'],
+    ['ค่าของ',4264,'Jโบลท์ตัว',true,0,'2026-09-26'],
+    ['ค่าของ',1029,'ลวดเชื่อม',true,0,'2026-09-26']
   ];
-  S.tx=rows.map(function(r,i){return {id:'thasala-recovered-'+i,date:today(),type:'out',amount:r[1],cat:r[0],sub:r[2],pay:r[3]?'transfer':'',pid:pid,partner:'',vat:false,wht:false,paid:r[3],due:r[3]?'':addDays(r[4]),photo:'',note:'กู้คืนจากข้อมูลเดิมที่ยืนยันได้'};});
+  S.tx=rows.map(function(r,i){return {id:'thasala-recovered-'+i,date:r[5]||today(),type:'out',amount:r[1],cat:r[0],sub:r[2],pay:r[3]?'transfer':'',pid:pid,partner:'',vat:false,wht:false,paid:r[3],due:r[3]?'':addDays(r[4]),photo:'',note:'กู้คืนจากข้อมูลเดิมที่ยืนยันได้'};});
   S.last={pid:pid,cat:'ค่าของ',pay:'transfer'};
-  S.recoveryNote='ท่าศาลา: กู้คืน 8 จาก 10 รายการที่ยืนยันได้จากข้อมูลเดิม';
+  S.recoveryNote='ท่าศาลา: กู้คืนเฉพาะรายการที่ยืนยันได้จากข้อมูลเดิมและเอกสารที่ผู้ใช้ส่ง';
   return true;
+}
+function mergeThaSalaDocument(){
+  var p=(S.projects||[]).find(function(x){return x.id==='thasala-m7'||(x.name||'').indexOf('ท่าศาลา')>-1;});
+  if(!p)return false;
+  if(!p.retAmt)p.retAmt=24750;
+  var has=(S.tx||[]).some(function(x){return x.pid===p.id&&Number(x.amount)===135513&&(x.sub||'').indexOf('เหล็ก')>-1;});
+  if(!has)S.tx.push({id:'thasala-doc-steel-135513',date:today(),type:'out',amount:135513,cat:'ค่าของ',sub:'เหล็ก',pay:'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:true,due:'',photo:'',note:'จากเอกสารท่าศาลาที่ผู้ใช้ยืนยัน'});
+  return !has;
 }
 function persist(){
   S.updatedAt=Date.now();var json=JSON.stringify(S),ok=true;
@@ -984,7 +993,8 @@ function boot(){
     if(o&&(!ls||(o.updatedAt||0)>(ls.updatedAt||0)))best=o;
     if(best)S=best;
     var recovered=restoreThaSalaKnown();
-    if(recovered)persist();
+    var mergedThaSala=mergeThaSalaDocument();
+    if(recovered||mergedThaSala)persist();
     if(S.role==='foreman'&&U.view!=='home')U.view='list';
     U.storageBad=!storageOK();
     render();
