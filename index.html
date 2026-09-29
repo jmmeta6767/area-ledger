@@ -225,6 +225,9 @@ body{background:#f3f5f6}.hd{background:#24333d;color:#fff}.hd-in{min-height:96px
 .preview-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}.preview-kpis button{background:#fff;border:0;border-radius:15px;padding:14px;text-align:left;box-shadow:0 5px 18px rgba(28,42,50,.05)}.preview-kpis small,.preview-kpis em{display:block;color:var(--muted);font-style:normal;font-size:.76rem}.preview-kpis b{display:block;font-size:1.05rem;margin:4px 0}.kicon{display:inline-flex;width:34px;height:34px;border-radius:9px;align-items:center;justify-content:center;margin-bottom:9px}.kicon.blue{background:#e5f7ff;color:#168cc0}.kicon.pink{background:#ffeaf1;color:#db4779}.kicon.amber{background:#fff3dc;color:#dc8b12}.kicon.green{background:#e7f7f1;color:#16876d}
 .ledger-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:18px 0 10px}.ledger-tabs button{border:0;background:#fff;padding:11px 5px;border-radius:8px;font-weight:700;color:var(--muted)}.ledger-tabs button.on{background:#efb323;color:#17242c}.ledger-feed{background:#fff;border-radius:16px;overflow:hidden}.feed-head{display:flex;justify-content:space-between;padding:13px 16px;background:#fff4d5;font-weight:800}.ledger-feed .row{margin:0;border:0;border-bottom:1px solid var(--line);border-radius:0}.quick-actions{margin:14px 0 8px}
 @media(max-width:620px){.preview-project{grid-template-columns:1fr}.preview-photo{min-height:150px}.preview-project-body{padding:17px}.balance-cols{grid-template-columns:1fr 1fr;gap:14px}.balance-cols span{border:0;padding:0}.preview-kpis{grid-template-columns:1fr 1fr}.balance-title b{font-size:1.9rem}}
+/* timeline + preview navigation */
+.tx-modern{position:relative;display:grid!important;grid-template-columns:40px 1fr auto 26px!important;gap:10px;align-items:center;padding:13px 10px!important}.tx-cat-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef6f7;color:#26737d;font-weight:900;border:1px solid #dde7e9}.tx-cat-icon.income{background:#e8f6ed;color:#277e49}.tx-more{color:#9aa6ac;font-size:.72rem}.time-group{border-top:1px solid var(--line)}.time-group-head{display:flex;justify-content:space-between;padding:11px 14px;background:#fff2ca;color:#15242d}.time-body{display:grid;grid-template-columns:76px 1fr}.time-date{padding:18px 10px;text-align:center;border-right:1px solid #d9e0e3;position:relative}.time-date:after{content:"";position:absolute;right:-5px;top:26px;width:9px;height:9px;border-radius:50%;background:#8ba0aa}.time-date b{display:block;font-size:1.35rem}.time-date small{color:var(--muted);font-size:.72rem}.time-items .row:last-child{border-bottom:0}.preview-add{overflow:visible!important}.preview-add span{position:absolute;top:54px;font-size:.67rem;color:#65737b;white-space:nowrap;font-weight:600}.nav{background:#fff;border-top:1px solid #e3e7e9}.nav-in{overflow:visible}.nav .add{background:#f6b91e!important;border:5px solid #fff!important;box-shadow:0 3px 12px rgba(0,0,0,.12)!important}
+@media(max-width:560px){.time-body{grid-template-columns:58px 1fr}.tx-modern{grid-template-columns:34px 1fr auto 18px!important;gap:7px}.tx-cat-icon{width:30px;height:30px}.time-date{padding-left:4px;padding-right:4px}.tx-modern .l small{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 </style>
 </head>
 <body>
@@ -498,17 +501,31 @@ function header(title,back){
   return '<div class="hd"><div class="hd-in">'+(back?'<button class="ghost" data-act="back" aria-label="ย้อนกลับ">'+ic('back').replace('<svg','<svg width="24" height="24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"')+'</button>':'')+
     (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost settings-ico" data-act="settings"><span>⚙</span><small>ตั้งค่า</small></button>'</div><div class="stripe"></div></div>';
 }
+function txIcon(t){
+  var x=((t.sub||'')+' '+(t.cat||'')).toLowerCase();
+  if(x.indexOf('ทราย')>=0||x.indexOf('วัสดุ')>=0)return '▤';
+  if(x.indexOf('เครื่อง')>=0||x.indexOf('เช่า')>=0)return '⌁';
+  if(x.indexOf('วิศว')>=0||x.indexOf('แรง')>=0)return '▣';
+  if(x.indexOf('สี')>=0)return '▥';
+  if(x.indexOf('jโบล')>=0||x.indexOf('โบล')>=0)return '↧';
+  if(x.indexOf('เชื่อม')>=0)return '◎';
+  if(x.indexOf('ตราสาร')>=0||x.indexOf('เอกสาร')>=0)return '▧';
+  return t.type==='in'?'฿':'▦';
+}
 function rowTx(t,showProj){
-  var d=dueInfo(t),tags='';
+  var d=dueInfo(t),tags='',label=t.sub||t.partner||t.cat;
   if(t.vat)tags+='<span class="tag">VAT</span>';
   if(t.wht)tags+='<span class="tag">หัก 3%</span>';
   if(t.paid&&t.pay==='cash')tags+='<span class="tag">เงินสด</span>';
-  if(!t.paid){
-    if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';
-    else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';
-  }
-  return '<button class="row" data-act="openTx" data-id="'+t.id+'"><div class="l"><b>'+esc(t.partner||t.cat)+'</b><small>'+esc(t.cat)+(t.sub?': '+esc(t.sub):'')+(showProj?'  /  '+esc(pname(t.pid)):'')+'  /  '+dstr(t.date)+'</small></div>'+
-   '<div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</span><span>'+tags+'</span></div></button>';
+  if(!t.paid){if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';}
+  return '<button class="row tx-modern" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b><small>'+esc(showProj?pname(t.pid):(t.partner||t.cat))+'</small></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
+}
+function timelineRows(list){
+  var groups={};list.forEach(function(t){var k=t.date||'undated';(groups[k]||(groups[k]=[])).push(t);});
+  return Object.keys(groups).sort(function(a,b){if(a==='undated')return 1;if(b==='undated')return -1;return a<b?1:-1;}).map(function(k){
+    var arr=groups[k],total=arr.reduce(function(a,t){return a+(t.type==='in'?net(t):-net(t));},0),dateHtml=k==='undated'?'<b>—</b><small>ไม่ระบุวันที่</small>':'<b>'+new Date(k+'T00:00:00').getDate()+'</b><small>'+new Date(k+'T00:00:00').toLocaleDateString('th-TH',{month:'short'})+'<br>'+new Date(k+'T00:00:00').getFullYear()+543+'</small>';
+    return '<div class="time-group"><div class="time-group-head"><span>'+ (k==='undated'?'ยังไม่ระบุวันที่':new Date(k+'T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'}))+'</span><b class="num">'+fmt(Math.abs(total))+'</b></div><div class="time-body"><div class="time-date">'+dateHtml+'</div><div class="time-items">'+arr.map(function(t){return rowTx(t,true);}).join('')+'</div></div></div>';
+  }).join('');
 }
 
 function vHome(){
@@ -525,7 +542,7 @@ function vHome(){
   var list=S.tx.slice().sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
   h+='<div class="ledger-tabs"><button class="on">ทั้งหมด ('+list.length+')</button><button data-act="go" data-v="list">รับเงิน ('+S.tx.filter(function(t){return t.type==="in";}).length+')</button><button data-act="go" data-v="list">จ่ายเงิน ('+S.tx.filter(function(t){return t.type==="out";}).length+')</button><button data-act="go" data-v="due">ค้าง ('+(pending("in").length+pending("out").length)+')</button></div>';
   h+='<section class="ledger-feed"><div class="feed-head"><span>รายการล่าสุด</span><button class="link" data-act="go" data-v="list">ดูทั้งหมด</button></div>';
-  if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';else list.slice(0,9).forEach(function(t){h+=rowTx(t,true);});
+  if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';else h+=timelineRows(list.slice(0,12));
   h+='</section><div class="quick-actions"><button class="btn pri" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="go" data-v="report">รายงานบัญชี</button></div>';
   return h;
 }
@@ -985,7 +1002,7 @@ function render(){
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
     if(t[0]==='x')return;
-    if(t[0]==='add')nav+='<button class="add" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'</button>';
+    if(t[0]==='add')nav+='<button class="add preview-add" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>เพิ่มรายการ</span></button>';
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report');nav+='<button class="'+(on?'on':'')+'" data-act="go" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span></button>';}
   });
   nav+='</div></nav>';
