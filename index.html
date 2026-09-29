@@ -919,6 +919,37 @@ body.wallpaper-on .mgroup{
  .project-hub-kpis span{padding:0 5px}.project-hub-kpis small{font-size:.57rem}.project-hub-kpis b{font-size:.69rem}
  .project-hub-actions button{font-size:.66rem;min-height:39px}
 }
+
+/* APP HAMBURGER DRAWER — quick navigation */
+.app-menu-btn{width:42px;height:42px;border:0;background:transparent;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:9px;flex:none}
+.app-menu-btn span{display:block;width:22px;height:2.5px;border-radius:3px;background:#fff}
+.master-ref-header .app-menu-btn{position:absolute;left:13px;top:50%;transform:translateY(-50%);z-index:3}
+.master-ref-header .master-ref-logo{margin-left:45px}
+.app-drawer-wrap{position:fixed;inset:0;z-index:9999}
+.app-drawer-scrim{position:absolute;inset:0;border:0;background:rgba(9,15,21,.48);backdrop-filter:blur(2px)}
+.app-drawer{position:absolute;left:0;top:0;bottom:0;width:min(86vw,350px);background:#fff;box-shadow:16px 0 36px rgba(0,0,0,.18);padding:max(18px,env(safe-area-inset-top)) 14px max(18px,env(safe-area-inset-bottom));animation:drawerIn .18s ease-out}
+@keyframes drawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+.app-drawer-head{display:grid;grid-template-columns:48px 1fr 38px;gap:10px;align-items:center;padding:8px 4px 16px;border-bottom:1px solid #e8ebed}
+.app-drawer-logo{width:48px;height:48px;border-radius:12px;background:#ffd21f;color:#17202b;font-weight:900;display:grid;place-items:center;font-size:13px}
+.app-drawer-head b,.app-drawer-head small{display:block}.app-drawer-head b{font-size:15px}.app-drawer-head small{font-size:11px;color:#77808a;margin-top:2px}
+.app-drawer-head>button{width:36px;height:36px;border:0;background:#f1f3f4;border-radius:50%;font-size:24px;color:#4d5660}
+.app-drawer-menu{padding:10px 0}
+.app-drawer-menu>button{width:100%;border:0;background:transparent;display:grid;grid-template-columns:40px 1fr auto auto;gap:9px;align-items:center;text-align:left;padding:10px 8px;border-radius:12px;color:#17202b}
+.app-drawer-menu>button.on{background:#fff4cc}.app-drawer-ico{width:38px;height:38px;border-radius:10px;background:#f2f4f5;display:grid;place-items:center}
+.app-drawer-menu>button.on .app-drawer-ico{background:#ffd95d}.app-drawer-ico svg{width:20px;height:20px}
+.app-drawer-menu b,.app-drawer-menu small{display:block}.app-drawer-menu b{font-size:13px}.app-drawer-menu small{font-size:9.5px;color:#7b848c;margin-top:2px}
+.app-drawer-menu strong{font-size:22px;color:#9aa1a7}.app-drawer-menu i{font-style:normal;background:#b74731;color:#fff;min-width:22px;height:22px;border-radius:11px;display:grid;place-items:center;font-size:10px;font-weight:800}
+.app-drawer-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid #e8ebed;padding-top:12px}
+.app-drawer-quick button{border:0;border-radius:12px;min-height:48px;background:#f3f5f5;font-weight:700;color:#17202b;display:flex;align-items:center;justify-content:center;gap:7px}
+.app-drawer-quick button:first-child{background:#ffc333}.app-drawer-quick svg{width:19px;height:19px}
+@media(max-width:430px){
+ .master-ref-header .app-menu-btn{left:7px;width:38px;height:38px}.master-ref-header .master-ref-logo{margin-left:39px}
+ .app-drawer{width:84vw;max-width:330px;padding-left:12px;padding-right:12px}
+}
+@media(prefers-color-scheme:dark){
+ .app-drawer{background:#17202b;color:#fff}.app-drawer-head,.app-drawer-quick{border-color:#303b46}
+ .app-drawer-menu>button{color:#fff}.app-drawer-menu>button.on{background:#3a3320}.app-drawer-ico,.app-drawer-head>button,.app-drawer-quick button{background:#222d38;color:#fff}
+}
 </style>
 </head>
 <body>
@@ -1269,8 +1300,9 @@ function homeUrgentAlert(allMode,active,all){
 }
 
 function header(title,back){
-  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header"><div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button class="master-ref-settings" data-act="settings" aria-label="ตั้งค่า"><span>⚙</span><small>ตั้งค่า</small></button></div>';
-  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="back" aria-label="ย้อนกลับ">'+ic('back')+'</button>':'')+'<h1>'+esc(title)+'</h1><button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button></div><div class="stripe"></div></div>';
+  var menu='<button class="app-menu-btn" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button>';
+  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header">'+menu+'<div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button class="master-ref-settings" data-act="settings" aria-label="ตั้งค่า"><span>⚙</span><small>ตั้งค่า</small></button></div>';
+  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="back" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1><button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button></div><div class="stripe"></div></div>';
 }
 
 function txIcon(t){
@@ -1811,6 +1843,20 @@ function urgentCount(){
   return n;
 }
 
+
+function appMenuHtml(){
+  if(!U.appMenu)return '';
+  var due=urgentCount(),items=[
+    ['home','home','ภาพรวม','สรุปสถานะการเงิน'],
+    ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
+    ['projects','build','โครงการ','จัดการงานและส่งออกรายงาน'],
+    ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'ติดตามกำหนดชำระ'],
+    ['report','list','รายงาน','สรุปบัญชีและภาษี'],
+    ['docs','build','เอกสาร','ใบเสนอราคา / วางบิล / ใบเสร็จ']
+  ];
+  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[0]==='due'&&due?'<i>'+Math.min(due,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
+}
+
 function render(){
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
@@ -1837,7 +1883,7 @@ function render(){
   var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
   document.body.classList.toggle('wallpaper-on',wall);
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml();U.anim=0;
+  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;
 }
 
 /* ---------- เหตุการณ์ ---------- */
@@ -1845,13 +1891,16 @@ document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
+  if(a==='appMenu'){U.appMenu=true;render();return;}
+  if(a==='appMenuClose'){U.appMenu=false;render();return;}
+  if(a==='menuGo'){U.appMenu=false;go(v);return;}
   if(a==='go')go(v);
   else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
   else if(a==='back'&&U.view==='quoteprint'){go('docs');}
   else if(a==='back'&&U.view==='docs'){go('home');}
   else if(a==='back'&&U.view==='report'){go('home');}
   else if(a==='back'){U.draft=null;go(U.pid&&U.view==='add'&&U.from==='project'?'project':(U.from||(S.role==='foreman'?'list':'home')));}
-  else if(a==='newTx'){U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();}
+  else if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();}
   else if(a==='addToProj'){U.from='project';U.draft=newDraft('out',id);go('add');focusAmt();}
   else if(a==='setType'){U.draft.type=v;U.draft.cat=v==='in'?CAT_IN[1]:CAT_OUT[0];U.draft.sub='';U.draft.subCustom='';render();}
   else if(a==='cat'){U.draft.cat=v;U.draft.sub='';U.draft.subCustom='';render();}
@@ -1940,7 +1989,7 @@ document.addEventListener('click',function(e){
   else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
   else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
-  else if(a==='settings'){U.sheet={kind:'settings'};U.confirm=null;render();}
+  else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';persist();render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
