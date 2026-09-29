@@ -228,6 +228,14 @@ body{background:#f3f5f6}.hd{background:#24333d;color:#fff}.hd-in{min-height:96px
 /* timeline + preview navigation */
 .tx-modern{position:relative;display:grid!important;grid-template-columns:40px 1fr auto 26px!important;gap:10px;align-items:center;padding:13px 10px!important}.tx-cat-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef6f7;color:#26737d;font-weight:900;border:1px solid #dde7e9}.tx-cat-icon.income{background:#e8f6ed;color:#277e49}.tx-more{color:#9aa6ac;font-size:.72rem}.time-group{border-top:1px solid var(--line)}.time-group-head{display:flex;justify-content:space-between;padding:11px 14px;background:#fff2ca;color:#15242d}.time-body{display:grid;grid-template-columns:76px 1fr}.time-date{padding:18px 10px;text-align:center;border-right:1px solid #d9e0e3;position:relative}.time-date:after{content:"";position:absolute;right:-5px;top:26px;width:9px;height:9px;border-radius:50%;background:#8ba0aa}.time-date b{display:block;font-size:1.35rem}.time-date small{color:var(--muted);font-size:.72rem}.time-items .row:last-child{border-bottom:0}.preview-add{overflow:visible!important}.preview-add span{position:absolute;top:54px;font-size:.67rem;color:#65737b;white-space:nowrap;font-weight:600}.nav{background:#fff;border-top:1px solid #e3e7e9}.nav-in{overflow:visible}.nav .add{background:#f6b91e!important;border:5px solid #fff!important;box-shadow:0 3px 12px rgba(0,0,0,.12)!important}
 @media(max-width:560px){.time-body{grid-template-columns:58px 1fr}.tx-modern{grid-template-columns:34px 1fr auto 18px!important;gap:7px}.tx-cat-icon{width:30px;height:30px}.time-date{padding-left:4px;padding-right:4px}.tx-modern .l small{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+/* preview fidelity pass: header, typography, spacing, project card */
+:root{--area-yellow:#f4b820;--area-navy:#24333d;--area-deep:#12232d;--area-bg:#f3f5f6;--area-radius:16px}
+body{font-size:15px;color:#17252e}.hd-in{padding-left:20px;padding-right:20px}.brand{gap:12px}.brand .logo{width:76px;height:76px;border-radius:10px}.brand .bt b{font-size:1.04rem;letter-spacing:.02em}.brand .bt small{font-size:.82rem;color:#fff}
+main{padding-top:0}.preview-project{margin-left:0;margin-right:0;border-radius:0 0 18px 18px}.preview-project-body h2{font-weight:800}.preview-project-actions .btn{min-height:42px;border-radius:12px}
+.balance-card{margin-top:16px}.balance-title small{font-size:.92rem}.balance-title b{font-weight:800;letter-spacing:-.03em}.preview-kpis button{min-height:132px}.preview-kpis small{font-size:.83rem}.preview-kpis b{font-size:1.16rem}.preview-kpis em{font-size:.73rem}
+.ledger-tabs{position:sticky;top:96px;z-index:3;background:var(--area-bg);padding:3px 0}.ledger-feed{box-shadow:0 4px 16px rgba(30,45,54,.035)}.time-group-head{font-size:.9rem}.tx-modern .l b{font-size:.96rem}.tx-modern .r>.num{font-size:.96rem;font-weight:800}
+.nav-in{height:78px}.nav button span{font-size:.72rem}.nav .add{width:62px!important;height:62px!important;margin-top:-25px!important}.preview-add span{top:59px!important}
+@media(max-width:560px){.hd-in{min-height:94px}.brand .logo{width:64px;height:64px}.brand .bt b{font-size:.96rem}.brand .bt small{font-size:.76rem}.preview-project{margin-left:-16px;margin-right:-16px}.preview-kpis button{min-height:118px;padding:12px}.ledger-tabs{top:94px}}
 </style>
 </head>
 <body>
@@ -499,7 +507,7 @@ function newDraft(type,pid){
 /* ---------- หน้าจอ ---------- */
 function header(title,back){
   return '<div class="hd"><div class="hd-in">'+(back?'<button class="ghost" data-act="back" aria-label="ย้อนกลับ">'+ic('back').replace('<svg','<svg width="24" height="24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"')+'</button>':'')+
-    (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost settings-ico" data-act="settings"><span>⚙</span><small>ตั้งค่า</small></button>'</div><div class="stripe"></div></div>';
+    (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button>'</div><div class="stripe"></div></div>';
 }
 function txIcon(t){
   var x=((t.sub||'')+' '+(t.cat||'')).toLowerCase();
