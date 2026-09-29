@@ -245,6 +245,11 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .mitem,.mstats button,.mtabs button{cursor:pointer}
 .mitem:active,.mstats button:active,.mtabs button:active{opacity:.78}
 @media(prefers-reduced-motion:no-preference){.mitem,.mstats button,.mtabs button{transition:opacity .12s ease,transform .12s ease}.mitem:active,.mstats button:active,.mtabs button:active{transform:scale(.995)}}
+/* Master UI extension: Projects + Due */
+.master-page-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 14px}.master-action{min-height:58px;border:0;border-radius:14px;background:#fff;color:#17202b;display:flex;align-items:center;justify-content:center;gap:9px;font:700 15px "Noto Sans Thai",system-ui,sans-serif}.master-action svg{width:21px;height:21px}.master-action.primary{background:#e8a91e;color:#17202b}
+.master-project-row{background:#fff!important;border:0!important;border-radius:16px!important;padding:16px!important;margin:0 0 12px!important;box-shadow:none!important;text-align:left!important}.master-project-row .top{gap:12px}.master-project-row .top>b{font-size:16px;color:var(--ink)}.master-project-row .meta{color:var(--muted);font-size:12.5px}.master-project-row .bar{height:7px;border-radius:8px;margin:11px 0}
+.master-due-card{background:#fff!important;border:0!important;border-radius:16px!important;padding:0!important;margin:14px 0!important;overflow:hidden!important}.master-due-card>h2{margin:0!important;padding:14px 16px!important;background:#fdf1d0!important;color:#17202b!important;font-size:16px!important;display:flex!important;justify-content:space-between!important;gap:12px!important}.master-due-card .row{padding:14px 16px!important;border-top:1px solid #e6e9e8!important}.master-due-card .empty{padding:28px 16px!important}
+@media(prefers-color-scheme:dark){.master-action,.master-project-row,.master-due-card{background:var(--card)!important;color:var(--ink)!important}.master-due-card>h2{background:#3a3016!important;color:var(--ink)!important}}
 </style>
 </head>
 <body>
@@ -627,11 +632,11 @@ function prevText(d){
 }
 
 function vProjects(){
-  var h='<div class="action-grid"><button class="action-card primary" data-act="go" data-v="home">'+ic('home')+'<span>แดชบอร์ด</span></button><button class="action-card" data-act="newProj">'+ic('build')+'<span>เพิ่มโครงการ</span></button></div>';
+  var h='<div class="master-page-actions"><button class="master-action primary" data-act="go" data-v="home">'+ic('home')+'<span>แดชบอร์ด</span></button><button class="master-action" data-act="newProj">'+ic('build')+'<span>เพิ่มโครงการ</span></button></div>';
   if(!S.projects.length)h+='<div class="empty">ยังไม่มีโครงการ</div>';
   S.projects.forEach(function(p){
     var s=stats(p.id),x=budgetPct(p);
-    h+='<button class="proj" data-act="openProj" data-id="'+p.id+'"><div class="top"><b>'+esc(p.name)+'</b><span class="num '+(x>=1?'out':x>=.85?'muted':'muted')+'">'+Math.round(x*100)+'% ของงบ</span></div>'+
+    h+='<button class="proj master-project-row" data-act="openProj" data-id="'+p.id+'"><div class="top"><b>'+esc(p.name)+'</b><span class="num '+(x>=1?'out':x>=.85?'muted':'muted')+'">'+Math.round(x*100)+'% ของงบ</span></div>'+
     '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
     '<div class="meta"><span>'+esc(p.location||p.client||'ไม่ระบุสถานที่')+(p.endDate?'  ครบสัญญา '+dstr(p.endDate):'')+'</span><span><span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span> กำไร <b class="num '+(s.inB-s.outB>=0?'in':'out')+'">'+fmt(s.inB-s.outB)+'</b></span></div></button>';
   });
@@ -671,14 +676,14 @@ function vProject(){
 function vDue(){
   function block(type,title){
     var list=pending(type).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:1;});
-    var h='<div class="sec"><h2>'+title+' <span class="num '+(type==='in'?'in':'out')+'">'+fmt(sumNet(list))+'</span></h2>';
+    var h='<div class="sec master-due-card"><h2>'+title+' <span class="num '+(type==='in'?'in':'out')+'">'+fmt(sumNet(list))+'</span></h2>';
     if(!list.length)h+='<div class="empty">ไม่มียอดค้าง</div>';
     list.forEach(function(t){h+=rowTx(t,true);});
     return h+'</div>';
   }
   function retBlock(){
     var list=retOpen().sort(function(a,b){return (a.retDue||'9')<(b.retDue||'9')?-1:1;});
-    var h='<div class="sec"><h2>เงินประกันสัญญารอรับคืน <span class="num">'+fmt(list.reduce(function(a,p){return a+p.retAmt;},0))+'</span></h2>';
+    var h='<div class="sec master-due-card"><h2>เงินประกันสัญญารอรับคืน <span class="num">'+fmt(list.reduce(function(a,p){return a+p.retAmt;},0))+'</span></h2>';
     if(!list.length)h+='<div class="empty">ไม่มีเงินประกันที่รอคืน</div>';
     list.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>คืนวันที่ '+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
     return h+'</div>';
