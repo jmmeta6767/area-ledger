@@ -1384,6 +1384,32 @@ body.wallpaper-on .mgroup{
  .expense-donut-wrap{grid-template-columns:130px minmax(0,1fr)}
  .expense-donut{width:130px}
 }
+
+/* DONUT EXPENSE OVERVIEW — replaces 6 month cashflow chart */
+.dash-charts.donut-only{grid-template-columns:1fr!important}
+.dash-charts.donut-only .dash-chart-head{grid-column:1!important}
+.donut-card{min-height:260px}
+.expense-donut-wrap{display:grid;grid-template-columns:minmax(180px,260px) 1fr;align-items:center;gap:22px;padding:8px 10px 12px}
+.expense-donut{width:min(250px,100%);aspect-ratio:1;border-radius:50%;position:relative;margin:auto}
+.expense-donut:after{content:"";position:absolute;inset:23%;background:var(--m-card);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.02)}
+.expense-donut>div{position:absolute;inset:24%;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.expense-donut span{font-size:13px;color:var(--m-mut)}
+.expense-donut b{font-size:22px;line-height:1.15;color:var(--m-ink);margin-top:4px}
+.expense-donut-legend{display:grid;gap:9px}
+.expense-donut-legend>span{display:grid;grid-template-columns:10px 1fr auto;gap:7px;align-items:center;font-size:10px;color:var(--m-mut)}
+.expense-donut-legend i{width:9px;height:9px;border-radius:50%}
+.expense-donut-legend b{font-size:10px;color:var(--m-ink)}
+.donut-empty{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center}.donut-empty strong{font-size:25px}.donut-empty small{color:var(--m-mut)}
+@media(max-width:430px){
+ .donut-card{min-height:0}
+ .expense-donut-wrap{grid-template-columns:1fr;gap:13px;padding:5px 5px 9px}
+ .expense-donut{width:210px}
+ .expense-donut b{font-size:20px}
+ .expense-donut-legend{grid-template-columns:1fr 1fr;gap:7px 10px}
+ .expense-donut-legend>span{font-size:8.5px;grid-template-columns:8px 1fr auto;gap:5px}
+ .expense-donut-legend b{font-size:8.5px}
+}
+@media(prefers-color-scheme:dark){.expense-donut:after{background:#1a232d}}
 </style>
 </head>
 <body>
@@ -1813,10 +1839,19 @@ function projectCategoryChart(pid){
   var legend=ks.map(function(k,i){return '<div class="donut-legend-row"><i style="background:'+palette[i%palette.length]+'"></i><span>'+esc(k)+'</span><b>'+fmt(st.byCat[k])+'</b></div>';}).join('');
   return '<div class="expense-donut-wrap"><div class="expense-donut" style="background:conic-gradient('+stops.join(',')+')"><div class="expense-donut-hole"><span>รายจ่ายรวม</span><b>'+fmt(total)+'</b></div></div><div class="donut-legend">'+legend+'</div></div>';
 }
+function expenseDonut(all){
+  var total=0,by={};
+  all.forEach(function(t){if(t.type!=='out'||!t.paid)return;var v=net(t);total+=v;var k=t.cat||'อื่นๆ';by[k]=(by[k]||0)+v;});
+  var rows=Object.keys(by).map(function(k){return {k:k,v:by[k]};}).sort(function(a,b){return b.v-a.v;});
+  if(!total)return '<div class="donut-empty"><b>รายจ่ายรวม</b><strong>฿0</strong><small>ยังไม่มีรายจ่ายที่ชำระแล้ว</small></div>';
+  var main=rows.slice(0,5),rest=rows.slice(5).reduce(function(a,r){return a+r.v;},0);if(rest)main.push({k:'อื่นๆ',v:rest});
+  var colors=['#f2ad05','#626c75','#23313d','#7b5bb5','#3b8f78','#d66b4d'],start=0,stops=[];
+  main.forEach(function(r,i){var end=start+(r.v/total*100);stops.push(colors[i%colors.length]+' '+start.toFixed(2)+'% '+end.toFixed(2)+'%');start=end;});
+  return '<div class="expense-donut-wrap"><div class="expense-donut" style="background:conic-gradient('+stops.join(',')+')"><div><span>รายจ่ายรวม</span><b>'+fmt(total)+'</b></div></div><div class="expense-donut-legend">'+main.map(function(r,i){return '<span><i style="background:'+colors[i%colors.length]+'"></i>'+esc(r.k)+' <b>'+fmt(r.v)+'</b></span>';}).join('')+'</div></div>';
+}
 function dashboardCharts(allMode,active,all){
-  var h='<section class="dash-charts"><div class="dash-chart-head"><div><b>กราฟภาพรวม</b><small>'+(allMode?'รวมทุกโครงการ':'โครงการนี้')+'</small></div><button data-act="go" data-v="report">ดูรายงานทั้งหมด ›</button></div>';
-  h+='<div class="dash-chart-card"><h3>'+(allMode?'รับ–จ่ายแต่ละโครงการ':'ค่าใช้จ่ายตามหมวด')+'</h3>'+(allMode?projectCompareChart():projectCategoryChart(active?active.id:''))+'</div>';
-  h+='<div class="dash-chart-card"><h3>กระแสเงินสด 6 เดือน</h3>'+cashflow6(all)+'<div class="dash-legend"><span class="in">● เงินเข้า</span><span class="out">● เงินออก</span></div></div></section>';
+  var h='<section class="dash-charts donut-only"><div class="dash-chart-head"><div><b>กราฟภาพรวม</b><small>'+(allMode?'รวมทุกโครงการ':'โครงการนี้')+'</small></div><button data-act="go" data-v="report">ดูรายงานทั้งหมด ›</button></div>';
+  h+='<div class="dash-chart-card donut-card"><h3>สัดส่วนรายจ่ายตามหมวด</h3>'+expenseDonut(all)+'</div></section>';
   return h;
 }
 
