@@ -806,6 +806,11 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
   .field .tog[data-act="dueToggle"]{min-height:50px!important;padding:9px 11px!important}
   .field .tog[data-act="dueToggle"] small{font-size:9px!important;line-height:1.25!important}
 }
+
+/* DUE CONTROL CENTER — quick deadline editing and nav urgency badge */
+.nav button{position:relative}
+.nav-alert-badge{position:absolute;top:2px;right:18%;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#c94b38;color:#fff;display:grid;place-items:center;font-style:normal;font-size:8px;font-weight:800;line-height:1}
+@media(max-width:520px){.nav-alert-badge{top:1px;right:17%;min-width:15px;height:15px;font-size:7px}}
 </style>
 </head>
 <body>
@@ -1180,7 +1185,7 @@ function rowTx(t,showProj){
   if(t.wht)tags+='<span class="tag">หัก 3%</span>';
   if(t.paid&&t.pay==='cash')tags+='<span class="tag">เงินสด</span>';
   if(!t.paid){if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';}
-  return '<button class="row tx-modern" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b><small>'+esc(showProj?pname(t.pid):(t.partner||t.cat))+'</small><em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
+  return '<button class="row tx-modern" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+(t.partner?'<small>'+esc(t.partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
 }
 function timelineRows(list){
   var groups={};list.forEach(function(t){var k=t.date||'undated';(groups[k]||(groups[k]=[])).push(t);});
@@ -1574,7 +1579,17 @@ function sheetHtml(){
     b+='<div class="stack">';
     if(!t.paid)b+='<div class="lbl" style="margin:6px 0 0">'+(t.type==='in'?'รับเงินแล้วทาง':'จ่ายแล้วทาง')+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn pri" data-act="markPaid" data-id="'+t.id+'" data-pay="transfer">โอน</button><button class="btn" data-act="markPaid" data-id="'+t.id+'" data-pay="cash">เงินสด</button></div>';
     if(owner){b+='<button class="btn" data-act="editTx" data-id="'+t.id+'">แก้ไขรายการ</button><button class="btn dng'+(U.confirm==='tx'+t.id?' sure':'')+'" data-act="delTx" data-id="'+t.id+'">'+(U.confirm==='tx'+t.id?'แตะอีกครั้งเพื่อยืนยันลบ':'ลบรายการ')+'</button>';}
+    if(!t.paid)b+='<button class="btn" data-act="editDueTx" data-id="'+t.id+'">'+(t.due?'แก้ไขวันครบกำหนด':'เพิ่มวันครบกำหนด')+'</button>'+(t.due?'<button class="btn" data-act="clearDueTx" data-id="'+t.id+'">ปิดวันครบกำหนด</button>':'');
     b+='<button class="btn" data-act="closeSheet">ปิด</button></div>';
+  }else if(sh.kind==='dueEdit'){
+    var dt=S.tx.find(function(x){return x.id===sh.id;});if(!dt){U.sheet=null;return '';}
+    b='<h3>'+(dt.due?'แก้ไขวันครบกำหนด':'เพิ่มวันครบกำหนด')+'</h3>'+
+      '<div class="kv"><span>รายการ</span><span>'+esc(dt.sub||dt.partner||dt.cat)+'</span></div>'+
+      '<div class="kv"><span>โครงการ</span><span>'+esc(pname(dt.pid))+'</span></div>'+
+      '<div class="field"><label for="quickDue">วันที่ครบกำหนด</label><input id="quickDue" type="date" value="'+esc(dt.due||addDays(7))+'"></div>'+
+      '<div class="stack"><button class="btn pri" data-act="saveDueTx" data-id="'+dt.id+'">บันทึกวันครบกำหนด</button>'+
+      (dt.due?'<button class="btn" data-act="clearDueTx" data-id="'+dt.id+'">ปิดวันครบกำหนด</button>':'')+
+      '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='proj'){
     var p=sh.id?proj(sh.id):null;
     b='<h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3>'+
@@ -1667,6 +1682,16 @@ function csvText(){
 }
 
 /* ---------- วาดหน้า ---------- */
+function urgentCount(){
+  var n=0;
+  S.tx.forEach(function(t){if(!t.paid&&t.due){var d=dd(today(),t.due);if(d<=7)n++;}});
+  S.projects.forEach(function(p){
+    if((p.status||'active')==='active'&&p.endDate&&dd(today(),p.endDate)<=7)n++;
+    var rd=retDays(p);if(p.retAmt>0&&!p.retRecv&&rd!==null&&rd<=7)n++;
+  });
+  return n;
+}
+
 function render(){
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
@@ -1686,7 +1711,7 @@ function render(){
   tabs.forEach(function(t){
     if(t[0]==='x')return;
     if(t[0]==='add')nav+='<button class="add preview-add" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>เพิ่มรายการ</span></button>';
-    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report');nav+='<button class="'+(on?'on':'')+'" data-act="go" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span></button>';}
+    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='due'?urgentCount():0);nav+='<button class="'+(on?'on':'')+'" data-act="go" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
   var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
@@ -1732,6 +1757,16 @@ document.addEventListener('click',function(e){
   else if(a==='pdfView')go('print');
   else if(a==='doPrint'){try{window.print();}catch(x){toast('เครื่องนี้สั่งพิมพ์ไม่ได้');}}
   else if(a==='openTx'){U.sheet={kind:'tx',id:id};U.confirm=null;render();}
+  else if(a==='editDueTx'){U.sheet={kind:'dueEdit',id:id};U.confirm=null;render();}
+  else if(a==='saveDueTx'){
+    var qd=S.tx.find(function(x){return x.id===id;}),qel=document.getElementById('quickDue');
+    if(!qd||!qel||!qel.value){toast('เลือกวันที่ครบกำหนดก่อน');return;}
+    qd.due=qel.value;qd.paid=false;persist();U.sheet={kind:'tx',id:id};render();toast('บันทึกวันครบกำหนดแล้ว');
+  }
+  else if(a==='clearDueTx'){
+    var cd=S.tx.find(function(x){return x.id===id;});
+    if(cd){cd.due='';cd.paid=false;persist();U.sheet={kind:'tx',id:id};render();toast('ปิดวันครบกำหนดแล้ว');}
+  }
   else if(a==='closeSheet'){U.sheet=null;U.confirm=null;render();}
   else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(t){t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';persist();U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}}
   else if(a==='editTx'){
