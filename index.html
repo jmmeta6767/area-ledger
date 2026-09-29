@@ -208,6 +208,7 @@ th{color:var(--muted);font-weight:500}
 .cash-modern{border-radius:18px!important;box-shadow:0 8px 24px rgba(20,28,32,.06)}
 .kpi4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 18px}.kpi4 button{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:left;min-height:96px}.kpi4 small,.kpi4 span{display:block;color:var(--muted);font-size:.78rem}.kpi4 b{display:block;font-size:1.12rem;margin:6px 0}
 @media(min-width:700px){.kpi4{grid-template-columns:repeat(4,1fr)}}
+ .mini-status{display:inline-block;background:#eef1f2;border-radius:999px;padding:3px 7px;font-size:.72rem;color:var(--ink);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -506,8 +507,9 @@ function vHome(){
   var recent=S.tx.slice().sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,5);
   var nudge='';
   if(S.tx.length>=5&&(!S.lastBackup||Date.now()-S.lastBackup>30*86400000))nudge='<button class="row" data-act="backup" style="margin-top:0"><div class="l"><b>ยังไม่ได้สำรองข้อมูลเลย หรือนานเกิน 30 วัน</b><small>แตะเพื่อสำรองไว้กันข้อมูลหาย</small></div></button>';
-  var active=S.projects[0]||null,ast=active?stats(active.id):null;
-  var hero=active?'<button class="project-hero" data-act="openProj" data-id="'+active.id+'"><div class="project-hero-kicker">โครงการปัจจุบัน <span class="status-pill">กำลังดำเนินการ</span></div><b>'+esc(active.name)+'</b><small>'+esc(active.client||'แตะเพื่อดูรายละเอียดโครงการ')+'</small><span class="hero-link">ดูรายละเอียดโครงการ →</span></button>':'';
+  var active=S.projects.find(function(p){return (p.status||'active')==='active';})||S.projects[0]||null,ast=active?stats(active.id):null;
+  var statusName={active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'};
+  var hero=active?'<button class="project-hero" data-act="openProj" data-id="'+active.id+'"><div class="project-hero-kicker">โครงการปัจจุบัน <span class="status-pill">'+esc(statusName[active.status||'active']||'กำลังดำเนินการ')+'</span></div><b>'+esc(active.name)+'</b><small>'+esc(active.location||active.client||'แตะเพื่อดูรายละเอียดโครงการ')+'</small><span class="hero-link">ดูรายละเอียดโครงการ →</span></button>':'';
   var h=nudge+hero+'<div class="cash cash-modern"><small>เงินคงเหลือตามรายการ</small><div class="big num">'+fmt(cashBalance())+'</div>'+
    '<div class="mrow"><span>เดือนนี้ รับ <b class="in num">'+fmt(inM)+'</b></span><span>จ่าย <b class="out num">'+fmt(outM)+'</b></span><span>กำไรเบื้องต้น <b class="num">'+fmt(inM-outM)+'</b></span></div><div class="mrow" style="margin-top:8px"><span>ในบัญชี <b class="num">'+fmt(cs2.bank)+'</b></span><span>เงินสดในมือ <b class="num">'+fmt(cs2.cash)+'</b></span></div></div>';
   var ro0=retOpen(),retTotal=ro0.reduce(function(a,p){return a+p.retAmt;},0);
@@ -599,7 +601,7 @@ function vProjects(){
     var s=stats(p.id),x=budgetPct(p);
     h+='<button class="proj" data-act="openProj" data-id="'+p.id+'"><div class="top"><b>'+esc(p.name)+'</b><span class="num '+(x>=1?'out':x>=.85?'muted':'muted')+'">'+Math.round(x*100)+'% ของงบ</span></div>'+
     '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
-    '<div class="meta"><span>'+esc(p.client||'ไม่ระบุลูกค้า')+(p.endDate?'  ครบสัญญา '+dstr(p.endDate):'')+'</span><span>กำไรตอนนี้ <b class="num '+(s.inB-s.outB>=0?'in':'out')+'">'+fmt(s.inB-s.outB)+'</b></span></div></button>';
+    '<div class="meta"><span>'+esc(p.location||p.client||'ไม่ระบุสถานที่')+(p.endDate?'  ครบสัญญา '+dstr(p.endDate):'')+'</span><span><span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span> กำไร <b class="num '+(s.inB-s.outB>=0?'in':'out')+'">'+fmt(s.inB-s.outB)+'</b></span></div></button>';
   });
   return h;
 }
@@ -607,7 +609,7 @@ function vProjects(){
 function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
   var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB;
-  var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+'</div>';
+  var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div>';
   h+=contractBlock(p);
   h+='<div class="sec" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span>ใช้งบไปแล้ว</span><b class="num">'+Math.round(x*100)+'%</b></div><div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
     '<div class="muted" style="font-size:.9rem">'+fmt(s.outB)+' จากงบ '+fmt(p.budget)+(left>=0?' เหลือ <b class="num">'+fmt(left)+'</b>':' เกินงบ <b class="num out">'+fmt(-left)+'</b>')+'</div></div>';
@@ -829,6 +831,8 @@ function sheetHtml(){
     b='<h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3>'+
      '<div class="field"><label for="pn">ชื่อโครงการ</label><input id="pn" type="text" value="'+esc(p?p.name:'')+'" placeholder="เช่น บ้านคุณสมชาย"></div>'+
      '<div class="field"><label for="pc">ลูกค้า / เจ้าของงาน</label><input id="pc" type="text" value="'+esc(p?p.client:'')+'"></div>'+
+     '<div class="field"><label for="ploc">สถานที่ / พื้นที่โครงการ</label><input id="ploc" type="text" value="'+esc(p&&p.location?p.location:'')+'" placeholder="เช่น หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม"></div>'+
+     '<div class="field"><label for="pstatus">สถานะโครงการ</label><select id="pstatus"><option value="active"'+(!p||!p.status||p.status==="active"?" selected":"")+'>กำลังดำเนินการ</option><option value="waiting"'+(p&&p.status==="waiting"?" selected":"")+'>รอเริ่มงาน</option><option value="delivered"'+(p&&p.status==="delivered"?" selected":"")+'>ส่งมอบแล้ว</option><option value="closed"'+(p&&p.status==="closed"?" selected":"")+'>ปิดโครงการ</option></select></div>'+
      '<div class="field"><label for="pno">สัญญาเลขที่</label><input id="pno" type="text" value="'+esc(p?p.contractNo:'')+'" placeholder="เช่น 001/2569"></div>'+
      '<div class="field"><label for="pcd">ลงวันที่</label><input id="pcd" type="date" value="'+(p&&p.contractDate?p.contractDate:'')+'"></div>'+
      '<div class="field"><label for="psd">วันเริ่มต้นสัญญา</label><input id="psd" type="date" value="'+(p&&p.startDate?p.startDate:'')+'"></div>'+
@@ -978,7 +982,7 @@ document.addEventListener('click',function(e){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
     var sd0=document.getElementById('psd').value,ed0=document.getElementById('ped').value;
     if(sd0&&ed0&&ed0<sd0){toast('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มต้น');return;}
-    var o={name:n,client:document.getElementById('pc').value.trim(),contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:parseFloat(document.getElementById('pr').value)||0,retDue:document.getElementById('prd').value||'',contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
+    var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:document.getElementById('pstatus').value||'active',contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:parseFloat(document.getElementById('pr').value)||0,retDue:document.getElementById('prd').value||'',contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
     if(id){var pp=proj(id);Object.assign(pp,o);}else{o.id=uid();S.projects.push(o);}
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
