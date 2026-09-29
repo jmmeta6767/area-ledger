@@ -445,7 +445,7 @@ function rowTx(t,showProj){
 function vHome(){
   if(!S.projects.length&&!S.tx.length){
     return '<div class="cash"><small>ยินดีต้อนรับ</small><div class="big num" style="font-size:1.7rem">เริ่มบันทึกบัญชีหน้างาน</div><div class="muted">ข้อมูลเก็บไว้ในเครื่องนี้ ไม่หายจนกว่าจะลบเอง</div></div>'+
-      '<div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการแรก</button>'+(isStandalone()?'':'<button class="btn" data-act="install">วิธีติดตั้งบน iPhone</button>')+'<button class="btn" data-act="demo">ดูข้อมูลตัวอย่างก่อน</button><button class="btn" data-act="restoreOpen">กู้คืนจากข้อมูลสำรอง</button></div>';
+      '<div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการแรก</button>'+(isStandalone()?'':'<button class="btn" data-act="install">วิธีติดตั้งบน iPhone</button>')+'<button class="btn" data-act="restoreOpen">กู้คืนจากข้อมูลสำรอง</button></div>';
   }
   var mk=today().slice(0,7),inM=0,outM=0;
   S.tx.forEach(function(t){if(t.date.slice(0,7)===mk){if(t.type==='in')inM+=base(t);else outM+=base(t);}});
@@ -791,7 +791,7 @@ function sheetHtml(){
     b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
      (S.role==='owner'?'<div class="field"><label for="brn">ชื่อกิจการ</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div><div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
-     '<div class="stack">'+(S.role==='owner'?'<button class="btn" data-act="saveOpen">บันทึกการตั้งค่าบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn" data-act="install">วิธีติดตั้งบน iPhone</button><button class="btn" data-act="demo">โหลดข้อมูลตัวอย่างใหม่</button><button class="btn dng'+(U.confirm==='clear'?' sure':'')+'" data-act="clear">'+(U.confirm==='clear'?'แตะอีกครั้งเพื่อยืนยันล้างข้อมูล':'ล้างข้อมูลทั้งหมด เริ่มใช้งานจริง')+'</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
+     '<div class="stack">'+(S.role==='owner'?'<button class="btn" data-act="saveOpen">บันทึกการตั้งค่าบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn" data-act="install">วิธีติดตั้งบน iPhone</button><button class="btn dng'+(U.confirm==='clear'?' sure':'')+'" data-act="clear">'+(U.confirm==='clear'?'แตะอีกครั้งเพื่อยืนยันล้างข้อมูล':'ล้างข้อมูลทั้งหมด เริ่มใช้งานจริง')+'</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บในเครื่องนี้ถาวรจนกว่าจะลบเอง (ไม่ซิงค์ข้ามเครื่อง) '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
   }else if(sh.kind==='install'){
     b='<h3>ติดตั้งบน iPhone</h3><ol style="padding-left:22px;line-height:1.7;margin:10px 0">'+
@@ -906,7 +906,6 @@ document.addEventListener('click',function(e){
   else if(a==='settings'){U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='role'){S.role=v;persist();U.view=v==='foreman'?'list':'home';render();}
   else if(a==='saveOpen'){S.opening=parseFloat(document.getElementById('op').value)||0;S.openCash=parseFloat(document.getElementById('opc').value)||0;S.bank=document.getElementById('bnk').value.trim();S.brand=document.getElementById('brn').value.trim()||'AREA MAIBAB';persist();U.sheet=null;render();toast('บันทึกการตั้งค่าแล้ว');}
-  else if(a==='demo'){var r=S.role;S=seed();S.role=r;persist();U.sheet=null;go('home');toast('โหลดข้อมูลตัวอย่างแล้ว');}
   else if(a==='clear'){if(U.confirm==='clear'){S=emptyState();persist();U.sheet=null;U.confirm=null;go('projects');toast('ล้างข้อมูลแล้ว เริ่มเพิ่มโครงการแรกได้เลย');}else{U.confirm='clear';render();}}
   else if(a==='mprev'){U.month=shiftMonth(U.month,-1);render();}
   else if(a==='mnext'){U.month=shiftMonth(U.month,1);render();}
