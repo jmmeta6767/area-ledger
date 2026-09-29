@@ -272,6 +272,9 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 @media(max-width:390px){.master-doc-create{grid-template-columns:1fr!important}.master-doc-create .btn{min-height:46px!important}.nav span{font-size:10.5px!important}}
 @media(prefers-color-scheme:dark){.master-form-page>.seg,.master-form-page>.field,.master-form-page .prev,.master-doc-card{background:var(--card)!important;color:var(--ink)!important}.master-form-page input,.master-form-page select,.master-form-page textarea{background:var(--bg)!important;color:var(--ink)!important;border-color:var(--line)!important}.master-form-page .savebar{background:rgba(15,21,28,.94)!important;border-color:var(--line)!important}.master-doc-card>h2{background:#3a3016!important;color:var(--ink)!important}}
 @media print{.mheader,.hd,.nav,.master-sheet,.master-scrim,.no-print{display:none!important}#app,main{max-width:none!important;background:#fff!important;padding:0!important}.quote-paper{box-shadow:none!important;margin:0!important;border:0!important}}
+/* Semantic transaction icon system */
+.mico,.tx-cat-icon{width:42px!important;height:42px!important;flex:0 0 42px!important;border-radius:13px!important;background:#f1f3f2!important;display:grid!important;place-items:center!important;color:#59636d!important}.mico svg,.tx-cat-icon svg{width:23px!important;height:23px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}.mico.income,.tx-cat-icon.income{background:#e8f6ef!important;color:#1e7a4a!important}.mitem{min-height:78px!important}.mitem:hover .mico,.mitem:active .mico{background:#fdf1d0!important;color:#9a6b00!important}.mtext>b{font-size:16px!important;line-height:1.35!important}.mtext>small{font-size:12.5px!important;margin-top:3px!important}.mamt{font-size:16px!important}.mdate b{font-size:18px!important}.mdate small{line-height:1.25!important}.mtext i{margin-left:5px!important}.mgroup{box-shadow:0 1px 0 rgba(23,32,43,.03)!important}
+@media(prefers-color-scheme:dark){.mico,.tx-cat-icon{background:#26313c!important;color:#aab5bf!important}.mico.income,.tx-cat-icon.income{background:#173b2b!important;color:#71d4a3!important}.mitem:hover .mico,.mitem:active .mico{background:#3a3016!important;color:#f0c14b!important}}
 </style>
 </head>
 <body>
@@ -562,14 +565,19 @@ function header(title,back){
 
 function txIcon(t){
   var x=((t.sub||'')+' '+(t.cat||'')).toLowerCase();
-  if(x.indexOf('ทราย')>=0||x.indexOf('วัสดุ')>=0)return '▤';
-  if(x.indexOf('เครื่อง')>=0||x.indexOf('เช่า')>=0)return '⌁';
-  if(x.indexOf('วิศว')>=0||x.indexOf('แรง')>=0)return '▣';
-  if(x.indexOf('สี')>=0)return '▥';
-  if(x.indexOf('jโบล')>=0||x.indexOf('โบล')>=0)return '↧';
-  if(x.indexOf('เชื่อม')>=0)return '◎';
-  if(x.indexOf('ตราสาร')>=0||x.indexOf('เอกสาร')>=0)return '▧';
-  return t.type==='in'?'฿':'▦';
+  var n='M12 2C7 2 3 6 3 11s4 9 9 11c5-2 9-6 9-11s-4-9-9-9Z';
+  if(x.indexOf('เหล็ก')>=0)return '<svg viewBox="0 0 24 24"><path d="M5 19 19 5M8 21 21 8M3 16 16 3M4 20l-1-4 13-13 4 1 1 4L8 21Z"/></svg>';
+  if(x.indexOf('ทราย')>=0)return '<svg viewBox="0 0 24 24"><path d="M4 19h16M6 17c1-5 3-8 6-8s5 3 6 8M8 9c1-3 2-5 4-5s3 2 4 5"/></svg>';
+  if(x.indexOf('ตัดถนน')>=0||x.indexOf('เครื่องตัด')>=0)return '<svg viewBox="0 0 24 24"><circle cx="13" cy="14" r="6"/><circle cx="13" cy="14" r="2"/><path d="M4 7h8l3 2M4 7v5h3M18 10l2-3"/></svg>';
+  if(x.indexOf('เช่า')>=0||x.indexOf('เครื่อง')>=0)return '<svg viewBox="0 0 24 24"><path d="M4 20h16M6 20v-9h12v9M8 11V7h8v4M9 15h6"/></svg>';
+  if(x.indexOf('ตราสาร')>=0||x.indexOf('เอกสาร')>=0)return '<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6Z"/><path d="M15 3v4h4M9 11h6M9 15h6"/></svg>';
+  if(x.indexOf('ลวดเชื่อม')>=0||x.indexOf('เชื่อม')>=0)return '<svg viewBox="0 0 24 24"><path d="M4 18 15 7M12 5l7 7M7 15l3 3M16 15l1 3M19 14l2 2M15 18l-1 3"/></svg>';
+  if(x.indexOf('โบล')>=0||x.indexOf('bolt')>=0)return '<svg viewBox="0 0 24 24"><path d="m8 4 3-2 3 2v4l5 5-6 6-5-5H4l-2-3 2-3h4Z"/><path d="m12 12 4 4"/></svg>';
+  if(x.indexOf('สี')>=0||x.indexOf('ทินเนอร์')>=0)return '<svg viewBox="0 0 24 24"><path d="M7 3h10l2 5-2 13H7L5 8Z"/><path d="M5 8h14M9 3v5M15 3v5"/></svg>';
+  if(x.indexOf('วิศว')>=0||x.indexOf('โฟร์แมน')>=0)return '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 21v-3c0-4 3-6 7-6s7 2 7 6v3M8 13l4 4 4-4M9 5V3h6v2"/></svg>';
+  if(x.indexOf('10%')>=0||x.indexOf('ประกัน')>=0)return '<svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="M8 15 16 7M9 8h.01M15 14h.01"/></svg>';
+  if(t.type==='in')return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M8 9h6a2 2 0 0 1 0 4h-4a2 2 0 0 0 0 4h6"/></svg>';
+  return '<svg viewBox="0 0 24 24"><path d="M5 5h14v14H5Z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>';
 }
 function rowTx(t,showProj){
   var d=dueInfo(t),tags='',label=t.sub||t.partner||t.cat;
@@ -599,7 +607,7 @@ function vHome(){
   var list=all.filter(function(t){return hf==='all'||(hf==='pend'?!t.paid:t.type===hf);}).sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
   if(!list.length)return h+'<div class="empty">ยังไม่มีรายการ<br>กดปุ่ม + เพื่อเพิ่มรายการแรก</div>';
   var g={};list.forEach(function(t){var k=t.date?t.date.slice(0,7):'none';(g[k]||(g[k]=[])).push(t);});
-  Object.keys(g).sort(function(a,b){if(a==='none')return 1;if(b==='none')return -1;return a<b?1:-1;}).forEach(function(k){var rows=g[k],month=k==='none'?'ยังไม่ระบุวันที่':new Date(k+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'}),pm=rows.filter(function(t){return t.type==='out'&&t.paid;}).reduce(function(a,t){return a+net(t);},0),tot=rows.reduce(function(a,t){return a+net(t);},0);h+='<section class="mgroup"><div class="mgh"><span>'+month+'</span><b>'+fmt(tot)+'</b></div><div class="mgs">'+rows.length+' รายการ · จ่ายแล้ว '+fmt(pm)+'</div>';rows.forEach(function(t){var d=t.date?new Date(t.date+'T00:00:00'):null,label=t.sub||t.partner||t.cat;h+='<button class="mitem" data-act="openTx" data-id="'+t.id+'"><div class="mdate">'+(d?'<b>'+d.getDate()+'</b><small>'+d.toLocaleDateString('th-TH',{month:'short'})+'<br>'+(d.getFullYear()+543)+'</small>':'<b>–</b><small>รอระบุ</small>')+'</div><div class="mico">'+(t.type==='in'?'฿':'▧')+'</div><div class="mtext"><b>'+esc(label)+(t.paid?'':' <i>ค้าง</i>')+'</b><small>'+esc(pname(t.pid))+'</small></div><div class="mamt '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</div></button>';});h+='</section>';});
+  Object.keys(g).sort(function(a,b){if(a==='none')return 1;if(b==='none')return -1;return a<b?1:-1;}).forEach(function(k){var rows=g[k],month=k==='none'?'ยังไม่ระบุวันที่':new Date(k+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'}),pm=rows.filter(function(t){return t.type==='out'&&t.paid;}).reduce(function(a,t){return a+net(t);},0),tot=rows.reduce(function(a,t){return a+net(t);},0);h+='<section class="mgroup"><div class="mgh"><span>'+month+'</span><b>'+fmt(tot)+'</b></div><div class="mgs">'+rows.length+' รายการ · จ่ายแล้ว '+fmt(pm)+'</div>';rows.forEach(function(t){var d=t.date?new Date(t.date+'T00:00:00'):null,label=t.sub||t.partner||t.cat;h+='<button class="mitem" data-act="openTx" data-id="'+t.id+'"><div class="mdate">'+(d?'<b>'+d.getDate()+'</b><small>'+d.toLocaleDateString('th-TH',{month:'short'})+'<br>'+(d.getFullYear()+543)+'</small>':'<b>–</b><small>รอระบุ</small>')+'</div><div class="mico '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</div><div class="mtext"><b>'+esc(label)+(t.paid?'':' <i>ค้าง</i>')+'</b><small>'+esc(pname(t.pid))+'</small></div><div class="mamt '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</div></button>';});h+='</section>';});
   return h;
 }
 
