@@ -1575,6 +1575,38 @@ body.wallpaper-on .mgroup{
 @media(prefers-color-scheme:dark){
  .expense-donut:after{background:#1a232d!important}
 }
+
+/* MOBILE DENSITY FIX V3 */
+@media(max-width:430px){
+.mdash-period{margin-top:8px!important;margin-bottom:6px!important;font-size:16px!important}
+.mdash-stats{gap:7px!important;margin-bottom:7px!important}
+.mdash-stats>button{min-height:108px!important;padding:11px!important;border-radius:15px!important}
+.mdash-stats>button>span:not(.mdash-stat-icon){font-size:14px!important;line-height:1.25!important}
+.mdash-stats>button>b{font-size:21px!important;line-height:1.1!important;margin-top:5px!important}
+.mdash-stats>button>small{font-size:11px!important;line-height:1.2!important;margin-top:4px!important;padding-top:0!important}
+.mdash-stat-icon{width:36px!important;height:36px!important;margin-bottom:5px!important}
+.dash-charts.donut-only{margin-top:8px!important;margin-bottom:7px!important;gap:5px!important}
+.dash-chart-head{margin:0!important;padding:0 2px 2px!important;min-height:40px!important}
+.dash-chart-head b{font-size:17px!important;line-height:1.2!important}
+.dash-chart-head small{font-size:12px!important;line-height:1.2!important}
+.dash-chart-head button{min-height:36px!important;padding:4px 0 4px 8px!important;font-size:12px!important}
+.dash-chart-card.donut-card{padding:11px!important;border-radius:16px!important}
+.dash-chart-card.donut-card h3{font-size:15px!important;line-height:1.25!important;margin:0 0 6px!important}
+.expense-donut-wrap{grid-template-columns:154px minmax(0,1fr)!important;gap:9px!important;padding:0!important}
+.expense-donut{width:154px!important}
+.expense-donut span{font-size:12px!important}.expense-donut b{font-size:18px!important}
+.expense-donut-legend{grid-template-columns:1fr!important;gap:6px!important}
+.expense-donut-legend>span{grid-template-columns:9px minmax(0,1fr) auto!important;gap:6px!important;font-size:11.5px!important;line-height:1.15!important}
+.expense-donut-legend>span>span,.expense-donut-legend b{font-size:11.5px!important;line-height:1.15!important}
+}
+@media(max-width:375px){
+.mdash-stats>button{min-height:102px!important;padding:10px!important}
+.mdash-stats>button>span:not(.mdash-stat-icon){font-size:13px!important}
+.mdash-stats>button>b{font-size:19px!important}
+.expense-donut-wrap{grid-template-columns:140px minmax(0,1fr)!important;gap:7px!important}
+.expense-donut{width:140px!important}
+.expense-donut-legend>span,.expense-donut-legend>span>span,.expense-donut-legend b{font-size:10.5px!important}
+}
 </style>
 </head>
 <body>
