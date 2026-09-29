@@ -310,6 +310,25 @@ function seed(){
   T.forEach(function(t){t.pay=t.paid?((t.type==='out'&&(t.cat==='น้ำมัน'||t.cat==='ขนส่ง'))?'cash':'transfer'):'';});
   return migrate({projects:P,tx:T,role:'owner',opening:150000,openCash:50000,customSubs:{}});
 }
+function restoreThaSalaKnown(){
+  if((S.projects&&S.projects.length)||(S.tx&&S.tx.length))return false;
+  var pid='thasala-m7';
+  S.projects=[{id:pid,name:'อาคารอเนกประสงค์ หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม',client:'',contract:0,budget:0,contractNo:'',contractDate:'',startDate:'',endDate:'',retAmt:24750,retDue:'',retRecv:false}];
+  var rows=[
+    ['ค่าแรง',2475,'วิศวะคุมงาน (0.5%)',false,7],
+    ['ค่าของ',2980,'เหล็ก 16 มิล 10 เส้น',true,0],
+    ['ค่างานเอกสาร',463,'ตีตราสาร',true,0],
+    ['ค่าเช่าอื่นๆ',700,'เช่าเครื่องตัดถนน',true,0],
+    ['ค่าของ',2800,'ทราย',true,0],
+    ['ค่าของ',5580,'สี/ทินเนอร์',true,0],
+    ['ค่าของ',4264,'เอโบลท์ 20*500',true,0],
+    ['ค่าของ',1029,'ลวดเชื่อม',true,0]
+  ];
+  S.tx=rows.map(function(r,i){return {id:'thasala-recovered-'+i,date:today(),type:'out',amount:r[1],cat:r[0],sub:r[2],pay:r[3]?'transfer':'',pid:pid,partner:'',vat:false,wht:false,paid:r[3],due:r[3]?'':addDays(r[4]),photo:'',note:'กู้คืนจากข้อมูลเดิมที่ยืนยันได้'};});
+  S.last={pid:pid,cat:'ค่าของ',pay:'transfer'};
+  S.recoveryNote='ท่าศาลา: กู้คืน 8 จาก 10 รายการที่ยืนยันได้จากข้อมูลเดิม';
+  return true;
+}
 function persist(){
   S.updatedAt=Date.now();var json=JSON.stringify(S),ok=true;
   try{localStorage.setItem(KEY,json);}catch(e){ok=false;}
@@ -964,6 +983,8 @@ function boot(){
     var ls=loadLS(),best=ls;
     if(o&&(!ls||(o.updatedAt||0)>(ls.updatedAt||0)))best=o;
     if(best)S=best;
+    var recovered=restoreThaSalaKnown();
+    if(recovered)persist();
     if(S.role==='foreman'&&U.view!=='home')U.view='list';
     U.storageBad=!storageOK();
     render();
