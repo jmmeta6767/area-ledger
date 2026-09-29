@@ -811,6 +811,60 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .nav button{position:relative}
 .nav-alert-badge{position:absolute;top:2px;right:18%;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#c94b38;color:#fff;display:grid;place-items:center;font-style:normal;font-size:8px;font-weight:800;line-height:1}
 @media(max-width:520px){.nav-alert-badge{top:1px;right:17%;min-width:15px;height:15px;font-size:7px}}
+
+/* AREA APP WALLPAPER — subtle construction-office background */
+body.wallpaper-on{
+  background-color:#dfe4e1!important;
+  background-image:
+    linear-gradient(180deg,rgba(242,244,243,.76),rgba(231,235,232,.84)),
+    radial-gradient(circle at 82% 13%,rgba(255,210,31,.24),transparent 28%),
+    radial-gradient(circle at 8% 70%,rgba(23,32,43,.08),transparent 34%),
+    url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iMTIwMCIgdmlld0JveD0iMCAwIDYwMCAxMjAwIj4KPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTcyMDJiIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9Ii4xOCI+CiAgPHBhdGggZD0iTTQwIDEwNTBINTYwTTkwIDEwNTBWNzYwSDI2MFYxMDUwTTExNSA4MjBIMjM1TTExNSA4NzVIMjM1TTExNSA5MzBIMjM1TTExNSA5ODVIMjM1Ii8+CiAgPHBhdGggZD0iTTM0MCAxMDUwVjY5MEg1MTVWMTA1ME0zNjUgNzUwSDQ5ME0zNjUgODA1SDQ5ME0zNjUgODYwSDQ5ME0zNjUgOTE1SDQ5ME0zNjUgOTcwSDQ5MCIvPgogIDxwYXRoIGQ9Ik00MjAgNjkwVjQxME00MjAgNDQwSDU1ME00MjAgNDQwTDUwMCA1MDBNNTE1IDQ0MFY1MjAiLz4KICA8Y2lyY2xlIGN4PSI0MjAiIGN5PSI0MTAiIHI9IjciLz4KPC9nPgo8ZyBmaWxsPSIjZThhOTFlIiBvcGFjaXR5PSIuMTEiPgogPHBhdGggZD0iTTAgMGgyMTBMMCAzMjB6Ii8+PHBhdGggZD0iTTYwMCAyMTBWMEg0MzB6Ii8+CjwvZz4KPC9zdmc+")!important;
+  background-size:cover,cover,cover,520px 1040px!important;
+  background-position:center,center,center,center top!important;
+  background-repeat:no-repeat,no-repeat,no-repeat,repeat-y!important;
+  background-attachment:fixed!important;
+}
+body.wallpaper-on #app{
+  background:linear-gradient(180deg,rgba(241,243,242,.91),rgba(241,243,242,.80))!important;
+  box-shadow:0 0 36px rgba(23,32,43,.08);
+}
+body.wallpaper-on main{background:transparent!important}
+body.wallpaper-on .mbal,
+body.wallpaper-on .mdash-stats button,
+body.wallpaper-on .mgroup,
+body.wallpaper-on .master-due-card,
+body.wallpaper-on .master-detail-card,
+body.wallpaper-on .master-project-row{
+  box-shadow:0 8px 22px rgba(23,32,43,.06)!important;
+}
+body.wallpaper-on .mbal,
+body.wallpaper-on .mdash-stats button,
+body.wallpaper-on .mgroup{
+  background:rgba(255,255,255,.95)!important;
+  -webkit-backdrop-filter:blur(7px);
+  backdrop-filter:blur(7px);
+}
+@media(max-width:520px){
+  body.wallpaper-on{background-size:cover,cover,cover,430px 860px!important}
+  body.wallpaper-on #app{background:linear-gradient(180deg,rgba(241,243,242,.92),rgba(241,243,242,.82))!important}
+}
+@media(prefers-color-scheme:dark){
+  body.wallpaper-on{
+    background-color:#10161c!important;
+    background-image:
+      linear-gradient(180deg,rgba(15,21,28,.86),rgba(15,21,28,.92)),
+      radial-gradient(circle at 80% 12%,rgba(232,169,30,.16),transparent 30%),
+      url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iMTIwMCIgdmlld0JveD0iMCAwIDYwMCAxMjAwIj4KPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTcyMDJiIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9Ii4xOCI+CiAgPHBhdGggZD0iTTQwIDEwNTBINTYwTTkwIDEwNTBWNzYwSDI2MFYxMDUwTTExNSA4MjBIMjM1TTExNSA4NzVIMjM1TTExNSA5MzBIMjM1TTExNSA5ODVIMjM1Ii8+CiAgPHBhdGggZD0iTTM0MCAxMDUwVjY5MEg1MTVWMTA1ME0zNjUgNzUwSDQ5ME0zNjUgODA1SDQ5ME0zNjUgODYwSDQ5ME0zNjUgOTE1SDQ5ME0zNjUgOTcwSDQ5MCIvPgogIDxwYXRoIGQ9Ik00MjAgNjkwVjQxME00MjAgNDQwSDU1ME00MjAgNDQwTDUwMCA1MDBNNTE1IDQ0MFY1MjAiLz4KICA8Y2lyY2xlIGN4PSI0MjAiIGN5PSI0MTAiIHI9IjciLz4KPC9nPgo8ZyBmaWxsPSIjZThhOTFlIiBvcGFjaXR5PSIuMTEiPgogPHBhdGggZD0iTTAgMGgyMTBMMCAzMjB6Ii8+PHBhdGggZD0iTTYwMCAyMTBWMEg0MzB6Ii8+CjwvZz4KPC9zdmc+")!important;
+    background-size:cover,cover,520px 1040px!important;
+    background-position:center,center,center top!important;
+    background-repeat:no-repeat,no-repeat,repeat-y!important;
+  }
+  body.wallpaper-on #app{background:rgba(15,21,28,.82)!important}
+  body.wallpaper-on .mbal,
+  body.wallpaper-on .mdash-stats button,
+  body.wallpaper-on .mgroup{background:rgba(26,35,45,.95)!important}
+}
 </style>
 </head>
 <body>
@@ -836,6 +890,8 @@ function migrate(o){
   if(o.bank===undefined)o.bank='Krungthai Business';
   if(o.brand===undefined)o.brand='AREA MAIBAB';
   if(o.openCash===undefined)o.openCash=0;
+  if(!o.ui)o.ui={wallpaper:true};
+  if(o.ui.wallpaper===undefined)o.ui.wallpaper=true;
   if(!o.business)o.business={legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
   if(o.business.legalNameEn===undefined)o.business.legalNameEn='';
   if(o.business.addressEn===undefined)o.business.addressEn='';
@@ -887,7 +943,7 @@ function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).sli
 /* ---------- ข้อมูล ---------- */
 var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:''},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
 
-function emptyState(){return {projects:[],tx:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},customSubs:{},updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 function idbOpen(){return new Promise(function(res,rej){try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){r.result.createObjectStore('kv');};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
 function idbSet(v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'state');t.oncomplete=function(){res(true);};t.onerror=function(){res(false);};t.onabort=function(){res(false);};});}).catch(function(){return false;});}
@@ -1624,7 +1680,7 @@ function sheetHtml(){
      '<div class="field"><label for="bemail">อีเมล</label><input id="bemail" type="email" value="'+esc((S.business&&S.business.email)||'')+'"></div>'+
      '<div class="field"><label for="bbranch">สำนักงาน</label><select id="bbranch"><option '+(((S.business&&S.business.branch)||'สำนักงานใหญ่')==='สำนักงานใหญ่'?'selected':'')+'>สำนักงานใหญ่</option><option '+((S.business&&S.business.branch)==='สาขา'?'selected':'')+'>สาขา</option></select></div>'+
      '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
-     '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+
+     '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+'<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div><small class="muted" style="display:block;margin-top:7px">พื้นหลังสไตล์สำนักงาน/งานก่อสร้างแบบจาง เพื่อไม่รบกวนการอ่านบัญชี</small></div>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
      '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
@@ -1715,6 +1771,8 @@ function render(){
   });
   nav+='</div></nav>';
   var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
+  var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
+  document.body.classList.toggle('wallpaper-on',wall);
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml();U.anim=0;
 }
@@ -1820,6 +1878,7 @@ document.addEventListener('click',function(e){
   else if(a==='settings'){U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
+  else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';persist();render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.sheet={kind:'quote',id:null};render();}
   else if(a==='newBill'){U.sheet={kind:'bizdoc',docKind:'bill',id:null};render();}
   else if(a==='newReceipt'){U.sheet={kind:'bizdoc',docKind:'receipt',id:null};render();}
