@@ -797,6 +797,15 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 @media(prefers-color-scheme:dark){
   .tx-project-name{background:#26313c!important;color:#aeb8c1!important}
 }
+
+/* DUE DATE TOGGLE — editable and optional deadlines */
+.due-date-field{margin-top:10px!important}
+.due-date-field small{display:block;margin-top:5px;font-size:.78rem}
+@media(max-width:520px){
+  .due-date-field{margin-top:9px!important}
+  .field .tog[data-act="dueToggle"]{min-height:50px!important;padding:9px 11px!important}
+  .field .tog[data-act="dueToggle"] small{font-size:9px!important;line-height:1.25!important}
+}
 </style>
 </head>
 <body>
@@ -1106,7 +1115,7 @@ function go(v,extra){U.view=v;U.sheet=null;U.confirm=null;U.anim=1;if(extra)for(
 function newDraft(type,pid){
   type=type||'out';
   var first=S.projects[0]?S.projects[0].id:'';
-  return {id:null,type:type,amount:'',cat:type==='in'?CAT_IN[1]:((S.last&&CAT_OUT.indexOf(S.last.cat)>-1)?S.last.cat:CAT_OUT[0]),pay:(S.last&&S.last.pay)||'transfer',sub:'',subCustom:'',pid:pid||((S.last&&proj(S.last.pid))?S.last.pid:first),partner:'',date:today(),vat:false,wht:false,paid:true,due:addDays(7),photo:'',note:''};
+  return {id:null,type:type,amount:'',cat:type==='in'?CAT_IN[1]:((S.last&&CAT_OUT.indexOf(S.last.cat)>-1)?S.last.cat:CAT_OUT[0]),pay:(S.last&&S.last.pay)||'transfer',sub:'',subCustom:'',pid:pid||((S.last&&proj(S.last.pid))?S.last.pid:first),partner:'',date:today(),vat:false,wht:false,paid:true,dueEnabled:true,due:addDays(7),photo:'',note:''};
 }
 
 /* ---------- หน้าจอ ---------- */
@@ -1262,7 +1271,11 @@ function vAdd(){
   h+='<div class="prev" id="prev">'+prevText(d)+'</div>';
   h+='<div class="field"><span class="lbl">สถานะการชำระ</span><div class="seg"><button class="'+(d.paid?'on':'')+'" data-act="paid" data-v="1">'+(d.type==='in'?'รับแล้ว':'จ่ายแล้ว')+'</button><button class="'+(!d.paid?'on':'')+'" data-act="paid" data-v="0">ยังค้าง</button></div></div>';
   if(d.paid)h+='<div class="field"><span class="lbl">ช่องทาง'+(d.type==='in'?'รับเงิน':'ชำระเงิน')+'</span><div class="seg"><button class="'+(d.pay!=='cash'?'on':'')+'" data-act="pay" data-v="transfer">โอน'+(S.bank?' ('+esc(S.bank)+')':'')+'</button><button class="'+(d.pay==='cash'?'on':'')+'" data-act="pay" data-v="cash">เงินสด</button></div></div>';
-  if(!d.paid)h+='<div class="field"><label for="due">ครบกำหนด</label><input id="due" data-f="due" type="date" value="'+d.due+'"></div>';
+  if(!d.paid){
+    var dueOn=d.dueEnabled!==false;
+    h+='<div class="field"><span class="lbl">วันครบกำหนด</span><button class="tog'+(dueOn?' on':'')+'" data-act="dueToggle"><span class="sw"></span><span>'+(dueOn?'เปิดวันครบกำหนด':'ปิดวันครบกำหนด')+'<small>'+(dueOn?'ระบบจะแจ้งเตือนเมื่อใกล้ถึงกำหนด':'รายการยังค้างได้ แต่จะไม่แจ้งเตือนตามวัน')+'</small></span></button></div>';
+    if(dueOn)h+='<div class="field due-date-field"><label for="due">วันที่ครบกำหนด</label><input id="due" data-f="due" type="date" value="'+esc(d.due||addDays(7))+'"><small class="muted">แก้ไขวันที่ได้ตลอดเวลา</small></div>';
+  }
   h+='<div class="field"><span class="lbl">รูปใบเสร็จ</span>'+(d.photo?'<div class="photo"><img src="'+d.photo+'" alt="รูปใบเสร็จ"></div><div class="stack" style="margin-top:10px"><button class="btn" data-act="rmphoto">ลบรูป</button></div>':'<label class="btn" for="photoIn">'+ic('cam')+'ถ่ายรูปหรือเลือกรูป</label>')+'<input id="photoIn" type="file" accept="image/*" capture="environment"></div>';
   h+='<div class="field"><label for="note">หมายเหตุ</label><input id="note" data-f="note" type="text" placeholder="ไม่บังคับ" value="'+esc(d.note)+'"></div>';
   h+='<div class="savebar"><button class="btn pri" data-act="save">'+(d.id?'บันทึกการแก้ไข':'บันทึก')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore">บันทึกและเพิ่มอีก</button>')+'</div>';
@@ -1555,7 +1568,7 @@ function sheetHtml(){
      (t.vat?'<div class="kv"><span>ก่อน VAT / VAT</span><span class="num">'+fmt(base(t),1)+' / '+fmt(vatOf(t),1)+'</span></div>':'')+
      (t.wht?'<div class="kv"><span>หัก ณ ที่จ่าย 3%</span><span class="num">'+fmt(whtOf(t),1)+'</span></div>':'')+
      '<div class="kv"><span>'+(t.type==='in'?'เงินเข้าจริง':'จ่ายจริง')+'</span><span class="num">'+fmt(net(t),1)+'</span></div>'+
-     '<div class="kv"><span>สถานะ</span><span>'+(t.paid?(t.type==='in'?'รับแล้ว':'จ่ายแล้ว'):(d&&d.late?'เลยกำหนด '+(-d.days)+' วัน':'ค้าง ครบกำหนด '+dstr(t.due)))+'</span></div>'+
+     '<div class="kv"><span>สถานะ</span><span>'+(t.paid?(t.type==='in'?'รับแล้ว':'จ่ายแล้ว'):(d&&d.late?'เลยกำหนด '+(-d.days)+' วัน':(t.due?'ค้าง ครบกำหนด '+dstr(t.due):'ค้าง · ไม่มีวันครบกำหนด')))+'</span></div>'+
      (t.paid?'<div class="kv"><span>ช่องทางชำระ</span><span>'+payLabel(t.pay)+'</span></div>':'')+(t.note?'<div class="kv"><span>หมายเหตุ</span><span>'+esc(t.note)+'</span></div>':'')+'</div>'+
      (t.photo?'<div class="photo"><img src="'+t.photo+'" alt="รูปใบเสร็จ"></div>':'');
     b+='<div class="stack">';
@@ -1698,7 +1711,19 @@ document.addEventListener('click',function(e){
   else if(a==='cat'){U.draft.cat=v;U.draft.sub='';U.draft.subCustom='';render();}
   else if(a==='sub'){U.draft.sub=(U.draft.sub===v)?'':v;render();var si=document.getElementById('subc');if(si){si.focus();var n=si.value.length;try{si.setSelectionRange(n,n);}catch(x){}}}
   else if(a==='tog'){U.draft[v]=!U.draft[v];render();}
-  else if(a==='paid'){U.draft.paid=v==='1';if(U.draft.paid&&!U.draft.pay)U.draft.pay=(S.last&&S.last.pay)||'transfer';render();}
+  else if(a==='paid'){
+    U.draft.paid=v==='1';
+    if(U.draft.paid&&!U.draft.pay)U.draft.pay=(S.last&&S.last.pay)||'transfer';
+    if(!U.draft.paid&&U.draft.dueEnabled===undefined)U.draft.dueEnabled=true;
+    if(!U.draft.paid&&U.draft.dueEnabled!==false&&!U.draft.due)U.draft.due=addDays(7);
+    render();
+  }
+  else if(a==='dueToggle'){
+    U.draft.dueEnabled=U.draft.dueEnabled===false;
+    if(U.draft.dueEnabled&&!U.draft.due)U.draft.due=addDays(7);
+    if(!U.draft.dueEnabled)U.draft.due='';
+    render();
+  }
   else if(a==='pay'){U.draft.pay=v;render();}
   else if(a==='rmphoto'){U.draft.photo='';render();}
   else if(a==='save')saveTx();
@@ -1709,7 +1734,14 @@ document.addEventListener('click',function(e){
   else if(a==='openTx'){U.sheet={kind:'tx',id:id};U.confirm=null;render();}
   else if(a==='closeSheet'){U.sheet=null;U.confirm=null;render();}
   else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(t){t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';persist();U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}}
-  else if(a==='editTx'){var t2=S.tx.find(function(x){return x.id===id;});U.draft=JSON.parse(JSON.stringify(t2));U.draft.amount=String(t2.amount);if(U.draft.paid&&!U.draft.pay)U.draft.pay='transfer';if(!U.draft.due)U.draft.due=addDays(7);U.from=U.view;go('add');}
+  else if(a==='editTx'){
+    var t2=S.tx.find(function(x){return x.id===id;});if(!t2)return;
+    U.draft=JSON.parse(JSON.stringify(t2));U.draft.amount=String(t2.amount);
+    if(U.draft.paid&&!U.draft.pay)U.draft.pay='transfer';
+    if(t2.paid){U.draft.dueEnabled=true;if(!U.draft.due)U.draft.due=addDays(7);}
+    else{U.draft.dueEnabled=!!t2.due;if(!U.draft.dueEnabled)U.draft.due='';}
+    U.from=U.view;go('add');
+  }
   else if(a==='delTx'){if(U.confirm==='tx'+id){S.tx=S.tx.filter(function(x){return x.id!==id;});persist();U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
   else if(a==='ftype'){U.filter.type=v;render();}
@@ -1829,7 +1861,7 @@ function saveTx(more){
   if(!(a>0)){toast('กรอกจำนวนเงินก่อน');var el=document.getElementById('amt');if(el)el.focus();return;}
   if(!d.pid){toast('เลือกโครงการก่อน');return;}
   var sub=d.type==='out'?(d.sub||'').trim():'';
-  var t={id:d.id||uid(),date:d.date||today(),type:d.type,amount:a,cat:d.cat,sub:sub,pay:d.paid?(d.pay||'transfer'):'',pid:d.pid,partner:(d.partner||'').trim(),vat:!!d.vat,wht:!!d.wht,paid:!!d.paid,due:d.paid?'':(d.due||addDays(7)),photo:d.photo||'',note:(d.note||'').trim()};
+  var t={id:d.id||uid(),date:d.date||today(),type:d.type,amount:a,cat:d.cat,sub:sub,pay:d.paid?(d.pay||'transfer'):'',pid:d.pid,partner:(d.partner||'').trim(),vat:!!d.vat,wht:!!d.wht,paid:!!d.paid,due:d.paid?'':(d.dueEnabled===false?'':(d.due||addDays(7))),photo:d.photo||'',note:(d.note||'').trim()};
   var idx=S.tx.findIndex(function(x){return x.id===t.id;});
   if(idx>-1)S.tx[idx]=t;else S.tx.push(t);
   S.last={pid:d.pid,cat:(S.last&&S.last.cat)||CAT_OUT[0],pay:(d.paid?d.pay:(S.last&&S.last.pay))||'transfer'};if(d.type==='out')S.last.cat=d.cat;
