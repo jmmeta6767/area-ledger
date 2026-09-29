@@ -512,6 +512,7 @@ function restoreThaSalaKnown(){
   var pid='thasala-m7';
   S.projects=[{id:pid,name:'อาคารอเนกประสงค์ หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม',client:'',contract:0,budget:0,contractNo:'',contractDate:'',startDate:'',endDate:'',retAmt:24750,retDue:'',retRecv:false}];
   var rows=[
+    ['ค่าประกัน/ค่างาน',24750,'ประกันสัญญา',true,0,'2026-09-25'],
     ['ค่าแรง',2475,'วิศวะคุมงาน (0.5%)',false,7],
     ['ค่าของ',135513,'เหล็ก',true,0,''],
     ['ค่าของ',2980,'เหล็ก 16 มิล 10 เส้น',true,0,''],
@@ -533,6 +534,7 @@ function mergeThaSalaDocument(){
   if(p.retAmt!==24750){p.retAmt=24750;changed=true;} if(p.retDue!=='2026-09-25'){p.retDue='2026-09-25';changed=true;}
   var changed=false;
   var rows=[
+    {id:'thasala-doc-guarantee-24750',date:'2026-09-25',amount:24750,cat:'ค่าประกัน/ค่างาน',sub:'ประกันสัญญา',paid:true},
     {id:'thasala-doc-engineer-2475',date:'2026-09-25',amount:2475,cat:'ค่าแรง',sub:'วิศวะคุมงาน',paid:false},
     {id:'thasala-doc-10pct-49500',date:'2026-09-25',amount:49500,cat:'ค่าประกัน/ค่างาน',sub:'10%',paid:true},
     {id:'thasala-doc-steel-135513',date:'2026-09-15',amount:135513,cat:'ค่าของ',sub:'เหล็ก'},
@@ -715,7 +717,7 @@ function vHome(){
   var rec=sumNet(paidIn),spent=sumNet(paidOut),bal=rec-spent,h='',now=today(),ym=now.slice(0,7),monthRows=all.filter(function(t){return (t.date||'').slice(0,7)===ym;}),monthIn=sumNet(monthRows.filter(function(t){return t.type==='in'&&t.paid;})),monthOut=sumNet(monthRows.filter(function(t){return t.type==='out'&&t.paid;})),monthNet=monthIn-monthOut,retRows=(allMode?S.projects:(active?[active]:[])).filter(function(p){return p.retAmt&&!p.retRecv;}),retTotal=retRows.reduce(function(a,p){return a+(+p.retAmt||0);},0),cash=cashSplit();
   h+='<section class="mproj master-ref-project"><div class="master-ref-photo"><div class="master-ref-building"><svg viewBox="0 0 160 150" aria-hidden="true"><rect x="22" y="58" width="116" height="75" rx="2"/><rect x="35" y="31" width="90" height="27"/><path d="M28 58h104M46 58v75M80 58v75M114 58v75M22 91h116"/><rect x="53" y="99" width="24" height="34"/><rect x="88" y="99" width="24" height="34"/></svg></div><span>ภาพประกอบตามแบบ</span></div><div class="mbody master-ref-body"><div class="mtag master-ref-tag">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>โครงการ</span></div><h2>'+esc(allMode?'ทุกโครงการ':(active?active.name:'ยังไม่มีโครงการ'))+'</h2><small>ติดตามรายรับ–รายจ่ายหน้างาน</small><div class="master-ref-actions">'+(active?'<button class="master-ref-detail" data-act="openProj" data-id="'+active.id+'">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>ดูรายละเอียด</span></button><button class="master-ref-edit" data-act="editProj" data-id="'+active.id+'">แก้ไข</button>':'<button class="master-ref-detail" data-act="go" data-v="projects">ดูโครงการ</button>')+'<button class="master-ref-more" data-act="go" data-v="projects" aria-label="โครงการทั้งหมด">•••</button></div><select class="mselect master-ref-select" data-f="homePid"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div></section>';
   h+='<section class="mbal mdash-balance"><div class="mdash-balance-top"><span class="mdash-money-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg></span><div><span>เงินคงเหลือตามรายการ</span><b class="'+(bal<0?'out':'in')+'">'+fmt(bal)+'</b></div></div><div class="mdash-month"><i>เดือนนี้ รับแล้ว<strong class="in">'+fmt(monthIn)+'</strong></i><i>จ่ายแล้ว<strong class="out">'+fmt(monthOut)+'</strong></i><i>รับ − จ่ายเดือนนี้<strong class="'+(monthNet<0?'out':'in')+'">'+fmt(monthNet)+'</strong></i><i>ในบัญชี<strong>'+fmt(cash.bank)+'</strong></i></div><small class="mdash-note">ยอดเดือนนี้ไม่รวมรายการที่ยังไม่ระบุวันที่ · เงินคงเหลือรวมทุกวันที่</small></section>';
-  h+='<div class="mdash-period"><span>ภาพรวมเดือนนี้</span><b>'+new Date(ym+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'})+'</b></div><section class="mstats mdash-stats"><button data-act="go" data-v="list"><span class="mdash-stat-icon blue">'+txIcon({type:'in',sub:'',cat:''})+'</span><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ · แตะดูรายละเอียด</small></button><button data-act="go" data-v="list"><span class="mdash-stat-icon pink"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4Z"/><path d="M7 7V4h10v3M15 13h5"/></svg></span><span>จ่ายเงินแล้ว</span><b class="out">'+fmt(spent)+'</b><small>'+paidOut.length+' รายการ · แตะดูรายละเอียด</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon amber"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>ค้างจ่าย</span><b class="out">'+fmt(sumNet(outW))+'</b><small>ค้างรับ '+fmt(sumNet(inW))+' · '+outW.length+' รายการค้างจ่าย</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m9 12 2 2 4-5"/></svg></span><span>เงินประกันรอคืน</span><b class="mteal">'+fmt(retTotal)+'</b><small>'+retRows.length+' โครงการ · แตะดูวันครบกำหนด</small></button></section>';
+  h+='<div class="mdash-period"><span>ภาพรวมเดือนนี้</span><b>'+new Date(ym+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'})+'</b></div><section class="mstats mdash-stats"><button data-act="go" data-v="list"><span class="mdash-stat-icon blue">'+txIcon({type:'in',sub:'',cat:''})+'</span><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ · แตะดูรายละเอียด</small></button><button data-act="go" data-v="list"><span class="mdash-stat-icon pink"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4Z"/><path d="M7 7V4h10v3M15 13h5"/></svg></span><span>จ่ายเงินแล้ว</span><b class="out">'+fmt(spent)+'</b><small>'+paidOut.length+' รายการ · แตะดูรายละเอียด</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon amber"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>ค้างจ่าย</span><b class="out">'+fmt(sumNet(outW))+'</b><small>ค้างรับ '+fmt(sumNet(inW))+' · '+outW.length+' รายการค้างจ่าย</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m9 12 2 2 4-5"/></svg></span><span>เงินประกันจ่ายแล้ว</span><b class="mteal">'+fmt(retTotal)+'</b><small>'+retRows.length+' โครงการ · แตะดูวันครบกำหนด</small></button></section>';
   var hf=U.homeFilter||'all',cnt={all:all.length,in:all.filter(function(t){return t.type==='in';}).length,out:all.filter(function(t){return t.type==='out';}).length,pend:inW.length+outW.length};
   h+='<div class="mtabs">'+[['all','ทั้งหมด'],['in','รับเงิน'],['out','จ่ายเงิน'],['pend','ค้าง']].map(function(x){return '<button class="'+(hf===x[0]?'on':'')+'" data-act="homeFilter" data-v="'+x[0]+'">'+x[1]+' ('+cnt[x[0]]+')</button>';}).join('')+'</div>';
   var list=all.filter(function(t){return hf==='all'||(hf==='pend'?!t.paid:t.type===hf);}).sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
@@ -811,11 +813,11 @@ function vProject(){
   h+='<div class="grid4 master-detail-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(p.contract)+'</b></div><div><small>รับเงินแล้ว</small><b class="in">'+fmt(s.recd)+'</b></div>'+
     '<div><small>ค้างรับ</small><b>'+fmt(s.recPend)+'</b></div><div><small>ค้างจ่าย</small><b class="out">'+fmt(s.payPend)+'</b></div>'+
     '<div><small>กำไรที่คาด (สัญญา − งบ)</small><b>'+fmt(p.contract-p.budget)+'</b></div><div><small>กำไรตอนนี้ (รับ − จ่าย)</small><b class="'+(s.inB-s.outB>=0?'in':'out')+'">'+fmt(s.inB-s.outB)+'</b></div></div>';
-  h+='<div class="sec master-detail-card"><h2>เงินประกันสัญญา</h2>';
+  h+='<div class="sec master-detail-card"><h2>เงินประกันสัญญา / เงินประกันผลงาน</h2>';
   if(p.retAmt>0){
-    h+='<div class="kv"><span>จำนวนที่ถูกหักไว้</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
-       '<div class="kv"><span>ครบกำหนดรับคืน</span><span>'+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+' '+(p.retRecv?'':retTag(p))+'</span></div>'+
-       '<div class="kv"><span>สถานะ</span><span>'+(p.retRecv?'<b class="in">ได้รับคืนแล้ว</b>':'ยังถูกยึดไว้')+'</span></div>';
+    h+='<div class="kv"><span>จำนวนที่จ่ายออกแล้ว</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
+       '<div class="kv"><span>วันที่ส่งมอบงาน</span><span>'+(p.deliveryDate?dstr(p.deliveryDate):'ยังไม่ระบุ')+'</span></div><div class="kv"><span>ครบกำหนดรับคืน (ส่งมอบ + 2 ปี)</span><span>'+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+' '+(p.retRecv?'':retTag(p))+'</span></div>'+
+       '<div class="kv"><span>สถานะ</span><span>'+(p.retRecv?'<b class="in">ได้รับคืนแล้ว</b>':'จ่ายออกแล้ว · รอครบกำหนดรับคืน')+'</span></div>';
     if(!p.retRecv)h+='<div class="stack"><button class="btn" data-act="retRecv" data-id="'+p.id+'">ได้รับเงินประกันคืนแล้ว</button></div>';
   }else h+='<div class="empty">ยังไม่ได้บันทึกเงินประกันสัญญา แตะ "แก้ไขโครงการ" เพื่อเพิ่ม</div>';
   h+='</div>';
@@ -841,9 +843,9 @@ function vDue(){
   }
   function retBlock(){
     var list=retOpen().sort(function(a,b){return (a.retDue||'9')<(b.retDue||'9')?-1:1;});
-    var h='<div class="sec master-due-card"><h2>เงินประกันสัญญารอรับคืน <span class="num">'+fmt(list.reduce(function(a,p){return a+p.retAmt;},0))+'</span></h2>';
+    var h='<div class="sec master-due-card"><h2>เงินประกันที่จ่ายแล้ว · รอรับคืน <span class="num">'+fmt(list.reduce(function(a,p){return a+p.retAmt;},0))+'</span></h2>';
     if(!list.length)h+='<div class="empty">ไม่มีเงินประกันที่รอคืน</div>';
-    list.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>คืนวันที่ '+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
+    list.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>รับคืนได้วันที่ '+(p.retDue?dstr(p.retDue):'รอระบุวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
     return h+'</div>';
   }
   return block('in','ลูกหนี้ (เงินค้างรับจากเจ้าของงาน)')+block('out','เจ้าหนี้ (ค้างจ่ายร้านวัสดุและช่าง)')+retBlock()+'<p class="muted" style="font-size:.85rem;margin-top:16px">แตะรายการเพื่อกด "รับเงินแล้ว" หรือ "จ่ายแล้ว" ยอดแสดงเป็นยอดสุทธิหลังหัก ณ ที่จ่าย</p>';
@@ -1085,8 +1087,9 @@ function sheetHtml(){
      '<div class="field"><label for="ped">วันสิ้นสุดสัญญา</label><input id="ped" type="date" value="'+(p&&p.endDate?p.endDate:'')+'"></div>'+
      '<div class="field"><label for="pv">มูลค่าสัญญา (ก่อน VAT)</label><input id="pv" type="number" inputmode="decimal" value="'+(p?p.contract:'')+'" placeholder="0"></div>'+
      '<div class="field"><label for="pb">งบต้นทุน (ก่อน VAT)</label><input id="pb" type="number" inputmode="decimal" value="'+(p?p.budget:'')+'" placeholder="0"></div>'+
-     '<div class="field"><label for="pr">เงินประกันสัญญาที่ถูกหักไว้ (บาท)</label><input id="pr" type="number" inputmode="decimal" value="'+(p&&p.retAmt?p.retAmt:'')+'" placeholder="0 ถ้าไม่มี"></div>'+
-     '<div class="field"><label for="prd">ครบกำหนดรับคืน</label><input id="prd" type="date" value="'+(p&&p.retDue?p.retDue:'')+'"></div>'+
+     '<div class="field"><label for="pr">เงินประกันสัญญาที่จ่ายออก (บาท)</label><input id="pr" type="number" inputmode="decimal" value="'+(p&&p.retAmt?p.retAmt:'')+'" placeholder="0 ถ้าไม่มี"></div>'+
+     '<div class="field"><label for="pdel">วันที่ส่งมอบงาน</label><input id="pdel" type="date" value="'+(p&&p.deliveryDate?p.deliveryDate:'')+'"><small class="muted">ระบบจะกำหนดวันรับคืนเงินประกัน = วันส่งมอบ + 2 ปี</small></div>'+
+     '<div class="field"><label for="prd">ครบกำหนดรับคืนเงินประกัน</label><input id="prd" type="date" value="'+(p&&p.retDue?p.retDue:'')+'" readonly></div>'+
      '<div class="stack"><button class="btn pri" data-act="saveProj" data-id="'+(p?p.id:'')+'">บันทึกโครงการ</button>'+
      (p?'<button class="btn dng'+(U.confirm==='p'+p.id?' sure':'')+'" data-act="delProj" data-id="'+p.id+'">'+(U.confirm==='p'+p.id?'แตะอีกครั้งเพื่อลบโครงการและรายการทั้งหมด':'ลบโครงการ')+'</button>':'')+
      '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
@@ -1246,7 +1249,7 @@ document.addEventListener('click',function(e){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
     var sd0=document.getElementById('psd').value,ed0=document.getElementById('ped').value;
     if(sd0&&ed0&&ed0<sd0){toast('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มต้น');return;}
-    var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:document.getElementById('pstatus').value||'active',contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:parseFloat(document.getElementById('pr').value)||0,retDue:document.getElementById('prd').value||'',contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
+    var delEl=document.getElementById('pdel'),deliveryDate=delEl?delEl.value:'',retDue='';if(deliveryDate){var dd=new Date(deliveryDate+'T00:00:00');dd.setFullYear(dd.getFullYear()+2);retDue=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');}var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:document.getElementById('pstatus').value||'active',contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:parseFloat(document.getElementById('pr').value)||0,deliveryDate:deliveryDate,retDue:retDue,contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
     if(id){var pp=proj(id);Object.assign(pp,o);}else{o.id=uid();S.projects.push(o);}
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
