@@ -290,6 +290,20 @@ body{background:var(--theme-bg)}
 .mbal>b,.mbal strong,.mstats b,.mgh b{font-variant-numeric:tabular-nums}
 .nav{padding-bottom:max(8px,env(safe-area-inset-bottom))}.nav button{min-height:44px}
 @media(max-width:360px){.mheader{padding-left:14px}.mlogo{width:60px;height:60px;font-size:18px}.mheader b{font-size:18px}.mproj{min-height:195px}.mtag{font-size:15px}.mstats button{min-height:118px}.mstats span{font-size:13px}.mstats b{font-size:19px}.mtabs button{padding-left:13px;padding-right:13px}}
+/* FINAL APPROVED UI OVERRIDE — must remain last */
+html,body{background:#f1f3f2!important}#app{max-width:520px!important;margin:0 auto!important;background:#f1f3f2!important}
+.mheader{display:flex!important;height:118px!important;min-height:118px!important;padding:22px 18px!important;align-items:center!important;gap:14px!important;background:linear-gradient(116deg,#17202b 0 70%,#e8a91e 70.3% 73.5%,#e9edf0 73.8% 100%)!important}
+.mlogo{display:grid!important;width:72px!important;height:72px!important;min-width:72px!important;place-items:center!important;border-radius:15px!important;background:#ffd84c!important;color:#17202b!important;font-size:21px!important;font-weight:800!important}
+.mheader>div:last-child b{display:block!important;color:#fff!important;font-size:21px!important;line-height:1.2!important}.mheader>div:last-child small{display:block!important;color:#cfd6dc!important;font-size:15px!important;margin-top:4px!important}
+main{max-width:520px!important;margin:0 auto!important;padding:0 14px 105px!important;background:#f1f3f2!important}
+.mproj{display:flex!important;margin:16px 0 0!important;min-height:218px!important;border-radius:17px!important;overflow:hidden!important;background:#17202b!important;color:#fff!important}.mpic{display:block!important;width:35%!important;flex:0 0 35%!important;position:relative!important;background:linear-gradient(#9fd0f5,#dcecf8 60%,#b9c4c9 60%)!important}.mpic svg{display:block!important;position:absolute!important;inset:auto 0 0!important;width:100%!important}.mbody{display:block!important;flex:1!important;padding:18px 16px!important}.mtag{color:#f0c14b!important;font-size:17px!important}.mproj h2{display:block!important;color:#fff!important;font-size:20px!important;margin:10px 0 5px!important}.mproj small{display:block!important;color:#b8c2cb!important;font-size:15px!important}.mselect{display:block!important;width:100%!important;height:49px!important;margin-top:14px!important;background:#2a3541!important;color:#fff!important;border:0!important;border-radius:11px!important;padding:0 12px!important}
+.mbal{display:block!important;margin:16px 0 0!important;min-height:120px!important;background:#fff!important;border:0!important;border-left:6px solid #e8a91e!important;border-radius:17px!important;padding:18px 20px!important}.mbal>span{display:block!important;color:#6b7580!important;font-size:16px!important}.mbal>b{display:block!important;font-size:36px!important;line-height:1.2!important;margin-top:2px!important;white-space:nowrap!important}.mbal>div{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;margin-top:12px!important;padding-top:12px!important;border-top:1px solid #e6e9e8!important}.mbal i{display:block!important;font-style:normal!important;color:#6b7580!important;font-size:14px!important}.mbal strong{display:block!important;font-size:18px!important}
+.mstats{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important;margin-top:14px!important}.mstats button{display:block!important;min-height:138px!important;padding:16px!important;border:0!important;border-radius:17px!important;background:#fff!important;color:#17202b!important;text-align:left!important}.mstats span{display:block!important;color:#6b7580!important;font-size:15px!important}.mstats b{display:block!important;font-size:24px!important;margin-top:5px!important}.mstats small{display:block!important;color:#6b7580!important;font-size:13px!important;margin-top:5px!important}
+.mtabs{display:flex!important;gap:9px!important;margin:16px 0 12px!important;overflow-x:auto!important}.mtabs button{display:block!important;min-height:49px!important;padding:10px 18px!important;border:0!important;border-radius:11px!important;background:#fff!important;color:#17202b!important;font-size:15px!important;font-weight:600!important;white-space:nowrap!important}.mtabs button.on{background:#e8b23b!important;font-weight:800!important}
+.mgroup{display:block!important;background:#fff!important;border-radius:16px!important;margin-bottom:14px!important;overflow:hidden!important}.mgh{background:#fdf1d0!important;color:#17202b!important}
+.home-shot-header,.home-simple-list,.home-report,.preview-project,.balance-card,.preview-kpis,.ledger-tabs,.ledger-feed{display:none!important}
+.nav{z-index:50!important}
+@media(max-width:390px){.mheader{height:108px!important;min-height:108px!important}.mlogo{width:66px!important;height:66px!important;min-width:66px!important}.mproj{min-height:205px!important}.mproj h2{font-size:18px!important}.mstats button{min-height:125px!important}}
 </style>
 </head>
 <body>
@@ -1068,7 +1082,7 @@ function render(){
   nav+='</div></nav>';
   var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+(U.storageBad?'<div class="prev" style="border-color:var(--out);color:var(--ink)"><b>เบราว์เซอร์นี้ไม่ยอมเก็บข้อมูลถาวร</b> ข้อมูลอาจหายเมื่อปิดแอพ ให้ใช้ "สำรองข้อมูล" ในตั้งค่าเป็นประจำ</div>':'')+body+'</main>'+nav+sheetHtml();U.anim=0;
+  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml();U.anim=0;
 }
 
 /* ---------- เหตุการณ์ ---------- */
