@@ -997,6 +997,12 @@ body.wallpaper-on .mgroup{
 .doc-list-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:4px 0 12px}
 .doc-list-head small,.doc-list-head span{display:block;color:var(--m-mut);font-size:.72rem}.doc-list-head h2{margin:2px 0;font-size:1.15rem}.doc-list-head .btn{width:auto;min-width:112px;margin:0}
 @media(max-width:430px){.doc-type-grid{gap:8px}.doc-type-grid>button{min-height:68px;padding:9px 11px}.doc-list-head .btn{min-width:102px;font-size:.78rem}}
+
+/* PROJECT ACTION HUB — reports and business documents */
+.project-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:10px 0}
+.project-action-grid button{min-height:66px;border:1px solid var(--m-line);border-radius:13px;background:var(--m-card);padding:10px;text-align:left;color:var(--m-ink)}
+.project-action-grid b{display:block;font-size:.88rem}.project-action-grid small{display:block;margin-top:3px;font-size:.67rem;color:var(--m-mut)}
+@media(max-width:430px){.project-action-grid{gap:7px}.project-action-grid button{min-height:60px;padding:9px}}
 </style>
 </head>
 <body>
@@ -1528,7 +1534,7 @@ function vProject(){
   var list=S.tx.filter(function(t){return t.pid===p.id;}).sort(function(a,b){return a.date<b.date?1:-1;});
   if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';
   list.forEach(function(t){h+=rowTx(t,false);});
-  h+='</div><div class="sec master-detail-card project-export-card"><h2>ส่งออกข้อมูลโครงการ</h2><div class="project-export-actions project-export-actions-wide"><button class="btn" data-act="exportProjectXlsx" data-id="'+p.id+'">Excel (.xlsx)</button><button class="btn" data-act="exportProjectPdf" data-id="'+p.id+'">PDF</button></div><small class="muted">ส่งออกเฉพาะรายการ รายรับ รายจ่าย ค้างรับ/จ่าย และสรุปของโครงการนี้</small></div><div class="stack"><button class="btn pri" data-act="addToProj" data-id="'+p.id+'">เพิ่มรายการในโครงการนี้</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไขโครงการ</button></div>';
+  h+='</div><div class="sec master-detail-card project-export-card"><h2>เครื่องมือโครงการ</h2><div class="project-action-grid"><button data-act="exportProjectXlsx" data-id="'+p.id+'"><b>Excel</b><small>ส่งออกรายการ</small></button><button data-act="exportProjectPdf" data-id="'+p.id+'"><b>PDF</b><small>รายงานโครงการ</small></button><button data-act="projectDocList" data-kind="quote" data-id="'+p.id+'"><b>ใบเสนอราคา</b><small>เอกสารโครงการ</small></button><button data-act="projectDocList" data-kind="bill" data-id="'+p.id+'"><b>ใบวางบิล</b><small>เอกสารโครงการ</small></button></div><small class="muted">รายงานและเอกสารจะอ้างอิงเฉพาะโครงการนี้</small></div><div class="stack"><button class="btn pri" data-act="addToProj" data-id="'+p.id+'">เพิ่มรายการในโครงการนี้</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไขโครงการ</button></div>';
   return h;
 }
 
@@ -1718,8 +1724,8 @@ function vDocs(){
     '</div>';
 }
 function vDocList(){
-  var kind=U.docListKind||'quote',list=docKindList(kind).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),label=docKindLabel(kind),act=kind==='bill'?'newBill':kind==='receipt'?'newReceipt':'newQuote';
-  var h='<div class="doc-list-head"><div><small>เอกสารธุรกิจ</small><h2>'+label+'</h2><span>'+list.length+' ฉบับ</span></div><button class="btn pri" data-act="'+act+'">+ สร้างใหม่</button></div>';
+  var kind=U.docListKind||'quote',projectFilter=U.docProjectPid||'',projectName=projectFilter?pname(projectFilter):'',list=docKindList(kind).filter(function(q){return !projectFilter||q.pid===projectFilter||q.project===projectName;}).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),label=docKindLabel(kind),act=kind==='bill'?'newBill':kind==='receipt'?'newReceipt':'newQuote';
+  var h='<div class="doc-list-head"><div><small>'+(projectFilter?esc(projectName):'เอกสารธุรกิจ')+'</small><h2>'+label+'</h2><span>'+list.length+' ฉบับ</span></div><button class="btn pri" data-act="'+act+'"'+(projectFilter?' data-pid="'+projectFilter+'"':'')+'>+ สร้างใหม่</button></div>';
   if(!list.length)return h+'<div class="empty">ยังไม่มี'+label+'</div>';
   h+='<div class="sec master-doc-card">';
   list.forEach(function(q){var calc=docCalc(q);h+='<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small><small>'+esc(q.project||'')+'</small></div><div class="r"><span class="num">'+fmt(calc.total)+'</span><span>เปิดเอกสาร ›</span></div></button>';});
@@ -1947,13 +1953,14 @@ document.addEventListener('click',function(e){
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
   if(a==='appMenu'){U.appMenu=true;render();return;}
   if(a==='appMenuClose'){U.appMenu=false;render();return;}
-  if(a==='drawerDocList'){U.appMenu=false;U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
-  if(a==='menuGo'){U.appMenu=false;go(v);return;}
-  if(a==='docSection'){U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
+  if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
+  if(a==='menuGo'){U.appMenu=false;if(v==='docs')U.docProjectPid='';go(v);return;}
+  if(a==='docSection'){U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
+  if(a==='projectDocList'){U.docProjectPid=id||'';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='go')go(v);
   else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
   else if(a==='back'&&U.view==='quoteprint'){U.docListKind=U.docKind||'quote';go('doclist');}
-  else if(a==='back'&&U.view==='doclist'){go('docs');}
+  else if(a==='back'&&U.view==='doclist'){if(U.docProjectPid){var dp=U.docProjectPid;U.docProjectPid='';go('project',{pid:dp});}else go('docs');}
   else if(a==='back'&&U.view==='docs'){go('home');}
   else if(a==='back'&&U.view==='report'){go('home');}
   else if(a==='back'){U.draft=null;go(U.pid&&U.view==='add'&&U.from==='project'?'project':(U.from||(S.role==='foreman'?'list':'home')));}
