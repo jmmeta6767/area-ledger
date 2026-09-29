@@ -421,7 +421,13 @@ function migrate(o){
   if(!Array.isArray(o.bills))o.bills=[];
   if(!Array.isArray(o.receipts))o.receipts=[];
   if(!o.docSeq)o.docSeq={quote:0,bill:0,receipt:0};
-  (o.projects||[]).forEach(function(p){if(p.deliveryDate===undefined)p.deliveryDate='';if(p.deliveryDate)p.retDue=addYearsIso(p.deliveryDate,2);});
+  (o.projects||[]).forEach(function(p){
+    if(p.deliveryDate===undefined)p.deliveryDate='';
+    if(p.retPaidDate===undefined)p.retPaidDate='';
+    var gx=(o.tx||[]).find(function(t){return t.pid===p.id&&t.type==='out'&&((t.sub||'').trim()==='ประกันสัญญา'||t.id==='guarantee-expense-'+p.id);});
+    if(!p.retPaidDate&&gx&&gx.date)p.retPaidDate=gx.date;
+    if(p.deliveryDate)p.retDue=addYearsIso(p.deliveryDate,2);
+  });
   o.tx.forEach(function(t){
     if(t.sub===undefined)t.sub='';
     if(t.type==='out'&&LEG[t.cat]){t.sub=t.sub||LEG[t.cat][1];t.cat=LEG[t.cat][0];}
@@ -512,7 +518,7 @@ function seed(){
 function restoreThaSalaKnown(){
   if((S.projects&&S.projects.length)||(S.tx&&S.tx.length))return false;
   var pid='thasala-m7';
-  S.projects=[{id:pid,name:'อาคารอเนกประสงค์ หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม',client:'',contract:0,budget:0,contractNo:'',contractDate:'',startDate:'',endDate:'',retAmt:24750,retDue:'',retRecv:false}];
+  S.projects=[{id:pid,name:'อาคารอเนกประสงค์ หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม',client:'',contract:0,budget:0,contractNo:'',contractDate:'',startDate:'',endDate:'',retAmt:24750,retPaidDate:'2026-09-25',deliveryDate:'',retDue:'',retRecv:false}];
   var rows=[
     ['ค่าประกัน/ค่างาน',24750,'ประกันสัญญา',true,0,'2026-09-25'],
     ['ค่าแรง',2475,'วิศวะคุมงาน (0.5%)',false,7],
@@ -535,6 +541,7 @@ function mergeThaSalaDocument(){
   if(!p)return false;
   var changed=false;
   if(p.retAmt!==24750){p.retAmt=24750;changed=true;}
+  if(p.retPaidDate!=='2026-09-25'){p.retPaidDate='2026-09-25';changed=true;}
   if(p.deliveryDate){var due=addYearsIso(p.deliveryDate,2);if(p.retDue!==due){p.retDue=due;changed=true;}}
   else if(p.retDue==='2026-09-25'){p.retDue='';changed=true;}
   var rows=[
@@ -571,6 +578,23 @@ function persist(){
 }
 function proj(id){return S.projects.find(function(p){return p.id===id;});}
 function pname(id){var p=proj(id);return p?p.name:'ไม่ระบุโครงการ';}
+function syncGuaranteeExpense(p){
+  if(!p||!(+p.retAmt>0)||!p.retPaidDate)return false;
+  var t=(S.tx||[]).find(function(x){return x.pid===p.id&&x.type==='out'&&(x.id==='guarantee-expense-'+p.id||((x.sub||'').trim()==='ประกันสัญญา'&&x.cat==='ค่าประกัน/ค่างาน'));});
+  if(!t){
+    S.tx.push({id:'guarantee-expense-'+p.id,date:p.retPaidDate,type:'out',amount:+p.retAmt,cat:'ค่าประกัน/ค่างาน',sub:'ประกันสัญญา',pay:'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:true,due:'',photo:'',note:'เงินประกันสัญญา — จ่ายออกและนับเป็นค่าใช้จ่าย'});
+    return true;
+  }
+  var ch=false;
+  if(t.date!==p.retPaidDate){t.date=p.retPaidDate;ch=true;}
+  if(+t.amount!==+p.retAmt){t.amount=+p.retAmt;ch=true;}
+  if(t.cat!=='ค่าประกัน/ค่างาน'){t.cat='ค่าประกัน/ค่างาน';ch=true;}
+  if((t.sub||'').trim()!=='ประกันสัญญา'){t.sub='ประกันสัญญา';ch=true;}
+  if(t.type!=='out'){t.type='out';ch=true;}
+  if(!t.paid){t.paid=true;t.due='';ch=true;}
+  if(!t.pay){t.pay='transfer';ch=true;}
+  return ch;
+}
 
 /* ---------- คำนวณ ---------- */
 function base(t){return t.vat?t.amount/1.07:t.amount;}
@@ -637,7 +661,7 @@ function brandHtml(){
 }
 function retOpen(){return S.projects.filter(function(p){return p.retAmt>0&&!p.retRecv;});}
 function retDays(p){if(!p.retDue)return null;return Math.round((new Date(p.retDue+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);}
-function retTag(p){var d=retDays(p);if(d===null)return '';return d<0?'<span class="tag late">เลยกำหนด '+(-d)+' วัน</span>':'<span class="tag pend">อีก '+d+' วัน</span>';}
+function retTag(p){var d=retDays(p);if(d===null)return '<span class="tag pend">รอวันส่งมอบ</span>';return d<=0?'<span class="tag in">ครบกำหนดรับคืนแล้ว</span>':'<span class="tag pend">อีก '+d+' วัน</span>';}
 function catRows(order,byCat,bySub,total){
   return order.map(function(c){
     var subs=bySub[c]||{},ks=Object.keys(subs).sort(function(a,b){return subs[b]-subs[a];});
@@ -820,6 +844,7 @@ function vProject(){
   h+='<div class="sec master-detail-card"><h2>เงินประกันสัญญา / เงินประกันผลงาน</h2>';
   if(p.retAmt>0){
     h+='<div class="kv"><span>จำนวนที่จ่ายออกแล้ว</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
+       '<div class="kv"><span>วันที่จ่ายเงินประกัน</span><span>'+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</span></div>'+
        '<div class="kv"><span>วันที่ส่งมอบงาน</span><span>'+(p.deliveryDate?dstr(p.deliveryDate):'ยังไม่ระบุ')+'</span></div><div class="kv"><span>ครบกำหนดรับคืน (ส่งมอบ + 2 ปี)</span><span>'+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+' '+(p.retRecv?'':retTag(p))+'</span></div>'+
        '<div class="kv"><span>สถานะ</span><span>'+(p.retRecv?'<b class="in">ได้รับคืนแล้ว และบันทึกเป็นรายรับ</b>':'<b class="out">นับเป็นค่าใช้จ่ายแล้ว</b> · รอรับคืนหลังส่งมอบครบ 2 ปี')+'</span></div>';
     if(!p.retRecv)h+='<div class="stack"><button class="btn" data-act="retRecv" data-id="'+p.id+'">ได้รับเงินประกันคืนแล้ว</button></div>';
@@ -964,10 +989,10 @@ function exportXlsx(){
   function n(v,st){v=Math.round((+v||0)*100)/100;return {v:v,s:st||M};}
   var r1=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน (รวม VAT)','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
   list.forEach(function(t){r1.push([t.date,t.type==='in'?'รายรับ':'รายจ่าย',t.cat,t.sub||'',pname(t.pid),t.partner||'',n(t.amount),n(base(t)),n(vatOf(t)),n(whtOf(t)),n(net(t)),t.paid?'ชำระแล้ว':'ค้าง',t.paid?(t.pay==='cash'?'เงินสด':'โอน'):'',t.due||'',t.note||'']);});
-  var r2=[['โครงการ','ลูกค้า','สัญญาเลขที่','ลงวันที่','เริ่มต้นสัญญา','สิ้นสุดสัญญา','มูลค่าสัญญา','งบต้นทุน','รายรับ (ก่อน VAT)','รายจ่าย (ก่อน VAT)','กำไรตอนนี้','ใช้งบ','ค้างรับ (สุทธิ)','ค้างจ่าย (สุทธิ)','เงินประกันสัญญา','ครบกำหนดรับคืน','สถานะเงินประกัน']];
+  var r2=[['โครงการ','ลูกค้า','สัญญาเลขที่','ลงวันที่','เริ่มต้นสัญญา','สิ้นสุดสัญญา','มูลค่าสัญญา','งบต้นทุน','รายรับ (ก่อน VAT)','รายจ่าย (ก่อน VAT)','กำไรตอนนี้','ใช้งบ','ค้างรับ (สุทธิ)','ค้างจ่าย (สุทธิ)','เงินประกันที่จ่ายออก','วันที่จ่ายเงินประกัน','วันที่ส่งมอบงาน','ครบกำหนดรับคืน (+2 ปี)','สถานะเงินประกัน']];
   S.projects.filter(function(p){return !pid||p.id===pid;}).forEach(function(p){
     var s=stats(p.id);
-    r2.push([p.name,p.client||'',p.contractNo||'',p.contractDate||'',p.startDate||'',p.endDate||'',n(p.contract),n(p.budget),n(s.inB),n(s.outB),n(s.inB-s.outB),{v:p.budget>0?s.outB/p.budget:0,s:P},n(s.recPend),n(s.payPend),n(p.retAmt||0),p.retDue||'',p.retAmt>0?(p.retRecv?'ได้รับคืนแล้ว':'ยังถูกยึดไว้'):'']);
+    r2.push([p.name,p.client||'',p.contractNo||'',p.contractDate||'',p.startDate||'',p.endDate||'',n(p.contract),n(p.budget),n(s.inB),n(s.outB),n(s.inB-s.outB),{v:p.budget>0?s.outB/p.budget:0,s:P},n(s.recPend),n(s.payPend),n(p.retAmt||0),p.retPaidDate||'',p.deliveryDate||'',p.retDue||'',p.retAmt>0?(p.retRecv?'ได้รับคืนแล้ว':(p.retDue&&retDays(p)<=0?'ครบกำหนดรับคืนแล้ว':'จ่ายแล้ว / รอรับคืน')):'']);
   });
   var mm={};
   list.forEach(function(t){var k=t.date.slice(0,7),m=mm[k]||(mm[k]={i:0,o:0,vi:0,vo:0,wi:0,wo:0});
@@ -995,7 +1020,7 @@ function vPrint(){
   if(pid){var pj=proj(pid);if(pj&&contractText(pj))h+='<div style="font-size:.9rem;margin-top:4px">'+esc(contractText(pj))+'</div>';}
   h+='<div class="grid4"><div><small>รายรับ (ก่อน VAT)</small><b class="in">'+fmt(i)+'</b></div><div><small>รายจ่าย (ก่อน VAT)</small><b class="out">'+fmt(o)+'</b></div><div><small>กำไรเบื้องต้น</small><b>'+fmt(i-o)+'</b></div><div><small>ค้างรับ / ค้างจ่าย</small><b>'+fmt(rv)+' / '+fmt(pv)+'</b></div></div>';
   h+='<div class="sec"><h2>สรุปรายโครงการ</h2><table><tr><th>โครงการ</th><th>สัญญา</th><th>งบ</th><th>รับ</th><th>จ่าย</th><th>กำไร</th></tr>';
-  pr.forEach(function(p){var s=stats(p.id);h+='<tr><td>'+esc(p.name)+(contractText(p)?'<br><span class="muted">'+esc(contractText(p))+'</span>':'')+'</td><td class="num">'+fmt(p.contract)+'</td><td class="num">'+fmt(p.budget)+'</td><td class="num">'+fmt(s.inB)+'</td><td class="num">'+fmt(s.outB)+'</td><td class="num"><b>'+fmt(s.inB-s.outB)+'</b></td></tr>';});
+  pr.forEach(function(p){var s=stats(p.id),retInfo=p.retAmt?'<br><span class="muted">เงินประกันจ่ายแล้ว '+fmt(p.retAmt)+(p.retPaidDate?' · จ่าย '+dstr(p.retPaidDate):'')+(p.deliveryDate?' · ส่งมอบ '+dstr(p.deliveryDate):'')+(p.retDue?' · รับคืนได้ '+dstr(p.retDue):'')+'</span>':'';h+='<tr><td>'+esc(p.name)+(contractText(p)?'<br><span class="muted">'+esc(contractText(p))+'</span>':'')+retInfo+'</td><td class="num">'+fmt(p.contract)+'</td><td class="num">'+fmt(p.budget)+'</td><td class="num">'+fmt(s.inB)+'</td><td class="num">'+fmt(s.outB)+'</td><td class="num"><b>'+fmt(s.inB-s.outB)+'</b></td></tr>';});
   h+='</table></div>';
   var cs=Object.keys(cat).sort(function(a,b){return cat[b]-cat[a];});
   if(cs.length)h+='<div class="sec"><h2>รายจ่ายตามหมวด</h2>'+catRows(cs,cat,sub,o)+'</div>';
@@ -1092,6 +1117,7 @@ function sheetHtml(){
      '<div class="field"><label for="pv">มูลค่าสัญญา (ก่อน VAT)</label><input id="pv" type="number" inputmode="decimal" value="'+(p?p.contract:'')+'" placeholder="0"></div>'+
      '<div class="field"><label for="pb">งบต้นทุน (ก่อน VAT)</label><input id="pb" type="number" inputmode="decimal" value="'+(p?p.budget:'')+'" placeholder="0"></div>'+
      '<div class="field"><label for="pr">เงินประกันสัญญาที่จ่ายออก (บาท)</label><input id="pr" type="number" inputmode="decimal" value="'+(p&&p.retAmt?p.retAmt:'')+'" placeholder="0 ถ้าไม่มี"></div>'+
+     '<div class="field"><label for="prpd">วันที่จ่ายเงินประกัน</label><input id="prpd" type="date" value="'+(p&&p.retPaidDate?p.retPaidDate:'')+'"><small class="muted">ยอดนี้จะถูกสร้าง/อัปเดตเป็นรายจ่ายที่ชำระแล้วอัตโนมัติ</small></div>'+
      '<div class="field"><label for="pdel">วันที่ส่งมอบงาน</label><input id="pdel" type="date" value="'+(p&&p.deliveryDate?p.deliveryDate:'')+'"><small class="muted">ระบบจะกำหนดวันรับคืนเงินประกัน = วันส่งมอบ + 2 ปี</small></div>'+
      '<div class="field"><label for="prd">ครบกำหนดรับคืนเงินประกัน</label><input id="prd" type="date" value="'+(p&&p.retDue?p.retDue:'')+'" readonly></div>'+
      '<div class="stack"><button class="btn pri" data-act="saveProj" data-id="'+(p?p.id:'')+'">บันทึกโครงการ</button>'+
@@ -1253,8 +1279,9 @@ document.addEventListener('click',function(e){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
     var sd0=document.getElementById('psd').value,ed0=document.getElementById('ped').value;
     if(sd0&&ed0&&ed0<sd0){toast('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มต้น');return;}
-    var delEl=document.getElementById('pdel'),deliveryDate=delEl?delEl.value:'',retDue=addYearsIso(deliveryDate,2),retAmtVal=parseFloat(document.getElementById('pr').value)||0,stVal=document.getElementById('pstatus').value||'active';if(retAmtVal>0&&(stVal==='delivered'||stVal==='closed')&&!deliveryDate){toast('กรอกวันที่ส่งมอบงานเพื่อเริ่มนับ 2 ปีรับคืนเงินประกัน');return;}var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:stVal,contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:retAmtVal,deliveryDate:deliveryDate,retDue:retDue,contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
-    if(id){var pp=proj(id);Object.assign(pp,o);}else{o.id=uid();S.projects.push(o);}
+    var delEl=document.getElementById('pdel'),deliveryDate=delEl?delEl.value:'',retDue=addYearsIso(deliveryDate,2),retAmtVal=parseFloat(document.getElementById('pr').value)||0,retPaidEl=document.getElementById('prpd'),retPaidDate=retPaidEl?retPaidEl.value:'',stVal=document.getElementById('pstatus').value||'active';if(retAmtVal>0&&!retPaidDate){toast('กรอกวันที่จ่ายเงินประกัน เพื่อบันทึกเป็นค่าใช้จ่าย');return;}if(retAmtVal>0&&(stVal==='delivered'||stVal==='closed')&&!deliveryDate){toast('กรอกวันที่ส่งมอบงานเพื่อเริ่มนับ 2 ปีรับคืนเงินประกัน');return;}var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:stVal,contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:retAmtVal,retPaidDate:retPaidDate,deliveryDate:deliveryDate,retDue:retDue,contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
+    var target=null;if(id){var pp=proj(id);Object.assign(pp,o);target=pp;}else{o.id=uid();S.projects.push(o);target=o;}
+    if(target)syncGuaranteeExpense(target);
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
   else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
