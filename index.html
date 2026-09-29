@@ -379,8 +379,8 @@ function donut(byCat,total,label){
     '<text x="21" y="20" text-anchor="middle" font-size="2.8" fill="var(--muted)" font-family="Sarabun,sans-serif">'+esc(label||'รายจ่ายรวม')+'</text><text x="21" y="24.6" text-anchor="middle" font-size="3.3" font-weight="700" fill="var(--ink)" font-family="Prompt,sans-serif">'+tt+'</text></svg><div class="lgs">'+lg+'</div></div>';
 }
 function brandHtml(){
-  var b=S.brand||'AREA MAIBAB',logo=b.split(' ')[0].toUpperCase().slice(0,6);
-  return '<div class="brand"><span class="logo">'+esc(logo)+'</span><div><b>'+esc(b)+'</b><small>บัญชีหน้างาน</small></div></div>';
+  var b=S.brand||'AREA MAIBAB';
+  return '<div class="brand"><img class="logo" src="area-logo-header.jpg" alt="AREA MAIBAB"><div><b>'+esc(b)+'</b><small>บัญชีหน้างาน</small></div></div>';
 }
 function retOpen(){return S.projects.filter(function(p){return p.retAmt>0&&!p.retRecv;});}
 function retDays(p){if(!p.retDue)return null;return Math.round((new Date(p.retDue+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);}
