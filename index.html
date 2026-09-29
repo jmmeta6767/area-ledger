@@ -265,6 +265,13 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .master-sheet-handle{width:44px;height:5px;border-radius:9px;background:#c5c9cc;margin:0 auto 12px}
 .master-sheet>h3{margin:2px 2px 14px!important;font-size:20px!important;color:#17202b!important}.master-sheet .field{background:#fff!important;border-radius:14px!important;padding:12px!important;margin:0 0 10px!important}.master-sheet .field label,.master-sheet .lbl{display:block!important;color:#6b7580!important;font-size:13px!important;font-weight:600!important;margin-bottom:5px!important}.master-sheet input,.master-sheet select,.master-sheet textarea{width:100%!important;min-height:46px!important;border:1px solid #e6e9e8!important;border-radius:10px!important;background:#f8f9f8!important;color:#17202b!important;padding:10px 11px!important;font:inherit!important}.master-sheet textarea{min-height:86px!important;resize:vertical}.master-sheet .seg{gap:8px!important}.master-sheet .seg button{min-height:44px!important;border-radius:10px!important;background:#f1f3f2!important;color:#17202b!important}.master-sheet .seg button.on{background:#e8a91e!important;color:#17202b!important;font-weight:800!important}.master-sheet .stack{gap:9px!important;margin-top:12px!important}.master-sheet .btn{min-height:48px!important;border-radius:11px!important;font-weight:700!important}.master-sheet .btn.pri{background:#e8a91e!important;color:#17202b!important}.master-sheet .btn.dng{color:#b8402b!important}.master-sheet .kv{background:#fff!important;border-bottom:1px solid #e6e9e8!important;padding:11px 12px!important}.master-sheet .photo{border-radius:14px!important;overflow:hidden!important;margin-top:12px!important}
 @media(prefers-color-scheme:dark){.master-sheet{background:#0f151c!important;color:#eef1f3!important}.master-sheet>h3{color:#eef1f3!important}.master-sheet .field,.master-sheet .kv{background:#1a232d!important;border-color:#2a3541!important}.master-sheet input,.master-sheet select,.master-sheet textarea,.master-sheet .seg button{background:#0f151c!important;color:#eef1f3!important;border-color:#2a3541!important}.master-sheet .field label,.master-sheet .lbl{color:#93a0ab!important}}
+/* Master UI completion: add form + documents + navigation */
+.master-form-page{padding-top:12px}.master-form-page>.seg{background:#fff;border-radius:14px;padding:6px;margin:0 0 10px!important}.master-form-page>.field{background:#fff;border-radius:15px;padding:13px;margin:0 0 10px}.master-form-page>.field label,.master-form-page>.field .lbl{color:#6b7580;font-size:13px}.master-form-page input,.master-form-page select,.master-form-page textarea{min-height:47px;border:1px solid #e6e9e8;border-radius:10px;background:#f8f9f8;color:#17202b}.master-form-page .amt input{font-size:28px;font-weight:800}.master-form-page .prev{border:0;border-left:5px solid #e8a91e;border-radius:14px;background:#fff;padding:14px;margin:10px 0}.master-form-page .savebar{background:rgba(241,243,242,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid #e6e9e8;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+.master-doc-head{margin:14px 0 10px;background:#17202b;color:#fff;border-radius:16px;padding:17px}.master-doc-head b{font-size:19px}.master-doc-head small{display:block;color:#cbd2d8;margin-top:3px}.master-doc-create{display:grid!important;grid-template-columns:1fr 1fr 1fr!important;gap:8px!important;margin-bottom:14px!important}.master-doc-create .btn{min-height:54px!important;border-radius:12px!important;font-size:13px!important;padding:8px!important}.master-doc-card{background:#fff!important;border:0!important;border-radius:16px!important;padding:0!important;overflow:hidden!important;margin:12px 0!important}.master-doc-card>h2{margin:0!important;padding:13px 15px!important;background:#fdf1d0!important;color:#17202b!important;font-size:16px!important}.master-doc-row{padding:14px 15px!important;border-top:1px solid #e6e9e8!important}
+.nav span{white-space:nowrap}.nav .add span{font-size:11px}
+@media(max-width:390px){.master-doc-create{grid-template-columns:1fr!important}.master-doc-create .btn{min-height:46px!important}.nav span{font-size:10.5px!important}}
+@media(prefers-color-scheme:dark){.master-form-page>.seg,.master-form-page>.field,.master-form-page .prev,.master-doc-card{background:var(--card)!important;color:var(--ink)!important}.master-form-page input,.master-form-page select,.master-form-page textarea{background:var(--bg)!important;color:var(--ink)!important;border-color:var(--line)!important}.master-form-page .savebar{background:rgba(15,21,28,.94)!important;border-color:var(--line)!important}.master-doc-card>h2{background:#3a3016!important;color:var(--ink)!important}}
+@media print{.mheader,.hd,.nav,.master-sheet,.master-scrim,.no-print{display:none!important}#app,main{max-width:none!important;background:#fff!important;padding:0!important}.quote-paper{box-shadow:none!important;margin:0!important;border:0!important}}
 </style>
 </head>
 <body>
@@ -608,7 +615,7 @@ function vList(){
 function vAdd(){
   var d=U.draft,foreman=S.role==='foreman',cats=d.type==='in'?CAT_IN:CAT_OUT;
   var partners={};S.tx.forEach(function(t){if(t.partner)partners[t.partner]=1;});
-  var h='';
+  var h='<section class="master-form-page">';
   if(!S.projects.length)return '<div class="empty" style="margin-top:20px">ต้องมีโครงการก่อนจึงจะบันทึกรายการได้</div><div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการ</button></div>';
   if(!foreman)h+='<div class="seg" style="margin-top:10px"><button class="out-c'+(d.type==='out'?' on':'')+'" data-act="setType" data-v="out">รายจ่าย</button><button class="in-c'+(d.type==='in'?' on':'')+'" data-act="setType" data-v="in">รายรับ</button></div>';
   h+='<div class="field"><label for="amt">จำนวนเงิน</label><div class="amt"><span>฿</span><input id="amt" data-f="amount" type="number" inputmode="decimal" min="0" step="any" placeholder="0" value="'+esc(d.amount)+'" autofocus></div><div class="muted num" id="amtfmt" style="margin-top:6px;min-height:24px">'+(parseFloat(d.amount)>0?fmt(parseFloat(d.amount),1):'')+'</div></div>';
@@ -634,7 +641,7 @@ function vAdd(){
   h+='<div class="field"><span class="lbl">รูปใบเสร็จ</span>'+(d.photo?'<div class="photo"><img src="'+d.photo+'" alt="รูปใบเสร็จ"></div><div class="stack" style="margin-top:10px"><button class="btn" data-act="rmphoto">ลบรูป</button></div>':'<label class="btn" for="photoIn">'+ic('cam')+'ถ่ายรูปหรือเลือกรูป</label>')+'<input id="photoIn" type="file" accept="image/*" capture="environment"></div>';
   h+='<div class="field"><label for="note">หมายเหตุ</label><input id="note" data-f="note" type="text" placeholder="ไม่บังคับ" value="'+esc(d.note)+'"></div>';
   h+='<div class="savebar"><button class="btn pri" data-act="save">'+(d.id?'บันทึกการแก้ไข':'บันทึก')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore">บันทึกและเพิ่มอีก</button>')+'</div>';
-  return h;
+  return h+'</section>';
 }
 function prevText(d){
   var a=parseFloat(d.amount);if(!(a>0))return 'กรอกจำนวนเงินเพื่อดูยอดสุทธิ';
@@ -863,13 +870,13 @@ function vDocs(){
   var rs=(S.receipts||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
   function rows(list,kind){
     if(!list.length)return '<div class="empty compact">ยังไม่มีเอกสาร</div>';
-    return list.map(function(q){var total=(+q.qty||0)*(+q.unitPrice||0);return '<button class="row doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small></div><div class="r"><span class="num">'+fmt(total)+'</span><span>'+esc(q.project||'')+'</span></div></button>';}).join('');
+    return list.map(function(q){var total=(+q.qty||0)*(+q.unitPrice||0);return '<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small></div><div class="r"><span class="num">'+fmt(total)+'</span><span>'+esc(q.project||'')+'</span></div></button>';}).join('');
   }
-  return '<div class="doc-head"><div><b>เอกสารธุรกิจ</b><small>สร้างจากข้อมูลบริษัทชุดเดียว ไม่ต้องกรอกซ้ำ</small></div></div>'+
-   '<div class="doc-create"><button class="btn pri" data-act="newQuote">+ ใบเสนอราคา</button><button class="btn" data-act="newBill">+ ใบวางบิล</button><button class="btn" data-act="newReceipt">+ ใบเสร็จรับเงิน</button></div>'+
-   '<div class="sec"><h2>ใบเสนอราคา <span class="muted">'+qs.length+' ฉบับ</span></h2>'+rows(qs,'quote')+'</div>'+
-   '<div class="sec"><h2>ใบวางบิล <span class="muted">'+bs.length+' ฉบับ</span></h2>'+rows(bs,'bill')+'</div>'+
-   '<div class="sec"><h2>ใบเสร็จรับเงิน <span class="muted">'+rs.length+' ฉบับ</span></h2>'+rows(rs,'receipt')+'</div>';
+  return '<div class="doc-head master-doc-head"><div><b>เอกสารธุรกิจ</b><small>สร้างจากข้อมูลบริษัทชุดเดียว ไม่ต้องกรอกซ้ำ</small></div></div>'+
+   '<div class="doc-create master-doc-create"><button class="btn pri" data-act="newQuote">+ ใบเสนอราคา</button><button class="btn" data-act="newBill">+ ใบวางบิล</button><button class="btn" data-act="newReceipt">+ ใบเสร็จรับเงิน</button></div>'+
+   '<div class="sec master-doc-card"><h2>ใบเสนอราคา <span class="muted">'+qs.length+' ฉบับ</span></h2>'+rows(qs,'quote')+'</div>'+
+   '<div class="sec master-doc-card"><h2>ใบวางบิล <span class="muted">'+bs.length+' ฉบับ</span></h2>'+rows(bs,'bill')+'</div>'+
+   '<div class="sec master-doc-card"><h2>ใบเสร็จรับเงิน <span class="muted">'+rs.length+' ฉบับ</span></h2>'+rows(rs,'receipt')+'</div>';
 }
 function docCollection(kind){return kind==='bill'?S.bills:kind==='receipt'?S.receipts:S.quotes;}
 function nextDocNo(kind){
@@ -928,7 +935,7 @@ function sheetHtml(){
     b+='<div class="stack">';
     if(!t.paid)b+='<div class="lbl" style="margin:6px 0 0">'+(t.type==='in'?'รับเงินแล้วทาง':'จ่ายแล้วทาง')+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn pri" data-act="markPaid" data-id="'+t.id+'" data-pay="transfer">โอน</button><button class="btn" data-act="markPaid" data-id="'+t.id+'" data-pay="cash">เงินสด</button></div>';
     if(owner){b+='<button class="btn" data-act="editTx" data-id="'+t.id+'">แก้ไขรายการ</button><button class="btn dng'+(U.confirm==='tx'+t.id?' sure':'')+'" data-act="delTx" data-id="'+t.id+'">'+(U.confirm==='tx'+t.id?'แตะอีกครั้งเพื่อยืนยันลบ':'ลบรายการ')+'</button>';}
-    b+='<button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
+    b+='<button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='proj'){
     var p=sh.id?proj(sh.id):null;
     b='<h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3>'+
@@ -964,7 +971,7 @@ function sheetHtml(){
      '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
      '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
-     '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บในเครื่องนี้ถาวรจนกว่าจะลบเอง (ไม่ซิงค์ข้ามเครื่อง) '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
+     '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
   }else if(sh.kind==='bizdoc'){
     var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind);
     b='<h3>'+(q?'แก้ไข':'สร้าง')+tt[0]+'</h3>'+
@@ -1033,7 +1040,7 @@ function render(){
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
   else if(v==='docs'){title='เอกสาร';body=vDocs();back=true;}
   else if(v==='quoteprint'){title=docTitle(U.docKind||'quote')[0];body=vBusinessDoc();back=true;}
-  var tabs=[['home','home','แดชบอร์ด'],['list','list','รายการ'],['add','plus',''],['projects','build','โครงการ'],['due','clock','ค้างรับจ่าย']];
+  var tabs=[['home','home','ภาพรวม'],['list','list','รายการ'],['add','plus',''],['projects','build','โครงการ'],['due','clock','ค้างรับ/จ่าย']];
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
     if(t[0]==='x')return;
