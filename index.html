@@ -413,16 +413,27 @@ function mergeThaSalaDocument(){
   var p=(S.projects||[]).find(function(x){return x.id==='thasala-m7'||(x.name||'').indexOf('ท่าศาลา')>-1;});
   if(!p)return false;
   if(!p.retAmt)p.retAmt=24750;
-  var has=(S.tx||[]).some(function(x){return x.pid===p.id&&Number(x.amount)===135513&&(x.sub||'').indexOf('เหล็ก')>-1;});
-  if(!has)S.tx.push({id:'thasala-doc-steel-135513',date:'',type:'out',amount:135513,cat:'ค่าของ',sub:'เหล็ก',pay:'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:true,due:'',photo:'',note:'จากเอกสารท่าศาลาที่ผู้ใช้ยืนยัน'});
-  var changed=!has;
-  (S.tx||[]).forEach(function(x){
-    if(x.pid!==p.id)return;
-    var sub=(x.sub||'').trim(),d=null;
-    if(sub==='สี/ทินเนอร์'||sub==='Jโบลท์ตัว'||sub==='ลวดเชื่อม')d='2026-09-26';
-    if(sub==='ตีตราสาร'||sub==='เช่าเครื่องตัดถนน'||sub==='ทราย')d='2026-09-28';
-    if(Number(x.amount)===135513&&sub==='เหล็ก')d='';
-    if(d!==null&&x.date!==d){x.date=d;changed=true;}
+  var changed=false;
+  var rows=[
+    {id:'thasala-doc-steel-135513',date:'',amount:135513,cat:'ค่าของ',sub:'เหล็ก'},
+    {id:'thasala-doc-paint-5580',date:'2026-09-26',amount:5580,cat:'ค่าของ',sub:'สี/ทินเนอร์'},
+    {id:'thasala-doc-jbolt-4264',date:'2026-09-26',amount:4264,cat:'ค่าของ',sub:'Jโบลท์ตัว'},
+    {id:'thasala-doc-weld-1029',date:'2026-09-26',amount:1029,cat:'ค่าของ',sub:'ลวดเชื่อม'},
+    {id:'thasala-doc-stamp-463',date:'2026-09-28',amount:463,cat:'ค่างานเอกสาร',sub:'ตีตราสาร'},
+    {id:'thasala-doc-roadcutter-700',date:'2026-09-28',amount:700,cat:'ค่าเช่าอื่นๆ',sub:'เช่าเครื่องตัดถนน'},
+    {id:'thasala-doc-sand-2800',date:'2026-09-28',amount:2800,cat:'ค่าของ',sub:'ทราย'}
+  ];
+  rows.forEach(function(r){
+    var x=(S.tx||[]).find(function(t){
+      return t.pid===p.id&&(t.id===r.id||(Number(t.amount)===r.amount&&((t.sub||'').trim()===r.sub)));
+    });
+    if(!x){
+      S.tx.push({id:r.id,date:r.date,type:'out',amount:r.amount,cat:r.cat,sub:r.sub,pay:'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:true,due:'',photo:'',note:'จากเอกสารค่าใช้จ่ายท่าศาลาที่ผู้ใช้ยืนยัน'});
+      changed=true;return;
+    }
+    if(x.date!==r.date){x.date=r.date;changed=true;}
+    if(x.cat!==r.cat){x.cat=r.cat;changed=true;}
+    if((x.sub||'').trim()!==r.sub){x.sub=r.sub;changed=true;}
   });
   return changed;
 }
