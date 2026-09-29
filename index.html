@@ -281,6 +281,15 @@ body{background:var(--theme-bg)}
 .mtabs{gap:9px;margin:16px 0 12px}.mtabs button{min-height:49px;border-radius:11px;padding:10px 18px;font-size:15px}.mtabs button.on{background:#e8b23b}
 .mgroup{border-radius:16px}.mgh{padding:12px 14px}.mitem{min-height:68px}
 @media(max-width:390px){.mheader{height:108px;min-height:108px}.mlogo{width:66px;height:66px}.mproj{min-height:205px}.mbody{padding:15px 13px}.mproj h2{font-size:18px}.mstats button{min-height:125px;padding:13px}}
+/* locked-theme quality pass: touch, readability, safe areas */
+.mproj,.mbal,.mstats button,.mgroup{box-shadow:0 2px 10px rgba(23,32,43,.025)}
+.mselect,button,input,select,textarea{touch-action:manipulation}
+.mitem:active,.mstats button:active,.mtabs button:active{transform:scale(.994)}
+.mitem:focus-visible,.mstats button:focus-visible,.mtabs button:focus-visible,.mselect:focus-visible{outline:3px solid #e8a91e;outline-offset:2px}
+.mtext b{font-size:15px}.mtext small{font-size:12px}.mamt{font-variant-numeric:tabular-nums}
+.mbal>b,.mbal strong,.mstats b,.mgh b{font-variant-numeric:tabular-nums}
+.nav{padding-bottom:max(8px,env(safe-area-inset-bottom))}.nav button{min-height:44px}
+@media(max-width:360px){.mheader{padding-left:14px}.mlogo{width:60px;height:60px;font-size:18px}.mheader b{font-size:18px}.mproj{min-height:195px}.mtag{font-size:15px}.mstats button{min-height:118px}.mstats span{font-size:13px}.mstats b{font-size:19px}.mtabs button{padding-left:13px;padding-right:13px}}
 </style>
 </head>
 <body>
