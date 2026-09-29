@@ -1535,6 +1535,46 @@ body.wallpaper-on .mgroup{
   .expense-donut b{font-size:14px!important}
   .expense-donut-legend>span,.expense-donut-legend>span b{font-size:9.5px!important}
 }
+
+/* DASHBOARD DONUT MOBILE READABILITY — standard touch/read sizing */
+.dash-charts.donut-only{display:block!important;margin:16px 0 12px!important}
+.dash-charts.donut-only .dash-chart-head{margin:0 2px 10px!important}
+.dash-charts.donut-only .dash-chart-head b{font-size:16px!important;line-height:1.25!important}
+.dash-charts.donut-only .dash-chart-head small{font-size:11px!important;margin-top:2px!important}
+.dash-charts.donut-only .dash-chart-head button{font-size:12px!important;min-height:44px!important;padding:8px 4px!important}
+.dash-chart-card.donut-card{padding:14px!important;border-radius:16px!important;overflow:hidden!important}
+.dash-chart-card.donut-card h3{font-size:14px!important;line-height:1.3!important;margin:0 0 12px!important}
+.expense-donut-wrap{display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(120px,.75fr)!important;gap:14px!important;align-items:center!important}
+.expense-donut{width:min(100%,300px)!important;aspect-ratio:1!important;height:auto!important;margin:auto!important;border-radius:50%!important;position:relative!important;display:grid!important;place-items:center!important}
+.expense-donut:after{content:""!important;position:absolute!important;inset:25%!important;background:var(--m-card,#fff)!important;border-radius:50%!important}
+.expense-donut>div,.expense-donut-hole{position:relative!important;z-index:2!important;text-align:center!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:4px!important}
+.expense-donut>div span,.expense-donut-hole span{font-size:13px!important;line-height:1.25!important;color:var(--m-mut)!important}
+.expense-donut>div b,.expense-donut-hole b{font-size:20px!important;line-height:1.15!important;margin-top:4px!important;color:var(--m-ink)!important;white-space:nowrap!important}
+.expense-donut-legend,.donut-legend{display:grid!important;gap:9px!important;min-width:0!important}
+.expense-donut-legend>span,.donut-legend-row{display:grid!important;grid-template-columns:11px minmax(0,1fr) auto!important;gap:7px!important;align-items:center!important;font-size:11px!important;line-height:1.25!important;color:var(--m-mut)!important}
+.expense-donut-legend i,.donut-legend-row i{width:10px!important;height:10px!important;border-radius:50%!important}
+.expense-donut-legend b,.donut-legend-row b{font-size:11px!important;color:var(--m-ink)!important;white-space:nowrap!important}
+.donut-empty{min-height:180px!important;display:grid!important;place-content:center!important;text-align:center!important;gap:4px!important}.donut-empty strong{font-size:22px!important}.donut-empty small{font-size:11px!important;color:var(--m-mut)!important}
+@media(max-width:430px){
+ .dash-charts.donut-only{margin-top:14px!important}
+ .dash-chart-card.donut-card{padding:12px!important}
+ .expense-donut-wrap{grid-template-columns:minmax(0,1.15fr) minmax(108px,.85fr)!important;gap:10px!important}
+ .expense-donut{width:min(100%,238px)!important}
+ .expense-donut:after{inset:27%!important}
+ .expense-donut>div span,.expense-donut-hole span{font-size:11px!important}
+ .expense-donut>div b,.expense-donut-hole b{font-size:17px!important}
+ .expense-donut-legend>span,.donut-legend-row{grid-template-columns:9px minmax(0,1fr)!important;gap:5px!important;font-size:10px!important}
+ .expense-donut-legend>span b,.donut-legend-row b{grid-column:2!important;font-size:10px!important;margin-top:-2px!important}
+ .expense-donut-legend i,.donut-legend-row i{width:8px!important;height:8px!important}
+}
+@media(max-width:360px){
+ .expense-donut-wrap{grid-template-columns:1fr!important}
+ .expense-donut{width:min(100%,220px)!important}
+ .expense-donut-legend,.donut-legend{grid-template-columns:1fr 1fr!important}
+}
+@media(prefers-color-scheme:dark){
+ .expense-donut:after{background:#1a232d!important}
+}
 </style>
 </head>
 <body>
