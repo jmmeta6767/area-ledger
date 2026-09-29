@@ -248,6 +248,10 @@ main{max-width:520px!important}.preview-project{background:var(--navy);border-ra
 .btn.pri{background:var(--gold)!important;color:#17202b!important}.tag.pend{background:var(--soft)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151c;--card:#1a232d;--ink:#eef1f3;--muted:#93a0ab;--soft:#3a3016;--line:#2a3541;--in:#4cc27f;--out:#ee7a63;--teal:#3cc4b8}}
 :root[data-theme="dark"]{--bg:#0f151c;--card:#1a232d;--ink:#eef1f3;--muted:#93a0ab;--soft:#3a3016;--line:#2a3541;--in:#4cc27f;--out:#ee7a63;--teal:#3cc4b8}
+/* iPhone header/logo hardening from screenshot QA */
+.brand>img.logo{display:block!important;width:64px!important;height:64px!important;min-width:64px!important;max-width:64px!important;min-height:64px!important;max-height:64px!important;padding:0!important;object-fit:cover!important;border-radius:12px!important;flex:0 0 64px!important}
+.hd-in{display:flex!important;align-items:center!important;gap:12px!important;min-height:96px!important}.brand{min-width:0!important}.brand>div{min-width:0}.brand>b,.brand>div>b{white-space:nowrap}.settings-ico{flex:0 0 auto!important;margin-left:auto!important}
+@media(max-width:390px){.brand>img.logo{width:56px!important;height:56px!important;min-width:56px!important;max-width:56px!important;min-height:56px!important;max-height:56px!important;flex-basis:56px!important}.brand .bt b,.brand>div>b{font-size:.92rem!important}}
 </style>
 </head>
 <body>
@@ -519,7 +523,7 @@ function newDraft(type,pid){
 /* ---------- หน้าจอ ---------- */
 function header(title,back){
   return '<div class="hd"><div class="hd-in">'+(back?'<button class="ghost" data-act="back" aria-label="ย้อนกลับ">'+ic('back').replace('<svg','<svg width="24" height="24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"')+'</button>':'')+
-    (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button>'</div><div class="stripe"></div></div>';
+    (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button></div><div class="stripe"></div></div>';
 }
 function txIcon(t){
   var x=((t.sub||'')+' '+(t.cat||'')).toLowerCase();
