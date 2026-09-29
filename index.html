@@ -770,7 +770,7 @@ function sheetHtml(){
     b+='<div class="stack">';
     if(!t.paid)b+='<div class="lbl" style="margin:6px 0 0">'+(t.type==='in'?'รับเงินแล้วทาง':'จ่ายแล้วทาง')+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn pri" data-act="markPaid" data-id="'+t.id+'" data-pay="transfer">โอน</button><button class="btn" data-act="markPaid" data-id="'+t.id+'" data-pay="cash">เงินสด</button></div>';
     if(owner){b+='<button class="btn" data-act="editTx" data-id="'+t.id+'">แก้ไขรายการ</button><button class="btn dng'+(U.confirm==='tx'+t.id?' sure':'')+'" data-act="delTx" data-id="'+t.id+'">'+(U.confirm==='tx'+t.id?'แตะอีกครั้งเพื่อยืนยันลบ':'ลบรายการ')+'</button>';}
-    b+='<button class="btn" data-act="closeSheet">ปิด</button></div>';
+    b+='<button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='proj'){
     var p=sh.id?proj(sh.id):null;
     b='<h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3>'+
@@ -801,6 +801,8 @@ function sheetHtml(){
       '<li>เปิดแอพจากไอคอนบนหน้าจอโฮมทุกครั้ง</li></ol>'+
       '<div class="prev"><b>สำคัญ:</b> ข้อมูลที่กรอกใน Safari จะไม่ตามมาที่ไอคอนบนหน้าจอโฮมโดยอัตโนมัติ ให้ติดตั้งก่อนแล้วค่อยเริ่มกรอกข้อมูลจริง หรือใช้ "สำรองข้อมูล" และ "กู้คืนข้อมูล" ย้ายข้อมูลข้ามมา</div>'+
       '<div class="stack"><button class="btn" data-act="closeSheet">ปิด</button></div>';
+  }else if(sh.kind==='resetConfirm'){
+    b='<h3 style="color:var(--out)">ยืนยันรีเซ็ตข้อมูล?</h3><p class="muted" style="margin:8px 0 4px">การรีเซ็ตจะลบโครงการและรายการบัญชีทั้งหมดในเครื่องนี้ และไม่สามารถย้อนกลับได้หากยังไม่ได้สำรองข้อมูล</p><div class="stack"><button class="btn dng sure" data-act="resetDo">ยืนยันรีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='backup'){
     b='<h3>สำรองข้อมูล</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกข้อความนี้ไปเก็บไว้ในโน้ต หรือ LINE Keep เมื่อต้องการกู้คืนให้วางกลับในเมนู "กู้คืนข้อมูล"</p><textarea class="csv" id="bkbox" readonly>'+esc(JSON.stringify(S))+'</textarea><div class="stack"><button class="btn pri" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='restore'){
@@ -903,6 +905,8 @@ document.addEventListener('click',function(e){
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
   else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
+  else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
+  else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='settings'){U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='role'){S.role=v;persist();U.view=v==='foreman'?'list':'home';render();}
   else if(a==='saveOpen'){S.opening=parseFloat(document.getElementById('op').value)||0;S.openCash=parseFloat(document.getElementById('opc').value)||0;S.bank=document.getElementById('bnk').value.trim();S.brand=document.getElementById('brn').value.trim()||'AREA MAIBAB';persist();U.sheet=null;render();toast('บันทึกการตั้งค่าแล้ว');}
