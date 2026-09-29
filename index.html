@@ -988,6 +988,15 @@ body.wallpaper-on .mgroup{
   .master-ref-project{width:100%!important;margin-left:0!important;margin-right:0!important}
   .mdash-balance,.mdash-stats,.mgroup,.ledger-feed{max-width:none!important}
 }
+
+/* DOCUMENT HUB — first-class quote bill receipt navigation */
+.doc-type-grid{display:grid;gap:10px;margin:12px 0}
+.doc-type-grid>button{border:1px solid var(--m-line);background:rgba(255,255,255,.96);border-radius:15px;min-height:74px;padding:11px 13px;display:grid;grid-template-columns:46px 1fr auto;grid-template-rows:auto auto;column-gap:11px;align-items:center;text-align:left;color:var(--m-ink)}
+.doc-type-icon{grid-row:1/3;width:44px;height:44px;border-radius:12px;background:#fff3c8;color:#9b6c00;display:grid;place-items:center;font-size:11px;font-weight:900}
+.doc-type-grid b{font-size:.92rem}.doc-type-grid small{font-size:.7rem;color:var(--m-mut)}.doc-type-grid strong{grid-column:3;grid-row:1/3;font-size:24px;color:#a1a8ad}
+.doc-list-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:4px 0 12px}
+.doc-list-head small,.doc-list-head span{display:block;color:var(--m-mut);font-size:.72rem}.doc-list-head h2{margin:2px 0;font-size:1.15rem}.doc-list-head .btn{width:auto;min-width:112px;margin:0}
+@media(max-width:430px){.doc-type-grid{gap:8px}.doc-type-grid>button{min-height:68px;padding:9px 11px}.doc-list-head .btn{min-width:102px;font-size:.78rem}}
 </style>
 </head>
 <body>
@@ -1697,20 +1706,26 @@ function vPrint(){
   });
   return h+'</table></div></div>';
 }
+function docKindLabel(kind){return kind==='bill'?'ใบวางบิล':kind==='receipt'?'ใบเสร็จรับเงิน':'ใบเสนอราคา';}
+function docKindList(kind){return (kind==='bill'?S.bills:kind==='receipt'?S.receipts:S.quotes)||[];}
 function vDocs(){
-  var qs=(S.quotes||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
-  var bs=(S.bills||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
-  var rs=(S.receipts||[]).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;});
-  function rows(list,kind){
-    if(!list.length)return '<div class="empty compact">ยังไม่มีเอกสาร</div>';
-    return list.map(function(q){var total=(+q.qty||0)*(+q.unitPrice||0);return '<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small></div><div class="r"><span class="num">'+fmt(total)+'</span><span>'+esc(q.project||'')+'</span></div></button>';}).join('');
-  }
-  return '<div class="doc-head master-doc-head"><div><b>เอกสารธุรกิจ</b><small>สร้างจากข้อมูลบริษัทชุดเดียว ไม่ต้องกรอกซ้ำ</small></div></div>'+
-   '<div class="doc-create master-doc-create"><button class="btn pri" data-act="newQuote">+ ใบเสนอราคา</button><button class="btn" data-act="newBill">+ ใบวางบิล</button><button class="btn" data-act="newReceipt">+ ใบเสร็จรับเงิน</button></div>'+
-   '<div class="sec master-doc-card"><h2>ใบเสนอราคา <span class="muted">'+qs.length+' ฉบับ</span></h2>'+rows(qs,'quote')+'</div>'+
-   '<div class="sec master-doc-card"><h2>ใบวางบิล <span class="muted">'+bs.length+' ฉบับ</span></h2>'+rows(bs,'bill')+'</div>'+
-   '<div class="sec master-doc-card"><h2>ใบเสร็จรับเงิน <span class="muted">'+rs.length+' ฉบับ</span></h2>'+rows(rs,'receipt')+'</div>';
+  var counts={quote:(S.quotes||[]).length,bill:(S.bills||[]).length,receipt:(S.receipts||[]).length};
+  return '<div class="doc-head master-doc-head"><div><b>เอกสารธุรกิจ</b><small>แยกจากตั้งค่า · เลือกประเภทเอกสารที่ต้องการ</small></div></div>'+
+    '<div class="doc-type-grid">'+
+      '<button data-act="docSection" data-kind="quote"><span class="doc-type-icon">QT</span><b>ใบเสนอราคา</b><small>'+counts.quote+' ฉบับ</small><strong>›</strong></button>'+
+      '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">BL</span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ</small><strong>›</strong></button>'+
+      '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">RC</span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small><strong>›</strong></button>'+
+    '</div>';
 }
+function vDocList(){
+  var kind=U.docListKind||'quote',list=docKindList(kind).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),label=docKindLabel(kind),act=kind==='bill'?'newBill':kind==='receipt'?'newReceipt':'newQuote';
+  var h='<div class="doc-list-head"><div><small>เอกสารธุรกิจ</small><h2>'+label+'</h2><span>'+list.length+' ฉบับ</span></div><button class="btn pri" data-act="'+act+'">+ สร้างใหม่</button></div>';
+  if(!list.length)return h+'<div class="empty">ยังไม่มี'+label+'</div>';
+  h+='<div class="sec master-doc-card">';
+  list.forEach(function(q){var calc=docCalc(q);h+='<button class="row doc-row master-doc-row" data-act="docView" data-kind="'+kind+'" data-id="'+q.id+'"><div class="l"><b>'+esc(q.no||'-')+'</b><small>'+esc(q.customer||'-')+' · '+dstr(q.date)+'</small><small>'+esc(q.project||'')+'</small></div><div class="r"><span class="num">'+fmt(calc.total)+'</span><span>เปิดเอกสาร ›</span></div></button>';});
+  return h+'</div>';
+}
+
 function docCollection(kind){return kind==='bill'?S.bills:kind==='receipt'?S.receipts:S.quotes;}
 function nextDocNo(kind){
   S.docSeq=S.docSeq||{quote:0,bill:0,receipt:0};S.docSeq[kind]=(S.docSeq[kind]||0)+1;
@@ -1892,7 +1907,7 @@ function appMenuHtml(){
     ['report','list','รายงาน','สรุปบัญชีและภาษี'],
     ['docs','build','เอกสารธุรกิจ','ใบเสนอราคา / ใบวางบิล / ใบเสร็จ']
   ];
-  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[0]==='due'&&due?'<i>'+Math.min(due,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-docs"><b>เอกสาร</b><div><button data-act="newQuote">+ ใบเสนอราคา</button><button data-act="newBill">+ ใบวางบิล</button><button data-act="newReceipt">+ ใบเสร็จ</button></div></div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
+  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[0]==='due'&&due?'<i>'+Math.min(due,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-docs"><b>เอกสาร</b><div><button data-act="drawerDocList" data-kind="quote">ใบเสนอราคา</button><button data-act="drawerDocList" data-kind="bill">ใบวางบิล</button><button data-act="drawerDocList" data-kind="receipt">ใบเสร็จ</button></div></div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
 }
 
 function render(){
@@ -1907,7 +1922,8 @@ function render(){
   else if(v==='due'){title='ค้างรับและค้างจ่าย';body=vDue();}
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
-  else if(v==='docs'){title='เอกสาร';body=vDocs();back=true;}
+  else if(v==='docs'){title='เอกสารธุรกิจ';body=vDocs();back=true;}
+  else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
   else if(v==='quoteprint'){title=docTitle(U.docKind||'quote')[0];body=vBusinessDoc();back=true;}
   var tabs=[['home','home','ภาพรวม'],['list','list','รายการ'],['add','plus',''],['projects','build','โครงการ'],['due','clock','ค้างรับ/จ่าย']];
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
@@ -1931,10 +1947,13 @@ document.addEventListener('click',function(e){
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
   if(a==='appMenu'){U.appMenu=true;render();return;}
   if(a==='appMenuClose'){U.appMenu=false;render();return;}
+  if(a==='drawerDocList'){U.appMenu=false;U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='menuGo'){U.appMenu=false;go(v);return;}
+  if(a==='docSection'){U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='go')go(v);
   else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
-  else if(a==='back'&&U.view==='quoteprint'){go('docs');}
+  else if(a==='back'&&U.view==='quoteprint'){U.docListKind=U.docKind||'quote';go('doclist');}
+  else if(a==='back'&&U.view==='doclist'){go('docs');}
   else if(a==='back'&&U.view==='docs'){go('home');}
   else if(a==='back'&&U.view==='report'){go('home');}
   else if(a==='back'){U.draft=null;go(U.pid&&U.view==='add'&&U.from==='project'?'project':(U.from||(S.role==='foreman'?'list':'home')));}
