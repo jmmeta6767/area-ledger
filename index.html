@@ -1354,6 +1354,14 @@ body.wallpaper-on .mgroup{
   .quote-item-grid{grid-template-columns:1fr 1fr}.quote-item-grid input:nth-child(3),.quote-item-grid input:nth-child(4){grid-column:auto}
   .doc-output-actions{grid-template-columns:1fr}
 }
+
+/* TAX DOCUMENT DETAIL HARDENING */
+.doc-item{grid-template-columns:2fr .6fr .7fr 1fr .8fr}
+.rd-company p{white-space:pre-wrap}
+@media(max-width:560px){
+ .doc-item{grid-template-columns:1fr 1fr}
+ .doc-item input:first-child{grid-column:1/-1}
+}
 </style>
 </head>
 <body>
@@ -2185,6 +2193,7 @@ function taxDocValidate(kind,d){
     if(!b.address)return 'กรอกที่อยู่สถานประกอบการในตั้งค่าก่อนออกใบกำกับภาษี';
     if(!d.customerAddress)return 'กรอกที่อยู่ลูกค้าก่อนออกใบกำกับภาษี';
     if(d.customerVatRegistered&&String(d.customerTaxId||'').replace(/\D/g,'').length!==13)return 'ลูกค้าจด VAT กรุณากรอกเลขประจำตัวผู้เสียภาษีลูกค้า 13 หลัก';
+    if(d.customerVatRegistered&&!String(d.customerBranch||'').trim())return 'ลูกค้าจด VAT กรุณาระบุสำนักงานใหญ่หรือสาขาของลูกค้า';
   }
   return '';
 }
@@ -2343,7 +2352,7 @@ function sheetHtml(){
      '<label class="quote-check"><input id="dcustvat" type="checkbox"'+(q&&q.customerVatRegistered?' checked':'')+'><span>ลูกค้าจดทะเบียน VAT</span></label>'+
      '<div class="field"><label for="dproj">โครงการ / งาน</label><input id="dproj" type="text" value="'+esc(q?q.project:(docProj?docProj.name:''))+'"'+(docProj?' readonly':'')+'></div>'+
      '<div class="field"><label for="dseller">ผู้ขาย / ผู้จัดทำเอกสาร</label><input id="dseller" value="'+esc(q?q.seller||'':'')+'"></div>'+
-     '<div class="field"><span class="lbl">รายการ</span>'+[0,1,2].map(function(i){var x=q?docItems(q)[i]:null;return '<div class="doc-item"><input id="ddesc'+i+'" type="text" placeholder="รายละเอียดรายการ" value="'+esc(x?x.description:'')+'"><input id="dqty'+i+'" type="number" inputmode="decimal" placeholder="จำนวน" value="'+esc(x?x.qty:(i===0?1:''))+'"><input id="dunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x?x.unit:(i===0?'งาน':''))+'"><input id="dprice'+i+'" type="number" inputmode="decimal" placeholder="ราคา/หน่วย" value="'+esc(x?x.unitPrice:'')+'"></div>';}).join('')+'</div>'+
+     '<div class="field"><span class="lbl">รายการ</span>'+[0,1,2].map(function(i){var x=q?docItems(q)[i]:null;return '<div class="doc-item"><input id="ddesc'+i+'" type="text" placeholder="รายละเอียดรายการ" value="'+esc(x?x.description:'')+'"><input id="dqty'+i+'" type="number" inputmode="decimal" placeholder="จำนวน" value="'+esc(x?x.qty:(i===0?1:''))+'"><input id="dunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x?x.unit:(i===0?'งาน':''))+'"><input id="dprice'+i+'" type="number" inputmode="decimal" placeholder="ราคา/หน่วย" value="'+esc(x?x.unitPrice:'')+'"><input id="dlineDisc'+i+'" type="number" inputmode="decimal" min="0" placeholder="ส่วนลด" value="'+esc(x?(x.discount||''):'')+'"></div>';}).join('')+'</div>'+
      '<div class="field"><label for="ddisc">ส่วนลด (บาท)</label><input id="ddisc" type="number" inputmode="decimal" value="'+esc(q?q.discount||'':'')+'"></div>'+
      '<div class="field"><label for="dwht">หัก ณ ที่จ่าย (%)</label><input id="dwht" type="number" inputmode="decimal" value="'+esc(q?q.whtRate||'':'')+'" placeholder="เช่น 3"></div>'+
      '<div class="field"><label for="ddue">วันครบกำหนดชำระ</label><input id="ddue" type="date" value="'+esc(q?q.dueDate||'':'')+'"></div>'+
@@ -2366,7 +2375,7 @@ function sheetHtml(){
       '<label class="quote-check"><input id="qcustvat" type="checkbox"'+(q&&q.customerVatRegistered?' checked':'')+'><span>ลูกค้าจดทะเบียน VAT</span></label>'+
       '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:(qProj?qProj.name:''))+'"'+(qProj?' readonly':'')+' placeholder="ระบุโครงการ"></div>'+'<div class="field"><label for="qwarehouse">คลังสินค้า / สถานที่ส่งมอบ</label><input id="qwarehouse" type="text" value="'+esc(q?q.warehouse||'':'')+'" placeholder="ไม่บังคับ"></div>'+
       '<div class="field"><label for="qseller">ผู้ขาย / ผู้เสนอราคา</label><input id="qseller" type="text" value="'+esc(q?q.seller||'':'')+'" placeholder="ชื่อผู้จัดทำ/ผู้ขาย"></div>'+
-      '<div class="doc-law-note">ใบเสนอราคาเป็นเอกสารเสนอราคา ไม่ใช่ใบกำกับภาษี เมื่อออกใบเสร็จ/ใบกำกับภาษี ระบบจะตรวจข้อมูลที่จำเป็นตามสถานะ VAT ของกิจการ</div></section>'+
+      '<div class="doc-law-note">ใบเสนอราคาเป็นเอกสารเสนอราคา ไม่ใช่ใบกำกับภาษี · '+((S.business&&S.business.vatRegistered)?'กิจการจด VAT: ระบบจะแสดง VAT 7% และตรวจข้อมูลก่อนออกใบเสร็จ/ใบกำกับภาษี':'กิจการยังไม่จด VAT: ระบบจะไม่คำนวณ VAT ในเอกสาร')+'</div></section>'+
       '<section class="quote-editor-section"><div class="quote-section-title"><span>สินค้า / บริการ</span><button data-act="quoteAddItem">＋ เพิ่มรายการ</button></div>'+
       '<div class="quote-item-list">'+Array.from({length:qCount}).map(function(_,i){var x=qItems[i]||{};return '<div class="quote-item-card"><div class="quote-item-top"><b>รายการ '+(i+1)+'</b>'+(i>0?'<button data-act="quoteRemoveItem" data-v="'+i+'">ลบ</button>':'')+'</div><textarea id="qdesc'+i+'" class="quote-desc" rows="3" placeholder="รายละเอียดสินค้า / บริการ">'+esc(x.description||'')+'</textarea><div class="quote-item-grid"><input id="qqty'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="จำนวน" value="'+esc(x.qty!==undefined?x.qty:(i===0?1:''))+'"><input id="qunit'+i+'" type="text" placeholder="หน่วย" value="'+esc(x.unit||'งาน')+'"><input id="qprice'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="ราคา/หน่วย" value="'+esc(x.unitPrice||'')+'"><input id="qlineDisc'+i+'" type="number" inputmode="decimal" min="0" step="any" placeholder="ส่วนลด" value="'+esc(x.discount||'')+'"></div></div>';}).join('')+'</div></section>'+
       '<section class="quote-editor-section quote-total-editor"><div class="field"><label for="qdiscount">ส่วนลดรวม (บาท)</label><input id="qdiscount" type="number" inputmode="decimal" min="0" step="any" value="'+esc(qDisc)+'" placeholder="0"></div>'+
@@ -2634,7 +2643,7 @@ document.addEventListener('click',function(e){
     persist();U.docKind=target;U.docId=d.id;U.sheet=null;go('quoteprint');toast(target==='bill'?'สร้างใบวางบิลแล้ว':'บันทึกรับเงินและสร้างใบเสร็จแล้ว');
   }
   else if(a==='saveBizDoc'){
-    var kind=el.dataset.kind||'bill',list=docCollection(kind),items=[0,1,2].map(function(i){return {description:document.getElementById('ddesc'+i).value.trim(),qty:parseFloat(document.getElementById('dqty'+i).value)||0,unit:document.getElementById('dunit'+i).value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('dprice'+i).value)||0};}).filter(function(x){return x.description;});
+    var kind=el.dataset.kind||'bill',list=docCollection(kind),items=[0,1,2].map(function(i){var ld=document.getElementById('dlineDisc'+i);return {description:document.getElementById('ddesc'+i).value.trim(),qty:parseFloat(document.getElementById('dqty'+i).value)||0,unit:document.getElementById('dunit'+i).value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('dprice'+i).value)||0,discount:Math.max(0,parseFloat(ld&&ld.value)||0)};}).filter(function(x){return x.description;});
     var oldDoc=id?list.find(function(x){return x.id===id;}):null,linkedPid=(oldDoc&&oldDoc.pid)||U.docProjectPid||'',linkedProj=linkedPid?proj(linkedPid):null;
     var d={id:id||uid(),no:document.getElementById('dno').value.trim()||nextDocNo(kind),date:document.getElementById('ddate').value||today(),customer:document.getElementById('dcust').value.trim()||(linkedProj?linkedProj.client||'':''),customerAddress:document.getElementById('daddr').value.trim(),customerTaxId:document.getElementById('dtax').value.trim(),customerBranch:document.getElementById('dbranch').value.trim(),customerVatRegistered:!!document.getElementById('dcustvat').checked,seller:document.getElementById('dseller').value.trim(),project:document.getElementById('dproj').value.trim()||(linkedProj?linkedProj.name:''),pid:linkedPid,items:items,description:items[0]?items[0].description:'',qty:items[0]?items[0].qty:1,unit:items[0]?items[0].unit:'งาน',unitPrice:items[0]?items[0].unitPrice:0,discount:parseFloat(document.getElementById('ddisc').value)||0,whtRate:parseFloat(document.getElementById('dwht').value)||0,dueDate:document.getElementById('ddue').value||'',note:document.getElementById('dnote').value.trim(),sourceId:oldDoc?oldDoc.sourceId||'':'',sourceKind:oldDoc?oldDoc.sourceKind||'':''};
     if(!d.customer||!items.length){toast('กรอกลูกค้าและอย่างน้อย 1 รายการ');return;}
