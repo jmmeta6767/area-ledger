@@ -960,6 +960,34 @@ body.wallpaper-on .mgroup{
 @media(prefers-color-scheme:dark){
  .app-drawer-docs{border-color:#303b46}.app-drawer-docs button{background:#222d38;border-color:#35414c;color:#fff}.app-drawer-docs button:first-child{background:#3a3320}
 }
+
+/* FULL-BLEED MOBILE APP — FlowAccount-like viewport */
+/* Phone: use the complete browser viewport. No narrow centered app column. */
+@media(max-width:700px){
+  html,body{width:100%!important;max-width:none!important;min-height:100%!important;overflow-x:hidden!important}
+  body{background:var(--m-bg)!important}
+  #app{width:100%!important;max-width:none!important;margin:0!important;min-height:100dvh!important;padding-bottom:0!important;background:var(--m-bg)!important}
+  main{width:100%!important;max-width:none!important;margin:0!important}
+  .mheader,.master-ref-header,.hd{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important}
+  .nav{left:0!important;right:0!important;width:100%!important;max-width:none!important;margin:0!important}
+  .nav-in{width:100%!important;max-width:none!important;margin:0!important}
+  .sheet{width:100%!important;max-width:none!important}
+  body.wallpaper-on #app{width:100%!important;max-width:none!important}
+}
+/* Keep content comfortably readable on tablets/desktop while phone remains true full-screen. */
+@media(min-width:701px){
+  #app{max-width:760px!important}
+  main{max-width:760px!important}
+  .nav-in{max-width:760px!important;margin:0 auto!important}
+  .sheet{max-width:760px!important}
+}
+/* Home cards reach the same visual edges as the reference app, retaining a small safe gutter. */
+@media(max-width:430px){
+  main{padding-left:8px!important;padding-right:8px!important}
+  .master-ref-header{border-radius:0!important}
+  .master-ref-project{width:100%!important;margin-left:0!important;margin-right:0!important}
+  .mdash-balance,.mdash-stats,.mgroup,.ledger-feed{max-width:none!important}
+}
 </style>
 </head>
 <body>
