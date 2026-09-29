@@ -335,8 +335,17 @@ function mergeThaSalaDocument(){
   if(!p)return false;
   if(!p.retAmt)p.retAmt=24750;
   var has=(S.tx||[]).some(function(x){return x.pid===p.id&&Number(x.amount)===135513&&(x.sub||'').indexOf('เหล็ก')>-1;});
-  if(!has)S.tx.push({id:'thasala-doc-steel-135513',date:today(),type:'out',amount:135513,cat:'ค่าของ',sub:'เหล็ก',pay:'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:true,due:'',photo:'',note:'จากเอกสารท่าศาลาที่ผู้ใช้ยืนยัน'});
-  return !has;
+  if(!has)S.tx.push({id:'thasala-doc-steel-135513',date:'',type:'out',amount:135513,cat:'ค่าของ',sub:'เหล็ก',pay:'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:true,due:'',photo:'',note:'จากเอกสารท่าศาลาที่ผู้ใช้ยืนยัน'});
+  var changed=!has;
+  (S.tx||[]).forEach(function(x){
+    if(x.pid!==p.id)return;
+    var sub=(x.sub||'').trim(),d=null;
+    if(sub==='สี/ทินเนอร์'||sub==='Jโบลท์ตัว'||sub==='ลวดเชื่อม')d='2026-09-26';
+    if(sub==='ตีตราสาร'||sub==='เช่าเครื่องตัดถนน'||sub==='ทราย')d='2026-09-28';
+    if(Number(x.amount)===135513&&sub==='เหล็ก')d='';
+    if(d!==null&&x.date!==d){x.date=d;changed=true;}
+  });
+  return changed;
 }
 function persist(){
   S.updatedAt=Date.now();var json=JSON.stringify(S),ok=true;
