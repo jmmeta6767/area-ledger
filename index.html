@@ -224,6 +224,8 @@ function migrate(o){
   if(o.bank===undefined)o.bank='Krungthai Business';
   if(o.brand===undefined)o.brand='AREA MAIBAB';
   if(o.openCash===undefined)o.openCash=0;
+  if(!o.business)o.business={legalName:'',taxId:'',phone:'',email:'',address:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
+  if(!Array.isArray(o.quotes))o.quotes=[];
   o.tx.forEach(function(t){
     if(t.sub===undefined)t.sub='';
     if(t.type==='out'&&LEG[t.cat]){t.sub=t.sub||LEG[t.cat][1];t.cat=LEG[t.cat][0];}
@@ -260,7 +262,7 @@ function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).sli
 /* ---------- ข้อมูล ---------- */
 var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:''},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
 
-function emptyState(){return {projects:[],tx:[],role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',customSubs:{},updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],quotes:[],role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',taxId:'',phone:'',email:'',address:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 function idbOpen(){return new Promise(function(res,rej){try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){r.result.createObjectStore('kv');};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
 function idbSet(v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'state');t.oncomplete=function(){res(true);};t.onerror=function(){res(false);};t.onabort=function(){res(false);};});}).catch(function(){return false;});}
@@ -827,9 +829,31 @@ function sheetHtml(){
   }else if(sh.kind==='settings'){
     b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
-     (S.role==='owner'?'<div class="field"><label for="brn">ชื่อกิจการ</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div><div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
-     '<div class="stack">'+(S.role==='owner'?'<button class="btn" data-act="saveOpen">บันทึกการตั้งค่าบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
+     (S.role==='owner'?'<div class="field"><label for="brn">ชื่อกิจการ / ชื่อที่แสดง</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
+     '<div class="field"><label for="blegal">ชื่อบริษัท / ห้างหุ้นส่วนตามทะเบียน</label><input id="blegal" type="text" value="'+esc((S.business&&S.business.legalName)||'')+'" placeholder="เช่น ห้างหุ้นส่วนจำกัด ..."></div>'+
+     '<div class="field"><label for="btax">เลขประจำตัวผู้เสียภาษี</label><input id="btax" type="text" inputmode="numeric" value="'+esc((S.business&&S.business.taxId)||'')+'" placeholder="13 หลัก"></div>'+
+     '<div class="field"><label for="bphone">โทรศัพท์</label><input id="bphone" type="tel" value="'+esc((S.business&&S.business.phone)||'')+'"></div>'+
+     '<div class="field"><label for="bemail">อีเมล</label><input id="bemail" type="email" value="'+esc((S.business&&S.business.email)||'')+'"></div>'+
+     '<div class="field"><label for="baddr">ที่อยู่ตามทะเบียน</label><textarea id="baddr" rows="3">'+esc((S.business&&S.business.address)||'')+'</textarea></div>'+
+     '<div class="field"><label for="bbranch">สำนักงาน</label><select id="bbranch"><option '+(((S.business&&S.business.branch)||'สำนักงานใหญ่')==='สำนักงานใหญ่'?'selected':'')+'>สำนักงานใหญ่</option><option '+((S.business&&S.business.branch)==='สาขา'?'selected':'')+'>สาขา</option></select></div>'+
+     '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
+     '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+
+     '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
+     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="newQuote">ใบเสนอราคา</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บในเครื่องนี้ถาวรจนกว่าจะลบเอง (ไม่ซิงค์ข้ามเครื่อง) '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
+  }else if(sh.kind==='quote'){
+    var q=sh.id?(S.quotes||[]).find(function(x){return x.id===sh.id;}):null;
+    b='<h3>'+(q?'แก้ไขใบเสนอราคา':'สร้างใบเสนอราคา')+'</h3>'+
+     '<div class="field"><label for="qno">เลขที่ใบเสนอราคา</label><input id="qno" type="text" value="'+esc(q?q.no:'QT-'+today().replace(/-/g,''))+'"></div>'+
+     '<div class="field"><label for="qdate">วันที่</label><input id="qdate" type="date" value="'+esc(q?q.date:today())+'"></div>'+
+     '<div class="field"><label for="qcust">ชื่อลูกค้า / หน่วยงาน</label><input id="qcust" type="text" value="'+esc(q?q.customer:'')+'"></div>'+
+     '<div class="field"><label for="qproj">โครงการ / งาน</label><input id="qproj" type="text" value="'+esc(q?q.project:'')+'"></div>'+
+     '<div class="field"><label for="qdesc">รายละเอียดงาน / สินค้า</label><textarea id="qdesc" rows="4">'+esc(q?q.description:'')+'</textarea></div>'+
+     '<div class="field"><label for="qqty">จำนวน</label><input id="qqty" type="number" inputmode="decimal" value="'+esc(q?q.qty:1)+'"></div>'+
+     '<div class="field"><label for="qunit">หน่วย</label><input id="qunit" type="text" value="'+esc(q?q.unit:'งาน')+'"></div>'+
+     '<div class="field"><label for="qprice">ราคา/หน่วย (บาท)</label><input id="qprice" type="number" inputmode="decimal" value="'+esc(q?q.unitPrice:'')+'"></div>'+
+     '<div class="field"><label for="qnote">หมายเหตุ / เงื่อนไข</label><textarea id="qnote" rows="3">'+esc(q?q.note:'')+'</textarea></div>'+
+     '<div class="stack"><button class="btn pri" data-act="saveQuote" data-id="'+(q?q.id:'')+'">บันทึกใบเสนอราคา</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='install'){
     b='<h3>ติดตั้งบน iPhone</h3><ol style="padding-left:22px;line-height:1.7;margin:10px 0">'+
       '<li>เปิดลิงก์แอพนี้ใน <b>Safari</b> (ไม่ใช่ในแอพ Claude)</li>'+
@@ -945,8 +969,22 @@ document.addEventListener('click',function(e){
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
   else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='settings'){U.sheet={kind:'settings'};U.confirm=null;render();}
+  else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
+  else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
+  else if(a==='newQuote'){U.sheet={kind:'quote',id:null};render();}
+  else if(a==='saveQuote'){
+    var q={id:id||uid(),no:document.getElementById('qno').value.trim(),date:document.getElementById('qdate').value||today(),customer:document.getElementById('qcust').value.trim(),project:document.getElementById('qproj').value.trim(),description:document.getElementById('qdesc').value.trim(),qty:parseFloat(document.getElementById('qqty').value)||1,unit:document.getElementById('qunit').value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('qprice').value)||0,note:document.getElementById('qnote').value.trim()};
+    if(!q.customer){toast('กรอกชื่อลูกค้าก่อน');return;}
+    if(!q.description){toast('กรอกรายละเอียดก่อน');return;}
+    var qi=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qi>-1)S.quotes[qi]=q;else S.quotes.push(q);
+    persist();U.sheet=null;render();toast('บันทึกใบเสนอราคาแล้ว');
+  }
   else if(a==='role'){S.role=v;persist();U.view=v==='foreman'?'list':'home';render();}
-  else if(a==='saveOpen'){S.opening=parseFloat(document.getElementById('op').value)||0;S.openCash=parseFloat(document.getElementById('opc').value)||0;S.bank=document.getElementById('bnk').value.trim();S.brand=document.getElementById('brn').value.trim()||'AREA MAIBAB';persist();U.sheet=null;render();toast('บันทึกการตั้งค่าแล้ว');}
+  else if(a==='saveOpen'){
+    S.opening=parseFloat(document.getElementById('op').value)||0;S.openCash=parseFloat(document.getElementById('opc').value)||0;S.bank=document.getElementById('bnk').value.trim();S.brand=document.getElementById('brn').value.trim()||'AREA MAIBAB';
+    S.business=S.business||{};S.business.legalName=document.getElementById('blegal').value.trim();S.business.taxId=document.getElementById('btax').value.trim();S.business.phone=document.getElementById('bphone').value.trim();S.business.email=document.getElementById('bemail').value.trim();S.business.address=document.getElementById('baddr').value.trim();S.business.branch=document.getElementById('bbranch').value;
+    persist();U.sheet=null;render();toast('บันทึกข้อมูลบริษัทแล้ว');
+  }
   else if(a==='mprev'){U.month=shiftMonth(U.month,-1);render();}
   else if(a==='mnext'){U.month=shiftMonth(U.month,1);render();}
   else if(a==='csv'){U.sheet={kind:'csv'};render();}
