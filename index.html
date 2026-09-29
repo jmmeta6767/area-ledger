@@ -1311,8 +1311,8 @@ function homeUrgentAlert(allMode,active,all){
 
 function header(title,back){
   var menu='<button class="app-menu-btn" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button>';
-  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header">'+menu+'<div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button class="master-ref-settings" data-act="settings" aria-label="ตั้งค่า"><span>⚙</span><small>ตั้งค่า</small></button></div>';
-  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="back" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1><button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button></div><div class="stripe"></div></div>';
+  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header">'+menu+'<div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div></div>';
+  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="back" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1></div><div class="stripe"></div></div>';
 }
 
 function txIcon(t){
