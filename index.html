@@ -1269,6 +1269,40 @@ body.wallpaper-on .mgroup{
   .row.tx-modern .tx-cat-icon{width:38px!important;height:38px!important;flex-basis:38px!important}
   .row.tx-modern .l>b{font-size:13px!important}
 }
+
+/* MULTI PROJECT DASHBOARD MANAGER + AGGREGATE CHARTS */
+.dash-tabs{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:9px 0 8px;align-items:stretch}
+.dash-tabs::-webkit-scrollbar{display:none}
+.dash-tab,.dash-add{border:1px solid var(--m-line);background:var(--m-card);color:var(--m-ink);border-radius:12px;min-height:48px;padding:7px 11px;flex:none;font:inherit}
+.dash-tab.all{font-weight:800}.dash-tab.on,.dash-tab-wrap.on{background:#f0b935;border-color:#f0b935;color:#17202b}
+.dash-tab span{display:block;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:750}
+.dash-tab small{display:block;font-size:8px;opacity:.68;margin-bottom:2px}
+.dash-tab-wrap{display:flex;align-items:stretch;border:1px solid var(--m-line);background:var(--m-card);border-radius:12px;overflow:hidden;flex:none}
+.dash-tab-wrap .dash-tab{border:0;border-radius:0;background:transparent;padding-right:7px}
+.dash-close{width:31px;border:0;border-left:1px solid rgba(120,130,138,.16);background:transparent;font-size:19px;color:inherit}
+.dash-add{display:flex;align-items:center;gap:4px;font-weight:800;border-style:dashed}.dash-add>span{font-size:9px}
+.dash-charts{margin:12px 0 10px;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.dash-chart-head{grid-column:1/-1;display:flex;align-items:end;justify-content:space-between;gap:10px}
+.dash-chart-head b,.dash-chart-head small{display:block}.dash-chart-head b{font-size:14px}.dash-chart-head small{font-size:9px;color:var(--m-mut)}
+.dash-chart-head button{border:0;background:transparent;color:#8d6500;font-weight:700;font-size:10px}
+.dash-chart-card{background:rgba(255,255,255,.96);border:1px solid var(--m-line);border-radius:15px;padding:11px;min-width:0}
+.dash-chart-card h3{font-size:11px;margin:0 0 9px}
+.dash-svg{display:block;width:100%;height:auto;min-height:120px}.dash-svg text{font-size:9px;fill:var(--m-mut)}.dash-svg .axis{stroke:var(--m-line)}.dash-svg .bar-in{fill:#2e8b61}.dash-svg .bar-out{fill:#c2523d}
+.dash-legend{display:flex;gap:12px;font-size:8px;margin-top:2px}
+.project-chart-list{display:grid;gap:8px}
+.project-chart-row{border:0;background:transparent;padding:0;text-align:left;color:inherit}
+.project-chart-name,.project-chart-values{display:flex;justify-content:space-between;gap:8px;align-items:center}.project-chart-name b{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66%}.project-chart-name span,.project-chart-values span{font-size:7.5px}
+.project-chart-bars{display:grid;gap:3px;margin:4px 0}.project-chart-bars i{display:block;min-width:2px;height:5px;border-radius:4px}.project-chart-bars .inbar{background:#2e8b61}.project-chart-bars .outbar{background:#c2523d}
+.category-chart{display:grid;gap:8px}.category-chart>div{display:grid;grid-template-columns:1fr auto;gap:4px 8px}.category-chart span{font-size:9px}.category-chart b{font-size:9px}.category-chart i{grid-column:1/-1;height:6px;background:#eef0ef;border-radius:6px;overflow:hidden}.category-chart em{display:block;height:100%;background:#e3ad2e;border-radius:6px}
+.dash-manager-list{display:grid;gap:8px;margin:10px 0 14px}.dash-manager-list>button{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--m-line);border-radius:12px;background:var(--m-card);padding:11px;text-align:left;color:var(--m-ink)}.dash-manager-list b,.dash-manager-list small{display:block}.dash-manager-list b{font-size:12px}.dash-manager-list small{font-size:9px;color:var(--m-mut);margin-top:2px}.dash-manager-list strong{font-size:10px;color:#8d6500;white-space:nowrap}
+@media(max-width:430px){
+ .dash-tabs{margin-left:0;margin-right:0;padding-top:7px}
+ .dash-tab,.dash-add{min-height:44px;padding:6px 9px}.dash-tab span{max-width:135px;font-size:10px}.dash-close{width:28px}
+ .dash-charts{grid-template-columns:1fr;gap:8px}.dash-chart-head{margin-top:2px}.dash-chart-card{padding:10px}.dash-svg{min-height:112px}
+}
+@media(prefers-color-scheme:dark){
+ .dash-chart-card{background:rgba(26,35,45,.96)}.category-chart i{background:#2b3540}
+}
 </style>
 </head>
 <body>
@@ -1294,8 +1328,12 @@ function migrate(o){
   if(o.bank===undefined)o.bank='Krungthai Business';
   if(o.brand===undefined)o.brand='AREA MAIBAB';
   if(o.openCash===undefined)o.openCash=0;
-  if(!o.ui)o.ui={wallpaper:true};
+  if(!o.ui)o.ui={wallpaper:true,dashboardPids:[]};
   if(o.ui.wallpaper===undefined)o.ui.wallpaper=true;
+  if(!Array.isArray(o.ui.dashboardPids)){
+    o.ui.dashboardPids=(o.projects||[]).filter(function(p){return (p.status||'active')!=='delivered'&&(p.status||'active')!=='closed';}).slice(0,3).map(function(p){return p.id;});
+  }
+  o.ui.dashboardPids=o.ui.dashboardPids.filter(function(id){return (o.projects||[]).some(function(p){return p.id===id;});});
   if(!o.business)o.business={legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
   if(o.business.legalNameEn===undefined)o.business.legalNameEn='';
   if(o.business.addressEn===undefined)o.business.addressEn='';
@@ -1347,7 +1385,7 @@ function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).sli
 /* ---------- ข้อมูล ---------- */
 var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
 
-function emptyState(){return {projects:[],tx:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true},customSubs:{},updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[]},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 function idbOpen(){return new Promise(function(res,rej){try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){r.result.createObjectStore('kv');};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
 function idbSet(v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'state');t.oncomplete=function(){res(true);};t.onerror=function(){res(false);};t.onabort=function(){res(false);};});}).catch(function(){return false;});}
@@ -1656,6 +1694,48 @@ function timelineRows(list){
   }).join('');
 }
 
+
+function dashPids(){
+  S.ui=S.ui||{};if(!Array.isArray(S.ui.dashboardPids))S.ui.dashboardPids=[];
+  S.ui.dashboardPids=S.ui.dashboardPids.filter(function(id){return !!proj(id);});
+  return S.ui.dashboardPids;
+}
+function dashTabs(){
+  var pins=dashPids(),h='<div class="dash-tabs" role="tablist"><button class="dash-tab all '+(U.homePid==='__all'?'on':'')+'" data-act="dashSwitch" data-id="__all"><span>รวมทุกโครงการ</span></button>';
+  pins.forEach(function(id,i){
+    var p=proj(id);if(!p)return;
+    h+='<div class="dash-tab-wrap '+(U.homePid===id?'on':'')+'"><button class="dash-tab" data-act="dashSwitch" data-id="'+id+'"><small>โครงการ '+(i+1)+'</small><span>'+esc(p.name)+'</span></button><button class="dash-close" data-act="dashClose" data-id="'+id+'" aria-label="ปิดแดชบอร์ด">×</button></div>';
+  });
+  h+='<button class="dash-add" data-act="dashManager" aria-label="เพิ่มแดชบอร์ด">＋<span>เพิ่มแดชบอร์ด</span></button></div>';
+  return h;
+}
+function cashflow6(list){
+  var months=[],mk=today().slice(0,7);for(var n=5;n>=0;n--)months.push(shiftMonth(mk,-n));
+  var rows=months.map(function(m){var inc=0,out=0;list.forEach(function(t){if(!t.paid||!t.date||t.date.slice(0,7)!==m)return;if(t.type==='in')inc+=net(t);else out+=net(t);});return {m:m,inc:inc,out:out};});
+  var mx=Math.max.apply(null,rows.map(function(r){return Math.max(r.inc,r.out);}).concat([1])),w=330,h=132,bw=13,g=9;
+  var svg='<svg class="dash-svg" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="เงินเข้าและออก 6 เดือน">';
+  rows.forEach(function(r,i){var x=10+i*53,hi=r.inc/mx*82,ho=r.out/mx*82;svg+='<rect class="bar-in" x="'+x+'" y="'+(94-hi)+'" width="'+bw+'" height="'+hi+'" rx="3"/><rect class="bar-out" x="'+(x+bw+g)+'" y="'+(94-ho)+'" width="'+bw+'" height="'+ho+'" rx="3"/><text x="'+(x+18)+'" y="116" text-anchor="middle">'+mshort(r.m)+'</text>';});
+  svg+='<line x1="5" y1="94.5" x2="325" y2="94.5" class="axis"/></svg>';
+  return svg;
+}
+function projectCompareChart(){
+  if(!S.projects.length)return '<div class="empty">ยังไม่มีโครงการ</div>';
+  var rows=S.projects.map(function(p){var st=stats(p.id);return {p:p,inc:st.recd,out:st.paidOut,net:st.recd-st.paidOut};});
+  var mx=Math.max.apply(null,rows.map(function(r){return Math.max(r.inc,r.out);}).concat([1]));
+  return '<div class="project-chart-list">'+rows.map(function(r){return '<button data-act="dashSwitch" data-id="'+r.p.id+'" class="project-chart-row"><div class="project-chart-name"><b>'+esc(r.p.name)+'</b><span class="'+(r.net>=0?'in':'out')+'">สุทธิ '+fmt(r.net)+'</span></div><div class="project-chart-bars"><i class="inbar" style="width:'+(r.inc/mx*100)+'%"></i><i class="outbar" style="width:'+(r.out/mx*100)+'%"></i></div><div class="project-chart-values"><span class="in">รับ '+fmt(r.inc)+'</span><span class="out">จ่าย '+fmt(r.out)+'</span></div></button>';}).join('')+'</div>';
+}
+function projectCategoryChart(pid){
+  var st=stats(pid),ks=Object.keys(st.byCat).sort(function(a,b){return st.byCat[b]-st.byCat[a];}),mx=Math.max.apply(null,ks.map(function(k){return st.byCat[k];}).concat([1]));
+  if(!ks.length)return '<div class="empty">ยังไม่มีค่าใช้จ่าย</div>';
+  return '<div class="category-chart">'+ks.map(function(k){return '<div><span>'+esc(k)+'</span><b>'+fmt(st.byCat[k])+'</b><i><em style="width:'+(st.byCat[k]/mx*100)+'%"></em></i></div>';}).join('')+'</div>';
+}
+function dashboardCharts(allMode,active,all){
+  var h='<section class="dash-charts"><div class="dash-chart-head"><div><b>กราฟภาพรวม</b><small>'+(allMode?'รวมทุกโครงการ':'โครงการนี้')+'</small></div><button data-act="go" data-v="report">ดูรายงานทั้งหมด ›</button></div>';
+  h+='<div class="dash-chart-card"><h3>'+(allMode?'รับ–จ่ายแต่ละโครงการ':'ค่าใช้จ่ายตามหมวด')+'</h3>'+(allMode?projectCompareChart():projectCategoryChart(active?active.id:''))+'</div>';
+  h+='<div class="dash-chart-card"><h3>กระแสเงินสด 6 เดือน</h3>'+cashflow6(all)+'<div class="dash-legend"><span class="in">● เงินเข้า</span><span class="out">● เงินออก</span></div></div></section>';
+  return h;
+}
+
 function vHome(){
   var allMode=U.homePid==='__all',active=allMode?null:(proj(U.homePid)||S.projects[0]||null),pid=active?active.id:'',all=allMode?S.tx.slice():(pid?S.tx.filter(function(t){return t.pid===pid;}):S.tx.slice());
   var paidIn=all.filter(function(t){return t.type==='in'&&t.paid;}),paidOut=all.filter(function(t){return t.type==='out'&&t.paid;}),inW=all.filter(function(t){return t.type==='in'&&!t.paid;}),outW=all.filter(function(t){return t.type==='out'&&!t.paid;});
@@ -1664,12 +1744,15 @@ function vHome(){
   var retHint=eligibleRet.length?'ครบกำหนด '+eligibleRet.length+' โครงการ':nearRet.length?'ใกล้ครบกำหนด '+nearRet.length+' โครงการ':waitDelivery.length?'รอวันส่งมอบ '+waitDelivery.length+' โครงการ':retRows.length+' โครงการ';
   var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid" aria-label="เลือกโครงการ"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
 
+  h+=dashTabs();
+
   h+='<section class="mproj master-ref-project"><div class="master-ref-photo"><div class="master-ref-building"><svg viewBox="0 0 160 150" aria-hidden="true"><rect x="22" y="58" width="116" height="75" rx="2"/><rect x="35" y="31" width="90" height="27"/><path d="M28 58h104M46 58v75M80 58v75M114 58v75M22 91h116"/><rect x="53" y="99" width="24" height="34"/><rect x="88" y="99" width="24" height="34"/></svg></div></div><div class="mbody master-ref-body"><div class="mtag master-ref-tag">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>โครงการ</span></div><h2>'+esc(allMode?'ทุกโครงการ':(active?active.name:'ยังไม่มีโครงการ'))+'</h2><div class="master-ref-actions">'+(active?'<button class="master-ref-detail" data-act="openProj" data-id="'+active.id+'">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>ดูรายละเอียด</span></button><button class="master-ref-edit" data-act="editProj" data-id="'+active.id+'">แก้ไข</button>':'<button class="master-ref-detail" data-act="go" data-v="projects">ดูโครงการ</button>')+'<button class="master-ref-more" data-act="go" data-v="projects" aria-label="โครงการทั้งหมด">•••</button></div>'+selector+'</div></section>';
 
   var cs=allMode?cashSplit():null;
   h+='<section class="mbal mdash-balance mdash-balance-clean"><div class="mdash-balance-top"><span class="mdash-money-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg></span><div><span>'+(allMode?'เงินคงเหลือรวมยอดยกมา':'เงินคงเหลือตามรายการโครงการ')+'</span><b class="'+(bal<0?'out':'in')+'">'+fmt(bal)+'</b></div></div>'+(allMode?'<div class="mdash-cash-split"><span>ในบัญชี <b class="num">'+fmt(cs.bank)+'</b></span><span>เงินสด <b class="num">'+fmt(cs.cash)+'</b></span></div>':'')+'</section>';
 
   h+='<div class="mdash-period mdash-period-clean"><span>'+(allMode?'ภาพรวมทั้งหมด':'ภาพรวมโครงการ')+'</span></div><section class="mstats mdash-stats"><button data-act="homePaid" data-v="in"><span class="mdash-stat-icon blue">'+txIcon({type:'in',sub:'',cat:''})+'</span><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ</small></button><button data-act="homePaid" data-v="out"><span class="mdash-stat-icon pink"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4Z"/><path d="M7 7V4h10v3M15 13h5"/></svg></span><span>จ่ายเงินแล้ว</span><b class="out">'+fmt(spent)+'</b><small>'+paidOut.length+' รายการ</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon amber"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>ค้างจ่าย</span><b class="out">'+fmt(sumNet(outW))+'</b><small>'+outW.length+' รายการ'+(inW.length?' · ค้างรับ '+inW.length:'')+'</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m9 12 2 2 4-5"/></svg></span><span>เงินประกันรอคืน</span><b class="mteal">'+fmt(retTotal)+'</b><small>'+retHint+'</small></button></section>';
+  h+=dashboardCharts(allMode,active,all);
   h+=homeUrgentAlert(allMode,active,all);
 
   var hf=U.homeFilter||'all',cnt={all:all.length,in:all.filter(function(t){return t.type==='in';}).length,out:all.filter(function(t){return t.type==='out';}).length,pend:inW.length+outW.length};
@@ -2124,6 +2207,12 @@ function sheetHtml(){
      '<div class="stack"><button class="btn pri" data-act="saveProj" data-id="'+(p?p.id:'')+'">บันทึกโครงการ</button>'+
      (p?'<button class="btn dng'+(U.confirm==='p'+p.id?' sure':'')+'" data-act="delProj" data-id="'+p.id+'">'+(U.confirm==='p'+p.id?'แตะอีกครั้งเพื่อลบโครงการและรายการทั้งหมด':'ลบโครงการ')+'</button>':'')+
      '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+  }else if(sh.kind==='dashManager'){
+    var pins=dashPids(),available=S.projects.filter(function(p){return pins.indexOf(p.id)<0;});
+    b='<h3>จัดการแดชบอร์ดโครงการ</h3><p class="muted" style="margin-top:-4px">หน้า “รวมทุกโครงการ” จะแสดงเสมอ เพิ่มโครงการที่ต้องการติดตามเป็นแดชบอร์ดแยกได้</p>'+
+      '<div class="dash-manager-list">'+
+      (available.length?available.map(function(p){var st=({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ';return '<button data-act="dashAdd" data-id="'+p.id+'"><span><b>'+esc(p.name)+'</b><small>'+esc(st)+'</small></span><strong>+ เพิ่ม</strong></button>';}).join(''):'<div class="empty">ทุกโครงการถูกเพิ่มในแดชบอร์ดแล้ว</div>')+
+      '</div><button class="btn" data-act="closeSheet">ปิด</button>';
   }else if(sh.kind==='settings'){
     b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
@@ -2255,6 +2344,22 @@ document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
+  if(a==='dashSwitch'){
+    U.homePid=id||'__all';try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}
+    U.sheet=null;go('home');return;
+  }
+  if(a==='dashManager'){U.sheet={kind:'dashManager'};render();return;}
+  if(a==='dashAdd'){
+    var dp=proj(id);if(dp){var pins=dashPids();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;persist();U.sheet={kind:'dashManager'};render();toast('เพิ่มแดชบอร์ดโครงการแล้ว');}return;
+  }
+  if(a==='dashClose'){
+    var cp=proj(id);if(!cp)return;
+    var cs=cp.status||'active';
+    if(cs!=='delivered'&&cs!=='closed'){toast('ปิดแดชบอร์ดได้เมื่อโครงการส่งมอบแล้วหรือปิดโครงการ');return;}
+    S.ui.dashboardPids=dashPids().filter(function(x){return x!==id;});
+    if(U.homePid===id){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
+    persist();render();toast('ปิดแดชบอร์ดโครงการแล้ว ข้อมูลยังอยู่ครบ');return;
+  }
   if(a==='appMenu'){U.appMenu=true;render();return;}
   if(a==='appMenuClose'){U.appMenu=false;render();return;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
@@ -2353,7 +2458,7 @@ document.addEventListener('click',function(e){
     var sd0=document.getElementById('psd').value,ed0=document.getElementById('ped').value;
     if(sd0&&ed0&&ed0<sd0){toast('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มต้น');return;}
     var delEl=document.getElementById('pdel'),deliveryDate=delEl?delEl.value:'',retDue=addYearsIso(deliveryDate,2),retAmtVal=parseFloat(document.getElementById('pr').value)||0,retPaidEl=document.getElementById('prpd'),retPaidDate=retPaidEl?retPaidEl.value:'',stVal=document.getElementById('pstatus').value||'active';if(retAmtVal>0&&!retPaidDate){toast('กรอกวันที่จ่ายเงินประกัน เพื่อบันทึกเป็นค่าใช้จ่าย');return;}if(retAmtVal>0&&(stVal==='delivered'||stVal==='closed')&&!deliveryDate){toast('กรอกวันที่ส่งมอบงานเพื่อเริ่มนับ 2 ปีรับคืนเงินประกัน');return;}var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:stVal,contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:retAmtVal,retPaidDate:retPaidDate,deliveryDate:deliveryDate,retDue:retDue,contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
-    var target=null;if(id){var pp=proj(id);Object.assign(pp,o);target=pp;}else{o.id=uid();S.projects.push(o);target=o;}
+    var target=null;if(id){var pp=proj(id);Object.assign(pp,o);target=pp;}else{o.id=uid();S.projects.push(o);target=o;if(dashPids().length===0)S.ui.dashboardPids=[o.id];}
     if(target)syncGuaranteeExpense(target);
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
@@ -2464,6 +2569,8 @@ function boot(){
     var recovered=restoreThaSalaKnown();
     var mergedThaSala=mergeThaSalaDocument();
     if(recovered||mergedThaSala)persist();
+    if(!U.homePid)U.homePid='__all';
+    if(U.homePid!=='__all'&&dashPids().indexOf(U.homePid)<0){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
     if(S.role==='foreman'&&U.view!=='home')U.view='list';
     U.storageBad=!storageOK();
     render();
