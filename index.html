@@ -240,6 +240,11 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .nav{z-index:50}.nav button{min-height:44px;touch-action:manipulation}
 @media(prefers-color-scheme:dark){:root{--m-bg:#0f151c;--m-card:#1a232d;--m-ink:#eef1f3;--m-mut:#93a0ab;--m-line:#2a3541;--m-soft:#3a3016}.mbal,.mstats button,.mgroup,.mitem,.mtabs button{background:var(--m-card);color:var(--m-ink)}.mgh{color:var(--m-ink)}}
 @media(max-width:390px){.mheader{height:108px;padding:20px 14px}.mlogo{width:66px;height:66px;flex-basis:66px}.mproj{min-height:205px}.mbody{padding:15px 13px}.mproj h2{font-size:18px}.mstats button{min-height:125px;padding:13px}.mitem{padding:11px 10px;gap:7px}.mdate{width:40px}.mico{width:34px;height:34px}.mamt{font-size:14px}}
+/* master UI functional refinement */
+.mselect{appearance:auto;-webkit-appearance:menulist;cursor:pointer}
+.mitem,.mstats button,.mtabs button{cursor:pointer}
+.mitem:active,.mstats button:active,.mtabs button:active{opacity:.78}
+@media(prefers-reduced-motion:no-preference){.mitem,.mstats button,.mtabs button{transition:opacity .12s ease,transform .12s ease}.mitem:active,.mstats button:active,.mtabs button:active{transform:scale(.995)}}
 </style>
 </head>
 <body>
@@ -542,10 +547,10 @@ function timelineRows(list){
 }
 
 function vHome(){
-  var active=proj(U.homePid)||S.projects[0]||null,pid=active?active.id:'',all=pid?S.tx.filter(function(t){return t.pid===pid;}):S.tx.slice();
+  var allMode=U.homePid==='__all',active=allMode?null:(proj(U.homePid)||S.projects[0]||null),pid=active?active.id:'',all=allMode?S.tx.slice():(pid?S.tx.filter(function(t){return t.pid===pid;}):S.tx.slice());
   var paidIn=all.filter(function(t){return t.type==='in'&&t.paid;}),paidOut=all.filter(function(t){return t.type==='out'&&t.paid;}),inW=all.filter(function(t){return t.type==='in'&&!t.paid;}),outW=all.filter(function(t){return t.type==='out'&&!t.paid;});
   var rec=sumNet(paidIn),spent=sumNet(paidOut),bal=rec-spent,h='';
-  h+='<section class="mproj"><div class="mpic"><svg viewBox="0 0 100 70"><rect x="12" y="14" width="76" height="56" fill="#c7ccd0"/><rect x="12" y="14" width="76" height="4" fill="#8e979e"/><rect x="12" y="38" width="76" height="3" fill="#8e979e"/><g fill="#8e979e"><rect x="14" y="18" width="3" height="52"/><rect x="48" y="18" width="3" height="52"/><rect x="83" y="18" width="3" height="52"/></g></svg></div><div class="mbody"><div class="mtag">▤ โครงการ</div><h2>'+esc(active?active.name:'ยังไม่มีโครงการ')+'</h2><small>ติดตามรายรับ–รายจ่ายหน้างาน</small><select class="mselect" data-f="homePid">'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div></section>';
+  h+='<section class="mproj"><div class="mpic"><svg viewBox="0 0 100 70"><rect x="12" y="14" width="76" height="56" fill="#c7ccd0"/><rect x="12" y="14" width="76" height="4" fill="#8e979e"/><rect x="12" y="38" width="76" height="3" fill="#8e979e"/><g fill="#8e979e"><rect x="14" y="18" width="3" height="52"/><rect x="48" y="18" width="3" height="52"/><rect x="83" y="18" width="3" height="52"/></g></svg></div><div class="mbody"><div class="mtag">▤ โครงการ</div><h2>'+esc(allMode?'ทุกโครงการ':(active?active.name:'ยังไม่มีโครงการ'))+'</h2><small>ติดตามรายรับ–รายจ่ายหน้างาน'+(allMode&&S.projects.length?' · '+S.projects.length+' โครงการ':'')+'</small><select class="mselect" data-f="homePid"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div></section>';
   h+='<section class="mbal"><span>เงินคงเหลือตามรายการ</span><b class="'+(bal<0?'out':'in')+'">'+fmt(bal)+'</b><div><i>รับแล้ว<strong class="in">'+fmt(rec)+'</strong></i><i>จ่ายแล้ว<strong class="out">'+fmt(spent)+'</strong></i></div></section>';
   h+='<section class="mstats"><button data-act="go" data-v="list"><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ</small></button><button data-act="go" data-v="list"><span>จ่ายเงินแล้ว</span><b class="out">'+fmt(spent)+'</b><small>'+paidOut.length+' รายการ</small></button><button data-act="go" data-v="due"><span>ค้างจ่าย</span><b class="out">'+fmt(sumNet(outW))+'</b><small>ค้างรับ '+fmt(sumNet(inW))+'</small></button><button data-act="go" data-v="report"><span>กำไร/ขาดทุนสะสม</span><b class="mteal">'+fmt(bal)+'</b><small>รับแล้ว − จ่ายแล้ว</small></button></section>';
   var hf=U.homeFilter||'all',cnt={all:all.length,in:all.filter(function(t){return t.type==='in';}).length,out:all.filter(function(t){return t.type==='out';}).length,pend:inW.length+outW.length};
@@ -1143,7 +1148,7 @@ document.addEventListener('input',function(e){
   U.draft[f]=e.target.value;
   if(f==='amount'){var pv=document.getElementById('prev');if(pv)pv.innerHTML=prevText(U.draft);var af=document.getElementById('amtfmt');if(af){var av=parseFloat(U.draft.amount);af.textContent=av>0?fmt(av,1):'';}}
 });
-document.addEventListener('change',function(e){if(e.target&&e.target.dataset&&e.target.dataset.f==='homePid'){U.homePid=e.target.value;render();return;}
+document.addEventListener('change',function(e){if(e.target&&e.target.dataset&&e.target.dataset.f==='homePid'){U.homePid=e.target.value;try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}render();return;}
   var el=e.target,f=el.dataset&&el.dataset.f;
   if(f==='fpid'){U.filter.pid=el.value;render();return;}
   if(f==='fcat'){U.filter.cat=el.value;U.filter.sub='';render();return;}
@@ -1175,6 +1180,7 @@ function saveTx(more){
   toast(was?'บันทึกการแก้ไขแล้ว':'บันทึกรายการแล้ว');
 }
 function boot(){
+  try{var hp=localStorage.getItem('area-ledger-home-pid');if(hp)U.homePid=hp;}catch(err){}
   var done=false;
   function start(o){
     if(done)return;done=true;
