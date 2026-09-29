@@ -1140,6 +1140,60 @@ body.wallpaper-on .mgroup{
   .master-ref-header,.hd{background:#17202b!important}
   .master-ref-header .app-menu-btn,.hd .back,.hd .app-menu-btn{background:#101820!important}
 }
+
+/* Mobile clarity: compact header, readable money, consistent touch targets. */
+@media screen{
+.master-ref-header{height:64px!important;min-height:64px!important;padding:8px 12px!important;gap:10px!important;border-bottom:2px solid #efba32!important}
+.master-ref-header:after{display:none!important}
+.master-ref-header .master-ref-logo{width:40px!important;height:40px!important;flex-basis:40px!important;border-radius:10px!important;font-size:12px!important}
+.master-ref-header .app-menu-btn,.hd .app-menu-btn,.hd .back{width:44px!important;height:44px!important;flex-basis:44px!important}
+.master-ref-header .master-ref-brand b{font-size:15px!important;line-height:1.3!important}
+.master-ref-header .master-ref-brand small{font-size:11px!important}
+.hd,.hd .hd-in{min-height:64px!important}
+.hd h1{overflow-wrap:anywhere;line-height:1.4!important}
+.master-ref-project{grid-template-columns:60px minmax(0,1fr)!important;min-height:0!important;margin:12px 0!important;border-radius:16px!important}
+.master-ref-photo{width:60px!important;height:auto!important;min-height:0!important;background:#263642!important}
+.master-ref-building{position:static!important;display:grid!important;place-items:center!important;height:100%!important;width:100%!important;background:none!important}
+.master-ref-building svg{width:44px!important;height:52px!important;stroke:#adc0cd!important;opacity:1!important}
+.master-ref-body{padding:14px 12px!important}
+.master-ref-body h2{font-size:16px!important;line-height:1.5!important;margin:4px 0 12px!important;overflow-wrap:anywhere}
+.master-ref-tag{font-size:11px!important;gap:5px!important}
+.master-ref-actions{grid-template-columns:minmax(0,1fr) 58px 44px!important;gap:6px!important}
+.master-ref-actions button{height:44px!important;min-height:44px!important;font-size:12px!important;border-radius:10px!important}
+.master-ref-select{min-height:44px!important;font-size:16px!important}
+.mdash-balance-clean{padding:16px!important;margin:0 0 16px!important;border-left-width:4px!important;box-shadow:none!important}
+.mdash-balance-clean .mdash-balance-top{display:flex!important;gap:12px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important}
+.mdash-balance-clean .mdash-balance-top>div{min-width:0}
+.mdash-balance-clean .mdash-balance-top>div>span{font-size:12px!important;line-height:1.5!important}
+.mdash-balance-clean .mdash-balance-top>div>b{font-size:clamp(24px,7vw,32px)!important;line-height:1.3!important;overflow-wrap:anywhere;white-space:normal!important;font-variant-numeric:tabular-nums}
+.mdash-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin:8px 0 16px!important}
+.mdash-stats button{height:auto!important;min-height:112px!important;padding:12px!important;border:1px solid var(--m-line)!important;border-radius:14px!important;box-shadow:none!important;min-width:0!important;position:relative}
+.mdash-stats button>span:not(.mdash-stat-icon){font-size:12px!important;line-height:1.5!important;min-height:0!important}
+.mdash-stats button>b{font-size:clamp(18px,4.7vw,23px)!important;line-height:1.5!important;white-space:normal!important;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;margin-top:4px!important}
+.mdash-stats button small{display:block!important;font-size:11px!important;line-height:1.4!important;margin-top:2px!important}
+.mdash-stat-icon{width:30px!important;height:30px!important;margin-bottom:6px!important}
+.mdash-stat-icon svg{width:18px!important;height:18px!important}
+.mdash-period-clean span{font-size:14px!important}
+.mtabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;padding:4px!important;background:var(--m-card)!important;border:1px solid var(--m-line);border-radius:12px!important;margin:12px 0!important}
+.mtabs button{min-width:0!important;min-height:44px!important;padding:8px 2px!important;font-size:12px!important;border-radius:8px!important}
+.mgh{padding:12px!important;background:var(--m-card)!important;border-bottom:1px solid var(--m-line)}
+.mgh span{font-size:14px!important}.mgh small{font-size:11px!important}
+.mgh b{font-size:16px!important;text-align:right}.mgh b small{display:block;font-weight:400;color:var(--m-mut)}
+.mitem{padding:12px 10px!important;gap:8px!important;min-height:76px!important}
+.mdate{width:30px!important;flex-basis:30px!important}.mdate b{font-size:18px!important}.mdate small{font-size:10px!important}
+.mico{width:30px!important;height:30px!important;flex-basis:30px!important}
+.mtext>b{font-size:14px!important;line-height:1.5!important;white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.mtext .tx-kind{font-size:10px!important;line-height:1.5!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block!important}
+.mamt{font-size:14px!important;min-width:0!important;max-width:42%;overflow-wrap:anywhere;white-space:normal!important}
+.nav{height:auto!important;padding-bottom:env(safe-area-inset-bottom,0px)!important}
+.nav-in{height:66px!important;padding:4px 6px!important}
+.nav button{min-width:0!important;min-height:48px!important}
+.nav button span{font-size:11px!important}.nav .add span{font-size:9px!important}
+#app:not(.nonav){padding-bottom:0!important}#app:not(.nonav) main{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}
+.list-paid-filter{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--m-soft);border-radius:10px;margin:8px 0;font-size:13px}.list-paid-filter button{min-height:44px;border:0;background:transparent;text-decoration:underline}
+@media(min-width:600px){.mdash-stats{grid-template-columns:repeat(4,minmax(0,1fr))!important}.master-ref-project{grid-template-columns:88px minmax(0,1fr)!important}.master-ref-photo{width:88px!important}.mdash-stats button>b{font-size:20px!important}}
+}
+
 </style>
 </head>
 <body>
@@ -1533,25 +1587,25 @@ function vHome(){
   var rec=sumNet(paidIn),spent=sumNet(paidOut),openingTotal=allMode?((+S.opening||0)+(+S.openCash||0)):0,bal=openingTotal+rec-spent,h='',retRows=(allMode?S.projects:(active?[active]:[])).filter(function(p){return p.retAmt&&!p.retRecv;}),retTotal=retRows.reduce(function(a,p){return a+(+p.retAmt||0);},0);
   var eligibleRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),nearRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;}),waitDelivery=retRows.filter(function(p){return !p.deliveryDate;});
   var retHint=eligibleRet.length?'ครบกำหนด '+eligibleRet.length+' โครงการ':nearRet.length?'ใกล้ครบกำหนด '+nearRet.length+' โครงการ':waitDelivery.length?'รอวันส่งมอบ '+waitDelivery.length+' โครงการ':retRows.length+' โครงการ';
-  var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
+  var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid" aria-label="เลือกโครงการ"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
 
   h+='<section class="mproj master-ref-project"><div class="master-ref-photo"><div class="master-ref-building"><svg viewBox="0 0 160 150" aria-hidden="true"><rect x="22" y="58" width="116" height="75" rx="2"/><rect x="35" y="31" width="90" height="27"/><path d="M28 58h104M46 58v75M80 58v75M114 58v75M22 91h116"/><rect x="53" y="99" width="24" height="34"/><rect x="88" y="99" width="24" height="34"/></svg></div></div><div class="mbody master-ref-body"><div class="mtag master-ref-tag">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>โครงการ</span></div><h2>'+esc(allMode?'ทุกโครงการ':(active?active.name:'ยังไม่มีโครงการ'))+'</h2><div class="master-ref-actions">'+(active?'<button class="master-ref-detail" data-act="openProj" data-id="'+active.id+'">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>ดูรายละเอียด</span></button><button class="master-ref-edit" data-act="editProj" data-id="'+active.id+'">แก้ไข</button>':'<button class="master-ref-detail" data-act="go" data-v="projects">ดูโครงการ</button>')+'<button class="master-ref-more" data-act="go" data-v="projects" aria-label="โครงการทั้งหมด">•••</button></div>'+selector+'</div></section>';
 
   var cs=allMode?cashSplit():null;
   h+='<section class="mbal mdash-balance mdash-balance-clean"><div class="mdash-balance-top"><span class="mdash-money-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg></span><div><span>'+(allMode?'เงินคงเหลือรวมยอดยกมา':'เงินคงเหลือตามรายการโครงการ')+'</span><b class="'+(bal<0?'out':'in')+'">'+fmt(bal)+'</b></div></div>'+(allMode?'<div class="mdash-cash-split"><span>ในบัญชี <b class="num">'+fmt(cs.bank)+'</b></span><span>เงินสด <b class="num">'+fmt(cs.cash)+'</b></span></div>':'')+'</section>';
 
-  h+='<div class="mdash-period mdash-period-clean"><span>'+(allMode?'ภาพรวมทั้งหมด':'ภาพรวมโครงการ')+'</span></div><section class="mstats mdash-stats"><button data-act="go" data-v="list"><span class="mdash-stat-icon blue">'+txIcon({type:'in',sub:'',cat:''})+'</span><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ</small></button><button data-act="go" data-v="list"><span class="mdash-stat-icon pink"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4Z"/><path d="M7 7V4h10v3M15 13h5"/></svg></span><span>จ่ายเงินแล้ว</span><b class="out">'+fmt(spent)+'</b><small>'+paidOut.length+' รายการ</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon amber"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>ค้างจ่าย</span><b class="out">'+fmt(sumNet(outW))+'</b><small>'+outW.length+' รายการ'+(inW.length?' · ค้างรับ '+inW.length:'')+'</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m9 12 2 2 4-5"/></svg></span><span>เงินประกันรอคืน</span><b class="mteal">'+fmt(retTotal)+'</b><small>'+retHint+'</small></button></section>';
+  h+='<div class="mdash-period mdash-period-clean"><span>'+(allMode?'ภาพรวมทั้งหมด':'ภาพรวมโครงการ')+'</span></div><section class="mstats mdash-stats"><button data-act="homePaid" data-v="in"><span class="mdash-stat-icon blue">'+txIcon({type:'in',sub:'',cat:''})+'</span><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ</small></button><button data-act="homePaid" data-v="out"><span class="mdash-stat-icon pink"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4Z"/><path d="M7 7V4h10v3M15 13h5"/></svg></span><span>จ่ายเงินแล้ว</span><b class="out">'+fmt(spent)+'</b><small>'+paidOut.length+' รายการ</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon amber"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>ค้างจ่าย</span><b class="out">'+fmt(sumNet(outW))+'</b><small>'+outW.length+' รายการ'+(inW.length?' · ค้างรับ '+inW.length:'')+'</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m9 12 2 2 4-5"/></svg></span><span>เงินประกันรอคืน</span><b class="mteal">'+fmt(retTotal)+'</b><small>'+retHint+'</small></button></section>';
   h+=homeUrgentAlert(allMode,active,all);
 
   var hf=U.homeFilter||'all',cnt={all:all.length,in:all.filter(function(t){return t.type==='in';}).length,out:all.filter(function(t){return t.type==='out';}).length,pend:inW.length+outW.length};
-  h+='<div class="mtabs">'+[['all','ทั้งหมด'],['in','รับเงิน'],['out','จ่ายเงิน'],['pend','ค้าง']].map(function(x){return '<button class="'+(hf===x[0]?'on':'')+'" data-act="homeFilter" data-v="'+x[0]+'">'+x[1]+' ('+cnt[x[0]]+')</button>';}).join('')+'</div>';
+  h+='<div class="mtabs">'+[['all','ทั้งหมด'],['in','รับเงิน'],['out','จ่ายเงิน'],['pend','ค้าง']].map(function(x){return '<button class="'+(hf===x[0]?'on':'')+'" aria-pressed="'+(hf===x[0]?'true':'false')+'" data-act="homeFilter" data-v="'+x[0]+'">'+x[1]+' ('+cnt[x[0]]+')</button>';}).join('')+'</div>';
 
   var list=all.filter(function(t){return hf==='all'||(hf==='pend'?!t.paid:t.type===hf);}).sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
   if(!list.length)return h+'<div class="empty">ยังไม่มีรายการ<br>กดปุ่ม + เพื่อเพิ่มรายการแรก</div>';
   var g={};list.forEach(function(t){var k=t.date?t.date.slice(0,7):'none';(g[k]||(g[k]=[])).push(t);});
   Object.keys(g).sort(function(a,b){if(a==='none')return 1;if(b==='none')return -1;return a<b?1:-1;}).forEach(function(k){
     var rows=g[k],month=k==='none'?'ยังไม่ระบุวันที่':new Date(k+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'}),tot=rows.reduce(function(a,t){return a+net(t);},0);
-    h+='<section class="mgroup"><div class="mgh"><span>'+month+'<small>'+rows.length+' รายการ</small></span><b>'+fmt(tot)+'</b></div>';
+    h+='<section class="mgroup"><div class="mgh"><span>'+month+'<small>'+rows.length+' รายการ</small></span><b><small>ยอดรวมรายการ</small>'+fmt(tot)+'</b></div>';
     rows.forEach(function(t){
       var d=t.date?new Date(t.date+'T00:00:00'):null,label=t.sub||t.partner||t.cat;
       h+='<button class="mitem" data-act="openTx" data-id="'+t.id+'"><div class="mdate">'+(d?'<b>'+d.getDate()+'</b><small>'+d.toLocaleDateString('th-TH',{month:'short'})+'<br>'+(d.getFullYear()+543)+'</small>':'<b>–</b><small>รอระบุ</small>')+'</div><div class="mico '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</div><div class="mtext"><b>'+esc(label)+(t.paid?'':' <i>ค้าง</i>')+'</b><em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="mamt '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</div></button>';
@@ -1567,12 +1621,14 @@ function vList(){
     if(foreman&&t.type!=='out')return false;
     if(F.type!=='all'&&t.type!==F.type)return false;
     if(F.pid&&t.pid!==F.pid)return false;
+    if(F.paidOnly&&!t.paid)return false;
     if(F.cat&&t.cat!==F.cat)return false;
     if(F.sub&&(t.sub||'').toLowerCase().indexOf(F.sub.trim().toLowerCase())<0)return false;
     return true;
   }).sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;});
   var i=0,o=0;list.forEach(function(t){if(t.type==='in')i+=t.amount;else o+=t.amount;});
   var h='<section class="master-list">';
+  if(F.paidOnly)h+='<div class="list-paid-filter"><span>เฉพาะรายการที่ชำระแล้ว</span><button data-act="clearPaidFilter">แสดงทุกสถานะ</button></div>';
   if(!foreman)h+='<div class="chips master-list-chips">'+[['all','ทั้งหมด'],['in','รายรับ'],['out','รายจ่าย']].map(function(x){return '<button class="chip'+(F.type===x[0]?' on':'')+'" data-act="ftype" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';
   h+='<div class="master-list-selects">'+
    '<select data-f="fpid" aria-label="กรองตามโครงการ"><option value="">ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(F.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'+
@@ -2184,6 +2240,8 @@ document.addEventListener('click',function(e){
     U.from=U.view;go('add');
   }
   else if(a==='delTx'){if(U.confirm==='tx'+id){S.tx=S.tx.filter(function(x){return x.id!==id;});persist();U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
+  else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',paidOnly:true};go('list');}
+  else if(a==='clearPaidFilter'){U.filter.paidOnly=false;render();}
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
   else if(a==='ftype'){U.filter.type=v;render();}
   else if(a==='openProj'){U.from=null;go('project',{pid:id});}
