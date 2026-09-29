@@ -421,6 +421,7 @@ function migrate(o){
   if(!Array.isArray(o.bills))o.bills=[];
   if(!Array.isArray(o.receipts))o.receipts=[];
   if(!o.docSeq)o.docSeq={quote:0,bill:0,receipt:0};
+  (o.projects||[]).forEach(function(p){if(p.deliveryDate===undefined)p.deliveryDate='';if(p.deliveryDate)p.retDue=addYearsIso(p.deliveryDate,2);});
   o.tx.forEach(function(t){
     if(t.sub===undefined)t.sub='';
     if(t.type==='out'&&LEG[t.cat]){t.sub=t.sub||LEG[t.cat][1];t.cat=LEG[t.cat][0];}
@@ -450,6 +451,7 @@ function dd(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:0
 function mstr(k){return new Date(k+'-01T00:00:00').toLocaleDateString('th-TH',{month:'long',year:'numeric'});}
 function mshort(k){return new Date(k+'-01T00:00:00').toLocaleDateString('th-TH',{month:'short'});}
 function shiftMonth(k,n){var p=k.split('-');var d=new Date(+p[0],+p[1]-1+n,1);return ymd(d).slice(0,7);}
+function addYearsIso(v,n){if(!v)return '';var p=v.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);d.setFullYear(d.getFullYear()+(n||0));return ymd(d);}
 function fmt(n,dec){var s=Math.abs(n).toLocaleString('th-TH',dec?{minimumFractionDigits:2,maximumFractionDigits:2}:{maximumFractionDigits:0});return (n<0?'−':'')+'฿'+s;}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
@@ -531,8 +533,10 @@ function restoreThaSalaKnown(){
 function mergeThaSalaDocument(){
   var p=(S.projects||[]).find(function(x){return x.id==='thasala-m7'||(x.name||'').indexOf('ท่าศาลา')>-1;});
   if(!p)return false;
-  if(p.retAmt!==24750){p.retAmt=24750;changed=true;} if(p.retDue!=='2026-09-25'){p.retDue='2026-09-25';changed=true;}
   var changed=false;
+  if(p.retAmt!==24750){p.retAmt=24750;changed=true;}
+  if(p.deliveryDate){var due=addYearsIso(p.deliveryDate,2);if(p.retDue!==due){p.retDue=due;changed=true;}}
+  else if(p.retDue==='2026-09-25'){p.retDue='';changed=true;}
   var rows=[
     {id:'thasala-doc-guarantee-24750',date:'2026-09-25',amount:24750,cat:'ค่าประกัน/ค่างาน',sub:'ประกันสัญญา',paid:true},
     {id:'thasala-doc-engineer-2475',date:'2026-09-25',amount:2475,cat:'ค่าแรง',sub:'วิศวะคุมงาน',paid:false},
@@ -817,7 +821,7 @@ function vProject(){
   if(p.retAmt>0){
     h+='<div class="kv"><span>จำนวนที่จ่ายออกแล้ว</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
        '<div class="kv"><span>วันที่ส่งมอบงาน</span><span>'+(p.deliveryDate?dstr(p.deliveryDate):'ยังไม่ระบุ')+'</span></div><div class="kv"><span>ครบกำหนดรับคืน (ส่งมอบ + 2 ปี)</span><span>'+(p.retDue?dstr(p.retDue):'ยังไม่ระบุ')+' '+(p.retRecv?'':retTag(p))+'</span></div>'+
-       '<div class="kv"><span>สถานะ</span><span>'+(p.retRecv?'<b class="in">ได้รับคืนแล้ว</b>':'จ่ายออกแล้ว · รอครบกำหนดรับคืน')+'</span></div>';
+       '<div class="kv"><span>สถานะ</span><span>'+(p.retRecv?'<b class="in">ได้รับคืนแล้ว และบันทึกเป็นรายรับ</b>':'<b class="out">นับเป็นค่าใช้จ่ายแล้ว</b> · รอรับคืนหลังส่งมอบครบ 2 ปี')+'</span></div>';
     if(!p.retRecv)h+='<div class="stack"><button class="btn" data-act="retRecv" data-id="'+p.id+'">ได้รับเงินประกันคืนแล้ว</button></div>';
   }else h+='<div class="empty">ยังไม่ได้บันทึกเงินประกันสัญญา แตะ "แก้ไขโครงการ" เพื่อเพิ่ม</div>';
   h+='</div>';
@@ -848,7 +852,7 @@ function vDue(){
     list.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>รับคืนได้วันที่ '+(p.retDue?dstr(p.retDue):'รอระบุวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
     return h+'</div>';
   }
-  return block('in','ลูกหนี้ (เงินค้างรับจากเจ้าของงาน)')+block('out','เจ้าหนี้ (ค้างจ่ายร้านวัสดุและช่าง)')+retBlock()+'<p class="muted" style="font-size:.85rem;margin-top:16px">แตะรายการเพื่อกด "รับเงินแล้ว" หรือ "จ่ายแล้ว" ยอดแสดงเป็นยอดสุทธิหลังหัก ณ ที่จ่าย</p>';
+  return block('in','ลูกหนี้ (เงินค้างรับจากเจ้าของงาน)')+block('out','เจ้าหนี้ (ค้างจ่ายร้านวัสดุและช่าง)')+retBlock()+'<p class="muted" style="font-size:.85rem;margin-top:16px">เงินประกันนับเป็นค่าใช้จ่ายตั้งแต่วันที่จ่ายออก และจะบันทึกเป็นรายรับอีกครั้งเมื่อได้รับคืนจริงหลังส่งมอบครบ 2 ปี</p>';
 }
 
 function vReport(){
@@ -1249,7 +1253,7 @@ document.addEventListener('click',function(e){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
     var sd0=document.getElementById('psd').value,ed0=document.getElementById('ped').value;
     if(sd0&&ed0&&ed0<sd0){toast('วันสิ้นสุดสัญญาต้องไม่ก่อนวันเริ่มต้น');return;}
-    var delEl=document.getElementById('pdel'),deliveryDate=delEl?delEl.value:'',retDue='';if(deliveryDate){var dd=new Date(deliveryDate+'T00:00:00');dd.setFullYear(dd.getFullYear()+2);retDue=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');}var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:document.getElementById('pstatus').value||'active',contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:parseFloat(document.getElementById('pr').value)||0,deliveryDate:deliveryDate,retDue:retDue,contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
+    var delEl=document.getElementById('pdel'),deliveryDate=delEl?delEl.value:'',retDue=addYearsIso(deliveryDate,2),retAmtVal=parseFloat(document.getElementById('pr').value)||0,stVal=document.getElementById('pstatus').value||'active';if(retAmtVal>0&&(stVal==='delivered'||stVal==='closed')&&!deliveryDate){toast('กรอกวันที่ส่งมอบงานเพื่อเริ่มนับ 2 ปีรับคืนเงินประกัน');return;}var o={name:n,client:document.getElementById('pc').value.trim(),location:document.getElementById('ploc').value.trim(),status:stVal,contract:parseFloat(document.getElementById('pv').value)||0,budget:parseFloat(document.getElementById('pb').value)||0,retAmt:retAmtVal,deliveryDate:deliveryDate,retDue:retDue,contractNo:document.getElementById('pno').value.trim(),contractDate:document.getElementById('pcd').value||'',startDate:sd0,endDate:ed0};
     if(id){var pp=proj(id);Object.assign(pp,o);}else{o.id=uid();S.projects.push(o);}
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
@@ -1314,7 +1318,7 @@ document.addEventListener('input',function(e){
   U.draft[f]=e.target.value;
   if(f==='amount'){var pv=document.getElementById('prev');if(pv)pv.innerHTML=prevText(U.draft);var af=document.getElementById('amtfmt');if(af){var av=parseFloat(U.draft.amount);af.textContent=av>0?fmt(av,1):'';}}
 });
-document.addEventListener('change',function(e){if(e.target&&e.target.dataset&&e.target.dataset.f==='homePid'){U.homePid=e.target.value;try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}render();return;}
+document.addEventListener('change',function(e){if(e.target&&e.target.id==='pdel'){var rd=document.getElementById('prd');if(rd)rd.value=addYearsIso(e.target.value,2);return;}if(e.target&&e.target.dataset&&e.target.dataset.f==='homePid'){U.homePid=e.target.value;try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}render();return;}
   var el=e.target,f=el.dataset&&el.dataset.f;
   if(f==='fpid'){U.filter.pid=el.value;render();return;}
   if(f==='fcat'){U.filter.cat=el.value;U.filter.sub='';render();return;}
