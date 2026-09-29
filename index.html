@@ -950,6 +950,16 @@ body.wallpaper-on .mgroup{
  .app-drawer{background:#17202b;color:#fff}.app-drawer-head,.app-drawer-quick{border-color:#303b46}
  .app-drawer-menu>button{color:#fff}.app-drawer-menu>button.on{background:#3a3320}.app-drawer-ico,.app-drawer-head>button,.app-drawer-quick button{background:#222d38;color:#fff}
 }
+
+/* DOCUMENTS SEPARATED FROM SETTINGS */
+.app-drawer-docs{margin:3px 0 10px;padding:10px;border-top:1px solid #e8ebed;border-bottom:1px solid #e8ebed}
+.app-drawer-docs>b{display:block;font-size:11px;color:#7b848c;margin-bottom:7px}
+.app-drawer-docs>div{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.app-drawer-docs button{border:1px solid #e1e5e7;border-radius:9px;background:#fff;min-height:36px;padding:5px 4px;font-size:9px;font-weight:700;color:#17202b}
+.app-drawer-docs button:first-child{background:#fff4cc;border-color:#efd886}
+@media(prefers-color-scheme:dark){
+ .app-drawer-docs{border-color:#303b46}.app-drawer-docs button{background:#222d38;border-color:#35414c;color:#fff}.app-drawer-docs button:first-child{background:#3a3320}
+}
 </style>
 </head>
 <body>
@@ -1777,7 +1787,7 @@ function sheetHtml(){
      '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
      '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+'<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div><small class="muted" style="display:block;margin-top:7px">พื้นหลังสไตล์สำนักงาน/งานก่อสร้างแบบจาง เพื่อไม่รบกวนการอ่านบัญชี</small></div>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
-     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
+     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
   }else if(sh.kind==='bizdoc'){
     var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind);
@@ -1852,9 +1862,9 @@ function appMenuHtml(){
     ['projects','build','โครงการ','จัดการงานและส่งออกรายงาน'],
     ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'ติดตามกำหนดชำระ'],
     ['report','list','รายงาน','สรุปบัญชีและภาษี'],
-    ['docs','build','เอกสาร','ใบเสนอราคา / วางบิล / ใบเสร็จ']
+    ['docs','build','เอกสารธุรกิจ','ใบเสนอราคา / ใบวางบิล / ใบเสร็จ']
   ];
-  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[0]==='due'&&due?'<i>'+Math.min(due,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
+  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[0]==='due'&&due?'<i>'+Math.min(due,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-docs"><b>เอกสาร</b><div><button data-act="newQuote">+ ใบเสนอราคา</button><button data-act="newBill">+ ใบวางบิล</button><button data-act="newReceipt">+ ใบเสร็จ</button></div></div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
 }
 
 function render(){
@@ -1993,9 +2003,9 @@ document.addEventListener('click',function(e){
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';persist();render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
-  else if(a==='newQuote'){U.sheet={kind:'quote',id:null};render();}
-  else if(a==='newBill'){U.sheet={kind:'bizdoc',docKind:'bill',id:null};render();}
-  else if(a==='newReceipt'){U.sheet={kind:'bizdoc',docKind:'receipt',id:null};render();}
+  else if(a==='newQuote'){U.appMenu=false;U.sheet={kind:'quote',id:null};render();}
+  else if(a==='newBill'){U.appMenu=false;U.sheet={kind:'bizdoc',docKind:'bill',id:null};render();}
+  else if(a==='newReceipt'){U.appMenu=false;U.sheet={kind:'bizdoc',docKind:'receipt',id:null};render();}
   else if(a==='docView'){U.docKind=el.dataset.kind||'quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
   else if(a==='editDoc'){U.sheet={kind:'bizdoc',docKind:el.dataset.kind||'bill',id:id};render();}
   else if(a==='convertDoc'){
