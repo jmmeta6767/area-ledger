@@ -200,6 +200,14 @@ th,td{padding:8px 4px;text-align:right;border-bottom:1px solid var(--line);white
 th:first-child,td:first-child{text-align:left;white-space:normal}
 th{color:var(--muted);font-weight:500}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Work v1.3 live continuation */
+.project-hero{width:100%;text-align:left;background:#20282d;color:#fff;border:0;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 10px 26px rgba(20,28,32,.12)}
+.project-hero-kicker{display:flex;justify-content:space-between;align-items:center;color:#f0ad2d;font-size:.82rem;font-weight:800;margin-bottom:10px}
+.project-hero>b{display:block;font-size:1.2rem;line-height:1.35;margin-bottom:6px}.project-hero small{display:block;color:#bfc6ca}.hero-link{display:block;margin-top:14px;color:#f4b333;font-weight:700;font-size:.86rem}
+.status-pill{background:#e7f5ea;color:#26733f;border-radius:999px;padding:5px 9px;font-size:.72rem}
+.cash-modern{border-radius:18px!important;box-shadow:0 8px 24px rgba(20,28,32,.06)}
+.kpi4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 18px}.kpi4 button{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:left;min-height:96px}.kpi4 small,.kpi4 span{display:block;color:var(--muted);font-size:.78rem}.kpi4 b{display:block;font-size:1.12rem;margin:6px 0}
+@media(min-width:700px){.kpi4{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
@@ -498,12 +506,16 @@ function vHome(){
   var recent=S.tx.slice().sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,5);
   var nudge='';
   if(S.tx.length>=5&&(!S.lastBackup||Date.now()-S.lastBackup>30*86400000))nudge='<button class="row" data-act="backup" style="margin-top:0"><div class="l"><b>ยังไม่ได้สำรองข้อมูลเลย หรือนานเกิน 30 วัน</b><small>แตะเพื่อสำรองไว้กันข้อมูลหาย</small></div></button>';
-  var h=nudge+'<div class="cash"><small>เงินสดคงเหลือ</small><div class="big num">'+fmt(cashBalance())+'</div>'+
+  var active=S.projects[0]||null,ast=active?stats(active.id):null;
+  var hero=active?'<button class="project-hero" data-act="openProj" data-id="'+active.id+'"><div class="project-hero-kicker">โครงการปัจจุบัน <span class="status-pill">กำลังดำเนินการ</span></div><b>'+esc(active.name)+'</b><small>'+esc(active.client||'แตะเพื่อดูรายละเอียดโครงการ')+'</small><span class="hero-link">ดูรายละเอียดโครงการ →</span></button>':'';
+  var h=nudge+hero+'<div class="cash cash-modern"><small>เงินคงเหลือตามรายการ</small><div class="big num">'+fmt(cashBalance())+'</div>'+
    '<div class="mrow"><span>เดือนนี้ รับ <b class="in num">'+fmt(inM)+'</b></span><span>จ่าย <b class="out num">'+fmt(outM)+'</b></span><span>กำไรเบื้องต้น <b class="num">'+fmt(inM-outM)+'</b></span></div><div class="mrow" style="margin-top:8px"><span>ในบัญชี <b class="num">'+fmt(cs2.bank)+'</b></span><span>เงินสดในมือ <b class="num">'+fmt(cs2.cash)+'</b></span></div></div>';
-  h+='<div class="two"><button data-act="go" data-v="due"><b class="in">'+fmt(rec)+'</b><span>ค้างรับ '+pending('in').length+' รายการ</span></button>'+
-     '<button data-act="go" data-v="due"><b class="out">'+fmt(pay)+'</b><span>ค้างจ่าย '+pending('out').length+' รายการ</span></button></div>';
+  var ro0=retOpen(),retTotal=ro0.reduce(function(a,p){return a+p.retAmt;},0);
+  h+='<div class="kpi4"><button data-act="go" data-v="list"><small>รับเงิน</small><b class="in">'+fmt(S.tx.filter(function(t){return t.type==="in"&&t.paid;}).reduce(function(a,t){return a+net(t);},0))+'</b><span>'+S.tx.filter(function(t){return t.type==="in"&&t.paid;}).length+' รายการ</span></button>'+
+     '<button data-act="go" data-v="list"><small>จ่ายเงิน</small><b class="out">'+fmt(S.tx.filter(function(t){return t.type==="out"&&t.paid;}).reduce(function(a,t){return a+net(t);},0))+'</b><span>'+S.tx.filter(function(t){return t.type==="out"&&t.paid;}).length+' รายการ</span></button>'+
+     '<button data-act="go" data-v="due"><small>ค้างจ่าย</small><b class="out">'+fmt(pay)+'</b><span>'+pending("out").length+' รายการ</span></button>'+
+     '<button data-act="go" data-v="due"><small>เงินประกันรอคืน</small><b>'+fmt(retTotal)+'</b><span>'+ro0.length+' โครงการ</span></button></div>';
   var ro=retOpen();
-  if(ro.length)h+='<button class="row" data-act="go" data-v="due" style="margin-top:0"><div class="l"><b>เงินประกันสัญญารอรับคืน</b><small>'+ro.length+' โครงการ</small></div><div class="r"><span class="num">'+fmt(ro.reduce(function(a,p){return a+p.retAmt;},0))+'</span></div></button>';
   h+='<div class="sec"><h2>ต้องจับตา</h2>';
   if(!watch.length&&!soon.length&&!ending.length)h+='<div class="empty">ยังไม่มีงบใกล้เกินหรือยอดใกล้ครบกำหนด</div>';
   watch.forEach(function(p){var x=budgetPct(p);h+='<button class="proj" data-act="openProj" data-id="'+p.id+'"><div class="top"><b>'+esc(p.name)+'</b><span class="num '+(x>=1?'out':'muted')+'">'+Math.round(x*100)+'% ของงบ</span></div><div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div></button>';});
