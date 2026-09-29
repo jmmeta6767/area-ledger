@@ -871,6 +871,32 @@ body.wallpaper-on .mgroup{
 .mdash-cash-split span{display:block!important;color:var(--m-mut)!important;font-size:12px!important}
 .mdash-cash-split b{display:block!important;color:var(--m-ink)!important;font-size:14px!important;margin-top:1px!important;white-space:nowrap}
 @media(max-width:430px){.mdash-cash-split{margin-top:7px!important;padding-top:7px!important}.mdash-cash-split span{font-size:10px!important}.mdash-cash-split b{font-size:12px!important}}
+
+/* PROJECT EXPORT — Excel / PDF per project */
+.project-export-bar{
+  margin:10px 0 12px;padding:10px 12px;border:1px solid var(--m-line);border-radius:13px;
+  background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.project-export-bar>div:first-child{min-width:0}
+.project-export-bar b,.project-export-bar small{display:block}
+.project-export-bar b{font-size:12px}
+.project-export-bar small{font-size:9px;color:var(--m-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px;margin-top:2px}
+.project-export-actions{display:flex;gap:7px;flex:none}
+.project-export-actions button{
+  min-height:34px;padding:7px 11px;border:1px solid var(--m-line);border-radius:10px;
+  background:#fff;color:var(--m-ink);font-weight:700;font-size:10px
+}
+.project-export-actions button:first-child{background:#eaf7ee;border-color:#cfe7d5;color:#2e7d4f}
+.project-export-actions button:last-child{background:#fff1ef;border-color:#efcbc5;color:#a54432}
+.project-export-actions-wide{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.project-export-actions-wide .btn{min-height:44px;font-size:.9rem}
+.project-export-card>small{display:block;margin-top:8px;font-size:.8rem}
+@media(max-width:520px){
+  .project-export-bar{padding:9px 10px}
+  .project-export-bar b{font-size:10.5px}
+  .project-export-bar small{font-size:8px;max-width:180px}
+  .project-export-actions button{min-height:31px;padding:6px 9px;font-size:9px}
+}
 </style>
 </head>
 <body>
@@ -1309,6 +1335,7 @@ function vList(){
    '<select data-f="fcat" aria-label="กรองตามหมวด"><option value="">ทุกหมวด</option>'+CAT_OUT.concat(CAT_IN).map(function(c){return '<option'+(F.cat===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select></div>';
   if(CAT_OUT.indexOf(F.cat)>-1)h+='<input type="text" data-f="fsub" placeholder="ค้นหาในรายละเอียด เช่น เหล็ก" value="'+esc(F.sub||'')+'" class="master-list-search" aria-label="ค้นหาในรายละเอียด">';
   h+='<div class="mrow master-list-summary"><span>'+list.length+' รายการ</span>'+(foreman?'':'<span class="in">รับ <b class="num">'+fmt(i)+'</b></span>')+'<span class="out">จ่าย <b class="num">'+fmt(o)+'</b></span></div>';
+  if(F.pid&&!foreman)h+='<div class="project-export-bar"><div><b>ส่งออกข้อมูลโครงการ</b><small>'+esc(pname(F.pid))+'</small></div><div class="project-export-actions"><button data-act="exportProjectXlsx" data-id="'+F.pid+'">Excel</button><button data-act="exportProjectPdf" data-id="'+F.pid+'">PDF</button></div></div>';
   if(!list.length)h+='<div class="empty">ไม่พบรายการ ลองเปลี่ยนตัวกรอง หรือแตะปุ่ม + เพื่อเพิ่มรายการแรก</div>';
   list.forEach(function(t){h+=rowTx(t,true);});
   return h+'</section>';
@@ -1398,7 +1425,7 @@ function vProject(){
   var list=S.tx.filter(function(t){return t.pid===p.id;}).sort(function(a,b){return a.date<b.date?1:-1;});
   if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';
   list.forEach(function(t){h+=rowTx(t,false);});
-  h+='</div><div class="stack"><button class="btn pri" data-act="addToProj" data-id="'+p.id+'">เพิ่มรายการในโครงการนี้</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไขโครงการ</button></div>';
+  h+='</div><div class="sec master-detail-card project-export-card"><h2>ส่งออกข้อมูลโครงการ</h2><div class="project-export-actions project-export-actions-wide"><button class="btn" data-act="exportProjectXlsx" data-id="'+p.id+'">Excel (.xlsx)</button><button class="btn" data-act="exportProjectPdf" data-id="'+p.id+'">PDF</button></div><small class="muted">ส่งออกเฉพาะรายการ รายรับ รายจ่าย ค้างรับ/จ่าย และสรุปของโครงการนี้</small></div><div class="stack"><button class="btn pri" data-act="addToProj" data-id="'+p.id+'">เพิ่มรายการในโครงการนี้</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไขโครงการ</button></div>';
   return h;
 }
 
@@ -1522,6 +1549,11 @@ function saveFile(name,blob){
   dl();
 }
 function scopeTx(){var pid=U.exportPid||'';return S.tx.filter(function(t){return !pid||t.pid===pid;}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
+function exportFileName(pid,ext){
+  var base=pid?pname(pid):'ทุกโครงการ';
+  base=String(base||'AREA-Ledger').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim().slice(0,70);
+  return 'AREA-Ledger-'+base+'-'+today()+'.'+ext;
+}
 function exportXlsx(){
   var pid=U.exportPid||'',list=scopeTx();
   if(!list.length){toast('ยังไม่มีรายการให้ส่งออก');return;}
@@ -1547,7 +1579,7 @@ function exportXlsx(){
     Object.keys(sub[c]).sort(function(a,b){return sub[c][b]-sub[c][a];}).forEach(function(k){r4.push(['',k,n(sub[c][k]),{v:tot?sub[c][k]/tot:0,s:P}]);});
   });
   var blob=xlsxBuild([{name:'รายการ',rows:r1},{name:'สรุปโครงการ',rows:r2},{name:'สรุปรายเดือน',rows:r3},{name:'ค่าใช้จ่ายตามหมวด',rows:r4}]);
-  saveFile('site-ledger-'+today()+'.xlsx',blob);
+  saveFile(exportFileName(pid,'xlsx'),blob);
 }
 function vPrint(){
   var pid=U.exportPid||'',list=scopeTx(),i=0,o=0,rv=0,pv=0,cat={},sub={};
@@ -1790,7 +1822,7 @@ document.addEventListener('click',function(e){
   var a=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
   if(a==='go')go(v);
-  else if(a==='back'&&U.view==='print'){go('report');}
+  else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
   else if(a==='back'&&U.view==='quoteprint'){go('docs');}
   else if(a==='back'&&U.view==='docs'){go('home');}
   else if(a==='back'&&U.view==='report'){go('home');}
@@ -1819,7 +1851,9 @@ document.addEventListener('click',function(e){
   else if(a==='save')saveTx();
   else if(a==='saveMore')saveTx(true);
   else if(a==='xlsx')exportXlsx();
-  else if(a==='pdfView')go('print');
+  else if(a==='exportProjectXlsx'){U.exportPid=id;exportXlsx();}
+  else if(a==='exportProjectPdf'){U.exportPid=id;U.printFrom=U.view;go('print');}
+  else if(a==='pdfView'){U.printFrom=U.view;go('print');}
   else if(a==='doPrint'){try{window.print();}catch(x){toast('เครื่องนี้สั่งพิมพ์ไม่ได้');}}
   else if(a==='openTx'){U.sheet={kind:'tx',id:id};U.confirm=null;render();}
   else if(a==='editDueTx'){U.sheet={kind:'dueEdit',id:id};U.confirm=null;render();}
