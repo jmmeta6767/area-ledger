@@ -1194,6 +1194,81 @@ body.wallpaper-on .mgroup{
 @media(min-width:600px){.mdash-stats{grid-template-columns:repeat(4,minmax(0,1fr))!important}.master-ref-project{grid-template-columns:88px minmax(0,1fr)!important}.master-ref-photo{width:88px!important}.mdash-stats button>b{font-size:20px!important}}
 }
 
+
+/* WORK UX/UI CONTINUATION — 2x2 mobile summary, status filters, larger tap targets */
+.list-status-filter{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
+  margin:8px 0 10px;
+}
+.list-status-filter button{
+  min-height:42px;border:1px solid var(--m-line);border-radius:11px;
+  background:var(--m-card);color:var(--m-ink);font-weight:650;font-size:12px;
+}
+.list-status-filter button.on{
+  background:#f0b935;color:#17202b;border-color:#f0b935;font-weight:800;
+}
+
+/* Keep transaction titles and hit areas easy to read/tap. */
+.row.tx-modern{
+  min-height:74px!important;
+  padding:12px 13px!important;
+  gap:10px!important;
+}
+.row.tx-modern .tx-cat-icon{
+  width:42px!important;height:42px!important;flex:0 0 42px!important;
+  border-radius:12px!important;
+}
+.row.tx-modern .tx-cat-icon svg{width:21px!important;height:21px!important}
+.row.tx-modern .l>b{
+  font-size:14px!important;line-height:1.28!important;font-weight:700!important;
+}
+.row.tx-modern .l>small{font-size:10px!important;line-height:1.25!important}
+.row.tx-modern .tx-project-name{font-size:8.5px!important;margin-top:4px!important}
+.row.tx-modern .r>.num{font-size:14px!important;font-weight:800!important}
+
+/* Home timeline gets the same touch-friendly rhythm. */
+.mitem{min-height:70px!important;padding:10px 12px!important}
+.mitem .mico{width:38px!important;height:38px!important;flex:0 0 38px!important}
+.mitem .mtext>b{font-size:13.5px!important;line-height:1.25!important}
+.mitem .mamt{font-size:13.5px!important;font-weight:800!important}
+
+/* Work master uses a balanced 2x2 summary on phones. */
+@media(max-width:430px){
+  .mdash-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .mdash-stats button{
+    min-height:104px!important;height:auto!important;
+    padding:11px 10px!important;border-radius:14px!important;
+  }
+  .mdash-stats button>span:not(.mdash-stat-icon){
+    min-height:auto!important;font-size:10.5px!important;line-height:1.2!important;
+  }
+  .mdash-stats button>b{
+    font-size:17px!important;line-height:1.15!important;margin-top:5px!important;
+  }
+  .mdash-stats button small{
+    font-size:8.5px!important;line-height:1.25!important;margin-top:auto!important;padding-top:5px!important;
+  }
+  .mdash-stat-icon{width:31px!important;height:31px!important;margin-bottom:6px!important}
+  .mdash-stat-icon svg{width:17px!important;height:17px!important}
+
+  .master-list-chips{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:7px!important}
+  .master-list-chips .chip{width:100%!important;min-width:0!important;min-height:42px!important}
+  .master-list-selects{gap:7px!important}
+  .master-list-selects select{min-height:44px!important;font-size:12px!important}
+  .list-status-filter button{min-height:40px;font-size:11px}
+
+  .row.tx-modern{min-height:76px!important;padding:12px 10px!important}
+  .row.tx-modern .l>b{font-size:13.5px!important}
+  .row.tx-modern .r>.num{font-size:13px!important}
+}
+@media(max-width:360px){
+  .mdash-stats button>b{font-size:15.5px!important}
+  .row.tx-modern .tx-cat-icon{width:38px!important;height:38px!important;flex-basis:38px!important}
+  .row.tx-modern .l>b{font-size:13px!important}
+}
 </style>
 </head>
 <body>
@@ -1270,7 +1345,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:''},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
 
 function emptyState(){return {projects:[],tx:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
@@ -1621,15 +1696,18 @@ function vList(){
     if(foreman&&t.type!=='out')return false;
     if(F.type!=='all'&&t.type!==F.type)return false;
     if(F.pid&&t.pid!==F.pid)return false;
-    if(F.paidOnly&&!t.paid)return false;
+    var fs=F.status||(F.paidOnly?'paid':'all');
+    if(fs==='paid'&&!t.paid)return false;
+    if(fs==='pending'&&t.paid)return false;
     if(F.cat&&t.cat!==F.cat)return false;
     if(F.sub&&(t.sub||'').toLowerCase().indexOf(F.sub.trim().toLowerCase())<0)return false;
     return true;
   }).sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;});
   var i=0,o=0;list.forEach(function(t){if(t.type==='in')i+=t.amount;else o+=t.amount;});
   var h='<section class="master-list">';
-  if(F.paidOnly)h+='<div class="list-paid-filter"><span>เฉพาะรายการที่ชำระแล้ว</span><button data-act="clearPaidFilter">แสดงทุกสถานะ</button></div>';
+  if((F.status||'')==='paid'||F.paidOnly)h+='<div class="list-paid-filter"><span>เฉพาะรายการที่ชำระแล้ว</span><button data-act="clearPaidFilter">แสดงทุกสถานะ</button></div>';
   if(!foreman)h+='<div class="chips master-list-chips">'+[['all','ทั้งหมด'],['in','รายรับ'],['out','รายจ่าย']].map(function(x){return '<button class="chip'+(F.type===x[0]?' on':'')+'" data-act="ftype" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';
+  h+='<div class="list-status-filter">'+[['all','ทุกสถานะ'],['paid','ชำระแล้ว'],['pending','ค้าง']].map(function(x){var fs=F.status||(F.paidOnly?'paid':'all');return '<button class="'+(fs===x[0]?'on':'')+'" data-act="fstatus" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';
   h+='<div class="master-list-selects">'+
    '<select data-f="fpid" aria-label="กรองตามโครงการ"><option value="">ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(F.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'+
    '<select data-f="fcat" aria-label="กรองตามหมวด"><option value="">ทุกหมวด</option>'+CAT_OUT.concat(CAT_IN).map(function(c){return '<option'+(F.cat===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select></div>';
@@ -2240,10 +2318,11 @@ document.addEventListener('click',function(e){
     U.from=U.view;go('add');
   }
   else if(a==='delTx'){if(U.confirm==='tx'+id){S.tx=S.tx.filter(function(x){return x.id!==id;});persist();U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
-  else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',paidOnly:true};go('list');}
-  else if(a==='clearPaidFilter'){U.filter.paidOnly=false;render();}
+  else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',status:'paid',paidOnly:false};go('list');}
+  else if(a==='clearPaidFilter'){U.filter.paidOnly=false;U.filter.status='all';render();}
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
   else if(a==='ftype'){U.filter.type=v;render();}
+  else if(a==='fstatus'){U.filter.status=v||'all';U.filter.paidOnly=false;render();}
   else if(a==='openProj'){U.from=null;go('project',{pid:id});}
   else if(a==='retRecv'){
     var rp=proj(id);
