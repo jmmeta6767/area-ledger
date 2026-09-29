@@ -412,9 +412,11 @@ function restoreThaSalaKnown(){
 function mergeThaSalaDocument(){
   var p=(S.projects||[]).find(function(x){return x.id==='thasala-m7'||(x.name||'').indexOf('ท่าศาลา')>-1;});
   if(!p)return false;
-  if(!p.retAmt)p.retAmt=24750;
+  if(p.retAmt!==24750){p.retAmt=24750;changed=true;} if(p.retDue!=='2026-09-25'){p.retDue='2026-09-25';changed=true;}
   var changed=false;
   var rows=[
+    {id:'thasala-doc-engineer-2475',date:'2026-09-25',amount:2475,cat:'ค่าแรง',sub:'วิศวะคุมงาน',paid:false},
+    {id:'thasala-doc-10pct-49500',date:'2026-09-25',amount:49500,cat:'ค่างานเอกสาร',sub:'10%',paid:true},
     {id:'thasala-doc-steel-135513',date:'2026-09-15',amount:135513,cat:'ค่าของ',sub:'เหล็ก'},
     {id:'thasala-doc-paint-5580',date:'2026-09-26',amount:5580,cat:'ค่าของ',sub:'สี/ทินเนอร์'},
     {id:'thasala-doc-jbolt-4264',date:'2026-09-26',amount:4264,cat:'ค่าของ',sub:'Jโบลท์ตัว'},
@@ -428,12 +430,12 @@ function mergeThaSalaDocument(){
       return t.pid===p.id&&(t.id===r.id||(Number(t.amount)===r.amount&&((t.sub||'').trim()===r.sub)));
     });
     if(!x){
-      S.tx.push({id:r.id,date:r.date,type:'out',amount:r.amount,cat:r.cat,sub:r.sub,pay:'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:true,due:'',photo:'',note:'จากเอกสารค่าใช้จ่ายท่าศาลาที่ผู้ใช้ยืนยัน'});
+      S.tx.push({id:r.id,date:r.date,type:'out',amount:r.amount,cat:r.cat,sub:r.sub,pay:r.paid===false?'':'transfer',pid:p.id,partner:'',vat:false,wht:false,paid:r.paid===false?false:true,due:r.paid===false?'2026-09-25':'',photo:'',note:'จากเอกสารค่าใช้จ่ายท่าศาลาที่ผู้ใช้ยืนยัน'});
       changed=true;return;
     }
     if(x.date!==r.date){x.date=r.date;changed=true;}
     if(x.cat!==r.cat){x.cat=r.cat;changed=true;}
-    if((x.sub||'').trim()!==r.sub){x.sub=r.sub;changed=true;}
+    if((x.sub||'').trim()!==r.sub){x.sub=r.sub;changed=true;} if(r.paid===false&&x.paid!==false){x.paid=false;x.pay='';x.due='2026-09-25';changed=true;}
   });
   return changed;
 }
