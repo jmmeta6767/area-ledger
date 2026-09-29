@@ -257,6 +257,10 @@ main{max-width:520px!important}.preview-project{background:var(--navy);border-ra
 .balance-card,.preview-kpis button,.time-group{box-shadow:0 4px 14px rgba(23,32,43,.035)}.ledger-tabs::-webkit-scrollbar{display:none}.ledger-tabs{scrollbar-width:none}
 .tx-modern{min-height:64px}.tx-modern:active,.preview-kpis button:active,.preview-project-actions button:active{transform:scale(.992)}button{touch-action:manipulation}
 @media(max-width:390px){main{padding-left:12px!important;padding-right:12px!important}.preview-project{margin-left:-12px!important;margin-right:-12px!important}.balance-card{padding:14px}.balance-title b{font-size:30px}.preview-kpis{gap:8px}.preview-kpis button{padding:11px}.ledger-tabs button{padding:9px 13px}}
+/* Dashboard structure locked to user screenshot */
+.home-shot-header{background:#f1f3f2}.home-shot-head-inner{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1.45fr .85fr .55fr;align-items:center;gap:14px;padding:26px 18px 14px}.home-shot-logo{display:block;width:100%!important;height:auto!important;aspect-ratio:1/1;object-fit:cover;border:5px solid #e8a91e;border-radius:10px}.home-shot-brand{align-self:center}.home-shot-brand b{display:block;font-size:1.45rem;line-height:1.08;color:#17202b}.home-shot-brand span{display:block;color:#6b7580;font-size:1rem;margin-top:7px}.home-shot-settings{border:0;background:transparent;color:#6b7580;font:600 1rem "Noto Sans Thai",sans-serif;padding:12px 4px}.hazard-stripe{height:9px;background:repeating-linear-gradient(135deg,#17202b 0 12px,#e8a91e 12px 24px)}
+.home-simple-list{background:var(--bg);padding:0 14px}.home-simple-list .tx-modern{display:grid!important;grid-template-columns:1fr auto!important;min-height:92px;padding:15px 0!important;border-bottom:1px solid #d6d9d7!important;background:transparent!important;border-radius:0!important;margin:0!important}.home-simple-list .tx-cat-icon,.home-simple-list .tx-more{display:none!important}.home-simple-list .tx-modern .l{min-width:0}.home-simple-list .tx-modern .l b{font-size:1.08rem;font-weight:700}.home-simple-list .tx-modern .l small{display:block;max-width:390px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7580;font-size:.9rem}.home-simple-list .tx-modern .r{align-items:flex-end}.home-simple-list .tx-modern .r>.num{font-size:1.08rem;color:#b8402b;font-weight:800}.home-simple-list .tag{margin-top:4px}.home-report{padding:22px 18px 30px}.report-outline{width:100%;min-height:62px;background:transparent!important;color:#17202b!important;border:3px solid #17202b!important;border-radius:14px!important;font-size:1.05rem;font-weight:700}.home-empty{padding:80px 20px 40px}
+@media(max-width:390px){.home-shot-head-inner{grid-template-columns:1.35fr .9fr .55fr;padding:22px 14px 12px;gap:10px}.home-shot-brand b{font-size:1.25rem}.home-shot-brand span,.home-shot-settings{font-size:.9rem}.home-simple-list{padding:0 14px}.home-simple-list .tx-modern .l small{max-width:230px}}
 </style>
 </head>
 <body>
@@ -527,9 +531,12 @@ function newDraft(type,pid){
 
 /* ---------- หน้าจอ ---------- */
 function header(title,back){
-  return '<div class="hd"><div class="hd-in">'+(back?'<button class="ghost" data-act="back" aria-label="ย้อนกลับ">'+ic('back').replace('<svg','<svg width="24" height="24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"')+'</button>':'')+
-    (title==='บัญชีหน้างาน'&&!back?brandHtml():'<h1>'+esc(title)+'</h1>')+'<button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button></div><div class="stripe"></div></div>';
+  if(title==='บัญชีหน้างาน'&&!back){
+    return '<div class="home-shot-header"><div class="home-shot-head-inner"><img src="area-logo-header.jpg" class="home-shot-logo" alt="AREA MAIBAB"><div class="home-shot-brand"><b>AREA<br>MAIBAB</b><span>บัญชีหน้างาน</span></div><button class="home-shot-settings" data-act="settings">ตั้งค่า</button></div><div class="hazard-stripe"></div></div>';
+  }
+  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="back" aria-label="ย้อนกลับ">'+ic('back')+'</button>':'')+'<h1>'+esc(title)+'</h1><button class="ghost settings-ico" data-act="settings"><span aria-hidden="true">⚙</span><small>ตั้งค่า</small></button></div><div class="stripe"></div></div>';
 }
+
 function txIcon(t){
   var x=((t.sub||'')+' '+(t.cat||'')).toLowerCase();
   if(x.indexOf('ทราย')>=0||x.indexOf('วัสดุ')>=0)return '▤';
@@ -558,22 +565,13 @@ function timelineRows(list){
 }
 
 function vHome(){
-  if(!S.projects.length&&!S.tx.length){
-    return '<div class="cash"><small>ยินดีต้อนรับ</small><div class="big num" style="font-size:1.7rem">เริ่มบันทึกบัญชีหน้างาน</div><div class="muted">ข้อมูลเก็บไว้ในเครื่องนี้ ไม่หายจนกว่าจะลบเอง</div></div><div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการแรก</button><button class="btn" data-act="restoreOpen">กู้คืนจากข้อมูลสำรอง</button></div>';
+  if(!S.tx.length){
+    return '<div class="empty home-empty">ยังไม่มีรายการ<br>กดปุ่ม + เพื่อเพิ่มรายการแรก</div><div class="home-report"><button class="btn report-outline" data-act="go" data-v="report">ดูรายงานกำไรและกระแสเงินสด</button></div>';
   }
-  var mk=today().slice(0,7),inM=0,outM=0;S.tx.forEach(function(t){if((t.date||'').slice(0,7)===mk){if(t.type==='in')inM+=base(t);else outM+=base(t);}});
-  var active=proj(U.homePid)||S.projects.find(function(p){return (p.status||'active')==='active';})||S.projects[0],scopePid=active?active.id:'';
-  var scoped=S.tx.filter(function(t){return !scopePid||t.pid===scopePid;}),paidIn=scoped.filter(function(t){return t.type==='in'&&t.paid;}),paidOut=scoped.filter(function(t){return t.type==='out'&&t.paid;}),pay=scoped.filter(function(t){return t.type==='out'&&!t.paid;}),pin=scoped.filter(function(t){return t.type==='in'&&!t.paid;}),ro=active&&active.retAmt>0&&!active.retRecv?[active]:[],cs=cashSplit(),ps=active?stats(active.id):null;
-  inM=0;outM=0;scoped.forEach(function(t){if((t.date||'').slice(0,7)===mk){if(t.type==='in')inM+=base(t);else outM+=base(t);}});
-  var projectCard=active?'<section class="preview-project"><div class="preview-photo"><div class="photo-placeholder">'+ic('build')+'</div></div><div class="preview-project-body"><span class="eyebrow">▣ โครงการ</span><h2>'+esc(active.name)+'</h2><p>'+esc(active.location||active.client||'ติดตามรายรับ–รายจ่ายหน้างาน')+'</p><select class="home-project-select" data-f="homePid" aria-label="เลือกโครงการ">'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select><div class="preview-project-actions"><button class="btn pri" data-act="openProj" data-id="'+active.id+'">▣ ดูรายละเอียด</button><button class="btn dark" data-act="editProj" data-id="'+active.id+'">แก้ไข</button></div></div></section>':'';
-  var balance=paidIn.reduce(function(a,t){return a+net(t);},0)-paidOut.reduce(function(a,t){return a+net(t);},0);
-  var h=projectCard+'<section class="balance-card"><div class="balance-title"><span class="balance-icon">◉</span><div><small>เงินคงเหลือตามรายการ</small><b class="num">'+fmt(balance)+'</b></div></div><div class="balance-cols"><span>เดือนนี้ รับแล้ว<b class="in">'+fmt(inM)+'</b></span><span>จ่ายแล้ว<b class="out">'+fmt(outM)+'</b></span><span>รับ − จ่ายเดือนนี้<b class="'+(inM-outM>=0?'in':'out')+'">'+fmt(inM-outM)+'</b></span><span>ในบัญชี<b>'+fmt(cs.bank)+'</b></span></div></section>';
-  h+='<section class="preview-kpis"><button data-act="go" data-v="list"><span class="kicon blue">▣</span><small>รับเงินแล้ว</small><b class="in">'+fmt(paidIn.reduce(function(a,t){return a+net(t);},0))+'</b><em>'+paidIn.length+' รายการ</em></button><button data-act="go" data-v="list"><span class="kicon pink">▣</span><small>จ่ายเงินแล้ว</small><b class="out">'+fmt(paidOut.reduce(function(a,t){return a+net(t);},0))+'</b><em>'+paidOut.length+' รายการ</em></button><button data-act="go" data-v="due"><span class="kicon amber">▤</span><small>ค้างจ่าย</small><b class="out">'+fmt(sumNet(pay))+'</b><em>ค้างรับ '+fmt(sumNet(pin))+'</em></button><button data-act="go" data-v="due"><span class="kicon green">♢</span><small>เงินประกันรอคืน</small><b>'+fmt(ro.reduce(function(a,p){return a+p.retAmt;},0))+'</b><em>'+ro.length+' โครงการ</em></button></section>';
-  var list=scoped.slice().sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
-  h+='<div class="ledger-tabs"><button class="on">ทั้งหมด ('+list.length+')</button><button data-act="go" data-v="list">รับเงิน ('+scoped.filter(function(t){return t.type==="in";}).length+')</button><button data-act="go" data-v="list">จ่ายเงิน ('+scoped.filter(function(t){return t.type==="out";}).length+')</button><button data-act="go" data-v="due">ค้าง ('+(pin.length+pay.length)+')</button></div>';
-  h+='<section class="ledger-feed"><div class="feed-head"><span>รายการล่าสุด</span><button class="link" data-act="go" data-v="list">ดูทั้งหมด</button></div>';
-  if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';else h+=timelineRows(list.slice(0,12));
-  h+='</section><div class="quick-actions"><button class="btn pri" data-act="go" data-v="docs">เอกสาร / ใบเสนอราคา</button><button class="btn" data-act="go" data-v="report">รายงานบัญชี</button></div>';
+  var list=S.tx.slice().sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
+  var h='<section class="home-simple-list">';
+  list.forEach(function(t){h+=rowTx(t,true);});
+  h+='</section><div class="home-report"><button class="btn report-outline" data-act="go" data-v="report">ดูรายงานกำไรและกระแสเงินสด</button></div>';
   return h;
 }
 
