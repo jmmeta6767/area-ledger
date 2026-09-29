@@ -897,6 +897,28 @@ body.wallpaper-on .mgroup{
   .project-export-bar small{font-size:8px;max-width:180px}
   .project-export-actions button{min-height:31px;padding:6px 9px;font-size:9px}
 }
+
+/* PROJECT CONTROL CENTER — compact project finance + export */
+.project-hub-card{margin:10px 0 14px;border:1px solid var(--m-line);border-radius:17px;background:rgba(255,255,255,.96);overflow:hidden;box-shadow:0 2px 9px rgba(23,32,43,.04)}
+.project-hub-main{display:block;width:100%;padding:14px 14px 10px;border:0;background:transparent;text-align:left;color:inherit}
+.project-hub-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.project-hub-top>div{min-width:0}.project-hub-top b,.project-hub-top small{display:block}
+.project-hub-top b{font-size:.98rem;line-height:1.35}.project-hub-top small{font-size:.72rem;color:var(--m-mut);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.project-hub-card .bar{margin:11px 0 9px}
+.project-hub-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--m-line);padding-top:9px}
+.project-hub-kpis span{min-width:0;padding:0 7px;border-left:1px solid var(--m-line)}
+.project-hub-kpis span:first-child{border-left:0;padding-left:0}.project-hub-kpis span:last-child{padding-right:0}
+.project-hub-kpis small,.project-hub-kpis b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.project-hub-kpis small{font-size:.62rem;color:var(--m-mut)}.project-hub-kpis b{font-size:.78rem;margin-top:2px}
+.project-hub-pending{margin-top:9px;padding:7px 9px;border-radius:9px;background:#fff7df;color:#80641d;font-size:.68rem}
+.project-hub-actions{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--m-line);background:#fbfbfb}
+.project-hub-actions button{min-height:42px;border:0;border-left:1px solid var(--m-line);background:transparent;color:var(--m-ink);font-weight:700;font-size:.72rem}
+.project-hub-actions button:first-child{border-left:0;color:#9b6c00}.project-hub-actions button:nth-child(2){color:#2e7d4f}.project-hub-actions button:nth-child(3){color:#a54432}
+@media(max-width:390px){
+ .project-hub-main{padding:12px 11px 9px}.project-hub-top b{font-size:.9rem}
+ .project-hub-kpis span{padding:0 5px}.project-hub-kpis small{font-size:.57rem}.project-hub-kpis b{font-size:.69rem}
+ .project-hub-actions button{font-size:.66rem;min-height:39px}
+}
 </style>
 </head>
 <body>
@@ -1390,10 +1412,12 @@ function vProjects(){
   var h='<div class="master-page-actions"><button class="master-action primary" data-act="go" data-v="home">'+ic('home')+'<span>แดชบอร์ด</span></button><button class="master-action" data-act="newProj">'+ic('build')+'<span>เพิ่มโครงการ</span></button></div>';
   if(!S.projects.length)h+='<div class="empty">ยังไม่มีโครงการ</div>';
   S.projects.forEach(function(p){
-    var s=stats(p.id),x=budgetPct(p);
-    h+='<button class="proj master-project-row" data-act="openProj" data-id="'+p.id+'"><div class="top"><b>'+esc(p.name)+'</b><span class="num '+(x>=1?'out':x>=.85?'muted':'muted')+'">'+Math.round(x*100)+'% ของงบ</span></div>'+
-    '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
-    '<div class="meta"><span>'+esc(p.location||p.client||'ไม่ระบุสถานที่')+(p.endDate?'  ครบสัญญา '+dstr(p.endDate):'')+'</span><span><span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span> กำไร <b class="num '+(s.inB-s.outB>=0?'in':'out')+'">'+fmt(s.inB-s.outB)+'</b></span></div></button>';
+    var st=stats(p.id),x=budgetPct(p),paid=st.recd-st.paidOut,pend=st.recPend-st.payPend,status=({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ';
+    h+='<article class="project-hub-card"><button class="project-hub-main" data-act="openProj" data-id="'+p.id+'"><div class="project-hub-top"><div><b>'+esc(p.name)+'</b><small>'+esc(p.location||p.client||'ไม่ระบุสถานที่')+'</small></div><span class="mini-status">'+esc(status)+'</span></div>'+
+      '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
+      '<div class="project-hub-kpis"><span><small>ใช้งบ</small><b>'+Math.round(x*100)+'%</b></span><span><small>รับแล้ว</small><b class="in">'+fmt(st.recd)+'</b></span><span><small>จ่ายแล้ว</small><b class="out">'+fmt(st.paidOut)+'</b></span><span><small>คงเหลือสุทธิ</small><b class="'+(paid>=0?'in':'out')+'">'+fmt(paid)+'</b></span></div>'+
+      ((st.recPend||st.payPend)?'<div class="project-hub-pending">ค้างรับ '+fmt(st.recPend)+' · ค้างจ่าย '+fmt(st.payPend)+' · สุทธิ '+fmt(pend)+'</div>':'')+
+      '</button><div class="project-hub-actions"><button data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button data-act="exportProjectXlsx" data-id="'+p.id+'">Excel</button><button data-act="exportProjectPdf" data-id="'+p.id+'">PDF</button><button data-act="editProj" data-id="'+p.id+'">แก้ไข</button></div></article>';
   });
   return h;
 }
