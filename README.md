@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v264
+# AREA Ledger V1 — Master v265
 
-AI/OCR Gateway Abstraction, based on GitHub `main` v263
-(`acd975a18987ec9fb335c613805fd4c35a59239f`).
+Gateway Contract / OCR Privacy Guard, based on GitHub `main` v264
+(`1522ea0631e9fe12298035cca51d0a1b7b7b6132`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v265 gateway contract / OCR privacy guard
+
+- Remote OCR now requires explicit `remoteOcrConsent=true`; configuring an endpoint alone cannot transmit document images.
+- Gateway is allowlisted to the expense OCR contract, validates image data URLs, rejects payloads over 4 MiB and validates/sanitizes response fields.
+- Requests omit credentials/referrer, bypass browser cache and use an abort timeout bounded to 3–30 seconds.
+- Remote OCR failure falls back to local Tesseract instead of blocking expense entry.
+- No provider secret is stored in browser state; accounting entries still require user review/save.
 
 ## v264 AI/OCR gateway abstraction
 
@@ -271,8 +279,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v264-ai-gateway-abstraction`.
-Registration: `sw.js?v=264`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v265-gateway-contract-privacy`.
+Registration: `sw.js?v=265`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
