@@ -1641,6 +1641,8 @@ body.force-desktop{min-width:1180px;overflow-x:auto}body.force-desktop main{max-
 body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-project{min-height:150px}.force-mobile .project-finance-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.force-mobile .project-finance-kpis>div{min-height:116px;padding:15px 13px}.force-mobile .project-finance-kpis b{font-size:22px}.force-mobile .mdash-balance-clean{min-height:105px}.force-mobile .mdash-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.force-mobile .dash-charts{display:block!important}.force-mobile .dash-chart-card{margin-top:10px}.mobile-financial-chart{display:none;background:#fff;border-radius:18px;padding:15px;margin:14px 0;box-shadow:0 5px 17px rgba(17,24,39,.05)}.force-mobile .mobile-financial-chart{display:block}.mobile-financial-chart .mfc-head{display:flex;justify-content:space-between;gap:12px;align-items:end;margin-bottom:14px}.mobile-financial-chart .mfc-head b{font-size:17px}.mobile-financial-chart .mfc-head small{color:#7c858d}.mfc-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end;height:150px;border-bottom:1px solid #dfe4e7;padding:0 8px 0}.mfc-col{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;min-width:0}.mfc-col strong{font-size:11px;white-space:nowrap}.mfc-bar{width:min(48px,70%);min-height:3px;border-radius:7px 7px 0 0;background:#77a9e8}.mfc-col:nth-child(2) .mfc-bar{background:#e6a24b}.mfc-col:nth-child(3) .mfc-bar{background:#68bba3}.mfc-col span{font-size:11px;color:#68717a;white-space:nowrap}.mobile-project-profit{display:none}.force-mobile .mobile-project-profit{display:block;background:#fff;border-radius:18px;margin:14px 0;padding:15px;box-shadow:0 5px 17px rgba(17,24,39,.05)}.mobile-project-profit h3{margin:0 0 10px}.mobile-project-profit button{width:100%;border:0;border-top:1px solid #edf0f1;background:transparent;padding:12px 0;text-align:left;display:grid;grid-template-columns:1fr auto;gap:4px 12px}.mobile-project-profit button:first-of-type{border-top:0}.mobile-project-profit small{color:#7c858d}.mobile-project-profit .mp-values{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#68717a}
 
 .cashflow-card{display:block!important}.cashflow-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#69737c;margin:4px 0 8px}.cashflow-legend span{display:flex;align-items:center;gap:5px}.cashflow-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}.cashflow-legend .cin{background:#77a9e8}.cashflow-legend .cout{background:#e6a24b}.cashflow-card .dash-svg{width:100%;height:auto;display:block}.cashflow-card .bar-in{fill:#77a9e8}.cashflow-card .bar-out{fill:#e6a24b}.cashflow-card .axis{stroke:#dfe4e7;stroke-width:1}.cashflow-card text{fill:#7a838b;font-size:9px}.force-mobile .dash-charts{display:block!important}.force-mobile .cashflow-card,.force-mobile .donut-card{margin-top:10px}@media(min-width:900px){.force-desktop .dash-charts{display:grid!important;grid-template-columns:minmax(0,2fr) minmax(300px,1fr)!important;gap:16px!important}.force-desktop .cashflow-card{grid-column:1!important}.force-desktop .donut-card{grid-column:2!important}}
+
+.guarantee-hub{padding-bottom:20px}.guarantee-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.guarantee-summary>div{background:#fff4cf;border-radius:18px;padding:15px;box-shadow:0 5px 17px rgba(17,24,39,.04)}.guarantee-summary>div:nth-child(2){background:#e8f7ed}.guarantee-summary small,.guarantee-summary b,.guarantee-summary span{display:block}.guarantee-summary b{font-size:22px;margin:5px 0}.guarantee-summary span{font-size:11px;color:#737d85}.guarantee-row{width:100%;border:0;border-top:1px solid #edf0f1;background:#fff;padding:14px 2px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px}.guarantee-row:first-of-type{border-top:0}.guarantee-row .gr-main small{display:block;color:#727b83;margin-top:3px}.guarantee-row>strong{font-size:16px}.guarantee-row .gr-meta{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#727b83}.guarantee-row>i{grid-column:1/-1;justify-self:start;font-style:normal;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px}.guarantee-row>i.wait{background:#fff2cd;color:#876500}.guarantee-row>i.ready{background:#e4f6e9;color:#277242}.guarantee-row>i.done{background:#edf0f2;color:#68717a}.guarantee-note{font-size:12px;margin:12px 3px}@media(min-width:900px){.guarantee-summary{grid-template-columns:repeat(2,minmax(0,320px))}.guarantee-row{grid-template-columns:minmax(260px,1fr) 160px 1fr auto;align-items:center}.guarantee-row .gr-meta{grid-column:auto}.guarantee-row>i{grid-column:auto;justify-self:end}}
 </style>
 </head>
 <body>
@@ -2254,6 +2256,15 @@ function vProject(){
   return h;
 }
 
+function vGuarantees(){
+  var rows=S.projects.filter(function(p){return (+p.retAmt||0)>0;}).sort(function(a,b){if(!!a.retRecv!==!!b.retRecv)return a.retRecv?1:-1;return (a.retDue||'9999')<(b.retDue||'9999')?-1:1;});
+  var open=rows.filter(function(p){return !p.retRecv;}),total=open.reduce(function(a,p){return a+(+p.retAmt||0);},0),ready=open.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}).reduce(function(a,p){return a+(+p.retAmt||0);},0);
+  var h='<section class="guarantee-hub"><div class="guarantee-summary"><div><small>เงินประกันที่อยู่ภายนอก</small><b>'+fmt(total)+'</b><span>'+open.length+' โครงการ</span></div><div><small>ครบกำหนดรับคืน</small><b>'+fmt(ready)+'</b><span>ติดตามรับเงินคืนได้</span></div></div><div class="sec"><h2>ข้อมูลงานประกัน</h2>';
+  if(!rows.length)h+='<div class="empty">ยังไม่มีข้อมูลเงินประกันในโครงการ</div>';
+  rows.forEach(function(p){var d=retDays(p),where=p.client||'ยังไม่ระบุหน่วยงาน/เจ้าของงาน',status=p.retRecv?'รับคืนแล้ว':d===null?'รอวันส่งมอบ':d<=0?'ครบกำหนดรับคืนแล้ว':'รอรับคืน';h+='<button class="guarantee-row" data-act="openProj" data-id="'+p.id+'"><div class="gr-main"><b>'+esc(p.name)+'</b><small>อยู่ที่: '+esc(where)+'</small></div><strong>'+fmt(+p.retAmt||0)+'</strong><div class="gr-meta"><span>จ่าย '+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</span><span>รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</span></div><i class="'+(p.retRecv?'done':d!==null&&d<=0?'ready':'wait')+'">'+status+'</i></button>';});
+  return h+'</div><p class="muted guarantee-note">ข้อมูลหน่วยงาน/เจ้าของงานอ้างอิงจากข้อมูลโครงการ และวันรับคืนอ้างอิงกำหนดเงินประกันของแต่ละโครงการ</p></section>';
+}
+
 function vDue(){
   function block(type,title){
     var list=pending(type).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:1;});
@@ -2762,6 +2773,7 @@ function appMenuHtml(){
     ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
     ['projects','build','โครงการ','จัดการงานและส่งออกรายงาน'],
     ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'ติดตามกำหนดชำระ'],
+    ['guarantees','clock','งานประกัน','ติดตามเงินประกัน อยู่ที่ไหน / เท่าไร / ได้เมื่อไร'],
     ['report','list','รายงาน','สรุปบัญชีและภาษี'],
     ['procurement','build','งานพัสดุ','ขออนุมัติใช้วัสดุ / หนังสือราชการ'],
     ['docs','build','เอกสารธุรกิจ','ใบเสนอราคา / ใบวางบิล / ใบเสร็จ']
@@ -2779,6 +2791,7 @@ function render(){
   else if(v==='projects'){title='โครงการ';body=vProjects();}
   else if(v==='project'){var p=proj(U.pid);title=p?p.name:'โครงการ';body=vProject();back=true;}
   else if(v==='due'){title='ค้างรับและค้างจ่าย';body=vDue();}
+  else if(v==='guarantees'){title='งานประกัน';body=vGuarantees();back=true;}
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
   else if(v==='docs'){title='เอกสารธุรกิจ';body=vDocs();back=true;}
