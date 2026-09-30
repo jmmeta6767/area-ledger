@@ -2391,7 +2391,8 @@ function vDocs(){
       '<button data-act="docSection" data-kind="quote"><span class="doc-type-icon">QT</span><b>ใบเสนอราคา</b><small>'+counts.quote+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">BL</span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">RC</span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small><strong>›</strong></button>'+
-    '</div>';
+    '</div>'+
+    '<div class="sec" style="margin-top:18px"><div class="sec-title"><b>งานพัสดุ</b><small>กำลังเตรียมระบบเอกสารโครงการแยกจากเอกสารธุรกิจ</small></div><div class="empty" style="margin:0">พื้นที่งานพัสดุจะเปิดใช้งานเป็นโมดูลแยก เพื่อไม่ให้รายการปะปนกัน</div></div>';
 }
 function vDocList(){
   var kind=U.docListKind||'quote',projectFilter=U.docProjectPid||'',projectName=projectFilter?pname(projectFilter):'',list=docKindList(kind).filter(function(q){return !projectFilter||q.pid===projectFilter||q.project===projectName;}).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),label=docKindLabel(kind),act=kind==='bill'?'newBill':kind==='receipt'?'newReceipt':'newQuote';
