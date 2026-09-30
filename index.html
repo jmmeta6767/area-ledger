@@ -2910,7 +2910,7 @@ function render(){
 function directAction(el){
   if(!el)return false;
   var a=el.getAttribute('data-act'),v=el.getAttribute('data-v'),id=el.getAttribute('data-id');
-  if(a==='go'||a==='openList'||a==='menuGo'){U.appMenu=false;if(a==='openList'){navList();return true;}go(v||'home');return true;} if(a==='navBack'){navBack();return true;} if(a==='navHome'){navHome();return true;}
+  if(a==='go'||a==='openList'||a==='menuGo'){U.appMenu=false;if(a==='openList'){navList();return true;}if((v||'home')==='home'){navHome();return true;}go(v||'home');return true;} if(a==='navBack'){navBack();return true;} if(a==='navHome'){navHome();return true;}
   if(a==='appMenu'){U.appMenu=true;render();return true;}
   if(a==='appMenuClose'){U.appMenu=false;render();return true;}
   if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();return true;}
@@ -2963,7 +2963,7 @@ document.addEventListener('click',function(e){
   if(a==='docSection'){U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='projectDocList'){U.docProjectPid=id||'';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='openList'){U.sheet=null;U.appMenu=false;U.filter=U.filter||{type:'all',pid:'',cat:'',status:'all',sub:''};go('list');return;}
-  if(a==='go'){go(v);return;}
+  if(a==='go'){if(v==='home')navHome();else go(v);return;}
   else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
   else if(a==='back'&&U.view==='quoteprint'){U.docListKind=U.docKind||'quote';go('doclist');}
   else if(a==='back'&&U.view==='doclist'){if(U.docProjectPid){var dp=U.docProjectPid;U.docProjectPid='';go('project',{pid:dp});}else go('docs');}
