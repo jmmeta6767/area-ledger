@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v266
+# AREA Ledger V1 — Master v267
 
-Worker Contract / Server Boundary, based on GitHub `main` v265
-(`50a64091a21518e1783f1d343888b7c2d51101d3`).
+Gateway Protocol / Idempotency Boundary, based on GitHub `main` v266
+(`9bb62741f37a9adaee481ef0ecb5efe34fe4aa6c`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v267 gateway protocol / idempotency boundary
+
+- Added protocol version negotiation and request IDs end-to-end between the PWA gateway client and edge worker.
+- OCR requests require protocol v1; responses expose protocol/request IDs for support and audit correlation without sending accounting records.
+- Added a bounded in-memory one-minute idempotency cache keyed by exact origin + request ID to avoid duplicate upstream OCR calls during short retries.
+- Added a provider adapter boundary (`OCR_PROVIDER=generic`) so future Gemini/OpenAI adapters can be added server-side without changing accounting core.
+- Health now reports protocol and whether provider configuration exists, but never returns provider secrets.
 
 ## v266 Worker contract / server boundary
 
@@ -287,8 +295,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v266-worker-contract`.
-Registration: `sw.js?v=266`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v267-gateway-protocol`.
+Registration: `sw.js?v=267`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.

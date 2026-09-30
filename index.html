@@ -2870,7 +2870,7 @@ async function aiGatewayRequest(path,payload){
   var clean=aiGatewayValidatePayload(path,payload),ctrl=typeof AbortController!=='undefined'?new AbortController():null,timer=null;
   try{
     if(ctrl)timer=setTimeout(function(){ctrl.abort();},cfg.timeoutMs);
-    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined,body:JSON.stringify(clean)});
+    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':('ocr-'+Date.now()+'-'+Math.random().toString(36).slice(2,10))},credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined,body:JSON.stringify(clean)});
     if(!res.ok)throw new Error('AI gateway HTTP '+res.status);
     return aiGatewayValidateExpense(await res.json());
   }finally{if(timer)clearTimeout(timer);}
@@ -4186,7 +4186,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=266',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=267',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
