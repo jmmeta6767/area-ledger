@@ -1,0 +1,9 @@
+# AREA Ledger browser asset allow-surface: exclude non-runtime repository content
+.github/
+gateway/
+tests/
+.gitignore
+README.md
+QA-*.md
+area-ledger-package.zip
+.assetsignore

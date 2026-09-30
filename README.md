@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v278
+# AREA Ledger V1 — Master v279
 
-Gateway Control Center, based on GitHub `main` v277
-(`bc607da82e498fb5a312b3c7efb01b7f561be8c1`).
+Unified Cloudflare App + API Staging, based on GitHub `main` v278
+(`e80bc6c5cfe08de52981346fcf339a65e0d5cc90`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v279 unified Cloudflare app + API staging
+
+- Added Workers Static Assets to the existing staging Worker so the same `workers.dev` host serves the full AREA Ledger PWA at `/` while `/health`, `/ready` and `/v1/*` execute the API Worker first.
+- Added SPA fallback so navigation routes resolve to `index.html` while API routes remain isolated.
+- Added `.assetsignore` protection so GitHub workflows, tests, gateway source, QA docs, README and legacy ZIP are not published as browser assets.
+- Added `/ready`: returns HTTP 200 only when provider, Durable Object and at least one exact allowed origin are configured; otherwise 503 with non-secret readiness metadata.
+- Fixed Node QA browser emulation to expose the standard `URL` API used by the hardened v278 endpoint parser.
 
 ## v278 Gateway Control Center
 
