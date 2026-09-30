@@ -1790,6 +1790,12 @@ textarea{resize:vertical}
 }
 :root[data-view-mode="desktop"] #app{max-width:1180px!important}
 :root[data-view-mode="desktop"] main{max-width:1180px!important}
+/* UX QA hardening */
+#app{min-height:100dvh}
+.master-scrim,.app-drawer-wrap{min-height:100dvh}
+@supports not (height:100dvh){#app,.master-scrim,.app-drawer-wrap{min-height:100vh}}
+:root[data-view-mode="mobile"] #app{max-width:560px!important}
+:root[data-view-mode="mobile"] main{max-width:560px!important}
 </style>
 </head>
 <body>
@@ -3008,6 +3014,7 @@ function appMenuHtml(){
 }
 
 function render(){
+  var mode=(S.ui&&S.ui.viewMode==='desktop')?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',mode);
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
   var validViews={home:1,list:1,add:1,projects:1,project:1,due:1,guarantees:1,report:1,print:1,docs:1,procurement:1,doclist:1,quoteprint:1};
@@ -3237,7 +3244,7 @@ document.addEventListener('click',function(e){
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
-  else if(a==='viewMode'){S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';persist();render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
+  else if(a==='viewMode'){S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);persist();render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';persist();render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
   else if(a==='quoteAddItem'){U.quoteItemCount=Math.min(8,(U.quoteItemCount||1)+1);render();}
