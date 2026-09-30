@@ -2590,21 +2590,27 @@ function thaiGovBoqDeclaredTotal(text){
 function boqOcrReconcile(rows,declared){
   var calc=(rows||[]).reduce(function(a,x){return a+boqAmount(x);},0),diff=declared?Math.abs(calc-declared):0,tol=declared?Math.max(5,declared*.005):0;return {declared:+declared||0,calculated:calc,diff:diff,tolerance:tol,ok:!!declared&&diff<=tol};
 }
+function thaiGovUnit(line){var m=String(line||'').match(/(?:^|\s)(ตร\.ม\.|ตรม\.?|ม\.2|ม2|ลบ\.ม\.|ลบม\.?|ม\.3|ม3|ม\.|เมตร|กก\.|กิโลกรัม|ตัน|ชุด|อัน|ตัว|แผ่น|เส้น|ท่อน|ถุง|ลูก|เที่ยว|งาน)(?:\s|$)/i);return m?m[1]:'';}
+function thaiGovNoise(line){return /(?:ดอกเบี้ย|เงินกู้|factor\s*f|ภาษี|vat|รวม|หมายเหตุ|ประมาณราคา|แบบ\s*ปร\.|ราคากลาง|ค่าใช้จ่ายพิเศษ|สรุป|ผู้ประมาณ|คณะกรรมการ|รายการ|จำนวนเงิน|ราคาต่อหน่วย)/i.test(line);}
 function thaiGovBoqRows(text){
-  var ls=String(text||'').split(/\n+/).map(function(x){return x.replace(/\s+/g,' ').trim();}).filter(Boolean),out=[];
+  var ls=String(text||'').split(/\n+/).map(function(x){return x.replace(/\s+/g,' ').trim();}).filter(Boolean),out=[],rejected=0;
   ls.forEach(function(line){
-    if(/รวม|หมายเหตุ|รายการ|ราคาต่อหน่วย|จำนวนเงิน|ประมาณราคา|แบบ ปร\./i.test(line))return;
-    var nums=(line.match(/\d[\d,]*(?:\.\d+)?/g)||[]).map(thaiBoqNum).filter(function(n){return isFinite(n);});
-    var name=line.replace(/\d[\d,]*(?:\.\d+)?/g,' ').replace(/\s+/g,' ').trim();
-    if(name.length<3||nums.length<2)return;
-    var qty=nums[0]>0?nums[0]:1,mat=nums.length>=4?nums[1]:0,labor=nums.length>=5?nums[3]:0;
-    if(mat>0)out.push({name:name+' — ค่าวัสดุ',category:'ค่าของ',qty:qty,unit:'',unitPrice:mat,note:'OCR แบบ ปร.4 · กรุณาตรวจสอบ'});
-    if(labor>0)out.push({name:name+' — ค่าแรง',category:'ค่าแรง',qty:qty,unit:'',unitPrice:labor,note:'OCR แบบ ปร.4 · กรุณาตรวจสอบ'});
+    if(thaiGovNoise(line)){rejected++;return;}
+    var unit=thaiGovUnit(line),rawNums=(line.match(/\d[\d,]*(?:\.\d+)?/g)||[]),nums=rawNums.map(thaiBoqNum).filter(function(n){return isFinite(n)&&n>=0;});
+    var name=line.replace(/\d[\d,]*(?:\.\d+)?/g,' ').replace(new RegExp(unit.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&'),'ig'),' ').replace(/[|#_=°]+/g,' ').replace(/\s+/g,' ').trim();
+    if(!unit||name.length<3||nums.length<3){rejected++;return;}
+    var qty=nums[0];if(!(qty>0)||qty>1000000){rejected++;return;}
+    var pairs=[];
+    for(var i=1;i<nums.length-1;i++){var price=nums[i],amt=nums[i+1];if(price>0&&amt>0){var err=Math.abs(qty*price-amt)/Math.max(1,amt);if(err<=.03)pairs.push({price:price,amount:amt,error:err});}}
+    if(!pairs.length){rejected++;return;}
+    var mat=pairs[0],labor=pairs.length>1?pairs[1]:null;
+    if(mat)out.push({name:name+' — ค่าวัสดุ',category:'ค่าของ',qty:qty,unit:unit,unitPrice:mat.price,note:'OCR ปร.4 · สมการผ่าน · ตรวจสอบก่อนนำเข้า',ocrConfidence:Math.max(0,1-mat.error)});
+    if(labor)out.push({name:name+' — ค่าแรง',category:'ค่าแรง',qty:qty,unit:unit,unitPrice:labor.price,note:'OCR ปร.4 · สมการผ่าน · ตรวจสอบก่อนนำเข้า',ocrConfidence:Math.max(0,1-labor.error)});
   });
-  return out;
+  out.rejected=rejected;return out;
 }
 function boqImportScannedPdf(file,pid,optInfo){
-  loadPdfJs(function(pok){if(!pok){toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');U.boqImportBusy=false;return;}loadTesseract(function(tok){if(!tok){toast('โหลด OCR ไทยไม่สำเร็จ');U.boqImportBusy=false;return;}var rd=new FileReader();rd.onload=function(){pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise.then(async function(pdf){var all='',pages=Math.min(pdf.numPages,30);for(var p=1;p<=pages;p++){boqImportSetStatus('OCR แบบ ปร.4 หน้า '+p+'/'+pages+'…');var pg=await pdf.getPage(p),vp=pg.getViewport({scale:1.35}),cv=document.createElement('canvas'),cx=cv.getContext('2d',{alpha:false});cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);await pg.render({canvasContext:cx,viewport:vp}).promise;var r=await Tesseract.recognize(cv,'tha+eng',{logger:function(m){if(m.status==='recognizing text')boqImportSetStatus('OCR หน้า '+p+'/'+pages+' · '+Math.round((m.progress||0)*100)+'%');}});all+='\n'+(r.data&&r.data.text||'');cv.width=cv.height=1;}var rows=thaiGovBoqRows(all),declared=thaiGovBoqDeclaredTotal(all),rec=boqOcrReconcile(rows,declared);U.boqImportBusy=false;if(!rows.length){boqImportSetStatus('OCR เสร็จ แต่ยังจับรายการ ปร.4 ไม่ได้');toast('อ่านภาพได้ แต่ยังจับตาราง ปร.4 ไม่สำเร็จ');return;}boqImportSetStatus('OCR เสร็จ · พบ '+rows.length+' รายการ ให้ตรวจ Preview');boqImportPreview(pid,rows,file.name,Object.assign({},optInfo||{},{ocr:true,ocrMode:'ปร.4 ไทย',pages:pages,reconcile:rec}));}).catch(function(e){console.error('OCR PDF',e);U.boqImportBusy=false;toast('OCR PDF ไม่สำเร็จ');});};rd.readAsArrayBuffer(file);});});
+  loadPdfJs(function(pok){if(!pok){toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');U.boqImportBusy=false;return;}loadTesseract(function(tok){if(!tok){toast('โหลด OCR ไทยไม่สำเร็จ');U.boqImportBusy=false;return;}var rd=new FileReader();rd.onload=function(){pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise.then(async function(pdf){var all='',pages=Math.min(pdf.numPages,30);for(var p=1;p<=pages;p++){boqImportSetStatus('OCR แบบ ปร.4 หน้า '+p+'/'+pages+'…');var pg=await pdf.getPage(p),vp=pg.getViewport({scale:1.35}),cv=document.createElement('canvas'),cx=cv.getContext('2d',{alpha:false});cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);await pg.render({canvasContext:cx,viewport:vp}).promise;var r=await Tesseract.recognize(cv,'tha+eng',{logger:function(m){if(m.status==='recognizing text')boqImportSetStatus('OCR หน้า '+p+'/'+pages+' · '+Math.round((m.progress||0)*100)+'%');}});all+='\n'+(r.data&&r.data.text||'');cv.width=cv.height=1;}var rows=thaiGovBoqRows(all),rejected=rows.rejected||0,declared=thaiGovBoqDeclaredTotal(all),rec=boqOcrReconcile(rows,declared);U.boqImportBusy=false;if(!rows.length){boqImportSetStatus('OCR เสร็จ แต่ยังจับรายการ ปร.4 ไม่ได้');toast('อ่านภาพได้ แต่ยังจับตาราง ปร.4 ไม่สำเร็จ');return;}boqImportSetStatus('OCR เสร็จ · ผ่าน validation '+rows.length+' รายการ'+(rejected?' · ตัด/พัก '+rejected+' บรรทัด':'')+' · ให้ตรวจ Preview');boqImportPreview(pid,rows,file.name,Object.assign({},optInfo||{},{ocr:true,ocrMode:'ปร.4 ไทย · validated rows',pages:pages,reconcile:rec,rejected:rejected}));}).catch(function(e){console.error('OCR PDF',e);U.boqImportBusy=false;toast('OCR PDF ไม่สำเร็จ');});};rd.readAsArrayBuffer(file);});});
 }
 function loadPdfLib(done){if(window.PDFLib){done(true);return;}var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';sc.onload=function(){done(!!window.PDFLib);};sc.onerror=function(){done(false);};document.head.appendChild(sc);}
 function fileMB(n){return ((+n||0)/1048576).toFixed(1)+' MB';}
