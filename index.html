@@ -2227,14 +2227,14 @@ function vProjects(){
 
 function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
-  var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB;
+  var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB,actualCost=s.outB,forecastProfit=(+p.contract||0)-actualCost;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div>';
   h+=contractBlock(p);
   h+='<div class="sec master-detail-card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span>ใช้งบไปแล้ว</span><b class="num">'+Math.round(x*100)+'%</b></div><div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
-    '<div class="muted" style="font-size:.9rem">'+fmt(s.outB)+' จากงบ '+fmt(p.budget)+(left>=0?' เหลือ <b class="num">'+fmt(left)+'</b>':' เกินงบ <b class="num out">'+fmt(-left)+'</b>')+'</div></div>';
+    '<div class="muted" style="font-size:.9rem">ต้นทุนจริง '+fmt(actualCost)+' · งบประมาณ '+fmt(p.budget)+(left>=0?' · งบคงเหลือ <b class="num">'+fmt(left)+'</b>':' · เกินงบ <b class="num out">'+fmt(-left)+'</b>')+'</div></div>';
   h+='<div class="grid4 master-detail-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(p.contract)+'</b></div><div><small>รับเงินแล้ว</small><b class="in">'+fmt(s.recd)+'</b></div>'+
     '<div><small>ค้างรับ</small><b>'+fmt(s.recPend)+'</b></div><div><small>ค้างจ่าย</small><b class="out">'+fmt(s.payPend)+'</b></div>'+
-    '<div><small>กำไรคาดการณ์ (มูลค่างาน − ต้นทุน)</small><b>'+fmt(p.contract-p.budget)+'</b></div><div><small>'+(s.recd>0?(s.recd-s.paidOut>=0?'กำไรสุทธิ':'ขาดทุนสุทธิ'):'กำไร/ขาดทุนสุทธิ')+'</small>'+(s.recd>0?'<b class="'+(s.recd-s.paidOut>=0?'in':'out')+'">'+fmt(s.recd-s.paidOut)+'</b>':'<b>รอรับรายได้</b>')+'</div></div>';
+    '<div><small>กำไรคาดการณ์ (มูลค่างาน − ต้นทุน)</small><b class="'+(forecastProfit>=0?'in':'out')+'">'+fmt(forecastProfit)+'</b></div><div><small>'+(s.recd>0?(s.recd-s.paidOut>=0?'กำไรสุทธิ':'ขาดทุนสุทธิ'):'กำไร/ขาดทุนสุทธิ')+'</small>'+(s.recd>0?'<b class="'+(s.recd-s.paidOut>=0?'in':'out')+'">'+fmt(s.recd-s.paidOut)+'</b>':'<b>รอรับรายได้</b>')+'</div></div>';
   h+='<div class="sec master-detail-card"><h2>เงินประกันสัญญา / เงินประกันผลงาน</h2>'+(p.retAmt?'<div class="ret-flow"><div class="done"><i>1</i><span>จ่ายเงินประกัน<small>'+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</small></span></div><div class="'+(p.deliveryDate?'done':'')+'"><i>2</i><span>ส่งมอบงาน<small>'+(p.deliveryDate?dstr(p.deliveryDate):'รอดำเนินการ')+'</small></span></div><div class="'+(p.retRecv?'done':(p.retDue&&retDays(p)<=0?'ready':''))+'"><i>3</i><span>รับเงินคืน<small>'+(p.retRecv?(p.retRecvDate?dstr(p.retRecvDate):'ได้รับคืนแล้ว'):(p.retDue?'ครบกำหนด '+dstr(p.retDue):'ส่งมอบ + 2 ปี'))+'</small></span></div></div>':'');
   if(p.retAmt>0){
     h+='<div class="kv"><span>จำนวนที่จ่ายออกแล้ว</span><span class="num">'+fmt(p.retAmt)+(p.contract>0?' ('+(Math.round(p.retAmt/p.contract*1000)/10)+'% ของสัญญา)':'')+'</span></div>'+
