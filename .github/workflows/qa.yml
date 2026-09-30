@@ -1,18 +1,32 @@
-name: AREA Ledger QA
+name: AREA Ledger Release QA
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 permissions:
   contents: read
+
+concurrency:
+  group: area-ledger-qa-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  qa:
+  regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node tests/qa.cjs
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Service worker syntax
+        run: node --check sw.js
+      - name: Regression QA
+        run: node tests/qa.cjs

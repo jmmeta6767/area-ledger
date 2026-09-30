@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v260
+# AREA Ledger V1 — Master v261
 
-Production Accounting Gate, based on GitHub `main` v243
-(`3050c49d9f773047835ce34e1ab3c8096995f662`).
+CI Release Gate, based on GitHub `main` v260
+(`c27f9801d30fa8f7d9f932170cc0b97cb1441d17`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,12 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v261 CI / host-neutral release gate
+
+- Added GitHub Actions release QA for every push/PR to `main`: Node syntax checks for the service worker plus the full `tests/qa.cjs` regression suite.
+- Release QA is hosting-neutral: no Render-specific runtime URL is required, preserving a safe future path to Cloudflare Pages/Workers.
+- Storage identifiers and IndexedDB schema remain unchanged; this release adds no destructive migration.
 
 ## v260 production accounting gate
 
@@ -243,8 +249,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v260-production-accounting-gate`.
-Registration: `sw.js?v=260`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v261-ci-release-gate`.
+Registration: `sw.js?v=261`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
