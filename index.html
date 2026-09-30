@@ -1957,6 +1957,8 @@ function migrate(o){
   o.ui.dashboardPids=o.ui.dashboardPids.filter(function(id){return (o.projects||[]).some(function(p){return p.id===id;});});
   if(!o.business)o.business={legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
   if(!o.ai||typeof o.ai!=='object'||Array.isArray(o.ai))o.ai={mode:'local',endpoint:'',remoteOcrConsent:false,timeoutMs:15000};if(o.ai.mode!=='gateway')o.ai.mode='local';if(typeof o.ai.endpoint!=='string')o.ai.endpoint='';if(o.ai.remoteOcrConsent!==true)o.ai.remoteOcrConsent=false;if(!isFinite(+o.ai.timeoutMs))o.ai.timeoutMs=15000;
+  if(!Number.isInteger(+o.dataRevision)||+o.dataRevision<0)o.dataRevision=0;else o.dataRevision=+o.dataRevision;
+  if(!Number.isInteger(+o.lastBackupRevision)||+o.lastBackupRevision<0)o.lastBackupRevision=-1;else o.lastBackupRevision=+o.lastBackupRevision;
   if(o.business.legalNameEn===undefined)o.business.legalNameEn='';
   if(o.business.addressEn===undefined)o.business.addressEn='';
   if(!Array.isArray(o.materialApprovals))o.materialApprovals=[];
@@ -2058,7 +2060,7 @@ function defaultChartAccounts(){return[
 ];}
 
 
-function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,timeoutMs:15000},updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,timeoutMs:15000},dataRevision:0,lastBackupRevision:-1,updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function idbOpen(){return new Promise(function(res,rej){var settled=false,timer=setTimeout(function(){settled=true;U.storageReadBlocked=true;rej(new Error('IndexedDB timeout'));},1500);function fail(e){clearTimeout(timer);settled=true;U.storageReadBlocked=true;rej(e);}try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv');};r.onsuccess=function(){clearTimeout(timer);if(settled){r.result.close();return;}settled=true;res(r.result);};r.onerror=function(){fail(r.error);};r.onblocked=function(){fail(new Error('IndexedDB blocked'));};}catch(e){fail(e);}});}
@@ -2269,7 +2271,7 @@ var mirrorQueue=Promise.resolve(),committedState='';
 function persist(opts){
   opts=opts||{};
   if(U.storageReadBlocked&&!committedState){toast('ยังอ่านข้อมูลเดิมไม่สำเร็จ กรุณาปิดแท็บอื่นแล้วเปิดใหม่ก่อนบันทึก');return false;}
-  var prev='',json='',stamp=S.updatedAt,current='';
+  var prev='',json='',stamp=S.updatedAt,revStamp=+S.dataRevision||0,current='';
   try{
     current=localStorage.getItem(KEY)||'';
     if(!opts.recovery&&committedState&&current!==committedState){
@@ -2278,12 +2280,13 @@ function persist(opts){
       return false;
     }
     prev=current||committedState;
+    if(!opts.metaOnly)S.dataRevision=revStamp+1;
     S.updatedAt=Math.max(Date.now(),(+S.updatedAt||0)+1);
     json=JSON.stringify(S);
     localStorage.setItem(KEY,json);
     if(localStorage.getItem(KEY)!==json)throw new Error('Storage verification failed');
   }catch(e){
-    S.updatedAt=stamp;
+    S.updatedAt=stamp;S.dataRevision=revStamp;
     if(prev){try{S=JSON.parse(prev);}catch(ignore){}}
     toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่ กรุณาลองอีกครั้ง');
     return false; /* Never mirror a rejected write into IndexedDB. */
@@ -3215,13 +3218,24 @@ function saveFile(name,blob){
   }catch(e){}
   return dl();
 }
+function backupEnvelope(){
+  return {backupFormat:1,exportedAt:new Date().toISOString(),sourceOrigin:String(location.origin||''),dataRevision:+S.dataRevision||0,state:S};
+}
+function backupJson(){return JSON.stringify(backupEnvelope(),null,2);}
+function hostMigrationReadiness(){
+  var h=stateHealth(S),rev=Math.max(0,+S.dataRevision||0),backupRev=Number.isInteger(+S.lastBackupRevision)?+S.lastBackupRevision:-1;
+  var hasData=!!((S.projects||[]).length||(S.tx||[]).length||(S.boq||[]).length||(S.quotes||[]).length||(S.bills||[]).length||(S.receipts||[]).length);
+  var backupFresh=!hasData||((+S.lastBackup||0)>0&&backupRev===rev);
+  var storageOk=!U.storageReadBlocked&&!U.storageConflict&&!U.storageMirrorBad;
+  return {ok:h.ok&&backupFresh&&storageOk,health:h,hasData:hasData,backupFresh:backupFresh,storageOk:storageOk,revision:rev,backupRevision:backupRev,lastBackup:+S.lastBackup||0};
+}
 function restoreParse(text){
   var o=null;try{o=typeof text==='string'?JSON.parse(text.trim()):text;}catch(_){return {ok:false,error:'JSON_INVALID'};}
-  if(o&&o.backupFormat===1&&o.state)o=o.state;
+  var meta={};if(o&&o.backupFormat===1&&o.state){meta={sourceOrigin:String(o.sourceOrigin||''),exportedAt:String(o.exportedAt||''),dataRevision:+o.dataRevision||0};o=o.state;}
   if(!o||typeof o!=='object'||!Array.isArray(o.projects)||!Array.isArray(o.tx))return {ok:false,error:'BACKUP_SHAPE'};
   try{
     var state=migrate(o);
-    return {ok:true,state:state,summary:{projects:state.projects.length,tx:state.tx.length,boq:(state.boq||[]).length,quotes:(state.quotes||[]).length,bills:(state.bills||[]).length,receipts:(state.receipts||[]).length}};
+    return {ok:true,state:state,meta:meta,summary:{projects:state.projects.length,tx:state.tx.length,boq:(state.boq||[]).length,quotes:(state.quotes||[]).length,bills:(state.bills||[]).length,receipts:(state.receipts||[]).length}};
   }catch(_){return {ok:false,error:'BACKUP_MIGRATION'};}
 }
 function scopeTx(){var pid=U.exportPid||'';return S.tx.filter(function(t){return !pid||t.pid===pid;}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
@@ -3615,6 +3629,8 @@ function sheetHtml(){
      '<div class="field"><label for="bbranch">สำนักงาน</label><select id="bbranch"><option '+(((S.business&&S.business.branch)||'สำนักงานใหญ่')==='สำนักงานใหญ่'?'selected':'')+'>สำนักงานใหญ่</option><option '+((S.business&&S.business.branch)==='สาขา'?'selected':'')+'>สาขา</option></select></div>'+
      '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
      '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+'<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div><small class="muted" style="display:block;margin-top:7px">พื้นหลังสไตล์สำนักงาน/งานก่อสร้างแบบจาง เพื่อไม่รบกวนการอ่านบัญชี</small></div>'+
+     '<div class="field"><span class="lbl" style="font-size:1.05rem;font-weight:800">Host Migration Safety</span></div>'+
+     (function(){var mr=hostMigrationReadiness();return '<div class="card"><div class="kv"><span>Data Health</span><span class="'+(mr.health.ok?'in':'out')+'">'+(mr.health.ok?'ผ่าน':'พบ '+mr.health.totalIssues+' จุด')+'</span></div><div class="kv"><span>Storage</span><span class="'+(mr.storageOk?'in':'out')+'">'+(mr.storageOk?'ปกติ':'ต้องตรวจ')+'</span></div><div class="kv"><span>Backup revision</span><span class="'+(mr.backupFresh?'in':'out')+'">'+(mr.backupFresh?(mr.hasData?'ล่าสุด r'+mr.revision:'ยังไม่มีข้อมูล'):'เก่า/ยังไม่มี · current r'+mr.revision)+'</span></div><div class="kv"><span>สถานะย้าย Host</span><span class="'+(mr.ok?'in':'out')+'"><b>'+(mr.ok?'พร้อมย้าย':'ยังไม่พร้อม')+'</b></span></div></div><div class="stack"><button class="btn '+(mr.ok?'pri':'')+'" data-act="migrationCheck">ตรวจความพร้อมย้าย Host</button></div>';})()+
      '<div class="field"><span class="lbl" style="font-size:1.05rem;font-weight:800">AI / OCR Gateway</span><small class="muted">โหมด Local เป็นค่าเริ่มต้น · Remote OCR จะไม่ส่งรูปออกจากเครื่องจนกว่าจะเปิดความยินยอม</small></div>'+
      '<div class="field"><span class="lbl">โหมด OCR</span><div class="seg"><button class="'+(aiGatewayConfig().mode==='local'?'on':'')+'" data-act="aiMode" data-v="local">Local</button><button class="'+(aiGatewayConfig().mode==='gateway'?'on':'')+'" data-act="aiMode" data-v="gateway">Cloudflare</button></div></div>'+
      '<div class="field"><label for="aiEndpoint">Gateway endpoint</label><input id="aiEndpoint" type="text" inputmode="url" autocapitalize="none" autocomplete="off" value="'+esc(aiGatewayConfig().endpoint)+'" placeholder="https://...workers.dev"><small class="muted" style="display:block;margin-top:7px">API key ไม่ถูกเก็บในแอปหรือเบราว์เซอร์</small></div>'+
@@ -3680,7 +3696,7 @@ function sheetHtml(){
   }else if(sh.kind==='resetConfirm'){
     b='<h3 style="color:var(--out)">ยืนยันรีเซ็ตข้อมูล?</h3><p class="muted" style="margin:8px 0 4px">การรีเซ็ตจะลบโครงการและรายการบัญชีทั้งหมดในเครื่องนี้ และไม่สามารถย้อนกลับได้หากยังไม่ได้สำรองข้อมูล</p><div class="stack"><button class="btn dng sure" data-act="resetDo">ยืนยันรีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='backup'){
-    b='<h3>สำรองข้อมูล / ย้ายเครื่องหรือย้ายเว็บ</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">ก่อนเปลี่ยนโดเมนหรือเครื่อง ให้บันทึกไฟล์ .json จากเว็บเดิม แล้วเปิดเว็บใหม่และเลือก "กู้คืนจากไฟล์ .json" · ต้นทาง '+esc(location.origin)+'</p><textarea class="csv" id="bkbox" readonly>'+esc(JSON.stringify(S))+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์ย้ายข้อมูล .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
+    b='<h3>สำรองข้อมูล / ย้ายเครื่องหรือย้ายเว็บ</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">ก่อนเปลี่ยนโดเมนหรือเครื่อง ให้บันทึกไฟล์ .json จากเว็บเดิม แล้วเปิดเว็บใหม่และเลือก "กู้คืนจากไฟล์ .json" · ต้นทาง '+esc(location.origin)+'</p><textarea class="csv" id="bkbox" readonly>'+esc(backupJson())+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์ย้ายข้อมูล .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='restore'){
     b='<h3>กู้คืน / ย้ายข้อมูลเข้าเว็บนี้</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">เลือกไฟล์ AREA-Ledger-backup-*.json จาก Files/iCloud หรือวาง JSON ทั้งก้อน · ปลายทาง '+esc(location.origin)+'</p><label class="btn pri" for="restoreFile">เลือกไฟล์สำรอง .json</label><input id="restoreFile" type="file" accept=".json,application/json"><div class="muted" style="margin-top:8px">'+esc(U.restoreInfo||'ยังไม่ได้เลือกไฟล์')+'</div><textarea class="csv" id="rsbox" placeholder="หรือวางข้อมูลสำรองที่นี่">'+esc(U.rsText||'')+'</textarea><div class="stack"><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'ตรวจและกู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='csv'){
@@ -3963,14 +3979,14 @@ document.addEventListener('click',function(e){
   }
   else if(a==='install'){U.sheet={kind:'install'};render();}
   else if(a==='backup'){U.sheet={kind:'backup'};render();}
-  else if(a==='backupFile'){var payload=JSON.stringify(S,null,2),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'})).then(function(ok){if(!ok)return;S.lastBackup=Date.now();if(!persist())return;toast('สำรองข้อมูลแล้ว · พร้อมย้าย host/เครื่อง');});}
+  else if(a==='backupFile'){var backupRev=+S.dataRevision||0,payload=backupJson(),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'})).then(function(ok){if(!ok)return;S.lastBackup=Date.now();S.lastBackupRevision=backupRev;if(!persist({metaOnly:true}))return;render();toast('สำรอง revision '+backupRev+' แล้ว · พร้อมตรวจย้าย host');});}
   else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.restoreInfo='';U.confirm=null;render();}
-  else if(a==='copyBk'){doCopy('bkbox',function(){S.lastBackup=Date.now();if(!persist())return;toast('คัดลอกข้อมูลสำรองแล้ว');});}
+  else if(a==='copyBk'){var copyRev=+S.dataRevision||0;doCopy('bkbox',function(){S.lastBackup=Date.now();S.lastBackupRevision=copyRev;if(!persist({metaOnly:true}))return;render();toast('คัดลอกข้อมูลสำรอง revision '+copyRev+' แล้ว');});}
   else if(a==='doRestore'){
     var parsed=restoreParse(U.rsText||'');
     if(!parsed.ok){toast('ไฟล์/ข้อมูลสำรองไม่ถูกต้อง · ยังไม่ได้เปลี่ยนข้อมูล');return;}
     if((S.projects.length||S.tx.length)&&U.confirm!=='restore'){U.confirm='restore';U.restoreInfo='พร้อมแทนที่ · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ · '+parsed.summary.boq+' BOQ';render();return;}
-    var restoreSnap=S;S=parsed.state;if(!persist()){S=restoreSnap;return;}U.rsText='';U.restoreInfo='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ');
+    var restoreSnap=S;S=parsed.state;if(!persist()){S=restoreSnap;return;}S.lastBackup=Date.now();S.lastBackupRevision=+S.dataRevision||0;if(!persist({metaOnly:true})){S=restoreSnap;return;}U.rsText='';U.restoreInfo='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ');
   }
   else if(a==='boqImportPick'){U.sheet={kind:'boqImportFile',pid:id};render();}
   else if(a==='boqImportConfirm'){var im0=U.boqImport,selPid=((document.getElementById('boqImportPid')||{}).value||'');if(!im0||!im0.rows.length){toast('ไม่พบข้อมูลนำเข้า');return;}if(!selPid||!proj(selPid)){toast('กรุณาเลือกโครงการปลายทาง');return;}if(im0.pid!==selPid){im0.pid=selPid;im0.batch='';U.confirm=null;}if(!proj(im0.pid)){toast('ไม่พบโครงการปลายทาง');return;}if(im0.pdfOptimize&&im0.pdfOptimize.ocr){var rc0=im0.pdfOptimize.reconcile,decl0=rc0&&+rc0.declared||0,live0=boqOcrReconcile(im0.rows,decl0);im0.pdfOptimize.reconcile=live0;if(!decl0){toast('OCR อ่านยอดรวมเอกสารไม่ได้ · กรุณาตรวจรายการก่อน');if(U.confirm!=='ocr-unverified'){U.confirm='ocr-unverified';return;}}else if(!live0.ok){toast('ยอด OCR ยังไม่ตรงเอกสาร · ต่าง '+fmt(live0.diff));if(U.confirm!=='ocr-mismatch'){U.confirm='ocr-mismatch';return;}}}document.querySelectorAll('.bqi-name').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].name=el.value.trim();});document.querySelectorAll('.bqi-cat').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].category=el.value;});document.querySelectorAll('.bqi-qty').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].qty=boqNum(el.value);});document.querySelectorAll('.bqi-unit').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].unit=el.value.trim();});document.querySelectorAll('.bqi-price').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].unitPrice=boqNum(el.value);});var invalidEdit=im0.rows.some(function(x){return !x.name||!(+x.qty>0)||!(+x.unitPrice>=0)||!isFinite(+x.qty)||!isFinite(+x.unitPrice);});if(invalidEdit){toast('กรุณาตรวจรายการ ปริมาณ และราคาต่อหน่วย');return;}var keys={};if(im0.rows.some(function(x){var k=boqImportKey(x);if(keys[k])return true;keys[k]=1;return false;})){toast('มีรายการซ้ำหลังแก้ไข กรุณาตรวจอีกครั้ง');return;}var existsTarget={};(S.boq||[]).filter(function(x){return x.pid===im0.pid;}).forEach(function(x){existsTarget[boqImportKey(x)]=1;});if(im0.rows.some(function(x){return existsTarget[boqImportKey(x)];})){toast('โครงการนี้มี BOQ บางรายการซ้ำอยู่แล้ว · กรุณาตรวจโครงการหรือรายการ');return;}var finalTotal=im0.rows.reduce(function(a,x){return a+boqAmount(x);},0),targetSig='boq-target-'+im0.pid+'-'+im0.rows.length+'-'+Math.round(finalTotal*100);if(U.confirm!==targetSig){U.confirm=targetSig;im0.confirmPid=im0.pid;im0.confirmTotal=finalTotal;im0.confirmCount=im0.rows.length;toast('ยืนยัน: '+pname(im0.pid)+' · '+im0.rows.length+' รายการ · '+fmt(finalTotal)+' · แตะอีกครั้งเพื่อบันทึก');render();return;}if(im0.confirmPid!==im0.pid||im0.confirmCount!==im0.rows.length||Math.round((im0.confirmTotal||0)*100)!==Math.round(finalTotal*100)){U.confirm=null;toast('ข้อมูลหรือโครงการเปลี่ยน กรุณายืนยันใหม่');render();return;}im0.batch=boqBatchKey(im0.pid,im0.file,im0.rows);im0.total=finalTotal;var snap0=(S.boq||[]).slice(),added=0,importedNow=Date.now();im0.rows.forEach(function(x){S.boq.push({id:uid(),pid:im0.pid,name:x.name,category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,note:x.note||('นำเข้าจาก '+(im0.file||'ไฟล์')),importBatch:im0.batch||'',importFile:im0.file||'',importedAt:importedNow});added++;});if(!persist()){S.boq=snap0;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.boqImport=null;U.sheet=null;U.confirm=null;render();toast('นำเข้า BOQ แล้ว '+added+' รายการ · '+pname(im0.pid));}
@@ -4042,6 +4058,7 @@ document.addEventListener('click',function(e){
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;if(!persist())return;render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
+  else if(a==='migrationCheck'){var mr=hostMigrationReadiness();if(!mr.health.ok){toast('ยังไม่พร้อม · Data Health พบ '+mr.health.totalIssues+' จุด');return;}if(!mr.storageOk){toast('ยังไม่พร้อม · Storage มี conflict/read/mirror issue');return;}if(!mr.backupFresh){toast('ยังไม่พร้อม · ข้อมูลเปลี่ยนหลัง backup กรุณาสำรองใหม่');return;}var cfg=aiGatewayConfig();if(cfg.mode==='gateway'&&cfg.remoteOcrConsent){aiGatewayReadiness().then(function(x){toast(x.ok?'พร้อมย้าย Host และ Gateway พร้อม':'ข้อมูลพร้อมย้าย · Gateway ยังไม่พร้อม (Local OCR ยังใช้ได้)');}).catch(function(){toast('ข้อมูลพร้อมย้าย · ตรวจ Gateway ไม่สำเร็จ แต่ Local OCR ยังใช้ได้');});}else toast('ข้อมูลพร้อมย้าย Host · backup revision '+mr.revision+' ตรงกับข้อมูลปัจจุบัน');}
   else if(a==='aiMode'){S.ai=S.ai||{};S.ai.mode=v==='gateway'?'gateway':'local';if(!persist())return;render();}
   else if(a==='aiConsent'){S.ai=S.ai||{};S.ai.remoteOcrConsent=S.ai.remoteOcrConsent!==true;if(!persist())return;render();}
   else if(a==='aiUseStaging'){S.ai=S.ai||{};S.ai.mode='gateway';S.ai.endpoint=aiGatewaySuggestedBase();if(!persist())return;render();toast('ตั้งค่า Gateway แล้ว · เปิด Remote OCR เมื่อพร้อมส่งรูป');}
@@ -4238,7 +4255,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=285',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=286',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();

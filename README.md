@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v285
+# AREA Ledger V1 — Master v286
 
-Host Migration Backup / Restore, based on GitHub `main` v284
-(`439e63ae34be28855a03ee598c09d1ee6858fb2a`).
+Host Migration Safety Gate, based on GitHub `main` v285
+(`6b1b70699ceae26f98135ab249b6663c56f4cf2c`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,15 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v286 host migration safety gate
+
+- Added monotonic `dataRevision` metadata: normal successful writes advance the revision while backup-status metadata writes use `persist({metaOnly:true})` and do not.
+- Successful file/copy backups record `lastBackupRevision`; any subsequent data write makes the backup visibly stale until a new backup is created.
+- Backup files now use versioned `{backupFormat:1, exportedAt, sourceOrigin, dataRevision, state}` envelopes while restore stays compatible with legacy raw-state JSON.
+- Added Host Migration Safety in Settings: Data Health, storage conflict/mirror/read state, backup revision freshness and an explicit ready/not-ready gate.
+- A restored backup becomes a fresh migration checkpoint on the destination origin; no old-host data is deleted automatically.
+- Service-worker cache advanced to v286; deployment snapshot remains synchronized with root runtime assets.
 
 ## v285 host migration backup / restore
 
@@ -417,8 +426,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v285-host-migration`.
-Registration: `sw.js?v=285`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v286-migration-safety`.
+Registration: `sw.js?v=286`., `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
