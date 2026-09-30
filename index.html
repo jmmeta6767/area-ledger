@@ -3175,7 +3175,7 @@ document.addEventListener('click',function(e){
     if(cd){cd.due='';cd.paid=false;persist();U.sheet={kind:'tx',id:id};render();toast('ปิดวันครบกำหนดแล้ว');}
   }
   else if(a==='closeSheet'){U.sheet=null;U.confirm=null;render();}
-  else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(t){t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';persist();U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}}
+  else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(!t){toast('ไม่พบรายการ');return;}if(t.paid){U.sheet=null;render();toast('รายการนี้ชำระแล้ว');return;}var prevPaid=t.paid,prevDue=t.due,prevPay=t.pay;t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';if(!persist()){t.paid=prevPaid;t.due=prevDue;t.pay=prevPay;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}
   else if(a==='editTx'){
     var t2=S.tx.find(function(x){return x.id===id;});if(!t2)return;
     U.draft=JSON.parse(JSON.stringify(t2));U.draft.amount=String(t2.amount);
@@ -3226,7 +3226,7 @@ document.addEventListener('click',function(e){
     var gg=id?(S.guarantees||[]).find(function(x){return x.id===id;}):null;if(gg)Object.assign(gg,go);else{go.id=uid();go.returned=false;go.returnedDate='';S.guarantees.push(go);gg=go;}if(gg.method!=='เงินสด/โอน')S.tx=S.tx.filter(function(t){return t.id!=='guarantee-v2-expense-'+gg.id;});syncGuaranteeRecord(gg);
     persist();U.sheet=null;render();toast('บันทึกงานประกันแล้ว');
   }
-  else if(a==='returnGuarantee'){var rg=(S.guarantees||[]).find(function(g){return g.id===id;});if(rg&&receiveGuaranteeRecord(rg)){persist();U.sheet=null;render();toast('บันทึกรับหลักประกันคืนแล้ว');}}
+  else if(a==='returnGuarantee'){var rg=(S.guarantees||[]).find(function(g){return g.id===id;});if(!rg){toast('ไม่พบรายการหลักประกัน');return;}if(rg.returned){U.sheet=null;render();toast('รายการนี้รับคืนแล้ว');return;}if(receiveGuaranteeRecord(rg)){persist();U.sheet=null;render();toast('บันทึกรับหลักประกันคืนแล้ว');}}
   else if(a==='deleteGuarantee'){var dg=(S.guarantees||[]).find(function(g){return g.id===id;});if(dg&&dg.legacyPid){toast('รายการเดิมผูกกับโครงการ กรุณาแก้จากข้อมูลโครงการ');return;}if(U.confirm!=='g'+id){U.confirm='g'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');return;}S.guarantees=(S.guarantees||[]).filter(function(g){return g.id!==id;});S.tx=S.tx.filter(function(t){return t.id!=='guarantee-v2-expense-'+id&&t.id!=='guarantee-v2-refund-'+id;});persist();U.sheet=null;U.confirm=null;render();toast('ลบรายการงานประกันและรายการบัญชีที่เชื่อมแล้ว');}
   else if(a==='saveProj'){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
@@ -3237,7 +3237,7 @@ document.addEventListener('click',function(e){
     if(target)syncGuaranteeExpense(target);
     persist();U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
-  else if(a==='delProj'){if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});S.tx=S.tx.filter(function(t){return t.pid!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();}}
+  else if(a==='delProj'){var linkedTx=S.tx.filter(function(t){return t.pid===id;}).length,linkedG=(S.guarantees||[]).filter(function(g){return g.pid===id;}).length,linkedDocs=['quotes','bills','receipts'].reduce(function(n,k){return n+(S[k]||[]).filter(function(d){return d.pid===id;}).length;},0);if(linkedTx||linkedG||linkedDocs){toast('ลบไม่ได้: โครงการนี้มีข้อมูลเชื่อม '+linkedTx+' รายการบัญชี · '+linkedG+' งานประกัน · '+linkedDocs+' เอกสาร');return;}if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');}}
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
   else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
