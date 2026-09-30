@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v273
+# AREA Ledger V1 — Master v274
 
-Cloudflare QA Alignment, based on GitHub `main` v272
-(`bc7b88a3e1ba353ce7a8789f56463dd21b927c60`).
+Storage QA Alignment, based on GitHub `main` v273
+(`5b2b4e64b760a21acd8644011aadf6b7df75d98c`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,11 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v274 storage QA alignment
+
+- Updated the storage-compatibility regression to validate the actual long-lived identifiers: localStorage `site-ledger-v1`, recovery key, IndexedDB `IDB_NAME=site-ledger-db`, version 1 and object store `kv` through the current `idbOpen()` implementation.
+- No storage identifier, IndexedDB schema or application behavior changed.
 
 ## v273 Cloudflare QA alignment
 
