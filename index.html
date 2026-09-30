@@ -1731,6 +1731,18 @@ textarea{resize:vertical}
   .project-hub-actions{gap:5px}.project-hub-actions button{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* UX SYSTEM v2 — forms, lists, feedback */
+.master-form-page{max-width:760px;margin:0 auto}
+.master-form-page>.field{background:var(--m-card,#fff);border:1px solid var(--m-line,#e2e5e5);border-radius:16px;padding:14px;margin:10px 0}
+.master-form-page>.seg{position:sticky;top:72px;z-index:28;background:var(--m-bg,#f1f3f2);padding:8px 0}
+.master-form-page .chips{gap:7px}.master-form-page .chip,.master-form-page .gbtn{min-height:44px}
+.savebar{display:grid!important;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px;background:rgba(248,248,244,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--m-line,#e2e5e5);padding:10px max(12px,env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom,0px));margin-left:-14px;margin-right:-14px}
+.savebar .btn{min-height:50px}
+.savebar .pri{font-weight:800}
+.master-list .row{min-height:72px}
+.master-list .row:active,.project-hub-main:active,.home-guarantee-watch:active{transform:scale(.995);opacity:.86}
+.toast{position:fixed!important;left:50%!important;bottom:calc(96px + env(safe-area-inset-bottom,0px))!important;transform:translateX(-50%);z-index:30000!important;max-width:min(88vw,420px);padding:11px 16px!important;border-radius:999px!important;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+@media(max-width:430px){.savebar{grid-template-columns:1fr}.master-form-page>.seg{top:66px}}
 </style>
 </head>
 <body>
@@ -2048,7 +2060,7 @@ function dueInfo(t){
 }
 
 /* ---------- ตัวช่วย UI ---------- */
-function focusAmt(){var a=document.getElementById('amt');if(a)a.focus();}
+function focusAmt(){setTimeout(function(){var a=document.getElementById('amt');if(a){try{a.focus({preventScroll:true});}catch(e){a.focus();}a.scrollIntoView({block:'center',behavior:'smooth'});}},80);}
 function doCopy(id,ok){
   var box=document.getElementById(id);if(!box)return;box.focus();box.select();
   try{box.setSelectionRange(0,box.value.length);}catch(x){}
