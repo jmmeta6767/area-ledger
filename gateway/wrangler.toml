@@ -32,7 +32,8 @@ name = "area-ledger-ai-gateway-staging"
 
 [env.staging.vars]
 RATE_LIMIT_PER_MINUTE = "10"
-OCR_PROVIDER = "generic"
+OCR_PROVIDER = "gemini"
+GEMINI_MODEL = "gemini-2.5-flash"
 PROVIDER_TIMEOUT_MS = "10000"
 PROVIDER_RETRIES = "0"
 

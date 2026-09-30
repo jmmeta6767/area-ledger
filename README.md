@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v275
+# AREA Ledger V1 — Master v276
 
-Gateway Contract QA Hardening, based on GitHub `main` v274
-(`0e9e668e7b9252e6908a2532f66d4b8b5ddf6c79`).
+Gemini Gateway Adapter, based on GitHub `main` v275
+(`812e096bddc40cf94b1a19568b2ce04863a3ead1`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v276 Gemini gateway adapter
+
+- Added a direct server-side Gemini multimodal OCR adapter using `x-goog-api-key`, image `inline_data`, JSON response mode and a configurable `GEMINI_MODEL`.
+- Staging now selects `OCR_PROVIDER=gemini` with `GEMINI_MODEL=gemini-2.5-flash`; the browser still receives only the provider-neutral expense OCR contract and never receives the API key.
+- Generic upstream adapter remains available for future providers. Health readiness now understands both generic and Gemini configuration.
+- Added runtime QA that validates the Gemini request envelope and sanitized expense response without sending any external request.
 
 ## v275 gateway contract QA hardening
 
