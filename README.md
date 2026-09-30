@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v243
+# AREA Ledger V1 — Master v260
 
-Billing Settlement Lock Hardening, based on GitHub `main` v242
+Production Accounting Gate, based on GitHub `main` v243
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,61 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v260 production accounting gate
+
+- Added one deterministic Production Gate spanning Data Health, tax/document reconciliation, AR/AP, bank reconciliation, journals, Trial Balance, financial statements, closed-period integrity, document lineage, audit history and project accounting.
+- Period close now requires the Production Gate to pass; warnings such as a missing bank reconciliation remain visible without inventing accounting data.
+- Added deterministic scale regression with 500 accounting rows plus storage/recovery compatibility assertions.
+
+## v259 performance / scale hardening
+- Production Gate is deterministic on large in-memory accounting sets and does not mutate source records during validation.
+
+## v258 iPhone / Safari release safeguards
+- Existing VisualViewport, safe touch/click path and PWA cache safeguards remain release invariants; physical-device verification remains a separate gate.
+
+## v257 backup / recovery integrity
+- Production release tests pin localStorage `site-ledger-v1`, recovery `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 and retain non-destructive migration behavior.
+
+## v256 Data Health 3.0
+- Production Gate consumes Data Health as a blocking invariant rather than duplicating or silently repairing corrupted records.
+
+## v255 document control integrity
+- Duplicate document IDs and broken Quote → Bill → Receipt lineage are blocking production issues.
+
+## v254 tax reconciliation hardening
+- Tax/document reconciliation is a blocking production invariant; WHT rates outside valid numeric bounds are reported rather than guessed.
+
+## v253 construction WIP integrity
+- Project accounting validates finite contract/cost/commitment/billing/receipt/AR/AP values and rejects negative WIP proxy anomalies.
+
+## v252 project accounting reconciliation
+- Every project is evaluated through the canonical project accounting calculation before period close.
+
+## v251 accounting statements integrity
+- Management financial statements and the accounting equation must reconcile with the Trial Balance.
+
+## v250 double-entry hardening
+- Every derived and manual journal included in the target period must balance; Trial Balance remains a separate blocking check.
+
+## v249 cash / bank control
+- Latest bank reconciliation difference is blocking when a reconciliation exists; absence is surfaced as a warning instead of fabricating a statement balance.
+
+## v248 AP control 2.0
+- AP Aging is reconciled against canonical outstanding settlement balances.
+
+## v247 AR control 2.0
+- AR Aging is reconciled against Billing open balance after partial settlements.
+
+## v246 audit integrity
+- Malformed audit rows are detected by the Production Gate so accounting history cannot silently become unverifiable.
+
+## v245 period close 2.0
+- Period close is now guarded by the shared Production Gate and closed-period snapshot integrity.
+
+## v244 VAT / WHT integrity
+- WHT validation rejects non-positive or over-100% recorded rates without substituting an assumed rate.
+- Existing recorded rates such as 1/2/3/5% remain preserved; VAT/WHT calculations continue from recorded transaction data.
 
 ## v243 billing settlement lock hardening
 
@@ -188,8 +243,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v243-billing-settlement-lock`.
-Registration: `sw.js?v=243`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v260-production-accounting-gate`.
+Registration: `sw.js?v=260`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
