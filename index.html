@@ -1996,7 +1996,7 @@ function persist(){
   S.updatedAt=Date.now();var json=JSON.stringify(S),ok=true;
   try{localStorage.setItem(KEY,json);}catch(e){ok=false;}
   idbSet(json).then(function(ok2){if(!ok&&!ok2)toast('พื้นที่จัดเก็บเต็ม บันทึกไม่ได้');});
-  return true;
+  return ok;
 }
 function proj(id){return S.projects.find(function(p){return p.id===id;});}
 function pname(id){var p=proj(id);return p?p.name:'ไม่ระบุโครงการ';}
@@ -3233,7 +3233,7 @@ document.addEventListener('click',function(e){
     var o=null;try{o=JSON.parse((U.rsText||'').trim());}catch(x){}
     if(!o||!Array.isArray(o.projects)||!Array.isArray(o.tx)){toast('ข้อมูลไม่ถูกต้อง ตรวจว่าวางครบทั้งก้อน');return;}
     if((S.projects.length||S.tx.length)&&U.confirm!=='restore'){U.confirm='restore';render();return;}
-    S=migrate(o);persist();U.rsText='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว');
+    var restorePrev=JSON.parse(JSON.stringify(S));S=migrate(o);if(!persist()){S=restorePrev;persist();toast('กู้คืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.rsText='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว');
   }
   else if(a==='newProj'){U.sheet={kind:'proj',id:null};render();}
   else if(a==='editProj'){U.sheet={kind:'proj',id:id};render();}
@@ -3258,7 +3258,7 @@ document.addEventListener('click',function(e){
   }
   else if(a==='delProj'){var linkedTx=S.tx.filter(function(t){return t.pid===id;}).length,linkedG=(S.guarantees||[]).filter(function(g){return g.pid===id;}).length,linkedDocs=['quotes','bills','receipts'].reduce(function(n,k){return n+(S[k]||[]).filter(function(d){return d.pid===id;}).length;},0);if(linkedTx||linkedG||linkedDocs){toast('ลบไม่ได้: โครงการนี้มีข้อมูลเชื่อม '+linkedTx+' รายการบัญชี · '+linkedG+' งานประกัน · '+linkedDocs+' เอกสาร');return;}if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');}}
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
-  else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
+  else if(a==='resetDo'){var resetPrev=JSON.parse(JSON.stringify(S));try{sessionStorage.setItem('area-ledger-pre-reset',JSON.stringify(resetPrev));}catch(e){}S=emptyState();if(!persist()){S=resetPrev;persist();toast('รีเซ็ตไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='repairBilling'){var rr=safeRepairBilling('');if(rr){render();if(rr.created||rr.updated)toast('ซ่อมแล้ว: เชื่อมใหม่ '+rr.created+' · ปรับยอดค้างรับ '+rr.updated);else toast('ไม่มีรายการที่ซ่อมอัตโนมัติได้อย่างปลอดภัย');}}
   else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
