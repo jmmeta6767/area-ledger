@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v261
+# AREA Ledger V1 — Master v262
 
-CI Release Gate, based on GitHub `main` v260
-(`c27f9801d30fa8f7d9f932170cc0b97cb1441d17`).
+Host-neutral PWA Hardening, based on GitHub `main` v261
+(`e9e8c79f66e2c34a40171e6e60ab7a025ae31a39`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v262 host-neutral PWA / deployment readiness
+
+- Fixed Release QA so the dependency-free repository no longer asks `setup-node` for a nonexistent npm lockfile cache.
+- Added portable static-host headers for service-worker revalidation and security defaults; compatible with Cloudflare Pages while remaining harmless to the current host.
+- Added SPA/PWA navigation fallback for static edge hosting without changing the relative manifest scope or local/offline storage model.
+- No production-host switch, DNS change, storage-key change or destructive migration.
 
 ## v261 CI / host-neutral release gate
 
@@ -249,8 +256,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v261-ci-release-gate`.
-Registration: `sw.js?v=261`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v262-host-neutral-pwa`.
+Registration: `sw.js?v=262`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
