@@ -1796,11 +1796,6 @@ textarea{resize:vertical}
 @supports not (height:100dvh){#app,.master-scrim,.app-drawer-wrap{min-height:100vh}}
 :root[data-view-mode="mobile"] #app{max-width:560px!important}
 :root[data-view-mode="mobile"] main{max-width:560px!important}
-
-/* v142 clean dashboard spacing */
-.dash-tabs{margin-bottom:14px!important}
-.master-ref-project{margin-top:0!important}
-@media(max-width:430px){.dash-tabs{margin-bottom:10px!important}.master-ref-project{margin-top:0!important}}
 </style>
 </head>
 <body>
@@ -1996,7 +1991,7 @@ function persist(){
   S.updatedAt=Date.now();var json=JSON.stringify(S),ok=true;
   try{localStorage.setItem(KEY,json);}catch(e){ok=false;}
   idbSet(json).then(function(ok2){if(!ok&&!ok2)toast('พื้นที่จัดเก็บเต็ม บันทึกไม่ได้');});
-  return ok;
+  return true;
 }
 function proj(id){return S.projects.find(function(p){return p.id===id;});}
 function pname(id){var p=proj(id);return p?p.name:'ไม่ระบุโครงการ';}
@@ -2296,7 +2291,10 @@ function dashboardCharts(allMode,active,all){
 function vHome(){
   var allMode=U.homePid==='__all',active=allMode?null:(proj(U.homePid)||S.projects[0]||null),pid=active?active.id:'',all=allMode?S.tx.slice():(pid?S.tx.filter(function(t){return t.pid===pid;}):S.tx.slice());
   var paidIn=all.filter(function(t){return t.type==='in'&&t.paid;}),paidOut=all.filter(function(t){return t.type==='out'&&t.paid;}),inW=all.filter(function(t){return t.type==='in'&&!t.paid;}),outW=all.filter(function(t){return t.type==='out'&&!t.paid;});
-  var rec=sumNet(paidIn),spent=sumNet(paidOut),openingTotal=allMode?((+S.opening||0)+(+S.openCash||0)):0,bal=openingTotal+rec-spent,h='';
+  var rec=sumNet(paidIn),spent=sumNet(paidOut),openingTotal=allMode?((+S.opening||0)+(+S.openCash||0)):0,bal=openingTotal+rec-spent,h='',retRows=(allMode?S.projects:(active?[active]:[])).filter(function(p){return p.retAmt&&!p.retRecv;}),retTotal=retRows.reduce(function(a,p){return a+(+p.retAmt||0);},0);
+  var gScope=(S.guarantees||[]).filter(function(g){return !g.returned&&(allMode||g.pid===pid);}),gExposure=gScope.reduce(function(a,g){return a+(+g.amount||0);},0),gReady=gScope.filter(function(g){return g.dueDate&&dd(today(),g.dueDate)<=0;}),gNear=gScope.filter(function(g){var d=g.dueDate?dd(today(),g.dueDate):null;return d!==null&&d>0&&d<=90;});
+  var eligibleRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),nearRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;}),waitDelivery=retRows.filter(function(p){return !p.deliveryDate;});
+  var retHint=eligibleRet.length?'ครบกำหนด '+eligibleRet.length+' โครงการ':nearRet.length?'ใกล้ครบกำหนด '+nearRet.length+' โครงการ':waitDelivery.length?'รอวันส่งมอบ '+waitDelivery.length+' โครงการ':retRows.length+' โครงการ';
   var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid" aria-label="เลือกโครงการ"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
 
   h+=dashTabs();
@@ -3233,7 +3231,7 @@ document.addEventListener('click',function(e){
     var o=null;try{o=JSON.parse((U.rsText||'').trim());}catch(x){}
     if(!o||!Array.isArray(o.projects)||!Array.isArray(o.tx)){toast('ข้อมูลไม่ถูกต้อง ตรวจว่าวางครบทั้งก้อน');return;}
     if((S.projects.length||S.tx.length)&&U.confirm!=='restore'){U.confirm='restore';render();return;}
-    var restorePrev=JSON.parse(JSON.stringify(S));S=migrate(o);if(!persist()){S=restorePrev;persist();toast('กู้คืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.rsText='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว');
+    S=migrate(o);persist();U.rsText='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว');
   }
   else if(a==='newProj'){U.sheet={kind:'proj',id:null};render();}
   else if(a==='editProj'){U.sheet={kind:'proj',id:id};render();}
@@ -3258,7 +3256,7 @@ document.addEventListener('click',function(e){
   }
   else if(a==='delProj'){var linkedTx=S.tx.filter(function(t){return t.pid===id;}).length,linkedG=(S.guarantees||[]).filter(function(g){return g.pid===id;}).length,linkedDocs=['quotes','bills','receipts'].reduce(function(n,k){return n+(S[k]||[]).filter(function(d){return d.pid===id;}).length;},0);if(linkedTx||linkedG||linkedDocs){toast('ลบไม่ได้: โครงการนี้มีข้อมูลเชื่อม '+linkedTx+' รายการบัญชี · '+linkedG+' งานประกัน · '+linkedDocs+' เอกสาร');return;}if(U.confirm==='p'+id){S.projects=S.projects.filter(function(p){return p.id!==id;});persist();U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');}}
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
-  else if(a==='resetDo'){var resetPrev=JSON.parse(JSON.stringify(S));try{sessionStorage.setItem('area-ledger-pre-reset',JSON.stringify(resetPrev));}catch(e){}S=emptyState();if(!persist()){S=resetPrev;persist();toast('รีเซ็ตไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
+  else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='repairBilling'){var rr=safeRepairBilling('');if(rr){render();if(rr.created||rr.updated)toast('ซ่อมแล้ว: เชื่อมใหม่ '+rr.created+' · ปรับยอดค้างรับ '+rr.updated);else toast('ไม่มีรายการที่ซ่อมอัตโนมัติได้อย่างปลอดภัย');}}
   else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
