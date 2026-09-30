@@ -1956,6 +1956,7 @@ function migrate(o){
   }
   o.ui.dashboardPids=o.ui.dashboardPids.filter(function(id){return (o.projects||[]).some(function(p){return p.id===id;});});
   if(!o.business)o.business={legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
+  if(!o.ai||typeof o.ai!=='object'||Array.isArray(o.ai))o.ai={mode:'local',endpoint:''};if(o.ai.mode!=='gateway')o.ai.mode='local';if(typeof o.ai.endpoint!=='string')o.ai.endpoint='';
   if(o.business.legalNameEn===undefined)o.business.legalNameEn='';
   if(o.business.addressEn===undefined)o.business.addressEn='';
   if(!Array.isArray(o.materialApprovals))o.materialApprovals=[];
@@ -2057,7 +2058,7 @@ function defaultChartAccounts(){return[
 ];}
 
 
-function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:''},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function idbOpen(){return new Promise(function(res,rej){var settled=false,timer=setTimeout(function(){settled=true;U.storageReadBlocked=true;rej(new Error('IndexedDB timeout'));},1500);function fail(e){clearTimeout(timer);settled=true;U.storageReadBlocked=true;rej(e);}try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv');};r.onsuccess=function(){clearTimeout(timer);if(settled){r.result.close();return;}settled=true;res(r.result);};r.onerror=function(){fail(r.error);};r.onblocked=function(){fail(new Error('IndexedDB blocked'));};}catch(e){fail(e);}});}
@@ -2768,7 +2769,7 @@ function expenseScanImage(file){
   var draft=U.draft,token=uid();U.expenseScanToken=token;U.expenseScanBusy=true;U.expenseScanMsg='';
   function current(){return U.draft===draft&&U.expenseScanToken===token;}
   function done(msg){if(U.expenseScanToken!==token)return;U.expenseScanBusy=false;if(current()){U.expenseScanMsg=msg;render();}}
-  var r=new FileReader();r.onerror=function(){done('อ่านไฟล์ไม่ได้ กรุณาเลือกรูปใหม่');};r.onload=function(){if(!current()){done('');return;}var im=new Image();im.onerror=function(){done('รูปอ่านไม่ได้ กรุณาเลือก JPG/PNG หรือกรอกเอง');};im.onload=function(){if(!current()){done('');return;}try{var M=1200,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);draft.photo=c.toDataURL('image/jpeg',.68);var beforeOcr=JSON.stringify(draft);render();loadTesseract(function(ok){if(!ok){done('แนบรูปแล้ว · OCR โหลดไม่ได้ กรุณากรอกเอง');return;}Tesseract.recognize(c,'tha+eng').then(function(res){if(!current()){done('');return;}if(JSON.stringify(draft)!==beforeOcr){done('ข้อมูลถูกแก้ไขระหว่าง OCR · คงค่าที่คุณกรอกไว้');return;}var text=res.data&&res.data.text||'',g=expenseGuess(text),amt=expenseOcrAmount(text);if(!text.trim()||!(amt>0)||!isFinite(amt)){done('อ่านยอดไม่ได้ · ไม่บันทึกอัตโนมัติ กรุณากรอกและตรวจเอง');return;}draft.cat=g.cat;if(g.sub)draft.sub=g.sub;draft.amount=String(amt);if(!draft.partner)draft.partner=expenseOcrPartner(text);done('OCR แนะนำยอด '+fmt(amt)+' · ตรวจยอด วันที่ หมวด และโครงการก่อนกดบันทึก');}).catch(function(){done('อ่านรูปไม่สำเร็จ กรุณากรอกเอง');});});}catch(e){done('เตรียมรูปไม่สำเร็จ กรุณาเลือกรูปใหม่');}};im.src=r.result;};r.readAsDataURL(file);
+  var r=new FileReader();r.onerror=function(){done('อ่านไฟล์ไม่ได้ กรุณาเลือกรูปใหม่');};r.onload=function(){if(!current()){done('');return;}var im=new Image();im.onerror=function(){done('รูปอ่านไม่ได้ กรุณาเลือก JPG/PNG หรือกรอกเอง');};im.onload=function(){if(!current()){done('');return;}try{var M=1200,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);draft.photo=c.toDataURL('image/jpeg',.68);var beforeOcr=JSON.stringify(draft);render();expenseOcrRecognize(c).then(function(res){if(!current()){done('');return;}if(JSON.stringify(draft)!==beforeOcr){done('ข้อมูลถูกแก้ไขระหว่าง OCR · คงค่าที่คุณกรอกไว้');return;}var amt=+res.amount||0;if(!(amt>0)||!isFinite(amt)){done('อ่านยอดไม่ได้ · ไม่บันทึกอัตโนมัติ กรุณากรอกและตรวจเอง');return;}draft.cat=res.cat||'ค่าของ';if(res.sub)draft.sub=res.sub;draft.amount=String(amt);if(!draft.partner&&res.partner)draft.partner=res.partner;done('OCR แนะนำยอด '+fmt(amt)+' · ตรวจยอด วันที่ หมวด และโครงการก่อนกดบันทึก');}).catch(function(){done('OCR ใช้งานไม่ได้ · แนบรูปไว้แล้ว กรุณากรอกเอง');});}catch(e){done('เตรียมรูปไม่สำเร็จ กรุณาเลือกรูปใหม่');}};im.src=r.result;};r.readAsDataURL(file);
 }
 function vAdd(){
   var d=U.draft;if(!d){U.from=U.from||'home';U.draft=newDraft('out',U.pid||null);d=U.draft;}var foreman=S.role==='foreman',cats=d.type==='in'?CAT_IN:CAT_OUT;
@@ -2842,6 +2843,38 @@ function boqRowsFromGrid(grid){
 }
 function loadSheetJs(done){if(window.XLSX){done(true);return;}var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';sc.onload=function(){done(!!window.XLSX);};sc.onerror=function(){done(false);};document.head.appendChild(sc);}
 function loadPdfJs(done){if(window.pdfjsLib){done(true);return;}var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';sc.onload=function(){if(window.pdfjsLib)window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';done(!!window.pdfjsLib);};sc.onerror=function(){done(false);};document.head.appendChild(sc);}
+function aiGatewayConfig(){
+  var cfg=S&&S.ai&&typeof S.ai==='object'?S.ai:{};
+  return {mode:cfg.mode==='gateway'?'gateway':'local',endpoint:String(cfg.endpoint||'').trim()};
+}
+function aiGatewayEndpoint(path){
+  var cfg=aiGatewayConfig(),base=cfg.endpoint.replace(/\/+$/,'');
+  if(cfg.mode!=='gateway'||!base)return '';
+  if(!/^https:\/\//i.test(base)&&!/^http:\/\/localhost(?::\d+)?$/i.test(base))return '';
+  return base+'/'+String(path||'').replace(/^\/+/, '');
+}
+async function aiGatewayRequest(path,payload){
+  var url=aiGatewayEndpoint(path);if(!url)throw new Error('AI gateway is not configured');
+  var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'omit',body:JSON.stringify(payload||{})});
+  if(!res.ok)throw new Error('AI gateway HTTP '+res.status);
+  var data=await res.json();if(!data||typeof data!=='object')throw new Error('AI gateway invalid response');
+  return data;
+}
+function expenseOcrResult(text){
+  text=String(text||'');var g=expenseGuess(text),amt=expenseOcrAmount(text);
+  return {text:text,amount:amt,cat:g.cat,sub:g.sub,partner:expenseOcrPartner(text)};
+}
+function expenseOcrRecognize(canvas){
+  var cfg=aiGatewayConfig(),dataUrl='';
+  if(cfg.mode==='gateway'){
+    try{dataUrl=canvas.toDataURL('image/jpeg',.78);}catch(e){return Promise.reject(e);}
+    return aiGatewayRequest('v1/ocr/expense',{image:dataUrl,lang:'tha+eng'}).then(function(x){
+      var text=String(x.text||'');if(text)return expenseOcrResult(text);
+      return {text:'',amount:+x.amount||0,cat:String(x.cat||'ค่าของ'),sub:String(x.sub||''),partner:String(x.partner||'')};
+    });
+  }
+  return new Promise(function(resolve,reject){loadTesseract(function(ok){if(!ok){reject(new Error('Local OCR unavailable'));return;}Tesseract.recognize(canvas,'tha+eng').then(function(res){resolve(expenseOcrResult(res.data&&res.data.text||''));}).catch(reject);});});
+}
 function loadTesseract(done){if(window.Tesseract){done(true);return;}var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=function(){done(!!window.Tesseract);};sc.onerror=function(){done(false);};document.head.appendChild(sc);}
 function thaiBoqNum(v){return boqNum(String(v==null?'':v).replace(/[Oo]/g,'0').replace(/[, ]/g,''));}
 function thaiGovBoqDeclaredTotal(text){
@@ -4135,7 +4168,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=263',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=264',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
