@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v272
+# AREA Ledger V1 — Master v273
 
-Cloudflare Build Gate Fix, based on GitHub `main` v271
-(`2c7d1ede2c56ede87976fcf1177a13912fd1460a`).
+Cloudflare QA Alignment, based on GitHub `main` v272
+(`bc7b88a3e1ba353ce7a8789f56463dd21b927c60`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,11 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v273 Cloudflare QA alignment
+
+- Updated the period-close regression assertion to validate the canonical `accountingProductionGate()` path introduced by the hardened accounting releases, instead of obsolete pre-gate `hp.ok` / `tb2.ok` source checks.
+- No accounting behavior, data, storage schema or Worker runtime configuration changed.
 
 ## v272 Cloudflare build gate fix
 
