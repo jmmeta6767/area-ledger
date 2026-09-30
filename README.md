@@ -1,41 +1,68 @@
-# AREA Ledger V1 — Master v153
+# AREA Ledger V1 — Master v226
 
-ระบบบัญชีและควบคุมโครงการรับเหมาก่อสร้างแบบ standalone/PWA
+Integrity / Recovery / Contract Control Hardening, based on GitHub `main` v225
+(`3050c49d9f773047835ce34e1ab3c8096995f662`).
+
+Standalone/PWA accounting and construction project control. This repository remains
+separate from AREA Maibab Public Website and AREA SEO AI.
 
 ## Data safety
-- ใช้ localStorage key `site-ledger-v1`
-- ใช้ IndexedDB `site-ledger-db`
-- ห้ามล้างหรือเปลี่ยน storage key/database โดยไม่ทำ migration
-- การแก้ไขต้องรักษาข้อมูลเดิมและ backward compatibility
 
-## Financial core
-- มูลค่างาน = มูลค่างานตามสัญญา
-- ต้นทุน = รายจ่าย/ต้นทุนของโครงการ
-- กำไรคาดการณ์ = มูลค่างานตามสัญญา − ต้นทุน
-- กำไร/ขาดทุนสุทธิ = รายรับจริงสะสม − ต้นทุน
-- มูลค่าสัญญาไม่ถือเป็นรายรับจริงจนกว่าจะมีการรับเงินจริง
+- localStorage: `site-ledger-v1` (unchanged); recovery: `site-ledger-v1-recovery`.
+- IndexedDB: `site-ledger-db`, version 1, object store `kv` (unchanged).
+- localStorage is the synchronous commit point. A rejected write is never mirrored
+  to IndexedDB; committed mirrors run in order. A mirror failure is reported.
+- Migration works on a copy, retains duplicate IDs/orphan references for Data Health,
+  and rejects malformed collections rather than replacing them with empty arrays.
+- Startup waits for bounded IndexedDB reads. Unreadable data does not trigger a
+  seed overwrite. Intentional empty states remain empty.
+- Existing Tha Sala expense/BOQ data is never automatically overwritten or
+  re-imported on startup. The historical baseline is tested in isolation.
+- No destructive repair, storage-key changes, rebuild, or force push.
 
-## Current modules
-- Dashboard / Project control
-- รายรับ–รายจ่าย / ค้างรับ–ค้างจ่าย
-- BOQ / ต้นทุน
-- งานประกัน / เงินประกันผลงาน
-- ใบเสนอราคา → ใบวางบิล → ใบเสร็จรับเงิน
-- งานพัสดุ / เอกสารโครงการ
-- รายงาน / Excel / PDF / CSV
-- Mobile / Desktop view mode
+## v226 fixes
 
-## v153 hardening
-- รองรับรับชำระใบวางบิลบางส่วนหลายครั้ง
-- ออกใบเสร็จตามยอดที่รับจริงแต่ละครั้ง
-- รายงานแยกยอดรับแล้วและยอดคงเหลือของใบวางบิล
-- คืน `billingReconcile()` และ `safeRepairBilling()` แบบรองรับ partial payments
-- ป้องกัน regression หน้า “สุขภาพข้อมูลบัญชี” / ปุ่มซ่อมความเชื่อมโยง
-- รองรับ WHT rate จริงจากเอกสาร เช่น 1%, 2%, 3%, 5% โดยข้อมูล transaction เก่า fallback 3%
-- ใบเสร็จ partial payment รับ WHT rate จากใบวางบิลอย่างถูกต้อง
-- ตรวจข้อมูลภาษี/ผู้เสียภาษีก่อนออกใบเสร็จจากการรับเงิน
-- static QA: data-act ใน UI มี handler ครบ
-- service worker cache: `site-ledger-v153-partial-payment-hardening`
+- Fix `go` variable shadowing that broke click-handler navigation after saves.
+- Preserve transaction metadata, document links and WHT rate during transaction edits.
+- Prevent failed writes from reappearing through IndexedDB recovery; restore prior
+  state and retain forms on failure. UI mutations check persistence before success.
+- Detect duplicate/orphan IDs across modules, cross-project BOQ/document links,
+  billing/receipt mismatches, guarantee accounting mismatches and inconsistent
+  Timeline/Variation/EOT states without modifying records.
+- Exclude cross-project and ambiguous BOQ links from actual-cost totals.
+- Use approved signed Variation amounts in project/report/BOQ profit forecasts;
+  pending reductions remain in the action queue even when their net value is zero.
+- Suppress contract deadline/missing-date warnings for delivered/closed projects.
+  Outstanding correspondence and accounting work can still be displayed.
+- Validate Timeline status, letter number, send/reply chronology and reply content.
+- Validate EOT as positive whole days; approval requires an order/reference.
+  EOT remains a request register: saving a request, including approved status, does
+  not silently rewrite the stored contractual end date. Approved days are shown
+  separately; the contract date is maintained explicitly in project details.
+- Protect projects with contract/procurement references from deletion.
+- Require explicit selection of batch OCR suggestions; invalid selected rows block
+  the whole batch. Reject nonfinite amounts, orphan projects and invalid dates.
+- Bound photo OCR results to the original unchanged draft; unreadable images release
+  the scan lock. OCR never automatically persists an expense.
+- Fix touch scrolling on sheets; use visual viewport height for keyboard/rotation,
+  16px sheet inputs and non-sticky actions on short landscape screens.
+- Scope SW cleanup to Ledger caches; offline reads use only the current cache;
+  cache-write failure does not discard a successful network response.
 
-## Development rule
-พัฒนาต่อจาก `main` ของ repo `jmmeta6767/area-ledger` เท่านั้นเป็น Master ปัจจุบัน ห้ามย้อน logic เก่า ห้ามสร้างระบบใหม่ทับ และต้องทำ startup/data safety + navigation/UX regression check ก่อนเพิ่ม feature ใหญ่
+## Financial conventions retained
+
+Contract value is not cash revenue. Actual cost includes accrued expenses. Net
+profit is actual revenue minus cost. Approved Variation changes forecast revenue;
+pending/rejected amounts do not. No unapproved EOT changes the contract date.
+
+## QA
+
+Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual app
+functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
+See `QA-v226.md` for coverage and device testing still required.
+
+Service-worker cache: `site-ledger-v226-integrity-recovery-hardening`.
+Registration: `sw.js?v=226`, `updateViaCache: 'none'`.
+
+The tracked legacy `area-ledger-package.zip` is not the current deployment source;
+use the current `main` tree. It was not used or rebuilt for this release.
