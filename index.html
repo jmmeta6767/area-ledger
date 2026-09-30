@@ -2010,6 +2010,9 @@ function stateHealth(o){o=o||S;var p={},b={},issues=[];(o.projects||[]).forEach(
   ['quotes','bills','receipts'].forEach(function(k){var nos={};(o[k]||[]).forEach(function(d){if(d&&d.no){if(nos[d.no])issues.push('เลขเอกสารซ้ำ '+d.no);nos[d.no]=1;}});});
   (o.bills||[]).forEach(function(d){if(d.sourceKind==='quote'&&d.sourceId&&!(o.quotes||[]).some(function(q){return q.id===d.sourceId;}))issues.push('ใบวางบิลอ้างใบเสนอราคาที่ไม่พบ');});
   (o.receipts||[]).forEach(function(d){if(d.sourceKind==='bill'&&d.sourceId&&!(o.bills||[]).some(function(q){return q.id===d.sourceId;}))issues.push('ใบเสร็จอ้างใบวางบิลที่ไม่พบ');});
+  var batches={};(o.boq||[]).forEach(function(x){if(x.importBatch){var bk=x.pid+'|'+x.importBatch;(batches[bk]||(batches[bk]=[])).push(x);}});
+  Object.keys(batches).forEach(function(k){var rows=batches[k],files={};rows.forEach(function(x){files[x.importFile||'']=1;if(!(boqAmount(x)>=0))issues.push('BOQ นำเข้ามียอดผิดรูปแบบ');});if(Object.keys(files).length>1)issues.push('BOQ import batch มีชื่อไฟล์ไม่สอดคล้อง');});
+  (o.tx||[]).forEach(function(t){if(t.boqId){var bx=(o.boq||[]).find(function(x){return x.id===t.boqId;});if(bx&&bx.pid!==t.pid)issues.push('รายจ่ายผูก BOQ คนละโครงการ');}});
   if(o===S&&typeof billingReconcile==='function'){var ar=billingReconcile('');if(ar.orphanTx)issues.push('รายการบัญชีอ้างใบวางบิลที่ไม่พบ '+ar.orphanTx);if(ar.unlinked)issues.push('ใบวางบิลไม่มีลูกหนี้เชื่อม '+ar.unlinked);if(ar.mismatch)issues.push('ยอดใบวางบิล/ลูกหนี้ไม่ตรง '+ar.mismatch);}
   return {ok:issues.length===0,issues:issues.slice(0,20),projects:(o.projects||[]).length,tx:(o.tx||[]).length,boq:(o.boq||[]).length};}
 function loadLS(){try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&o.tx)return migrate(o);}}catch(e){}return null;}
@@ -2576,6 +2579,7 @@ function boqImportPdf(file,pid){
   loadPdfJs(function(ok){if(!ok){toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');return;}var rd=new FileReader();rd.onload=function(){pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise.then(async function(pdf){var lines=[];for(var p=1;p<=pdf.numPages;p++){var pg=await pdf.getPage(p),tc=await pg.getTextContent(),by={};tc.items.forEach(function(it){var y=Math.round(it.transform[5]/3)*3;(by[y]||(by[y]=[])).push({x:it.transform[4],s:it.str});});Object.keys(by).sort(function(a,b){return +b-+a;}).forEach(function(y){lines.push(by[y].sort(function(a,b){return a.x-b.x;}).map(function(z){return z.s;}));});}var rows=boqRowsFromGrid(lines);if(!rows.length){toast('PDF นี้ไม่พบตารางข้อความ BOQ · ถ้าเป็นไฟล์สแกนต้องใช้ OCR/AI');return;}boqImportPreview(pid,rows,file.name);}).catch(function(){toast('อ่าน PDF ไม่สำเร็จ');});};rd.readAsArrayBuffer(file);});
 }
 function boqImportKey(x){return [String(x.name||'').trim().toLowerCase(),(+x.qty||0).toFixed(4),String(x.unit||'').trim().toLowerCase(),(+x.unitPrice||0).toFixed(4)].join('|');}
+function boqBatchKey(pid,name,rows){var body=(rows||[]).map(boqImportKey).sort().join('~');var h=2166136261;for(var i=0;i<body.length;i++){h^=body.charCodeAt(i);h=Math.imul(h,16777619);}return [pid,String(name||'').toLowerCase(),(h>>>0).toString(36),(rows||[]).length].join('|');}
 function boqImportPreview(pid,rows,name){
   if(!proj(pid)){toast('ไม่พบโครงการปลายทาง');return;}
   var seen={},existing={};(S.boq||[]).filter(function(x){return x.pid===pid;}).forEach(function(x){existing[boqImportKey(x)]=1;});
@@ -2583,7 +2587,8 @@ function boqImportPreview(pid,rows,name){
   (rows||[]).forEach(function(x){if(!x||!String(x.name||'').trim()||!(+x.qty>0)||!(+x.unitPrice>=0)||!isFinite(+x.qty)||!isFinite(+x.unitPrice)){bad++;return;}var k=boqImportKey(x);if(seen[k]||existing[k]){dup++;return;}seen[k]=1;clean.push(x);});
   if(!clean.length){toast(dup?'ไฟล์นี้ซ้ำกับ BOQ ที่มีอยู่แล้ว':'ไม่พบรายการ BOQ ที่นำเข้าได้');return;}
   if(clean.length>5000){toast('ไฟล์มีรายการมากเกิน 5,000 แถว กรุณาแบ่งไฟล์');return;}
-  U.boqImport={pid:pid,rows:clean,file:name||'',rawCount:raw,duplicateCount:dup,invalidCount:bad};U.sheet={kind:'boqImportPreview'};render();
+  var batch=boqBatchKey(pid,name,clean),already=(S.boq||[]).some(function(x){return x.pid===pid&&x.importBatch===batch;});if(already){toast('ไฟล์ชุดนี้เคยนำเข้าในโครงการนี้แล้ว');return;}
+  U.boqImport={pid:pid,rows:clean,file:name||'',rawCount:raw,duplicateCount:dup,invalidCount:bad,batch:batch,total:clean.reduce(function(a,x){return a+boqAmount(x);},0)};U.sheet={kind:'boqImportPreview'};render();
 }
 function vBoq(){
   var rows=S.boq||[],tb=0,ta=0,linked=0,over=0;
@@ -3431,7 +3436,7 @@ document.addEventListener('click',function(e){
     S=migrate(o);persist();U.rsText='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว');
   }
   else if(a==='boqImportPick'){U.sheet={kind:'boqImportFile',pid:id};render();}
-  else if(a==='boqImportConfirm'){var im0=U.boqImport;if(!im0||!proj(im0.pid)||!im0.rows.length){toast('ไม่พบข้อมูลนำเข้า');return;}var snap0=(S.boq||[]).slice(),added=0;im0.rows.forEach(function(x){S.boq.push({id:uid(),pid:im0.pid,name:x.name,category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,note:x.note||('นำเข้าจาก '+(im0.file||'ไฟล์'))});added++;});if(!persist()){S.boq=snap0;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.boqImport=null;U.sheet=null;render();toast('นำเข้า BOQ แล้ว '+added+' รายการ');}
+  else if(a==='boqImportConfirm'){var im0=U.boqImport;if(!im0||!proj(im0.pid)||!im0.rows.length){toast('ไม่พบข้อมูลนำเข้า');return;}var snap0=(S.boq||[]).slice(),added=0;im0.rows.forEach(function(x){S.boq.push({id:uid(),pid:im0.pid,name:x.name,category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,note:x.note||('นำเข้าจาก '+(im0.file||'ไฟล์')),importBatch:im0.batch||'',importFile:im0.file||'',importedAt:Date.now()});added++;});if(!persist()){S.boq=snap0;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.boqImport=null;U.sheet=null;render();toast('นำเข้า BOQ แล้ว '+added+' รายการ');}
   else if(a==='boqPickOne'){U.sheet={kind:'boq',id:null,pid:id};render();}
   else if(a==='newBoq'){U.sheet={kind:'boq',id:null,pid:id||U.pid};render();}
   else if(a==='editBoq'){U.sheet={kind:'boq',id:id};render();}
