@@ -6,6 +6,8 @@ assert(/url\.pathname\s*===\s*['"]\/health['"]/.test(worker));
 assert(/url\.pathname\s*===\s*['"]\/ready['"]/.test(worker));
 assert(/url\.pathname\s*!==\s*['"]\/v1\/ocr\/expense['"]/.test(worker));
 assert(/allowedOrigins\(env\)\.includes\([A-Za-z_$][\w$]*\)/.test(worker));
+assert(worker.includes("new URL(r.url).origin"));
+assert(worker.includes("sameOriginAllowed:true"));
 assert(!/Access-Control-Allow-Origin['"]?\s*:\s*['"]\*/.test(worker));
 assert(/MAX_BODY_BYTES\s*=\s*3\s*\*\s*1024\s*\*\s*1024/.test(worker));
 assert(worker.includes("RATE_LIMITED"));

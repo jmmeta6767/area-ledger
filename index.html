@@ -2857,6 +2857,22 @@ function aiGatewayBase(){
     return u.href.replace(/\/+$/,'');
   }catch(_){return '';}
 }
+function aiGatewaySuggestedBase(){
+  try{
+    var host=String(location.hostname||'').toLowerCase();
+    if(location.protocol==='https:'&&/\.workers\.dev$/.test(host))return location.origin;
+  }catch(_){}
+  return 'https://area-ledger-ai-gateway-staging.areamaibab.workers.dev';
+}
+async function aiGatewayReadiness(){
+  var base=aiGatewayBase()||aiGatewaySuggestedBase(),ctrl=typeof AbortController!=='undefined'?new AbortController():null,timer=null;
+  try{
+    if(ctrl)timer=setTimeout(function(){ctrl.abort();},8000);
+    var res=await fetch(base+'/ready',{method:'GET',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined});
+    var data={};try{data=await res.json();}catch(_){}
+    return {ok:res.ok&&data&&data.ok===true,status:res.status,data:data,base:base};
+  }finally{if(timer)clearTimeout(timer);}
+}
 function aiGatewayEndpoint(path){
   var cfg=aiGatewayConfig(),base=aiGatewayBase();
   if(cfg.mode!=='gateway'||!cfg.remoteOcrConsent||!base)return '';
@@ -3596,8 +3612,8 @@ function sheetHtml(){
      '<div class="field"><label for="aiEndpoint">Gateway endpoint</label><input id="aiEndpoint" type="text" inputmode="url" autocapitalize="none" autocomplete="off" value="'+esc(aiGatewayConfig().endpoint)+'" placeholder="https://...workers.dev"><small class="muted" style="display:block;margin-top:7px">API key ไม่ถูกเก็บในแอปหรือเบราว์เซอร์</small></div>'+
      '<div class="field"><label for="aiTimeout">Timeout (ms)</label><input id="aiTimeout" type="number" inputmode="numeric" min="3000" max="30000" step="1000" value="'+aiGatewayConfig().timeoutMs+'"></div>'+
      '<button class="tog '+(aiGatewayConfig().remoteOcrConsent?'on':'')+'" data-act="aiConsent"><span class="sw"></span><span><b>อนุญาต Remote OCR</b><small>'+(aiGatewayConfig().remoteOcrConsent?'เปิดแล้ว · รูปจะส่งเฉพาะเมื่อใช้เมนู OCR':'ปิดอยู่ · ใช้ OCR ในเครื่องเท่านั้น')+'</small></span></button>'+
-     '<div class="field"><label for="appOrigin">Origin ของเว็บนี้</label><input id="appOrigin" type="text" readonly value="'+esc(location.origin)+'"><small class="muted" style="display:block;margin-top:7px">ใช้ค่านี้ใน Cloudflare ALLOWED_ORIGINS แบบตรงตัว</small></div>'+
-     '<div class="stack"><button class="btn" data-act="aiUseStaging">ใช้ Cloudflare staging endpoint</button><button class="btn" data-act="copyAppOrigin">คัดลอก Origin</button><button class="btn" data-act="openGatewayHealth">เปิด Gateway /health</button></div>'+
+     '<div class="field"><label for="appOrigin">Origin ของเว็บนี้</label><input id="appOrigin" type="text" readonly value="'+esc(location.origin)+'"><small class="muted" style="display:block;margin-top:7px">เมื่อแอปกับ Gateway อยู่ host เดียวกัน ระบบอนุญาต same-origin อัตโนมัติ · ALLOWED_ORIGINS ใช้เฉพาะ host ภายนอก</small></div>'+
+     '<div class="stack"><button class="btn" data-act="aiUseStaging">ใช้ Gateway ของ host นี้</button><button class="btn" data-act="aiCheckReady">ตรวจ Gateway readiness</button><button class="btn" data-act="copyAppOrigin">คัดลอก Origin</button><button class="btn" data-act="openGatewayHealth">เปิด Gateway /health</button></div>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
      '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
@@ -4020,9 +4036,10 @@ document.addEventListener('click',function(e){
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
   else if(a==='aiMode'){S.ai=S.ai||{};S.ai.mode=v==='gateway'?'gateway':'local';if(!persist())return;render();}
   else if(a==='aiConsent'){S.ai=S.ai||{};S.ai.remoteOcrConsent=S.ai.remoteOcrConsent!==true;if(!persist())return;render();}
-  else if(a==='aiUseStaging'){S.ai=S.ai||{};S.ai.mode='gateway';S.ai.endpoint='https://area-ledger-ai-gateway-staging.areamaibab.workers.dev';if(!persist())return;render();toast('ตั้งค่า Cloudflare staging แล้ว · เปิด Remote OCR เมื่อพร้อมส่งรูป');}
+  else if(a==='aiUseStaging'){S.ai=S.ai||{};S.ai.mode='gateway';S.ai.endpoint=aiGatewaySuggestedBase();if(!persist())return;render();toast('ตั้งค่า Gateway แล้ว · เปิด Remote OCR เมื่อพร้อมส่งรูป');}
   else if(a==='copyAppOrigin'){var origin=location.origin,done=false;try{var tmp=document.createElement('textarea');tmp.value=origin;tmp.style.position='fixed';tmp.style.opacity='0';document.body.appendChild(tmp);tmp.focus();tmp.select();done=document.execCommand('copy');tmp.remove();}catch(_){done=false;}if(!done&&navigator.clipboard)navigator.clipboard.writeText(origin).then(function(){toast('คัดลอก Origin แล้ว');},function(){toast(origin);});else toast(done?'คัดลอก Origin แล้ว':origin);}
-  else if(a==='openGatewayHealth'){var base=aiGatewayBase();if(!base){toast('กรอก Gateway endpoint ที่ถูกต้องก่อน');return;}var health=base+'/health';try{window.open(health,'_blank','noopener');}catch(_){location.href=health;}}
+  else if(a==='aiCheckReady'){aiGatewayReadiness().then(function(x){var d=x.data||{};if(x.ok)toast('Gateway พร้อมใช้งาน · protocol '+(d.protocol||'?'));else if(d.providerConfigured===false)toast('Gateway ทำงานแล้ว · เหลือ Gemini API secret');else if(d.durableState===false)toast('Gateway ยังขาด Durable Object');else toast('Gateway ยังไม่พร้อม · HTTP '+x.status);}).catch(function(){toast('ตรวจ Gateway ไม่สำเร็จ · ใช้ Local OCR ต่อได้');});}
+  else if(a==='openGatewayHealth'){var base=aiGatewayBase()||aiGatewaySuggestedBase();var health=base+'/health';try{window.open(health,'_blank','noopener');}catch(_){location.href=health;}}
   else if(a==='viewMode'){S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!persist())return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!persist())return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
@@ -4209,7 +4226,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=278',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=282',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
