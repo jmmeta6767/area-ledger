@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v265
+# AREA Ledger V1 — Master v266
 
-Gateway Contract / OCR Privacy Guard, based on GitHub `main` v264
-(`1522ea0631e9fe12298035cca51d0a1b7b7b6132`).
+Worker Contract / Server Boundary, based on GitHub `main` v265
+(`50a64091a21518e1783f1d343888b7c2d51101d3`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v266 Worker contract / server boundary
+
+- Added an isolated `gateway/` edge-worker contract; it is not enabled or called unless the browser is explicitly configured for consented remote OCR.
+- Health endpoint, exact-origin CORS allowlist, expense-OCR route allowlist, body-size guard and a conservative per-IP in-memory rate hook are included.
+- Provider API key is read only from server environment/secret storage; no secret value is committed or added to PWA state.
+- Added gateway contract QA to the release workflow to reject wildcard CORS, missing route/size/rate guards or committed provider secrets.
+- This is deployment-ready scaffolding only: no DNS, production endpoint or provider secret has been configured.
 
 ## v265 gateway contract / OCR privacy guard
 
@@ -279,8 +287,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v265-gateway-contract-privacy`.
-Registration: `sw.js?v=265`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v266-worker-contract`.
+Registration: `sw.js?v=266`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.

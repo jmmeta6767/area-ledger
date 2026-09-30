@@ -1,0 +1,13 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const worker=fs.readFileSync('gateway/src/worker.js','utf8');
+const wrangler=fs.readFileSync('gateway/wrangler.toml','utf8');
+assert(worker.includes("url.pathname === '/health'"));
+assert(worker.includes("url.pathname !== '/v1/ocr/expense'"));
+assert(worker.includes("allowedOrigins(env).includes(origin)"));
+assert(!worker.includes("'Access-Control-Allow-Origin': '*'"));
+assert(worker.includes("MAX_BODY_BYTES"));
+assert(worker.includes("RATE_LIMITED"));
+assert(worker.includes("env.OCR_API_KEY"));
+assert(!/OCR_API_KEY\s*=\s*["'][^"']+["']/.test(wrangler));
+assert(wrangler.includes('RATE_LIMIT_PER_MINUTE = "20"'));
+console.log('PASS gateway contract');
