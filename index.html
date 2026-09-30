@@ -3366,7 +3366,7 @@ document.addEventListener('click',function(e){
   else if(a==='saveDueTx'){
     var qd=S.tx.find(function(x){return x.id===id;}),qel=document.getElementById('quickDue');
     if(!qd||!qel||!qel.value){toast('เลือกวันที่ครบกำหนดก่อน');return;}
-    qd.due=qel.value;qd.paid=false;persist();U.sheet={kind:'tx',id:id};render();toast('บันทึกวันครบกำหนดแล้ว');
+    var oldQD={due:qd.due,paid:qd.paid};qd.due=qel.value;qd.paid=false;if(!persist()){qd.due=oldQD.due;qd.paid=oldQD.paid;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast('บันทึกวันครบกำหนดแล้ว');
   }
   else if(a==='clearDueTx'){
     var cd=S.tx.find(function(x){return x.id===id;});
@@ -3382,7 +3382,7 @@ document.addEventListener('click',function(e){
     else{U.draft.dueEnabled=!!t2.due;if(!U.draft.dueEnabled)U.draft.due='';}
     U.from=U.view;go('add');
   }
-  else if(a==='delTx'){if(U.confirm==='tx'+id){S.tx=S.tx.filter(function(x){return x.id!==id;});persist();U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
+  else if(a==='delTx'){if(U.confirm==='tx'+id){var oldTx=S.tx.slice();S.tx=S.tx.filter(function(x){return x.id!==id;});if(!persist()){S.tx=oldTx;toast('ลบไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
   else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',status:'paid',paidOnly:false};go('list');}
   else if(a==='clearPaidFilter'){U.filter.paidOnly=false;U.filter.status='all';render();}
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
@@ -3401,7 +3401,7 @@ document.addEventListener('click',function(e){
       var oldRefund=S.tx.find(function(t){return t.pid===rp.id&&t.type==='in'&&((t.cat||'')==='เงินประกันสัญญา'||(t.note||'').indexOf('รับคืนเงินประกันสัญญา')>=0);});
       rp.retRecv=true;rp.retRecvDate=today();
       if(!oldRefund)S.tx.push({id:'guarantee-refund-'+rp.id,date:today(),type:'in',amount:rp.retAmt,cat:'เงินประกันสัญญา',sub:'รับคืนเงินประกัน',pid:rp.id,partner:rp.client||'',pay:'transfer',vat:false,wht:false,paid:true,due:'',photo:'',note:'รับคืนเงินประกันสัญญาหลังส่งมอบครบ 2 ปี'});
-      persist();render();toast('บันทึกรับเงินประกันคืนแล้ว');
+      if(!persist()){rp.retRecv=false;rp.retRecvDate='';if(!oldRefund)S.tx=S.tx.filter(function(t){return t.id!=='guarantee-refund-'+rp.id;});toast('บันทึกรับคืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}render();toast('บันทึกรับเงินประกันคืนแล้ว');
     }
   }
   else if(a==='install'){U.sheet={kind:'install'};render();}
@@ -3424,12 +3424,12 @@ document.addEventListener('click',function(e){
     var bpid=el.dataset.pid||U.pid,bn=(document.getElementById('bqname')||{}).value||'',bqty=parseFloat((document.getElementById('bqqty')||{}).value)||0,bprice=parseFloat((document.getElementById('bqprice')||{}).value)||0;
     bn=bn.trim();if(!bpid||!proj(bpid)){toast('ไม่พบโครงการ');return;}if(!bn){toast('กรอกชื่อรายการ BOQ');return;}if(!(bqty>0)){toast('กรอกปริมาณมากกว่า 0');return;}if(bprice<0){toast('ราคาต่อหน่วยไม่ถูกต้อง');return;}
     var bo={pid:bpid,name:bn,category:(document.getElementById('bqcat')||{}).value||'ค่าของ',qty:bqty,unit:((document.getElementById('bqunit')||{}).value||'').trim(),unitPrice:bprice,note:((document.getElementById('bqnote')||{}).value||'').trim()};
-    var bi=id?(S.boq||[]).findIndex(function(x){return x.id===id;}):-1;if(bi>-1){bo.id=id;S.boq[bi]=bo;}else{bo.id=uid();S.boq.push(bo);}persist();U.sheet=null;render();toast('บันทึก BOQ แล้ว');
+    var bi=id?(S.boq||[]).findIndex(function(x){return x.id===id;}):-1,oldBoq=JSON.parse(JSON.stringify(S.boq));if(bi>-1){bo.id=id;S.boq[bi]=bo;}else{bo.id=uid();S.boq.push(bo);}if(!persist()){S.boq=oldBoq;toast('บันทึก BOQ ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึก BOQ แล้ว');
   }
   else if(a==='deleteBoq'){
     var linked=S.tx.some(function(t){return t.boqId===id;});if(linked){toast('ลบไม่ได้: BOQ นี้มีรายจ่ายเชื่อมอยู่');return;}
     if(U.confirm!=='boq'+id){U.confirm='boq'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');return;}
-    S.boq=(S.boq||[]).filter(function(x){return x.id!==id;});U.confirm=null;U.sheet=null;persist();render();toast('ลบรายการ BOQ แล้ว');
+    var oldBq=S.boq.slice();S.boq=(S.boq||[]).filter(function(x){return x.id!==id;});if(!persist()){S.boq=oldBq;toast('ลบ BOQ ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.confirm=null;U.sheet=null;render();toast('ลบรายการ BOQ แล้ว');
   }
   else if(a==='newProj'){U.sheet={kind:'proj',id:null};render();}
   else if(a==='editProj'){U.sheet={kind:'proj',id:id};render();}
