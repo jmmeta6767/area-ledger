@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v230
+# AREA Ledger V1 — Master v231
 
-Recovery / Conflict Hardening, based on GitHub `main` v229
+30-Day Executive Deadline Alerts, based on GitHub `main` v230
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v231 fixes
+
+- Executive Project Control is now a deadline alert: projects appear only when the effective contract deadline is within 30 days or overdue.
+- Added a 44px touch-friendly × button to dismiss an individual project alert.
+- Dismissal is persisted non-destructively in `ui.executiveDismissed`; it does not change project, contract, EOT, BOQ, or accounting records.
+- Added regression tests for the 30-day boundary and persisted dismissal.
 
 ## v230 fixes
 
