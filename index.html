@@ -1824,6 +1824,26 @@ textarea{resize:vertical}
 @media(prefers-color-scheme:dark){.app-drawer-menu small{color:#b6c0ca}.app-drawer-ico{color:#c9d4df}.app-drawer-docs button,.app-drawer-docs button:first-child{background:#222d38;border-color:#35414c;color:#fff}.app-drawer-docs svg{color:#c9d4df}.app-drawer-menu>button:active{background:#3a3320}}
 @media(prefers-reduced-motion:reduce){.app-drawer{animation:none}}
 </style>
+<style>
+/* v148: mobile settings flow and readable navigation */
+.hd .header-home{color:#fff!important;background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.3)!important;border-radius:12px;display:grid;place-items:center}
+.hd .header-home svg{width:22px;height:22px;stroke:currentColor!important;fill:none!important}
+.home-top-actions svg{width:23px;height:23px}
+.settings-sheet .stack{position:static!important;background:none!important;margin-top:18px;padding-top:14px;border-top:1px solid #d9dfe4}
+.settings-sheet{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important;scroll-padding-top:64px}
+.settings-sheet .settings-title{display:flex;align-items:center;justify-content:space-between;background:#f1f3f2;gap:12px}
+.settings-title button{width:44px;height:44px;flex-shrink:0;border:0;border-radius:12px;background:#e4e8eb;color:#24313c;font-size:28px;line-height:1}
+.settings-sheet .stack .btn{display:flex;align-items:center;justify-content:center;gap:8px;border-width:1px;border-radius:12px}
+.settings-sheet .seg{border-width:1px;border-color:#d9dfe4;border-radius:12px;padding:3px}
+.settings-sheet .seg button{border-radius:9px}
+.due-guarantee .row{padding:14px!important;align-items:flex-start;gap:12px}
+.due-guarantee .row .l{min-width:0;flex:1}
+.due-guarantee .row .l small{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.5}
+.due-guarantee .row .r{flex-shrink:0;max-width:44%;white-space:normal;text-align:right}
+.due-guarantee .row .r>span:last-child{font-size:11px;line-height:1.5;color:#66717e}
+.app-drawer{padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))!important}
+@media(prefers-color-scheme:dark){.settings-sheet .settings-title{background:#0f151c}.settings-title button{background:#263442;color:#fff}.due-guarantee .row .r>span:last-child{color:#bdc6cf}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2232,7 +2252,7 @@ function homeUrgentAlert(allMode,active,all){
 
 function header(title,back){
   var menu='<button class="app-menu-btn" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button>';
-  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header"><div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><div class="home-top-actions"><button data-act="settings" aria-label="ตั้งค่า">⚙</button><button data-act="appMenu" aria-label="เมนูเพิ่มเติม">•••</button></div></div>';
+  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header"><div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><div class="home-top-actions"><button data-act="settings" aria-label="ตั้งค่า">'+ic('settings')+'</button><button data-act="appMenu" aria-label="เมนูเพิ่มเติม">•••</button></div></div>';
   return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="navBack" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1>'+(back?'<button class="header-home" data-act="navHome" aria-label="กลับหน้าหลัก">'+ic('home')+'</button>':'')+'</div><div class="stripe"></div></div>';
 }
 
@@ -2927,7 +2947,7 @@ function sheetHtml(){
       (available.length?available.map(function(p){return '<button data-act="dashAdd" data-id="'+p.id+'"><span><b>'+esc(p.name)+'</b><small>'+esc(dst(p))+'</small></span><strong>+ เพิ่ม</strong></button>';}).join(''):'<div class="dash-manager-complete">ทุกโครงการอยู่ในแดชบอร์ดแล้ว</div>')+
       '</div></div>';
   }else if(sh.kind==='settings'){
-    b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">แตะแล้วสลับโหมดทันที ไม่ต้องยืนยัน</small></div><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
+    b='<h3 class="settings-title"><span>ตั้งค่า</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3><div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">แตะแล้วสลับโหมดทันที ไม่ต้องยืนยัน</small></div><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
      (S.role==='owner'?'<div class="field"><label for="brn">ชื่อกิจการ / ชื่อที่แสดง</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
      '<div class="field"><span class="lbl" style="font-size:1.05rem;font-weight:800">ข้อมูลเพื่อแสดงบนเอกสาร</span></div>'+
@@ -3005,7 +3025,7 @@ function sheetHtml(){
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
-  return '<div class="scrim master-scrim" data-act="scrim"><div class="sheet master-sheet'+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
+  return '<div class="scrim master-scrim" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
 }
 function csvText(){
   var rows=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
