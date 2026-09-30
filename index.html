@@ -2598,7 +2598,7 @@ function thaiGovBoqRows(text){
     if(thaiGovNoise(line)){rejected++;return;}
     var unit=thaiGovUnit(line),rawNums=(line.match(/\d[\d,]*(?:\.\d+)?/g)||[]),nums=rawNums.map(thaiBoqNum).filter(function(n){return isFinite(n)&&n>=0;});
     var name=line.replace(/\d[\d,]*(?:\.\d+)?/g,' ').replace(new RegExp(unit.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&'),'ig'),' ').replace(/[|#_=°]+/g,' ').replace(/\s+/g,' ').trim();
-    if(!unit||name.length<3||nums.length<3){rejected++;return;}
+    if(!unit||name.length<3||name.length>140||nums.length<3||/กลุ่มงาน|หมวดงาน|โครงสร้างวิศวกรรม|ส่วนราชการ|โครงการ/i.test(name)){rejected++;return;}
     var qty=nums[0];if(!(qty>0)||qty>1000000){rejected++;return;}
     var pairs=[];
     for(var i=1;i<nums.length-1;i++){var price=nums[i],amt=nums[i+1];if(price>0&&amt>0){var err=Math.abs(qty*price-amt)/Math.max(1,amt);if(err<=.03)pairs.push({price:price,amount:amt,error:err});}}
