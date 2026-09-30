@@ -1844,6 +1844,41 @@ textarea{resize:vertical}
 .app-drawer{padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))!important}
 @media(prefers-color-scheme:dark){.settings-sheet .settings-title{background:#0f151c}.settings-title button{background:#263442;color:#fff}.due-guarantee .row .r>span:last-child{color:#bdc6cf}}
 </style>
+<style>
+/* v149: mobile cards, readable reports and compact forms */
+.master-doc-head{background:#fff!important;color:#17202b!important}
+.master-doc-head b{color:#17202b!important}
+.master-doc-head small{color:#66717e!important}
+.doc-type-icon svg,.proc-icon svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8}
+.master-report-grid>div>b,.master-report-grid>div>small,.master-report-grid>div>span{display:block;line-height:1.5}
+.master-report-grid>div>span{margin-top:6px;font-size:12px}
+.guarantee-summary>div{min-width:0!important;max-width:100%;overflow-wrap:anywhere}
+.guarantee-summary{overflow:visible;scroll-snap-type:none}
+.master-form-page>.field{min-width:0}
+.master-form-page>.field>label,.master-form-page>.field>.lbl{display:block;margin:0 0 8px!important}
+.master-form-page input,.master-form-page select,.master-form-page textarea{box-sizing:border-box;min-width:0;max-width:100%;width:100%}
+.master-form-page input[type=date]{min-width:0!important;width:100%!important;max-width:100%!important;-webkit-appearance:none;appearance:none}
+.master-form-page .seg{border-width:1px;border-radius:14px;padding:4px;gap:4px}
+.master-form-page .seg button{min-width:0;white-space:normal;line-height:1.4;border-radius:10px;padding:10px 8px}
+.master-form-page .amt{border-width:1px;border-radius:12px}
+.master-form-page .amt input{border:0!important;box-shadow:none!important;background:transparent!important}
+.master-form-page .amt:focus-within{outline:2px solid #dfa313;outline-offset:2px}
+.master-form-page .field:focus-within{box-shadow:none;outline:none}
+@media screen and (max-width:600px){
+.guarantee-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+.guarantee-summary>div:first-child{grid-column:1/-1}
+.guarantee-summary small{font-size:12px;line-height:1.5}
+.guarantee-summary b{font-size:23px}
+.project-results-table,.project-results-table tbody{display:block;width:100%;min-width:0!important}
+.project-results-table tr:first-child{display:none}
+.project-results-table tr{display:block;padding:12px 0;border-bottom:1px solid #e1e6e9}
+.project-results-table td{display:flex;justify-content:space-between;align-items:baseline;gap:12px;width:100%!important;min-width:0!important;padding:7px 0;border:0;white-space:normal!important;text-align:right;box-sizing:border-box;font-size:14px}
+.project-results-table td::before{content:attr(data-label);font-weight:400;color:#66717e;text-align:left;flex:0 0 44%}
+.project-results-table td:first-child{display:block;font-weight:700;text-align:left;line-height:1.6;margin-bottom:7px}
+.project-results-table td:first-child::before{display:none}
+.project-results-table td b{overflow-wrap:anywhere}
+}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2582,8 +2617,8 @@ function vReport(){
   h+='</div><div class="sec master-report-card"><h2>ตรวจสอบใบวางบิล ↔ รายรับจริง</h2><div class="kv"><span>ใบวางบิลเดือนนี้</span><span class="num">'+monthBills.length+' ฉบับ</span></div><div class="kv"><span>ยังค้างรับ</span><span class="num out">'+fmt(monthOpen)+'</span></div><div class="kv"><span>รับเงินจริงแล้ว</span><span class="num in">'+fmt(monthSettled)+'</span></div><div class="muted" style="font-size:.82rem">ยอดรับจริงเชื่อมจากลูกหนี้ของใบวางบิล และใบเสร็จที่ออกจากใบวางบิล</div></div>'+function(){var ar=billingReconcile('');return '<div class="sec master-report-card"><h2>สุขภาพข้อมูลบัญชี</h2><div class="kv"><span>ใบวางบิลไม่มีลูกหนี้เชื่อม</span><span class="num">'+ar.unlinked+'</span></div><div class="kv"><span>ยอดใบวางบิลไม่ตรงลูกหนี้</span><span class="num">'+ar.mismatch+'</span></div><div class="kv"><span>รับเงินจริงแล้วแต่ไม่มีใบเสร็จเชื่อม</span><span class="num">'+ar.missingReceipt+'</span></div><div class="kv"><span>รายการบัญชีอ้างใบวางบิลที่ไม่พบ</span><span class="num">'+ar.orphanTx+'</span></div><b class="'+(ar.issues?'out':'in')+'">'+(ar.issues?'พบ '+ar.issues+' จุดที่ควรตรวจสอบ':'ข้อมูลเชื่อมโยงปกติ')+'</b>'+((ar.unlinked||ar.mismatch)?'<button class="btn" style="margin-top:10px" data-act="repairBilling">ซ่อมความเชื่อมโยงที่ปลอดภัย</button>':'')+'</div>';}()+'<div class="sec master-report-card"><h2>ภาษีของเดือนนี้ (ประมาณการ)</h2>'+
    '<div class="kv"><span>VAT ขาย</span><span class="num">'+fmt(vi)+'</span></div><div class="kv"><span>VAT ซื้อ</span><span class="num">'+fmt(vo)+'</span></div><div class="kv"><span>VAT ที่ต้องนำส่งโดยประมาณ</span><span class="num">'+fmt(vi-vo)+'</span></div>'+
    '<div class="kv"><span>ลูกค้าหัก ณ ที่จ่ายเรา (เครดิตภาษี)</span><span class="num">'+fmt(wi)+'</span></div><div class="kv"><span>เราหัก ณ ที่จ่ายผู้อื่น (ต้องนำส่ง)</span><span class="num">'+fmt(wo)+'</span></div></div>';
-  h+='<div class="sec master-report-card"><h2>ผลประกอบการรายโครงการ (ทั้งหมด)</h2><div class="wrapx"><table><tr><th>โครงการ</th><th>มูลค่างาน</th><th>ต้นทุนจริง</th><th>กำไรคาดการณ์</th><th>รับจริง</th><th>กำไร/ขาดทุนสุทธิ</th></tr>';
-  S.projects.forEach(function(p){var s=stats(p.id),v=+p.contract||0,cost=s.outB,pf=v-cost,np=s.recd-cost;h+='<tr><td>'+esc(p.name)+'</td><td class="num">'+fmt(v)+'</td><td class="num">'+fmt(cost)+'</td><td class="num '+(pf>=0?'in':'out')+'"><b>'+fmt(pf)+'</b></td><td class="num">'+fmt(s.recd)+'</td><td class="num '+(s.recd>0?(np>=0?'in':'out'):'')+'"><b>'+(s.recd>0?fmt(np):'รอรับรายได้')+'</b></td></tr>';});
+  h+='<div class="sec master-report-card"><h2>ผลประกอบการรายโครงการ (ทั้งหมด)</h2><div class="wrapx"><table class="project-results-table"><tr><th>โครงการ</th><th>มูลค่างาน</th><th>ต้นทุนจริง</th><th>กำไรคาดการณ์</th><th>รับจริง</th><th>กำไร/ขาดทุนสุทธิ</th></tr>';
+  S.projects.forEach(function(p){var s=stats(p.id),v=+p.contract||0,cost=s.outB,pf=v-cost,np=s.recd-cost;h+='<tr><td data-label="โครงการ">'+esc(p.name)+'</td><td data-label="มูลค่างาน" class="num">'+fmt(v)+'</td><td data-label="ต้นทุนจริง" class="num">'+fmt(cost)+'</td><td data-label="กำไรคาดการณ์" class="num '+(pf>=0?'in':'out')+'"><b>'+fmt(pf)+'</b></td><td data-label="รับจริง" class="num">'+fmt(s.recd)+'</td><td data-label="กำไร/ขาดทุนสุทธิ" class="num '+(s.recd>0?(np>=0?'in':'out'):'')+'"><b>'+(s.recd>0?fmt(np):'รอรับรายได้')+'</b></td></tr>';});
   h+='</table></div></div>'+
    '<div class="sec master-report-card"><h2>ส่งออกรายงาน</h2><label class="lbl" for="expid" style="margin-top:6px">ขอบเขตข้อมูล</label><select id="expid" data-f="exp"><option value="">ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+((U.exportPid||'')===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'+
    '<div class="stack"><button class="btn pri" data-act="xlsx">ส่งออก Excel (.xlsx)</button><button class="btn" data-act="pdfView">รายงาน PDF / พิมพ์</button><button class="btn" data-act="csv">คัดลอกเป็น CSV</button></div>'+
@@ -2718,14 +2753,14 @@ function vDocs(){
   var counts={quote:(S.quotes||[]).length,bill:(S.bills||[]).length,receipt:(S.receipts||[]).length};
   return '<div class="doc-head master-doc-head"><div><b>เอกสารธุรกิจ</b><small>เลือกประเภทเอกสาร</small></div></div>'+
     '<div class="doc-type-grid" aria-label="ประเภทเอกสาร">'+
-      '<button data-act="docSection" data-kind="quote"><span class="doc-type-icon">QT</span><b>ใบเสนอราคา</b><small>'+counts.quote+' ฉบับ</small><strong>›</strong></button>'+
-      '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">BL</span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ</small><strong>›</strong></button>'+
-      '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">RC</span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small><strong>›</strong></button>'+
+      '<button data-act="docSection" data-kind="quote"><span class="doc-type-icon">'+ic('quote')+'</span><b>ใบเสนอราคา</b><small>'+counts.quote+' ฉบับ</small><strong>›</strong></button>'+
+      '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">'+ic('bill')+'</span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ</small><strong>›</strong></button>'+
+      '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">'+ic('receipt')+'</span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small><strong>›</strong></button>'+
     '</div>';
 }
 function vProcurement(){
   var n=(S.materialApprovals||[]).length;
-  return '<div class="proc-head"><div><b>งานพัสดุ</b><small>เอกสารโครงการแยกจากเอกสารธุรกิจ</small></div></div><div class="proc-grid"><button data-act="procurementInfo"><span class="proc-icon">MA</span><span><b>ขออนุมัติใช้วัสดุ</b><small>'+n+' รายการ · โมดูลแรก</small></span><strong>›</strong></button><button disabled aria-disabled="true"><span class="proc-icon">หนังสือ</span><span><b>หนังสือราชการ</b><small>ลำดับถัดไป</small></span><strong>›</strong></button></div>';
+  return '<div class="proc-head"><div><b>งานพัสดุ</b><small>เอกสารโครงการแยกจากเอกสารธุรกิจ</small></div></div><div class="proc-grid"><button data-act="procurementInfo"><span class="proc-icon">'+ic('box')+'</span><span><b>ขออนุมัติใช้วัสดุ</b><small>'+n+' รายการ · โมดูลแรก</small></span><strong>›</strong></button><button disabled aria-disabled="true"><span class="proc-icon">'+ic('documents')+'</span><span><b>หนังสือราชการ</b><small>ลำดับถัดไป</small></span><strong>›</strong></button></div>';
 }
 function vDocList(){
   var kind=U.docListKind||'quote',projectFilter=U.docProjectPid||'',projectName=projectFilter?pname(projectFilter):'',list=docKindList(kind).filter(function(q){return !projectFilter||q.pid===projectFilter||q.project===projectName;}).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),label=docKindLabel(kind),act=kind==='bill'?'newBill':kind==='receipt'?'newReceipt':'newQuote';
