@@ -18,4 +18,24 @@ async function idemGet(env,key){const d=await durableCall(env.GATEWAY_STATE,'ide
 async function idemSet(env,key,value){const d=await durableCall(env.GATEWAY_STATE,'idem-set',{key,windowMs:WINDOW_MS,value});if(d)return;idempotency.set(key,{at:Date.now(),value});if(idempotency.size>500)idempotency.delete(idempotency.keys().next().value);}
 function auditMeta(rid,origin,status,started,provider){return {requestId:rid,origin,status,provider,durationMs:Date.now()-started,at:new Date().toISOString()};}
 async function audit(env,meta){if(!env.GATEWAY_AUDIT)return;try{await env.GATEWAY_AUDIT.put('audit/'+meta.at+'/'+meta.requestId+'.json',JSON.stringify(meta),{httpMetadata:{contentType:'application/json'}});}catch(_){}}
+export class GatewayState {
+  constructor(state){this.state=state;}
+  async fetch(request){
+    const path=new URL(request.url).pathname,body=await request.json(),now=Date.now(),storage=this.state.storage;
+    if(path==='/rate'){
+      const k='rate:'+body.key,old=await storage.get(k),windowMs=Math.max(1000,+body.windowMs||WINDOW_MS),limit=Math.max(1,+body.limit||20);
+      const next=!old||now-old.start>=windowMs?{start:now,count:1}:{start:old.start,count:old.count+1};
+      await storage.put(k,next,{expirationTtl:Math.max(60,Math.ceil(windowMs/1000)*2)});
+      return json({allowed:next.count<=limit});
+    }
+    if(path==='/idem-get'){
+      const x=await storage.get('idem:'+body.key);if(!x||now-x.at>Math.max(1000,+body.windowMs||WINDOW_MS))return json({hit:false});
+      return json({hit:true,value:x.value});
+    }
+    if(path==='/idem-set'){
+      const windowMs=Math.max(1000,+body.windowMs||WINDOW_MS);await storage.put('idem:'+body.key,{at:now,value:body.value},{expirationTtl:Math.max(60,Math.ceil(windowMs/1000)*2)});return json({ok:true});
+    }
+    return json({error:'STATE_ROUTE_NOT_FOUND'},404);
+  }
+}
 export default{async fetch(request,env){const started=Date.now(),url=new URL(request.url),rid=requestId(request);if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:!!(env.OCR_UPSTREAM_URL&&env.OCR_API_KEY),durableState:!!env.GATEWAY_STATE,auditSink:!!env.GATEWAY_AUDIT},200,'',rid);const origin=corsOrigin(request,env);if(request.method==='OPTIONS')return origin?json({ok:true,protocol:PROTOCOL_VERSION},204,origin,rid):json({error:'ORIGIN_DENIED'},403,'',rid);if(url.pathname!=='/v1/ocr/expense'||request.method!=='POST')return json({error:'NOT_FOUND'},404,'',rid);if(!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);if(!(await rateAllowed(request,env)))return json({error:'RATE_LIMITED'},429,origin,rid);const key=origin+'|'+rid,cached=await idemGet(env,key);if(cached)return json(cached,200,origin,rid);let status=200;try{const payload=validateExpense(await readJson(request)),result=await expenseOcr(payload,env,rid);await idemSet(env,key,result);return json(result,200,origin,rid);}catch(e){const code=String(e&&e.message||'GATEWAY_ERROR');status=code==='PAYLOAD_TOO_LARGE'?413:code==='INVALID_IMAGE'?400:code==='PROVIDER_NOT_CONFIGURED'?503:code==='PROVIDER_UNSUPPORTED'?501:code==='AbortError'?504:502;return json({error:code},status,origin,rid);}finally{await audit(env,auditMeta(rid,origin,status,started,String(env.OCR_PROVIDER||'generic')));}}};

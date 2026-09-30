@@ -30,3 +30,7 @@ jobs:
         run: node tests/qa.cjs
       - name: Gateway contract QA
         run: node tests/gateway-contract.cjs
+      - name: Gateway runtime QA
+        run: node tests/gateway-runtime.cjs
+      - name: Gateway staging preflight
+        run: node tests/gateway-preflight.cjs
