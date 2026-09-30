@@ -1985,9 +1985,14 @@ var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',sta
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
+var BACKUP_KEY=KEY+'-recovery';
 function idbOpen(){return new Promise(function(res,rej){try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){r.result.createObjectStore('kv');};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
-function idbSet(v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'state');t.oncomplete=function(){res(true);};t.onerror=function(){res(false);};t.onabort=function(){res(false);};});}).catch(function(){return false;});}
-function idbGet(){return idbOpen().then(function(db){return new Promise(function(res){var r=db.transaction('kv').objectStore('kv').get('state');r.onsuccess=function(){res(r.result);};r.onerror=function(){res(null);};});}).catch(function(){return null;});}
+function idbPut(k,v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=function(){res(true);};t.onerror=function(){res(false);};t.onabort=function(){res(false);};});}).catch(function(){return false;});}
+function idbRead(k){return idbOpen().then(function(db){return new Promise(function(res){var r=db.transaction('kv').objectStore('kv').get(k);r.onsuccess=function(){res(r.result);};r.onerror=function(){res(null);};});}).catch(function(){return null;});}
+function idbSet(v){return idbPut('state',v);}
+function idbGet(){return idbRead('state');}
+function loadRecovery(){try{var raw=localStorage.getItem(BACKUP_KEY);if(raw){var o=JSON.parse(raw);if(o&&Array.isArray(o.tx)&&Array.isArray(o.projects))return migrate(o);}}catch(e){}return null;}
+function stateHealth(o){o=o||S;var p={},b={},issues=[];(o.projects||[]).forEach(function(x){if(!x||!x.id)issues.push('โครงการไม่มี ID');else if(p[x.id])issues.push('Project ID ซ้ำ');else p[x.id]=1;});(o.boq||[]).forEach(function(x){if(!x||!x.id)issues.push('BOQ ไม่มี ID');else if(b[x.id])issues.push('BOQ ID ซ้ำ');else b[x.id]=1;if(x&&!p[x.pid])issues.push('BOQ ไม่พบโครงการ');});(o.tx||[]).forEach(function(x){if(!x||!x.id)issues.push('รายการบัญชีไม่มี ID');if(x&&!p[x.pid])issues.push('รายการบัญชีไม่พบโครงการ');if(x&&x.boqId&&!b[x.boqId])issues.push('รายการบัญชีอ้าง BOQ ที่ไม่มี');if(x&&(!isFinite(+x.amount)||+x.amount<0))issues.push('จำนวนเงินผิดรูปแบบ');});return {ok:issues.length===0,issues:issues.slice(0,20),projects:(o.projects||[]).length,tx:(o.tx||[]).length,boq:(o.boq||[]).length};}
 function loadLS(){try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&o.tx)return migrate(o);}}catch(e){}return null;}
 function seed(){
   var P=[
@@ -2089,8 +2094,8 @@ function mergeThaSalaDocument(){
   return changed;
 }
 function persist(){
-  S.updatedAt=Date.now();var json='',ok=false;
-  try{json=JSON.stringify(S);localStorage.setItem(KEY,json);ok=localStorage.getItem(KEY)===json;}catch(e){ok=false;}
+  S.updatedAt=Date.now();var json='',ok=false,prev='';
+  try{json=JSON.stringify(S);prev=localStorage.getItem(KEY)||'';if(prev&&prev!==json){try{var po=JSON.parse(prev);if(po&&Array.isArray(po.tx)&&Array.isArray(po.projects)){localStorage.setItem(BACKUP_KEY,prev);idbPut('state-backup',prev);}}catch(x){}}localStorage.setItem(KEY,json);ok=localStorage.getItem(KEY)===json;}catch(e){ok=false;}
   if(json)idbSet(json).then(function(ok2){if(!ok&&!ok2)toast('บันทึกไม่สำเร็จ: พื้นที่จัดเก็บอาจเต็ม');});
   return ok;
 }
@@ -3061,6 +3066,8 @@ function sheetHtml(){
       '<div class="dash-manager-section"><b>'+(available.length?'เพิ่มโครงการ':'ครบแล้ว')+'</b><div class="dash-manager-list">'+
       (available.length?available.map(function(p){return '<button data-act="dashAdd" data-id="'+p.id+'"><span><b>'+esc(p.name)+'</b><small>'+esc(dst(p))+'</small></span><strong>+ เพิ่ม</strong></button>';}).join(''):'<div class="dash-manager-complete">ทุกโครงการอยู่ในแดชบอร์ดแล้ว</div>')+
       '</div></div>';
+  }else if(sh.kind==='health'){
+    var hh=sh.health||stateHealth(S);b='<h3>สุขภาพข้อมูล</h3><div class="field"><b>'+(hh.ok?'✓ ไม่พบความผิดปกติ':'พบจุดต้องตรวจ')+'</b><div class="muted" style="margin-top:8px">'+hh.projects+' โครงการ · '+hh.tx+' รายการบัญชี · '+hh.boq+' BOQ</div></div>'+(hh.issues&&hh.issues.length?'<div class="field">'+hh.issues.map(function(x){return '<div>• '+esc(x)+'</div>';}).join('')+'</div>':'')+'<div class="stack"><button class="btn" data-act="settings">กลับตั้งค่า</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='settings'){
     b='<h3 class="settings-title"><span>ตั้งค่า</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3><div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">แตะแล้วสลับโหมดทันที ไม่ต้องยืนยัน</small></div><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
@@ -3077,7 +3084,7 @@ function sheetHtml(){
      '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
      '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+'<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div><small class="muted" style="display:block;margin-top:7px">พื้นหลังสไตล์สำนักงาน/งานก่อสร้างแบบจาง เพื่อไม่รบกวนการอ่านบัญชี</small></div>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
-     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
+     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
   }else if(sh.kind==='bizdoc'){
     var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind),docPid=(q&&q.pid)||U.docProjectPid||'',docProj=docPid?proj(docPid):null;
@@ -3261,6 +3268,7 @@ function directAction(el){
   if(a==='appMenuClose'){U.appMenu=false;render();return true;}
   if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();return true;}
   if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};render();return true;}
+  if(a==='healthCheck'){var hh=stateHealth(S);toast(hh.ok?'ข้อมูลปกติ · '+hh.projects+' โครงการ · '+hh.tx+' รายการ · '+hh.boq+' BOQ':'พบจุดต้องตรวจ '+hh.issues.length+' รายการ');if(!hh.ok){U.sheet={kind:'health',health:hh};render();}return true;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.getAttribute('data-kind')||'quote';go('doclist');return true;}
   if(a==='openProj'){U.pid=id;go('project',{pid:id});return true;}
   if(a==='boqOpenProject'){U.pid=id;go('project',{pid:id});return true;}
@@ -3592,8 +3600,8 @@ function boot(){
     if(best&&best===o&&o!==ls)persist();
     try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   }
-  idbGet().then(function(raw){var o=null;try{o=raw?migrate(JSON.parse(raw)):null;}catch(e){}start(o);});
-  setTimeout(function(){start(null);},1500);
+  Promise.all([idbGet(),idbRead('state-backup')]).then(function(vals){var primary=null,backup=null;try{primary=vals[0]?migrate(JSON.parse(vals[0])):null;}catch(e){}try{backup=vals[1]?migrate(JSON.parse(vals[1])):null;}catch(e){}var local=loadLS(),recovery=loadRecovery(),best=primary;if(local&&(!best||(local.updatedAt||0)>(best.updatedAt||0)))best=local;if(recovery&&(!best||(recovery.updatedAt||0)>(best.updatedAt||0)))best=recovery;if(backup&&(!best||(backup.updatedAt||0)>(best.updatedAt||0)))best=backup;start(best);});
+  setTimeout(function(){var recovery=loadRecovery();start(recovery);},1800);
 }
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){});}
 boot();
