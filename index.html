@@ -2123,6 +2123,57 @@ function mergeThaSalaDocument(){
   });
   return changed;
 }
+function mergeThaSalaPr4Boq(){
+  var p=(S.projects||[]).find(function(x){return x.id==='thasala-m7'||(x.name||'').indexOf('ท่าศาลา')>-1;});
+  if(!p)return false;
+  S.boq=S.boq||[];
+  var batch='thasala-pr4-manual-20260930-v1',file='ปร.4 อาคารอเนกประสงค์ หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม · 4 ภาพ',at=Date.now(),changed=false;
+  var rows=[
+    ['งานสกัดพื้นอาคารเดิม','ค่าแรง',18,'ตร.ม.',72],
+    ['งานขุดดิน','ค่าแรง',28.80,'ลบ.ม.',153],
+    ['ทรายหยาบรองพื้น','ค่าของ',21.62,'ลบ.ม.',375],
+    ['ทรายหยาบรองพื้น','ค่าแรง',21.62,'ลบ.ม.',112],
+    ['คอนกรีตโครงสร้าง รูปลูกบาศก์ 180 กก./ตร.ซม.','ค่าของ',0.90,'ลบ.ม.',2364.48],
+    ['คอนกรีตโครงสร้าง รูปลูกบาศก์ 180 กก./ตร.ซม.','ค่าแรง',0.90,'ลบ.ม.',329],
+    ['คอนกรีตโครงสร้าง รูปลูกบาศก์ 280 กก./ตร.ซม.','ค่าของ',9.86,'ลบ.ม.',2644.86],
+    ['คอนกรีตโครงสร้าง รูปลูกบาศก์ 280 กก./ตร.ซม.','ค่าแรง',9.86,'ลบ.ม.',421],
+    ['เหล็กเสริม RB 9 mm. SR 24','ค่าของ',0.170,'ตัน',21632.05],
+    ['เหล็กเสริม RB 9 mm. SR 24','ค่าแรง',0.170,'ตัน',4900],
+    ['เหล็กเสริม DB 12 mm. SD-40','ค่าของ',0.030,'ตัน',21049.08],
+    ['เหล็กเสริม DB 12 mm. SD-40','ค่าแรง',0.030,'ตัน',3900],
+    ['เหล็กเสริม DB 16 mm. SD-40','ค่าของ',1.13,'ตัน',20713.53],
+    ['เหล็กเสริม DB 16 mm. SD-40','ค่าแรง',1.13,'ตัน',3900],
+    ['ลวดผูกเหล็ก ศก.1.25 มม. (เบอร์ 18)','ค่าของ',39,'กก.',44.39],
+    ['ไม้แบบ','ค่าของ',59.14,'ลบ.ฟ.',545.41],
+    ['ค่าแรงงานไม้แบบ','ค่าแรง',73.92,'ตร.ม.',163],
+    ['ท่อเหล็กกลวงสี่เหลี่ยมจัตุรัส หนา 2.0 mm. ขนาด 2"x2" ยาว 6 m.','ค่าของ',17,'ท่อน',491.59],
+    ['เหล็กรูปพรรณ C-100x50x25x3.2 mm. ยาว 6 m.','ค่าของ',137,'ท่อน',762.62],
+    ['ค่าแรงงานประกอบเหล็กโครงหลังคาทั่วไป','ค่าแรง',4793.85,'กก.',12],
+    ['แผ่นเพลทเหล็ก ขนาด 10 x 10 นิ้ว หนา 12 mm.','ค่าของ',16,'แผ่น',367.29],
+    ['โบล์ทเหล็ก M20 x 400 mm.','ค่าของ',32,'ชุด',131.78],
+    ['งานทาสีใหม่','ค่าของ',267,'ตร.ม.',36.28],
+    ['งานทาสีใหม่','ค่าแรง',267,'ตร.ม.',36],
+    ['วัสดุมุงหลังคา Metal sheet แผ่นเหล็กรีดลอน 0.40 mm.','ค่าของ',368,'เมตร',140.19],
+    ['ค่าแรงมุงหลังคา','ค่าแรง',272,'ตร.ม.',72],
+    ['อุปกรณ์ยึดหลังคา (สกรูยึดแผ่นหลังคา)','ค่าของ',8,'กล่อง',191.59],
+    ['วัสดุครอบสันหลังคาเหล็ก','ค่าของ',17,'เมตร',98.13],
+    ['งานฉาบปูนฉาบโครงสร้าง','ค่าของ',48,'ตร.ม.',27.25],
+    ['งานฉาบปูนฉาบโครงสร้าง','ค่าแรง',48,'ตร.ม.',109],
+    ['งานทาสีน้ำพลาสติกโครงสร้าง','ค่าของ',48,'ตร.ม.',50.64],
+    ['งานทาสีน้ำพลาสติกโครงสร้าง','ค่าแรง',48,'ตร.ม.',35]
+  ];
+  var total=rows.reduce(function(a,r){return a+r[2]*r[4];},0);
+  if(Math.abs(total-412812.83)>.02){console.error('Tha Sala PR4 reconciliation failed',total);return false;}
+  var existing={};S.boq.filter(function(x){return x.pid===p.id;}).forEach(function(x){existing[boqImportKey(x)]=1;});
+  rows.forEach(function(r,i){
+    var x={pid:p.id,name:r[0],category:r[1],qty:r[2],unit:r[3],unitPrice:r[4]};
+    var k=boqImportKey(x);if(existing[k])return;
+    x.id='thasala-pr4-'+String(i+1).padStart(2,'0');x.note='ถอดจาก ปร.4 ภาพจริง · ตรวจยอดสะสม 48,884.85 / 128,032.73 / 402,162.11 / 412,812.83';x.importBatch=batch;x.importFile=file;x.importedAt=at;
+    S.boq.push(x);existing[k]=1;changed=true;
+  });
+  return changed;
+}
+
 function persist(){
   S.updatedAt=Date.now();var json='',ok=false,prev='';
   try{json=JSON.stringify(S);prev=localStorage.getItem(KEY)||'';if(prev&&prev!==json){try{var po=JSON.parse(prev);if(po&&Array.isArray(po.tx)&&Array.isArray(po.projects)){localStorage.setItem(BACKUP_KEY,prev);idbPut('state-backup',prev);}}catch(x){}}localStorage.setItem(KEY,json);ok=localStorage.getItem(KEY)===json;}catch(e){ok=false;}
@@ -3707,7 +3758,8 @@ function boot(){
     if(best)S=best;
     var recovered=restoreThaSalaKnown();
     var mergedThaSala=mergeThaSalaDocument();
-    if(recovered||mergedThaSala)persist();
+    var mergedThaSalaPr4=mergeThaSalaPr4Boq();
+    if(recovered||mergedThaSala||mergedThaSalaPr4)persist();
     if(!U.homePid)U.homePid='__all';
     if(U.homePid!=='__all'&&dashPids().indexOf(U.homePid)<0){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
     if(S.role==='foreman'&&U.view!=='home')U.view='list';
