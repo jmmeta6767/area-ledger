@@ -1659,6 +1659,11 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 .gr-title{display:flex;justify-content:space-between;align-items:center;gap:10px}.gr-title h2{margin:0}.gr-title .btn{width:auto;padding:8px 12px}.guarantee-reg-row{width:100%;border:0;border-top:1px solid #edf0f1;background:#fff;padding:12px 0;display:grid;grid-template-columns:1fr auto;text-align:left;gap:3px 10px}.guarantee-reg-row span small,.guarantee-reg-row>small{display:block;color:#727b83}.guarantee-reg-row>small{grid-column:1/-1}
 
 .guarantee-v2{grid-template-columns:minmax(0,1fr) auto}.guarantee-v2 .gv2-meta{grid-column:1/-1;display:flex;gap:8px 14px;flex-wrap:wrap;font-size:11px;color:#727b83}.guarantee-v2>i{grid-column:1/2;font-style:normal;font-size:11px;font-weight:800}.guarantee-v2>em{grid-column:2/3;grid-row:3;font-style:normal;font-size:10px;color:#66717a}.guarantee-v2.ready{box-shadow:inset 4px 0 0 #4a9d67}.guarantee-v2.near{box-shadow:inset 4px 0 0 #77a9e8}.guarantee-v2.done{opacity:.72}@media(min-width:900px){.guarantee-v2{grid-template-columns:minmax(240px,1fr) 150px minmax(320px,1fr) 120px}.guarantee-v2 .gv2-meta{grid-column:3}.guarantee-v2>i{grid-column:4}.guarantee-v2>em{grid-column:4;grid-row:auto}}
+
+/* iOS bottom navigation interaction hardening */
+.nav{z-index:10000!important;pointer-events:auto!important;isolation:isolate}
+.nav-in{pointer-events:auto!important;position:relative;z-index:2}
+.nav button{pointer-events:auto!important;position:relative;z-index:3;-webkit-tap-highlight-color:rgba(0,0,0,.08);touch-action:manipulation}
 </style>
 </head>
 <body>
@@ -2861,7 +2866,7 @@ function render(){
   tabs.forEach(function(t){
     if(t[0]==='x')return;
     if(t[0]==='add')nav+='<button class="add preview-add" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>เพิ่มรายการ</span></button>';
-    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='due'?urgentCount():0),act=t[0]==='list'?'openList':'go';nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
+    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='due'?urgentCount():0),act=t[0]==='list'?'openList':'go';nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'" onclick="go(\''+t[0]+'\');return false"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
   var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
