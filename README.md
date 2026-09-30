@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v240
+# AREA Ledger V1 — Master v241
 
-AR Accrual / Partial Settlement Hardening, based on GitHub `main` v239
+AR Settlement Data Health Hardening, based on GitHub `main` v240
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v241 AR settlement Data Health hardening
+
+- Data Health now accepts valid nested AR settlements on income receivables introduced in v240.
+- Invalid transaction types carrying AR/AP settlements are still rejected.
+- Added regression coverage so AR settlement support and Data Health cannot drift apart.
+- Service worker/cache registration advanced to v241 without changing storage keys or migration behavior.
 
 ## v240 AR accrual / partial-settlement hardening
 
@@ -165,8 +172,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v239-ap-partial-payments`.
-Registration: `sw.js?v=239`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v241-ar-settlement-data-health`.
+Registration: `sw.js?v=241`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
