@@ -2015,6 +2015,13 @@ function stateHealth(o){o=o||S;var p={},b={},issues=[];(o.projects||[]).forEach(
   (o.tx||[]).forEach(function(t){if(t.boqId){var bx=(o.boq||[]).find(function(x){return x.id===t.boqId;});if(bx&&bx.pid!==t.pid)issues.push('รายจ่ายผูก BOQ คนละโครงการ');}});
   if(o===S&&typeof billingReconcile==='function'){var ar=billingReconcile('');if(ar.orphanTx)issues.push('รายการบัญชีอ้างใบวางบิลที่ไม่พบ '+ar.orphanTx);if(ar.unlinked)issues.push('ใบวางบิลไม่มีลูกหนี้เชื่อม '+ar.unlinked);if(ar.mismatch)issues.push('ยอดใบวางบิล/ลูกหนี้ไม่ตรง '+ar.mismatch);}
   return {ok:issues.length===0,issues:issues.slice(0,20),projects:(o.projects||[]).length,tx:(o.tx||[]).length,boq:(o.boq||[]).length};}
+function repairStateSafe(){
+  var snap=JSON.parse(JSON.stringify(S)),fix=0,pids={},bids={};(S.projects||[]).forEach(function(p){if(p&&p.id)pids[p.id]=1;});(S.boq||[]).forEach(function(b){if(b&&b.id&&pids[b.pid])bids[b.id]=b.pid;});
+  (S.tx||[]).forEach(function(t){if(t.boqId&&(!bids[t.boqId]||bids[t.boqId]!==t.pid)){t.boqId='';fix++;}if(t.type!=='out'&&t.boqId){t.boqId='';fix++;}});
+  if(!fix)return {ok:true,fixed:0};
+  if(!persist()){S=snap;return {ok:false,fixed:0};}
+  return {ok:true,fixed:fix};
+}
 function loadLS(){try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&o.tx)return migrate(o);}}catch(e){}return null;}
 function seed(){
   var P=[
@@ -3092,7 +3099,7 @@ function sheetHtml(){
       (available.length?available.map(function(p){return '<button data-act="dashAdd" data-id="'+p.id+'"><span><b>'+esc(p.name)+'</b><small>'+esc(dst(p))+'</small></span><strong>+ เพิ่ม</strong></button>';}).join(''):'<div class="dash-manager-complete">ทุกโครงการอยู่ในแดชบอร์ดแล้ว</div>')+
       '</div></div>';
   }else if(sh.kind==='health'){
-    var hh=sh.health||stateHealth(S);b='<h3>สุขภาพข้อมูล</h3><div class="field"><b>'+(hh.ok?'✓ ไม่พบความผิดปกติ':'พบจุดต้องตรวจ')+'</b><div class="muted" style="margin-top:8px">'+hh.projects+' โครงการ · '+hh.tx+' รายการบัญชี · '+hh.boq+' BOQ</div></div>'+(hh.issues&&hh.issues.length?'<div class="field">'+hh.issues.map(function(x){return '<div>• '+esc(x)+'</div>';}).join('')+'</div>':'')+'<div class="stack"><button class="btn" data-act="settings">กลับตั้งค่า</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
+    var hh=sh.health||stateHealth(S);b='<h3>สุขภาพข้อมูล</h3><div class="field"><b>'+(hh.ok?'✓ ไม่พบความผิดปกติ':'พบจุดต้องตรวจ')+'</b><div class="muted" style="margin-top:8px">'+hh.projects+' โครงการ · '+hh.tx+' รายการบัญชี · '+hh.boq+' BOQ</div></div>'+(hh.issues&&hh.issues.length?'<div class="field">'+hh.issues.map(function(x){return '<div>• '+esc(x)+'</div>';}).join('')+'</div>':'')+'<div class="stack">'+(!hh.ok?'<button class="btn pri" data-act="healthRepair">ซ่อม reference ที่ปลอดภัย</button>':'')+'<button class="btn" data-act="settings">กลับตั้งค่า</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='settings'){
     b='<h3 class="settings-title"><span>ตั้งค่า</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3><div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">แตะแล้วสลับโหมดทันที ไม่ต้องยืนยัน</small></div><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
@@ -3294,6 +3301,7 @@ function directAction(el){
   if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();return true;}
   if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};render();return true;}
   if(a==='healthCheck'){var hh=stateHealth(S);toast(hh.ok?'ข้อมูลปกติ · '+hh.projects+' โครงการ · '+hh.tx+' รายการ · '+hh.boq+' BOQ':'พบจุดต้องตรวจ '+hh.issues.length+' รายการ');if(!hh.ok){U.sheet={kind:'health',health:hh};render();}return true;}
+  if(a==='healthRepair'){var rr=repairStateSafe();if(!rr.ok){toast('ซ่อมไม่สำเร็จ ข้อมูลเดิมยังอยู่');return true;}var rh=stateHealth(S);toast(rr.fixed?'ซ่อม reference แล้ว '+rr.fixed+' จุด':'ไม่พบ reference ที่ซ่อมอัตโนมัติได้');U.sheet={kind:'health',health:rh};render();return true;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.getAttribute('data-kind')||'quote';go('doclist');return true;}
   if(a==='openProj'){U.pid=id;go('project',{pid:id});return true;}
   if(a==='boqOpenProject'){U.pid=id;go('project',{pid:id});return true;}
