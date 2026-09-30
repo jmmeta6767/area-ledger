@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v279
+# AREA Ledger V1 — Master v280
 
-Unified Cloudflare App + API Staging, based on GitHub `main` v278
-(`e80bc6c5cfe08de52981346fcf339a65e0d5cc90`).
+Cloudflare Static Asset Redirect Compatibility, based on GitHub `main` v279
+(`cd306e2de926ae97b944a3598c79d80c2fc6d4d5`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,12 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v280 Cloudflare static asset redirect compatibility
+
+- Excluded the legacy root `_redirects` file from Worker Static Assets because SPA fallback is already provided by `assets.not_found_handling = "single-page-application"`.
+- This avoids duplicate `/* -> /index.html 200` rewrite processing and Wrangler redirect-loop validation while retaining `_redirects` in the repository for other static hosts.
+- No accounting logic, storage keys, API routes or browser state changed.
 
 ## v279 unified Cloudflare app + API staging
 

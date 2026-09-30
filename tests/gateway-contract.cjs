@@ -47,7 +47,7 @@ assert(/\[assets\]/.test(wrangler));
 assert(/directory\s*=\s*"\.\.\/"/.test(wrangler));
 assert(/not_found_handling\s*=\s*"single-page-application"/.test(wrangler));
 assert(/run_worker_first\s*=\s*\[[^\]]*"\/health"[^\]]*"\/ready"[^\]]*"\/v1\/\*"/.test(wrangler));
-for(const p of ['gateway/','tests/','README.md','QA-*.md','area-ledger-package.zip'])assert(assetsIgnore.includes(p));
+for(const p of ['gateway/','tests/','README.md','QA-*.md','area-ledger-package.zip','_redirects'])assert(assetsIgnore.includes(p));
 assert(/\[env\.staging\]/.test(wrangler));
 assert(/name\s*=\s*"area-ledger-ai-gateway-staging"/.test(wrangler));
 assert(/GEMINI_MODEL\s*=\s*"gemini-2.5-flash"/.test(wrangler));
