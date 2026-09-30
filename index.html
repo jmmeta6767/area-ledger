@@ -2299,6 +2299,8 @@ function vHome(){
 
   h+=dashTabs();
   if(gScope.length){h+='<button class="home-guarantee-watch" data-act="go" data-v="guarantees"><div><small>หลักประกันที่ต้องติดตาม</small><b>'+fmt(gExposure)+'</b><span>'+gScope.length+' รายการ · '+(gReady.length?'ครบกำหนด '+gReady.length+' รายการ':gNear.length?'ใกล้ครบกำหนด '+gNear.length+' รายการ':'กำลังรอรับคืน')+'</span></div><strong>ดูทะเบียน ›</strong></button>';}
+  var br=billingReconcile(allMode?'':pid);if(br.count){h+='<button class="home-guarantee-watch" data-act="drawerDocList" data-kind="bill"><div><small>ใบวางบิล / ลูกหนี้</small><b>'+fmt(br.open)+'</b><span>'+br.count+' ฉบับ · รับแล้ว '+fmt(br.paid)+(br.overdue?' · เลยกำหนด '+fmt(br.overdue):'')+'</span></div><strong>ดูใบวางบิล ›</strong></button>';}
+
 
 
 
@@ -2522,7 +2524,8 @@ function vReport(){
   h+='<div class="sec master-report-card"><h2>รายจ่ายตามหมวดของเดือนนี้</h2>';
   if(!cs.length)h+='<div class="empty">เดือนนี้ยังไม่มีรายจ่าย</div>';
   h+=(cs.length?donut(cat,o,mshort(mk)):'')+catRows(cs,cat,csub,o);
-  h+='</div><div class="sec master-report-card"><h2>ภาษีของเดือนนี้ (ประมาณการ)</h2>'+
+  var monthBills=(S.bills||[]).filter(function(b){return (b.date||'').slice(0,7)===mk;}),monthOpen=0,monthSettled=0;monthBills.forEach(function(b){var bt=billReceivable(b),ba=docCalc(b).total;if(bt&&bt.paid)monthSettled+=ba;else monthOpen+=ba;});
+  h+='</div><div class="sec master-report-card"><h2>ตรวจสอบใบวางบิล ↔ รายรับจริง</h2><div class="kv"><span>ใบวางบิลเดือนนี้</span><span class="num">'+monthBills.length+' ฉบับ</span></div><div class="kv"><span>ยังค้างรับ</span><span class="num out">'+fmt(monthOpen)+'</span></div><div class="kv"><span>รับเงินจริงแล้ว</span><span class="num in">'+fmt(monthSettled)+'</span></div><div class="muted" style="font-size:.82rem">ยอดรับจริงเชื่อมจากลูกหนี้ของใบวางบิล และใบเสร็จที่ออกจากใบวางบิล</div></div><div class="sec master-report-card"><h2>ภาษีของเดือนนี้ (ประมาณการ)</h2>'+
    '<div class="kv"><span>VAT ขาย</span><span class="num">'+fmt(vi)+'</span></div><div class="kv"><span>VAT ซื้อ</span><span class="num">'+fmt(vo)+'</span></div><div class="kv"><span>VAT ที่ต้องนำส่งโดยประมาณ</span><span class="num">'+fmt(vi-vo)+'</span></div>'+
    '<div class="kv"><span>ลูกค้าหัก ณ ที่จ่ายเรา (เครดิตภาษี)</span><span class="num">'+fmt(wi)+'</span></div><div class="kv"><span>เราหัก ณ ที่จ่ายผู้อื่น (ต้องนำส่ง)</span><span class="num">'+fmt(wo)+'</span></div></div>';
   h+='<div class="sec master-report-card"><h2>ผลประกอบการรายโครงการ (ทั้งหมด)</h2><div class="wrapx"><table><tr><th>โครงการ</th><th>มูลค่างาน</th><th>ต้นทุนจริง</th><th>กำไรคาดการณ์</th><th>รับจริง</th><th>กำไร/ขาดทุนสุทธิ</th></tr>';
@@ -2752,6 +2755,11 @@ function settleBillReceivable(bill,receipt){
     tx.paid=true;tx.date=(receipt&&receipt.date)||today();tx.amount=amt;tx.due='';tx.pay=tx.pay||'transfer';tx.pid=(receipt&&receipt.pid)||bill.pid||tx.pid||'';tx.partner=(receipt&&receipt.customer)||bill.customer||tx.partner||'';tx.sub='รับเงินตาม '+((receipt&&receipt.no)||bill.no||'');tx.note='รับเงินจากใบวางบิล '+(bill.no||'');tx.receiptId=receipt?receipt.id:'';tx.docId=receipt?receipt.id:tx.docId;
   }
   return tx;
+}
+function billingReconcile(pid){
+  var bills=(S.bills||[]).filter(function(b){return !pid||b.pid===pid;}),open=0,paid=0,overdue=0,unlinked=0;
+  bills.forEach(function(b){var tx=billReceivable(b),amt=Math.round(docCalc(b).total*100)/100;if(tx&&tx.paid)paid+=amt;else{open+=amt;if(b.dueDate&&dd(today(),b.dueDate)<0)overdue+=amt;}if(!tx)unlinked++;});
+  return {count:bills.length,open:open,paid:paid,overdue:overdue,unlinked:unlinked};
 }
 function billStatus(bill){
   var tx=billReceivable(bill);
