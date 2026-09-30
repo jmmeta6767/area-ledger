@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v239
+# AREA Ledger V1 — Master v240
 
-AP Partial Payment Hardening, based on GitHub `main` v238
+AR Accrual / Partial Settlement Hardening, based on GitHub `main` v239
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v240 AR accrual / partial-settlement hardening
+
+- Billing receivables now preserve the original invoice/billing date and full accrual value when later payments are received.
+- Partial AR receipts are stored as dated settlement rows on the receivable instead of mutating the original receivable transaction.
+- Double-entry posts the billing source to Accounts Receivable once, then each receipt as Debit Cash/Bank and Credit Accounts Receivable.
+- Bank book, cash split, cash flow, billing reconciliation and receipt reconciliation understand nested AR settlements while remaining compatible with legacy paid rows.
+- This prevents a later receipt from silently moving previously accrued revenue out of a closed accounting period.
 
 ## v239 AP partial-payment hardening
 
