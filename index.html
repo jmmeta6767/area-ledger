@@ -1930,6 +1930,7 @@ function migrate(o){
     if(p.deliveryDate)p.retDue=addYearsIso(p.deliveryDate,2);
   });
   o.tx.forEach(function(t){
+    if(t.boqId===undefined)t.boqId='';
     if(t.sub===undefined)t.sub='';
     if(t.type==='out'&&LEG[t.cat]){t.sub=t.sub||LEG[t.cat][1];t.cat=LEG[t.cat][0];}
   });
@@ -2252,7 +2253,7 @@ window.addEventListener('popstate',function(){if(U.sheet){U.sheet=null;render();
 function newDraft(type,pid){
   type=type||'out';
   var first=S.projects[0]?S.projects[0].id:'';
-  return {id:null,type:type,amount:'',cat:type==='in'?CAT_IN[1]:((S.last&&CAT_OUT.indexOf(S.last.cat)>-1)?S.last.cat:CAT_OUT[0]),pay:(S.last&&S.last.pay)||'transfer',sub:'',subCustom:'',pid:pid||((S.last&&proj(S.last.pid))?S.last.pid:first),partner:'',date:today(),vat:false,wht:false,paid:true,dueEnabled:true,due:addDays(7),photo:'',note:''};
+  return {id:null,type:type,amount:'',boqId:'',cat:type==='in'?CAT_IN[1]:((S.last&&CAT_OUT.indexOf(S.last.cat)>-1)?S.last.cat:CAT_OUT[0]),pay:(S.last&&S.last.pay)||'transfer',sub:'',subCustom:'',pid:pid||((S.last&&proj(S.last.pid))?S.last.pid:first),partner:'',date:today(),vat:false,wht:false,paid:true,dueEnabled:true,due:addDays(7),photo:'',note:''};
 }
 
 /* ---------- หน้าจอ ---------- */
@@ -2482,6 +2483,7 @@ function vAdd(){
     h+='</div>';
   }
   h+='<div class="field"><label for="pid">โครงการ</label><select id="pid" data-f="pid">'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(d.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div>';
+  if(d.type==='out'){var bqo=boqRows(d.pid);h+='<div class="field"><label for="boqid">อ้างอิง BOQ <span class="muted" style="font-weight:400">(ไม่บังคับ)</span></label><select id="boqid" data-f="boqId"><option value="">ไม่ผูก BOQ</option>'+bqo.map(function(x){return '<option value="'+x.id+'"'+(d.boqId===x.id?' selected':'')+'>'+esc(x.name)+' · '+fmt(boqAmount(x))+'</option>';}).join('')+'</select></div>';}
   h+='<div class="field"><label for="par">'+(d.type==='in'?'จากใคร (ลูกค้า)':'จ่ายให้ใคร (ร้านค้า/ช่าง)')+'</label><input id="par" data-f="partner" type="text" list="pl" placeholder="พิมพ์ชื่อ" value="'+esc(d.partner)+'"><datalist id="pl">'+Object.keys(partners).map(function(p){return '<option value="'+esc(p)+'">';}).join('')+'</datalist></div>';
   h+='<div class="field"><label for="dt">วันที่</label><input id="dt" data-f="date" type="date" value="'+d.date+'"></div>';
   h+='<div class="field"><span class="lbl">ภาษี</span><div style="display:grid;gap:10px">'+
@@ -2548,7 +2550,7 @@ function vProject(){
   h+='<div class="sec master-detail-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h2>BOQ / งบประมาณ</h2><button class="btn" data-act="newBoq" data-id="'+p.id+'">+ เพิ่มรายการ</button></div>'+
     '<div class="grid4 master-detail-grid"><div><small>งบ BOQ</small><b>'+fmt(bq.budget)+'</b></div><div><small>จำนวนรายการ</small><b>'+bq.rows.length+'</b></div><div><small>ต้นทุนจริงทั้งหมด</small><b class="out">'+fmt(s.outB)+'</b></div><div><small>คงเหลือเทียบ BOQ</small><b class="'+(bq.budget-s.outB>=0?'in':'out')+'">'+fmt(bq.budget-s.outB)+'</b></div></div>';
   if(!bq.rows.length)h+='<div class="empty">ยังไม่มี BOQ · เพิ่มรายการเพื่อวางแผนต้นทุนของโครงการ</div>';
-  bq.rows.forEach(function(x){h+='<button class="listrow" data-act="editBoq" data-id="'+x.id+'"><span><b>'+esc(x.name||'ไม่ระบุรายการ')+'</b><small>'+esc(x.category||'')+' · '+(+x.qty||0)+' '+esc(x.unit||'')+' × '+fmt(+x.unitPrice||0)+'</small></span><strong class="num">'+fmt(boqAmount(x))+'</strong></button>';});
+  bq.rows.forEach(function(x){var xa=S.tx.filter(function(t){return t.type==='out'&&t.boqId===x.id;}).reduce(function(a,t){return a+base(t);},0),xb=boqAmount(x),xr=xb-xa;h+='<div class="listrow"><button style="all:unset;display:flex;flex:1;justify-content:space-between;gap:10px;cursor:pointer" data-act="editBoq" data-id="'+x.id+'"><span><b>'+esc(x.name||'ไม่ระบุรายการ')+'</b><small>'+esc(x.category||'')+' · '+(+x.qty||0)+' '+esc(x.unit||'')+' × '+fmt(+x.unitPrice||0)+'<br>ใช้จริง '+fmt(xa)+' · '+(xr>=0?'เหลือ ':'เกิน ')+fmt(Math.abs(xr))+'</small></span><strong class="num">'+fmt(xb)+'</strong></button><button class="btn" style="width:auto;align-self:center" data-act="expenseFromBoq" data-id="'+x.id+'">ลงรายจ่าย</button></div>';});
   h+='</div>';
   var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
   h+='<div class="sec master-detail-card"><h2>ค่าใช้จ่ายตามหมวด</h2>';
@@ -3339,6 +3341,7 @@ document.addEventListener('click',function(e){
   }
   else if(a==='newBoq'){U.sheet={kind:'boq',id:null,pid:id||U.pid};render();}
   else if(a==='editBoq'){U.sheet={kind:'boq',id:id};render();}
+  else if(a==='expenseFromBoq'){var bx0=(S.boq||[]).find(function(x){return x.id===id;});if(!bx0){toast('ไม่พบ BOQ');return;}U.from='project';U.draft=newDraft('out',bx0.pid);U.draft.boqId=bx0.id;U.draft.cat=bx0.category||'ค่าของ';U.draft.sub=bx0.name||'';go('add');focusAmt();toast('เชื่อม BOQ แล้ว · กรอกยอดจ่ายจริง');}
   else if(a==='saveBoq'){
     var bpid=el.dataset.pid||U.pid,bn=(document.getElementById('bqname')||{}).value||'',bqty=parseFloat((document.getElementById('bqqty')||{}).value)||0,bprice=parseFloat((document.getElementById('bqprice')||{}).value)||0;
     bn=bn.trim();if(!bpid||!proj(bpid)){toast('ไม่พบโครงการ');return;}if(!bn){toast('กรอกชื่อรายการ BOQ');return;}if(!(bqty>0)){toast('กรอกปริมาณมากกว่า 0');return;}if(bprice<0){toast('ราคาต่อหน่วยไม่ถูกต้อง');return;}
@@ -3490,7 +3493,7 @@ function saveTx(more){
   if(!(a>0)){toast('กรอกจำนวนเงินก่อน');var el=document.getElementById('amt');if(el)el.focus();return;}
   if(!d.pid){toast('เลือกโครงการก่อน');return;}
   var sub=d.type==='out'?(d.sub||'').trim():'';
-  var t={id:d.id||uid(),date:d.date||today(),type:d.type,amount:a,cat:d.cat,sub:sub,pay:d.paid?(d.pay||'transfer'):'',pid:d.pid,partner:(d.partner||'').trim(),vat:!!d.vat,wht:!!d.wht,paid:!!d.paid,due:d.paid?'':(d.dueEnabled===false?'':(d.due||addDays(7))),photo:d.photo||'',note:(d.note||'').trim()};
+  var t={id:d.id||uid(),date:d.date||today(),type:d.type,amount:a,boqId:d.type==='out'?(d.boqId||''):'',cat:d.cat,sub:sub,pay:d.paid?(d.pay||'transfer'):'',pid:d.pid,partner:(d.partner||'').trim(),vat:!!d.vat,wht:!!d.wht,paid:!!d.paid,due:d.paid?'':(d.dueEnabled===false?'':(d.due||addDays(7))),photo:d.photo||'',note:(d.note||'').trim()};
   var idx=S.tx.findIndex(function(x){return x.id===t.id;}),prev=idx>-1?JSON.parse(JSON.stringify(S.tx[idx])):null,prevLast=JSON.parse(JSON.stringify(S.last||{}));
   if(idx>-1)S.tx[idx]=t;else S.tx.push(t);
   S.last={pid:d.pid,cat:(S.last&&S.last.cat)||CAT_OUT[0],pay:(d.paid?d.pay:(S.last&&S.last.pay))||'transfer'};if(d.type==='out')S.last.cat=d.cat;
