@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v227
+# AREA Ledger V1 — Master v228
 
-Multi-tab Conflict / Integrity Hardening, based on GitHub `main` v226
+Stale/Delete Conflict Hardening, based on GitHub `main` v227
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,11 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v228 fixes
+
+- Treat cross-tab deletion/clearing of the primary key as a conflict; a stale tab cannot silently recreate old state.
+- Reset conflict state explicitly in regression fixtures and add deletion-conflict coverage.
 
 ## v227 fixes
 
