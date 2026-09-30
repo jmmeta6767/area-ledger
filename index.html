@@ -2143,7 +2143,7 @@ function mergeThaSalaPr4Boq(){
     ['เหล็กเสริม DB 12 mm. SD-40','ค่าแรง',0.030,'ตัน',3900],
     ['เหล็กเสริม DB 16 mm. SD-40','ค่าของ',1.13,'ตัน',20713.53],
     ['เหล็กเสริม DB 16 mm. SD-40','ค่าแรง',1.13,'ตัน',3900],
-    ['ลวดผูกเหล็ก ศก.1.25 มม. (เบอร์ 18)','ค่าของ',39,'กก.',44.39],
+    ['ลวดผูกเหล็ก ศก.1.25 มม. (เบอร์ 18)','ค่าของ',39.90,'กก.',44.39],
     ['ไม้แบบ','ค่าของ',59.14,'ลบ.ฟ.',545.41],
     ['ค่าแรงงานไม้แบบ','ค่าแรง',73.92,'ตร.ม.',163],
     ['ท่อเหล็กกลวงสี่เหลี่ยมจัตุรัส หนา 2.0 mm. ขนาด 2"x2" ยาว 6 m.','ค่าของ',17,'ท่อน',491.59],
@@ -2163,7 +2163,7 @@ function mergeThaSalaPr4Boq(){
     ['งานทาสีน้ำพลาสติกโครงสร้าง','ค่าแรง',48,'ตร.ม.',35]
   ];
   var total=rows.reduce(function(a,r){return a+r[2]*r[4];},0);
-  if(Math.abs(total-412812.83)>.02){console.error('Tha Sala PR4 reconciliation failed',total);return false;}
+  var pageTotals=[rows.slice(0,8),rows.slice(8,17),rows.slice(17,28),rows.slice(28)].map(function(g){return g.reduce(function(a,r){return a+r[2]*r[4];},0);}),declared=[48884.85,79147.88,274129.38,10650.72];if(Math.abs(total-412812.83)>.02||pageTotals.some(function(v,i){return Math.abs(v-declared[i])>.02;})){console.error('Tha Sala PR4 reconciliation failed',total,pageTotals);return false;}
   var existing={};S.boq.filter(function(x){return x.pid===p.id;}).forEach(function(x){existing[boqImportKey(x)]=1;});
   rows.forEach(function(r,i){
     var x={pid:p.id,name:r[0],category:r[1],qty:r[2],unit:r[3],unitPrice:r[4]};
