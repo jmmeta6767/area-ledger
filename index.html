@@ -1670,6 +1670,9 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 
 /* Navigation QA: deterministic mobile tap targets */
 .nav button,.hd button,.app-drawer button,.master-page-actions button{min-width:44px;min-height:44px}.nav button:focus-visible,.hd button:focus-visible,.app-drawer button:focus-visible{outline:3px solid currentColor;outline-offset:2px}
+
+/* App shell: keep primary navigation available while entering transactions */
+#app:not(.nonav) main{padding-bottom:calc(104px + env(safe-area-inset-bottom))}.nav .preview-add.on{transform:translateY(-8px) scale(.96)}
 </style>
 </head>
 <body>
@@ -2893,11 +2896,11 @@ function render(){
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
     if(t[0]==='x')return;
-    if(t[0]==='add')nav+='<button class="add preview-add" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>เพิ่มรายการ</span></button>';
+    if(t[0]==='add')nav+='<button class="add preview-add'+(v==='add'?' on':'')+'" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>'+(v==='add'?'กำลังเพิ่ม':'เพิ่มรายการ')+'</span></button>';
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='due'?urgentCount():0),act=t[0]==='list'?'openList':'go';nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
-  var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
+  var nonav=(v==='print'||v==='quoteprint');if(nonav)nav='';
   var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
   document.body.classList.toggle('wallpaper-on',wall);
   document.body.classList.toggle('force-desktop',!!(S.ui&&S.ui.viewMode==='desktop'));
