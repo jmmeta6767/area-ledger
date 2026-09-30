@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v235
+# AREA Ledger V1 — Master v236
 
-Statements / Tax Reconciliation / Close Hardening, based on GitHub `main` v234
+Project Cost / Control Center 2.0 / Executive Reporting, based on GitHub `main` v235
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v236 Project cost / controls / reporting
+
+- Added project cost accounting for contract, BOQ budget, actual cost, commitments, billing, receipts, AR/AP, linked/unlinked BOQ cost, forecast profit and a clearly-labeled management WIP proxy.
+- Added Accounting Control Center 2.0 with Trial Balance, Bank, Billing/Receipt, tax/document, AP due-date, BOQ-link and exact-duplicate checks.
+- Added 30-day AR/AP cash forecast and Executive Accounting Report across projects.
+- Home dashboard now surfaces accounting exceptions rather than only totals.
 
 ## v235 Statements / tax / close hardening
 
