@@ -1916,7 +1916,7 @@ function migrate(o){
   if(!Array.isArray(o.projects))o.projects=[];
   if(!Array.isArray(o.tx))o.tx=[];
   if(!Array.isArray(o.boq))o.boq=[];
-  o.boq=o.boq.filter(function(x){return x&&x.pid;}).map(function(x){if(x.id===undefined)x.id=uid();if(x.name===undefined)x.name='';if(x.category===undefined)x.category='ค่าของ';if(x.qty===undefined)x.qty=0;if(x.unit===undefined)x.unit='';if(x.unitPrice===undefined)x.unitPrice=0;if(x.note===undefined)x.note='';return x;});
+  o.boq=o.boq.map(function(x){if(!x)x={};if(x.id===undefined)x.id=uid();if(x.pid===undefined)x.pid='';if(x.name===undefined)x.name='';if(x.category===undefined)x.category='ค่าของ';if(x.qty===undefined)x.qty=0;if(x.unit===undefined)x.unit='';if(x.unitPrice===undefined)x.unitPrice=0;if(x.note===undefined)x.note='';return x;});
   if(!o.customSubs)o.customSubs={};
   if(o.bank===undefined)o.bank='Krungthai Business';
   if(o.brand===undefined)o.brand='AREA MAIBAB';
