@@ -3206,15 +3206,23 @@ function xlsxBuild(sheets){
   return zipStore(files);
 }
 function saveFile(name,blob){
-  function dl(){try{var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(u);},4000);toast('กำลังบันทึกไฟล์');}catch(e){toast('เครื่องนี้บันทึกไฟล์ไม่ได้');}}
+  function dl(){return new Promise(function(resolve){try{var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(u);},4000);toast('กำลังบันทึกไฟล์');resolve(true);}catch(e){toast('เครื่องนี้บันทึกไฟล์ไม่ได้');resolve(false);}});}
   try{
     var file=new File([blob],name,{type:blob.type});
     if(navigator.canShare&&navigator.share&&navigator.canShare({files:[file]})){
-      navigator.share({files:[file],title:name}).catch(function(e){if(e&&e.name==='AbortError')return;dl();});
-      return;
+      return navigator.share({files:[file],title:name}).then(function(){toast('แชร์/บันทึกไฟล์แล้ว');return true;},function(e){if(e&&e.name==='AbortError'){toast('ยกเลิกการบันทึกไฟล์');return false;}return dl();});
     }
   }catch(e){}
-  dl();
+  return dl();
+}
+function restoreParse(text){
+  var o=null;try{o=typeof text==='string'?JSON.parse(text.trim()):text;}catch(_){return {ok:false,error:'JSON_INVALID'};}
+  if(o&&o.backupFormat===1&&o.state)o=o.state;
+  if(!o||typeof o!=='object'||!Array.isArray(o.projects)||!Array.isArray(o.tx))return {ok:false,error:'BACKUP_SHAPE'};
+  try{
+    var state=migrate(o);
+    return {ok:true,state:state,summary:{projects:state.projects.length,tx:state.tx.length,boq:(state.boq||[]).length,quotes:(state.quotes||[]).length,bills:(state.bills||[]).length,receipts:(state.receipts||[]).length}};
+  }catch(_){return {ok:false,error:'BACKUP_MIGRATION'};}
 }
 function scopeTx(){var pid=U.exportPid||'';return S.tx.filter(function(t){return !pid||t.pid===pid;}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function exportFileName(pid,ext){
@@ -3672,9 +3680,9 @@ function sheetHtml(){
   }else if(sh.kind==='resetConfirm'){
     b='<h3 style="color:var(--out)">ยืนยันรีเซ็ตข้อมูล?</h3><p class="muted" style="margin:8px 0 4px">การรีเซ็ตจะลบโครงการและรายการบัญชีทั้งหมดในเครื่องนี้ และไม่สามารถย้อนกลับได้หากยังไม่ได้สำรองข้อมูล</p><div class="stack"><button class="btn dng sure" data-act="resetDo">ยืนยันรีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='backup'){
-    b='<h3>สำรองข้อมูล</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกข้อความนี้ไปเก็บไว้ในโน้ต หรือ LINE Keep เมื่อต้องการกู้คืนให้วางกลับในเมนู "กู้คืนข้อมูล"</p><textarea class="csv" id="bkbox" readonly>'+esc(JSON.stringify(S))+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์สำรอง .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
+    b='<h3>สำรองข้อมูล / ย้ายเครื่องหรือย้ายเว็บ</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">ก่อนเปลี่ยนโดเมนหรือเครื่อง ให้บันทึกไฟล์ .json จากเว็บเดิม แล้วเปิดเว็บใหม่และเลือก "กู้คืนจากไฟล์ .json" · ต้นทาง '+esc(location.origin)+'</p><textarea class="csv" id="bkbox" readonly>'+esc(JSON.stringify(S))+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์ย้ายข้อมูล .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='restore'){
-    b='<h3>กู้คืนข้อมูล</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">วางข้อความสำรองที่คัดลอกไว้ทั้งก้อน ข้อมูลปัจจุบันในเครื่องจะถูกแทนที่</p><textarea class="csv" id="rsbox" placeholder="วางข้อมูลสำรองที่นี่">'+esc(U.rsText||'')+'</textarea><div class="stack"><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'กู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+    b='<h3>กู้คืน / ย้ายข้อมูลเข้าเว็บนี้</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">เลือกไฟล์ AREA-Ledger-backup-*.json จาก Files/iCloud หรือวาง JSON ทั้งก้อน · ปลายทาง '+esc(location.origin)+'</p><label class="btn pri" for="restoreFile">เลือกไฟล์สำรอง .json</label><input id="restoreFile" type="file" accept=".json,application/json"><div class="muted" style="margin-top:8px">'+esc(U.restoreInfo||'ยังไม่ได้เลือกไฟล์')+'</div><textarea class="csv" id="rsbox" placeholder="หรือวางข้อมูลสำรองที่นี่">'+esc(U.rsText||'')+'</textarea><div class="stack"><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'ตรวจและกู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -3955,14 +3963,14 @@ document.addEventListener('click',function(e){
   }
   else if(a==='install'){U.sheet={kind:'install'};render();}
   else if(a==='backup'){U.sheet={kind:'backup'};render();}
-  else if(a==='backupFile'){var payload=JSON.stringify(S,null,2),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'}));S.lastBackup=Date.now();persist();}
-  else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.confirm=null;render();}
+  else if(a==='backupFile'){var payload=JSON.stringify(S,null,2),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'})).then(function(ok){if(!ok)return;S.lastBackup=Date.now();if(!persist())return;toast('สำรองข้อมูลแล้ว · พร้อมย้าย host/เครื่อง');});}
+  else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.restoreInfo='';U.confirm=null;render();}
   else if(a==='copyBk'){doCopy('bkbox',function(){S.lastBackup=Date.now();if(!persist())return;toast('คัดลอกข้อมูลสำรองแล้ว');});}
   else if(a==='doRestore'){
-    var o=null;try{o=JSON.parse((U.rsText||'').trim());}catch(x){}
-    if(!o||!Array.isArray(o.projects)||!Array.isArray(o.tx)){toast('ข้อมูลไม่ถูกต้อง ตรวจว่าวางครบทั้งก้อน');return;}
-    if((S.projects.length||S.tx.length)&&U.confirm!=='restore'){U.confirm='restore';render();return;}
-    var restoreSnap=S;S=migrate(o);if(!persist()){S=restoreSnap;return;}U.rsText='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว');
+    var parsed=restoreParse(U.rsText||'');
+    if(!parsed.ok){toast('ไฟล์/ข้อมูลสำรองไม่ถูกต้อง · ยังไม่ได้เปลี่ยนข้อมูล');return;}
+    if((S.projects.length||S.tx.length)&&U.confirm!=='restore'){U.confirm='restore';U.restoreInfo='พร้อมแทนที่ · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ · '+parsed.summary.boq+' BOQ';render();return;}
+    var restoreSnap=S;S=parsed.state;if(!persist()){S=restoreSnap;return;}U.rsText='';U.restoreInfo='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ');
   }
   else if(a==='boqImportPick'){U.sheet={kind:'boqImportFile',pid:id};render();}
   else if(a==='boqImportConfirm'){var im0=U.boqImport,selPid=((document.getElementById('boqImportPid')||{}).value||'');if(!im0||!im0.rows.length){toast('ไม่พบข้อมูลนำเข้า');return;}if(!selPid||!proj(selPid)){toast('กรุณาเลือกโครงการปลายทาง');return;}if(im0.pid!==selPid){im0.pid=selPid;im0.batch='';U.confirm=null;}if(!proj(im0.pid)){toast('ไม่พบโครงการปลายทาง');return;}if(im0.pdfOptimize&&im0.pdfOptimize.ocr){var rc0=im0.pdfOptimize.reconcile,decl0=rc0&&+rc0.declared||0,live0=boqOcrReconcile(im0.rows,decl0);im0.pdfOptimize.reconcile=live0;if(!decl0){toast('OCR อ่านยอดรวมเอกสารไม่ได้ · กรุณาตรวจรายการก่อน');if(U.confirm!=='ocr-unverified'){U.confirm='ocr-unverified';return;}}else if(!live0.ok){toast('ยอด OCR ยังไม่ตรงเอกสาร · ต่าง '+fmt(live0.diff));if(U.confirm!=='ocr-mismatch'){U.confirm='ocr-mismatch';return;}}}document.querySelectorAll('.bqi-name').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].name=el.value.trim();});document.querySelectorAll('.bqi-cat').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].category=el.value;});document.querySelectorAll('.bqi-qty').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].qty=boqNum(el.value);});document.querySelectorAll('.bqi-unit').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].unit=el.value.trim();});document.querySelectorAll('.bqi-price').forEach(function(el){var i=+el.dataset.i;if(im0.rows[i])im0.rows[i].unitPrice=boqNum(el.value);});var invalidEdit=im0.rows.some(function(x){return !x.name||!(+x.qty>0)||!(+x.unitPrice>=0)||!isFinite(+x.qty)||!isFinite(+x.unitPrice);});if(invalidEdit){toast('กรุณาตรวจรายการ ปริมาณ และราคาต่อหน่วย');return;}var keys={};if(im0.rows.some(function(x){var k=boqImportKey(x);if(keys[k])return true;keys[k]=1;return false;})){toast('มีรายการซ้ำหลังแก้ไข กรุณาตรวจอีกครั้ง');return;}var existsTarget={};(S.boq||[]).filter(function(x){return x.pid===im0.pid;}).forEach(function(x){existsTarget[boqImportKey(x)]=1;});if(im0.rows.some(function(x){return existsTarget[boqImportKey(x)];})){toast('โครงการนี้มี BOQ บางรายการซ้ำอยู่แล้ว · กรุณาตรวจโครงการหรือรายการ');return;}var finalTotal=im0.rows.reduce(function(a,x){return a+boqAmount(x);},0),targetSig='boq-target-'+im0.pid+'-'+im0.rows.length+'-'+Math.round(finalTotal*100);if(U.confirm!==targetSig){U.confirm=targetSig;im0.confirmPid=im0.pid;im0.confirmTotal=finalTotal;im0.confirmCount=im0.rows.length;toast('ยืนยัน: '+pname(im0.pid)+' · '+im0.rows.length+' รายการ · '+fmt(finalTotal)+' · แตะอีกครั้งเพื่อบันทึก');render();return;}if(im0.confirmPid!==im0.pid||im0.confirmCount!==im0.rows.length||Math.round((im0.confirmTotal||0)*100)!==Math.round(finalTotal*100)){U.confirm=null;toast('ข้อมูลหรือโครงการเปลี่ยน กรุณายืนยันใหม่');render();return;}im0.batch=boqBatchKey(im0.pid,im0.file,im0.rows);im0.total=finalTotal;var snap0=(S.boq||[]).slice(),added=0,importedNow=Date.now();im0.rows.forEach(function(x){S.boq.push({id:uid(),pid:im0.pid,name:x.name,category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,note:x.note||('นำเข้าจาก '+(im0.file||'ไฟล์')),importBatch:im0.batch||'',importFile:im0.file||'',importedAt:importedNow});added++;});if(!persist()){S.boq=snap0;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.boqImport=null;U.sheet=null;U.confirm=null;render();toast('นำเข้า BOQ แล้ว '+added+' รายการ · '+pname(im0.pid));}
@@ -4124,7 +4132,7 @@ function quoteFormCalc(){
 }
 document.addEventListener('input',function(e){
   if(/^q(qty|price|lineDisc)\d+$/.test(e.target.id)||e.target.id==='qdiscount'){quoteFormCalc();}
-  if(e.target.id==='rsbox'){U.rsText=e.target.value;return;}
+  if(e.target.id==='rsbox'){U.rsText=e.target.value;U.restoreInfo='';U.confirm=null;return;}
   var f=e.target.dataset&&e.target.dataset.f;if(!f||!U.draft)return;
   U.draft[f]=e.target.value;
   if(f==='amount'){var pv=document.getElementById('prev');if(pv)pv.innerHTML=prevText(U.draft);var af=document.getElementById('amtfmt');if(af){var av=parseFloat(U.draft.amount);af.textContent=av>0?fmt(av,1):'';}}
@@ -4132,6 +4140,10 @@ document.addEventListener('input',function(e){
 ['dragenter','dragover'].forEach(function(ev){document.addEventListener(ev,function(e){var z=e.target&&e.target.closest?e.target.closest('#boqDropZone'):null;if(!z)return;e.preventDefault();e.stopPropagation();z.style.opacity='.72';});});
 ['dragleave','drop'].forEach(function(ev){document.addEventListener(ev,function(e){var z=e.target&&e.target.closest?e.target.closest('#boqDropZone'):null;if(!z)return;e.preventDefault();e.stopPropagation();z.style.opacity='1';if(ev==='drop'&&e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])boqHandleFile(e.dataTransfer.files[0],U.sheet&&U.sheet.pid);});});
 document.addEventListener('change',function(e){
+  if(e.target&&e.target.id==='restoreFile'&&e.target.files&&e.target.files[0]){
+    var rf=e.target.files[0];if(rf.size>20*1024*1024){toast('ไฟล์สำรองใหญ่เกิน 20 MB');return;}
+    var rr=new FileReader();rr.onerror=function(){toast('อ่านไฟล์สำรองไม่ได้');};rr.onload=function(){var raw=String(rr.result||''),parsed=restoreParse(raw);if(!parsed.ok){U.restoreInfo='ไฟล์ไม่ผ่าน validation';U.rsText='';U.confirm=null;render();toast('ไฟล์สำรองไม่ถูกต้อง');return;}U.rsText=raw;U.confirm=null;U.restoreInfo='พร้อมกู้คืน · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ · '+parsed.summary.boq+' BOQ';render();toast('อ่านไฟล์สำรองแล้ว · ตรวจยอดก่อนยืนยัน');};rr.readAsText(rf);return;
+  }
   if(e.target&&e.target.id==='govEventPhoto'&&e.target.files&&e.target.files[0]){var gf=e.target.files[0],gr=new FileReader();gr.onload=function(){var gi=new Image();gi.onload=function(){var M=1000,k=Math.min(1,M/Math.max(gi.width,gi.height)),c=document.createElement('canvas');c.width=Math.round(gi.width*k);c.height=Math.round(gi.height*k);c.getContext('2d').drawImage(gi,0,0,c.width,c.height);U.govEventPhoto=c.toDataURL('image/jpeg',.68);toast('แนบรูปหลักฐานแล้ว');};gi.src=gr.result;};gr.readAsDataURL(gf);return;}
   if(e.target&&e.target.dataset&&e.target.dataset.expBatch!==undefined){var bi=+e.target.dataset.expBatch,bk=e.target.dataset.k,bx=(U.expenseBatch||[])[bi];if(bx){bx[bk]=bk==='include'?e.target.checked:(bk==='amount'?(parseFloat(e.target.value)||0):e.target.value);}return;}
   if(e.target&&e.target.id==='expenseScanIn'&&e.target.files&&e.target.files[0]){expenseBatchScan(e.target.files);return;}
@@ -4226,7 +4238,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=282',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=285',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
