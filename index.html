@@ -1873,6 +1873,18 @@ function syncGuaranteeExpense(p){
   if(!t.pay){t.pay='transfer';ch=true;}
   return ch;
 }
+function syncGuaranteeRecord(g){
+  if(!g||g.legacyPid||g.method!=='เงินสด/โอน'||!(+g.amount>0)||!g.paidDate)return false;
+  var tid='guarantee-v2-expense-'+g.id,t=S.tx.find(function(x){return x.id===tid;}),sub=g.type==='ประกันผลงาน'?'ค่าประกันผลงาน':(g.type||'ประกันสัญญา');
+  if(!t){S.tx.push({id:tid,date:g.paidDate,type:'out',amount:+g.amount,cat:'ค่าประกัน/ค่างาน',sub:sub,pay:'transfer',pid:g.pid,partner:g.holder||'',vat:false,wht:false,paid:true,due:'',photo:'',note:'งานประกัน V2 · '+sub});return true;}
+  t.date=g.paidDate;t.amount=+g.amount;t.pid=g.pid;t.partner=g.holder||'';t.sub=sub;t.paid=true;return true;
+}
+function receiveGuaranteeRecord(g){
+  if(!g||g.returned)return false;g.returned=true;g.returnedDate=today();
+  if(g.method==='เงินสด/โอน'){
+    var tid='guarantee-v2-refund-'+g.id;if(!S.tx.some(function(t){return t.id===tid;}))S.tx.push({id:tid,date:today(),type:'in',amount:+g.amount,cat:g.type==='ประกันผลงาน'?'เงินประกันผลงาน':'เงินประกันสัญญา',sub:'รับคืนหลักประกัน',pid:g.pid,partner:g.holder||'',pay:'transfer',vat:false,wht:false,paid:true,due:'',photo:'',note:'รับคืนงานประกัน V2 · '+(g.type||'งานประกัน')});
+  }return true;
+}
 
 /* ---------- คำนวณ ---------- */
 function base(t){return t.vat?t.amount/1.07:t.amount;}
@@ -2646,7 +2658,7 @@ function sheetHtml(){
       '<div class="field"><label for="gpaid">วันที่วาง/จ่ายหลักประกัน</label><input id="gpaid" type="date" value="'+(g&&g.paidDate?g.paidDate:'')+'"></div>'+
       '<div class="field"><label for="gdue">วันที่รับคืน/ครบกำหนด</label><input id="gdue" type="date" value="'+(g&&g.dueDate?g.dueDate:'')+'"></div>'+
       '<div class="field"><label for="gnote">หมายเหตุ</label><textarea id="gnote" rows="2">'+esc(g?g.note:'')+'</textarea></div>'+
-      '<div class="stack"><button class="btn pri" data-act="saveGuarantee" data-id="'+(g?g.id:'')+'">บันทึกงานประกัน</button>'+(g?'<button class="btn dng" data-act="deleteGuarantee" data-id="'+g.id+'">ลบรายการ</button>':'')+'<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+      '<div class="stack"><button class="btn pri" data-act="saveGuarantee" data-id="'+(g?g.id:'')+'">บันทึกงานประกัน</button>'+(g&&!g.returned?'<button class="btn" data-act="returnGuarantee" data-id="'+g.id+'">บันทึกรับหลักประกันคืนแล้ว</button>':'')+(g?'<button class="btn dng" data-act="deleteGuarantee" data-id="'+g.id+'">ลบรายการ</button>':'')+'<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='proj'){
     var p=sh.id?proj(sh.id):null;
     b='<h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3>'+
@@ -2969,9 +2981,10 @@ document.addEventListener('click',function(e){
   else if(a==='saveGuarantee'){
     var gp=document.getElementById('gpid').value,ga=parseFloat(document.getElementById('gamt').value)||0;if(!gp||ga<=0){toast('เลือกโครงการและกรอกจำนวนเงิน');return;}
     var go={pid:gp,type:document.getElementById('gtype').value,holder:document.getElementById('gholder').value.trim(),method:document.getElementById('gmethod').value,amount:ga,paidDate:document.getElementById('gpaid').value||'',dueDate:document.getElementById('gdue').value||'',note:document.getElementById('gnote').value.trim()};
-    var gg=id?(S.guarantees||[]).find(function(x){return x.id===id;}):null;if(gg)Object.assign(gg,go);else{go.id=uid();go.returned=false;go.returnedDate='';S.guarantees.push(go);}
+    var gg=id?(S.guarantees||[]).find(function(x){return x.id===id;}):null;if(gg)Object.assign(gg,go);else{go.id=uid();go.returned=false;go.returnedDate='';S.guarantees.push(go);gg=go;}syncGuaranteeRecord(gg);
     persist();U.sheet=null;render();toast('บันทึกงานประกันแล้ว');
   }
+  else if(a==='returnGuarantee'){var rg=(S.guarantees||[]).find(function(g){return g.id===id;});if(rg&&receiveGuaranteeRecord(rg)){persist();U.sheet=null;render();toast('บันทึกรับหลักประกันคืนแล้ว');}}
   else if(a==='deleteGuarantee'){S.guarantees=(S.guarantees||[]).filter(function(g){return g.id!==id;});persist();U.sheet=null;render();toast('ลบรายการงานประกันแล้ว');}
   else if(a==='saveProj'){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
