@@ -3097,17 +3097,8 @@ function directAction(el){
   if(a==='projectDocList'){U.docProjectPid=id||'';U.docListKind=el.getAttribute('data-kind')||'quote';go('doclist');return true;}
   return false;
 }
-document.addEventListener('pointerup',function(e){
-  var el=e.target&&e.target.closest?e.target.closest('#app [data-act]'):null;
-  if(!el)return;
-  if(directAction(el)){e.preventDefault();e.stopPropagation();}
-},true);
-document.addEventListener('touchend',function(e){
-  if(window.PointerEvent)return;
-  var el=e.target&&e.target.closest?e.target.closest('#app [data-act]'):null;
-  if(!el)return;
-  if(directAction(el)){e.preventDefault();e.stopPropagation();}
-},{capture:true,passive:false});
+/* Use one click path for touch, mouse and keyboard. Pointer release also fires
+   after scrolling and can trigger navigation before the synthetic click. */
 
 /* UX keyboard / accessibility */
 document.addEventListener('keydown',function(e){
@@ -3118,7 +3109,9 @@ document.addEventListener('keydown',function(e){
 });
 /* ---------- เหตุการณ์ ---------- */
 document.addEventListener('click',function(e){
-  var el=e.target.closest('[data-act]');if(!el)return;
+  var el=e.target&&e.target.closest?e.target.closest('[data-act]'):null;if(!el)return;
+  if(el.disabled||el.getAttribute('aria-disabled')==='true')return;
+  if(directAction(el)){e.preventDefault();return;}
   var a=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
   if(a==='confirmLeaveAdd'){var fn=U.sheet&&U.sheet.target;U.sheet=null;U.draft=null;if(typeof fn==='function')fn();else navHome();return;}
