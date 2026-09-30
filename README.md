@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v236
+# AREA Ledger V1 — Master v237
 
-Project Cost / Control Center 2.0 / Executive Reporting, based on GitHub `main` v235
+Accounting Production Hardening, based on GitHub `main` v236
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,15 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v237 Accounting production hardening
+
+- Added Accounting Excel export covering Trial Balance, General Ledger, management statements, project cost and Audit Trail.
+- Expanded Data Health for required system accounts and duplicate accounting-period states.
+- Period-close snapshots now include transaction and journal counts for later audit comparison.
+- Added mobile accounting layout guards for small iPhone-width screens and scroll containment.
+- Added end-to-end accounting, backup/migration, export, close-snapshot and navigation regression tests.
+- Physical iPhone/Safari behavior is still a separate device gate and is not claimed by Node/CI tests.
 
 ## v236 Project cost / controls / reporting
 
