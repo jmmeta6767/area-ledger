@@ -1899,6 +1899,9 @@ function subsOf(g){
   return base0.concat(custom).concat(['อื่นๆ']);
 }
 function migrate(o){
+  if(!o||typeof o!=='object')o=emptyState();
+  if(!Array.isArray(o.projects))o.projects=[];
+  if(!Array.isArray(o.tx))o.tx=[];
   if(!Array.isArray(o.boq))o.boq=[];
   o.boq=o.boq.filter(function(x){return x&&x.pid;}).map(function(x){if(x.id===undefined)x.id=uid();if(x.name===undefined)x.name='';if(x.category===undefined)x.category='ค่าของ';if(x.qty===undefined)x.qty=0;if(x.unit===undefined)x.unit='';if(x.unitPrice===undefined)x.unitPrice=0;if(x.note===undefined)x.note='';return x;});
   if(!o.customSubs)o.customSubs={};
@@ -1929,8 +1932,13 @@ function migrate(o){
     if(!p.retPaidDate&&gx&&gx.date)p.retPaidDate=gx.date;
     if(p.deliveryDate)p.retDue=addYearsIso(p.deliveryDate,2);
   });
+  var pids={};o.projects=o.projects.filter(function(p){if(!p||!p.id||pids[p.id])return false;pids[p.id]=1;return true;});
+  var bids={};o.boq=o.boq.filter(function(x){if(!x||!x.id||bids[x.id]||!pids[x.pid])return false;bids[x.id]=1;return true;});
+  var tids={};o.tx=o.tx.filter(function(t){if(!t||!t.id||tids[t.id]||!pids[t.pid])return false;tids[t.id]=1;return true;});
   o.tx.forEach(function(t){
     if(t.boqId===undefined)t.boqId='';
+    if(t.boqId&&!bids[t.boqId])t.boqId='';
+    if(t.type!=='out')t.boqId='';
     if(t.sub===undefined)t.sub='';
     if(t.type==='out'&&LEG[t.cat]){t.sub=t.sub||LEG[t.cat][1];t.cat=LEG[t.cat][0];}
   });
@@ -2081,10 +2089,10 @@ function mergeThaSalaDocument(){
   return changed;
 }
 function persist(){
-  S.updatedAt=Date.now();var json=JSON.stringify(S),ok=true;
-  try{localStorage.setItem(KEY,json);}catch(e){ok=false;}
-  idbSet(json).then(function(ok2){if(!ok&&!ok2)toast('พื้นที่จัดเก็บเต็ม บันทึกไม่ได้');});
-  return true;
+  S.updatedAt=Date.now();var json='',ok=false;
+  try{json=JSON.stringify(S);localStorage.setItem(KEY,json);ok=localStorage.getItem(KEY)===json;}catch(e){ok=false;}
+  if(json)idbSet(json).then(function(ok2){if(!ok&&!ok2)toast('บันทึกไม่สำเร็จ: พื้นที่จัดเก็บอาจเต็ม');});
+  return ok;
 }
 function proj(id){return S.projects.find(function(p){return p.id===id;});}
 function pname(id){var p=proj(id);return p?p.name:'ไม่ระบุโครงการ';}
@@ -2543,7 +2551,16 @@ function boqImportExcel(file,pid){
 function boqImportPdf(file,pid){
   loadPdfJs(function(ok){if(!ok){toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');return;}var rd=new FileReader();rd.onload=function(){pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise.then(async function(pdf){var lines=[];for(var p=1;p<=pdf.numPages;p++){var pg=await pdf.getPage(p),tc=await pg.getTextContent(),by={};tc.items.forEach(function(it){var y=Math.round(it.transform[5]/3)*3;(by[y]||(by[y]=[])).push({x:it.transform[4],s:it.str});});Object.keys(by).sort(function(a,b){return +b-+a;}).forEach(function(y){lines.push(by[y].sort(function(a,b){return a.x-b.x;}).map(function(z){return z.s;}));});}var rows=boqRowsFromGrid(lines);if(!rows.length){toast('PDF นี้ไม่พบตารางข้อความ BOQ · ถ้าเป็นไฟล์สแกนต้องใช้ OCR/AI');return;}boqImportPreview(pid,rows,file.name);}).catch(function(){toast('อ่าน PDF ไม่สำเร็จ');});};rd.readAsArrayBuffer(file);});
 }
-function boqImportPreview(pid,rows,name){rows=(rows||[]).filter(function(x){return x.name&&x.qty>0&&x.unitPrice>=0;});if(!rows.length){toast('ไม่พบรายการ BOQ ที่นำเข้าได้');return;}U.boqImport={pid:pid,rows:rows,file:name||''};U.sheet={kind:'boqImportPreview'};render();}
+function boqImportKey(x){return [String(x.name||'').trim().toLowerCase(),(+x.qty||0).toFixed(4),String(x.unit||'').trim().toLowerCase(),(+x.unitPrice||0).toFixed(4)].join('|');}
+function boqImportPreview(pid,rows,name){
+  if(!proj(pid)){toast('ไม่พบโครงการปลายทาง');return;}
+  var seen={},existing={};(S.boq||[]).filter(function(x){return x.pid===pid;}).forEach(function(x){existing[boqImportKey(x)]=1;});
+  var raw=(rows||[]).length,dup=0,bad=0,clean=[];
+  (rows||[]).forEach(function(x){if(!x||!String(x.name||'').trim()||!(+x.qty>0)||!(+x.unitPrice>=0)||!isFinite(+x.qty)||!isFinite(+x.unitPrice)){bad++;return;}var k=boqImportKey(x);if(seen[k]||existing[k]){dup++;return;}seen[k]=1;clean.push(x);});
+  if(!clean.length){toast(dup?'ไฟล์นี้ซ้ำกับ BOQ ที่มีอยู่แล้ว':'ไม่พบรายการ BOQ ที่นำเข้าได้');return;}
+  if(clean.length>5000){toast('ไฟล์มีรายการมากเกิน 5,000 แถว กรุณาแบ่งไฟล์');return;}
+  U.boqImport={pid:pid,rows:clean,file:name||'',rawCount:raw,duplicateCount:dup,invalidCount:bad};U.sheet={kind:'boqImportPreview'};render();
+}
 function vBoq(){
   var rows=S.boq||[],tb=0,ta=0,linked=0,over=0;
   rows.forEach(function(x){var b=boqAmount(x),a=boqActual(x.id);tb+=b;linked+=a;if(a>b&&b>0)over++;});
@@ -3003,7 +3020,7 @@ function sheetHtml(){
     b='<h3>เลือกไฟล์ BOQ</h3><p class="muted">'+esc(pname(sh.pid))+' · รองรับ Excel .xlsx/.xls และ PDF ที่มีข้อความ</p><label class="btn pri" for="boqImportFile">เลือก Excel หรือ PDF</label><input id="boqImportFile" type="file" accept=".xlsx,.xls,.pdf,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><div class="muted" style="margin-top:12px">ไฟล์ PDF สแกนเป็นรูปจะยังไม่บันทึกอัตโนมัติ ระบบจะแจ้งให้ใช้ OCR/AI</div><div class="stack" style="margin-top:12px"><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='boqImportPreview'){
     var im=U.boqImport||{rows:[]},sum=im.rows.reduce(function(a,x){return a+boqAmount(x);},0);
-    b='<h3>ตรวจ BOQ ก่อนนำเข้า</h3><div class="muted">'+esc(im.file||'')+' · '+im.rows.length+' รายการ · รวม '+fmt(sum)+'</div><div style="max-height:45vh;overflow:auto;margin:12px 0">'+im.rows.slice(0,100).map(function(x,i){return '<div class="listrow"><span><b>'+(i+1)+'. '+esc(x.name)+'</b><small>'+esc(x.unit||'')+' · '+x.qty+' × '+fmt(x.unitPrice)+'</small></span><strong>'+fmt(boqAmount(x))+'</strong></div>';}).join('')+(im.rows.length>100?'<div class="muted">และอีก '+(im.rows.length-100)+' รายการ</div>':'')+'</div><div class="stack"><button class="btn pri" data-act="boqImportConfirm">ยืนยันนำเข้า '+im.rows.length+' รายการ</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+    b='<h3>ตรวจ BOQ ก่อนนำเข้า</h3><div class="muted">'+esc(im.file||'')+' · พร้อมนำเข้า '+im.rows.length+' รายการ · รวม '+fmt(sum)+(im.duplicateCount?' · ตัดรายการซ้ำ '+im.duplicateCount:'')+(im.invalidCount?' · ข้ามข้อมูลไม่สมบูรณ์ '+im.invalidCount:'')+'</div><div style="max-height:45vh;overflow:auto;margin:12px 0">'+im.rows.slice(0,100).map(function(x,i){return '<div class="listrow"><span><b>'+(i+1)+'. '+esc(x.name)+'</b><small>'+esc(x.unit||'')+' · '+x.qty+' × '+fmt(x.unitPrice)+'</small></span><strong>'+fmt(boqAmount(x))+'</strong></div>';}).join('')+(im.rows.length>100?'<div class="muted">และอีก '+(im.rows.length-100)+' รายการ</div>':'')+'</div><div class="stack"><button class="btn pri" data-act="boqImportConfirm">ยืนยันนำเข้า '+im.rows.length+' รายการ</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='boqProjectPick'){
     b='<h3>เลือกโครงการสำหรับ BOQ</h3><div class="stack">'+S.projects.map(function(p){return '<button class="btn" data-act="boqPickOne" data-id="'+p.id+'">'+esc(p.name)+'</button>';}).join('')+'<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='boq'){
@@ -3519,7 +3536,7 @@ document.addEventListener('input',function(e){
   if(f==='amount'){var pv=document.getElementById('prev');if(pv)pv.innerHTML=prevText(U.draft);var af=document.getElementById('amtfmt');if(af){var av=parseFloat(U.draft.amount);af.textContent=av>0?fmt(av,1):'';}}
 });
 document.addEventListener('change',function(e){
-  if(e.target&&e.target.id==='boqImportFile'&&e.target.files&&e.target.files[0]){var bf=e.target.files[0],pid=U.sheet&&U.sheet.pid;if(!pid){toast('ไม่พบโครงการปลายทาง');return;}var nm=(bf.name||'').toLowerCase();if(/\.pdf$/.test(nm)||bf.type==='application/pdf')boqImportPdf(bf,pid);else if(/\.(xlsx|xls)$/.test(nm))boqImportExcel(bf,pid);else toast('รองรับเฉพาะ Excel .xlsx/.xls และ PDF');return;}
+  if(e.target&&e.target.id==='boqImportFile'&&e.target.files&&e.target.files[0]){var bf=e.target.files[0],pid=U.sheet&&U.sheet.pid;if(bf.size>20*1024*1024){toast('ไฟล์ใหญ่เกิน 20 MB กรุณาแบ่งไฟล์');return;}if(!pid){toast('ไม่พบโครงการปลายทาง');return;}var nm=(bf.name||'').toLowerCase();if(/\.pdf$/.test(nm)||bf.type==='application/pdf')boqImportPdf(bf,pid);else if(/\.(xlsx|xls)$/.test(nm))boqImportExcel(bf,pid);else toast('รองรับเฉพาะ Excel .xlsx/.xls และ PDF');return;}
   if(e.target&&e.target.id==='quoteAttach'&&e.target.files&&e.target.files[0]){
     var qf=e.target.files[0],qr=new FileReader();qr.onload=function(){var qim=new Image();qim.onload=function(){var M=1200,k=Math.min(1,M/Math.max(qim.width,qim.height)),w=Math.round(qim.width*k),h=Math.round(qim.height*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(qim,0,0,w,h);U.quoteAttachment=c.toDataURL('image/jpeg',.72);render();};qim.src=qr.result;};qr.readAsDataURL(qf);return;
   }
@@ -3554,6 +3571,8 @@ function saveTx(more){
   go(S.role==='foreman'?'list':(U.from==='project'?'project':'list'));
   toast(was?'บันทึกการแก้ไขแล้ว':'บันทึกรายการแล้ว');
 }
+window.addEventListener('error',function(e){try{console.error('AREA Ledger runtime error',e.error||e.message);}catch(x){}});
+window.addEventListener('unhandledrejection',function(e){try{console.error('AREA Ledger promise rejection',e.reason);}catch(x){}});
 function boot(){
   try{var hp=localStorage.getItem('area-ledger-home-pid');if(hp)U.homePid=hp;}catch(err){}
   var done=false;
