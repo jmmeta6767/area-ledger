@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v283
+# AREA Ledger V1 — Master v284
 
-Gateway QA State Isolation, based on GitHub `main` v282
-(`af66bf2a97023bfe86a3b0c32d9b39ffa57d9bfb`).
+Gateway Fail-Closed Provider Hardening, based on GitHub `main` v283
+(`671691523bbb0063750bb9b2e88f46e1b9d0f19f`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v284 gateway fail-closed provider hardening
+
+- Staging and default Worker configs now require Durable Object rate state; a missing binding returns `DURABLE_STATE_REQUIRED` / HTTP 503 instead of silently falling back to per-isolate memory.
+- Generic provider URLs are HTTPS-only and reject credentials, query strings and fragments to reduce SSRF/misconfiguration risk.
+- Provider JSON responses are capped at 256 KiB before parsing; oversized or malformed responses are rejected with stable gateway errors.
+- Added runtime/contract coverage for the fail-closed state requirement and response/URL guards.
 
 ## v283 gateway QA state isolation
 
