@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v267
+# AREA Ledger V1 — Master v268
 
-Gateway Protocol / Idempotency Boundary, based on GitHub `main` v266
-(`9bb62741f37a9adaee481ef0ecb5efe34fe4aa6c`).
+Gateway Resilience / Durable-ready State, based on GitHub `main` v267
+(`ddf736a3574be2befb3887ec783a8c20cd08582e`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v268 gateway resilience / durable-ready state
+
+- Added provider timeout and at-most-one retry for transient 408/429/5xx/network failures; non-retryable provider errors are not replayed.
+- Rate limiting and idempotency now use an optional `GATEWAY_STATE` durable binding when present, with the bounded in-memory implementation retained for undeployed/local scaffolding.
+- Added optional privacy-safe `GATEWAY_AUDIT` metadata sink containing only request ID, exact origin, status, provider label, duration and timestamp—never image payload, OCR text, amounts, partner names or accounting records.
+- Health reports whether durable state/audit bindings exist without exposing secrets.
+- Production bindings remain intentionally unconfigured; no DNS or live gateway activation.
 
 ## v267 gateway protocol / idempotency boundary
 
@@ -295,8 +303,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v267-gateway-protocol`.
-Registration: `sw.js?v=267`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v268-gateway-resilience`.
+Registration: `sw.js?v=268`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.

@@ -5,6 +5,13 @@ compatibility_date = "2026-09-01"
 [vars]
 RATE_LIMIT_PER_MINUTE = "20"
 OCR_PROVIDER = "generic"
+PROVIDER_TIMEOUT_MS = "10000"
+PROVIDER_RETRIES = "1"
 # Set ALLOWED_ORIGINS at deploy time to exact production/preview origins.
 # Set OCR_UPSTREAM_URL as a non-secret environment variable.
 # Store OCR_API_KEY with the platform secret store; never commit it.
+
+# Optional bindings for production durability/privacy-safe audit:
+# GATEWAY_STATE = Durable Object namespace implementing rate/idem operations.
+# GATEWAY_AUDIT = R2 bucket storing metadata only (requestId/origin/status/provider/duration/at).
+# Never store OCR image payloads, extracted text, amounts, partner names or accounting data in gateway audit.
