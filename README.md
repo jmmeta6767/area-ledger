@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v242
+# AREA Ledger V1 — Master v243
 
-AR Reconciliation Integrity Hardening, based on GitHub `main` v241
+Billing Settlement Lock Hardening, based on GitHub `main` v242
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v243 billing settlement lock hardening
+
+- A billing document becomes accounting-locked as soon as any AR settlement exists, including a partial receipt while the receivable source still has `paid=false`.
+- Both the edit entry point and save path enforce the settlement lock so UI navigation cannot bypass accounting history protection.
+- Legacy fully-paid billing remains covered through the same `txPaidNet` settlement primitive.
+- Added regression coverage for a partial receipt that must lock the billing document before full settlement.
+- Service worker/cache registration advanced to v243 without storage-key or migration changes.
 
 ## v242 AR reconciliation integrity hardening
 
@@ -180,8 +188,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v242-ar-reconciliation-integrity`.
-Registration: `sw.js?v=242`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v243-billing-settlement-lock`.
+Registration: `sw.js?v=243`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
