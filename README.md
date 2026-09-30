@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v282
+# AREA Ledger V1 — Master v283
 
-Same-Origin Gateway Readiness, based on GitHub `main` v281
-(`e267ec3276f7951cdd8fded7ea9c4e6ce7071728`).
+Gateway QA State Isolation, based on GitHub `main` v282
+(`af66bf2a97023bfe86a3b0c32d9b39ffa57d9bfb`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,11 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v283 gateway QA state isolation
+
+- Fixed the v282 readiness regression so it validates the immutable `emptyState()` consent default instead of inheriting mutable `S.ai` state from an earlier endpoint-safety test.
+- Runtime behavior is unchanged; Cloudflare v282 deployment already passed Workers Build.
 
 ## v282 same-origin gateway readiness
 
