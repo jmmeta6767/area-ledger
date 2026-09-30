@@ -1629,6 +1629,9 @@ body{background:#f6f7f7}.master-ref-header{background:#fff!important;color:#1720
 /* RESPONSIVE DESKTOP / MOBILE DASHBOARD */
 @media(min-width:900px){body{background:#eef1f3}main{max-width:1380px!important;padding:18px 28px 50px!important;background:transparent!important}.master-ref-header{max-width:none!important;padding-left:28px!important;padding-right:28px!important}.master-ref-project{min-height:150px!important;display:grid!important;grid-template-columns:190px 1fr!important}.master-ref-photo{min-height:150px!important}.project-finance-kpis{grid-template-columns:repeat(3,1fr)!important;gap:14px!important}.project-finance-kpis>div{padding:18px!important}.project-finance-kpis b{font-size:24px!important}.mdash-balance-clean{min-height:100px!important}.mdash-stats{grid-template-columns:repeat(4,1fr)!important}.mdash-stats button{min-height:118px!important}.dash-charts{display:grid!important;grid-template-columns:minmax(0,2fr) minmax(300px,1fr)!important;gap:16px!important}.dash-chart-head{grid-column:1/-1!important}.donut-card{grid-column:2!important}.desktop-profit-table{display:block!important}.mgroup{max-width:none!important}.nav{display:none!important}.app-drawer{width:340px!important}body:has(.master-ref-header) main{padding-bottom:50px!important}}
 .desktop-profit-table{display:none;background:#fff;border-radius:18px;margin:16px 0;padding:16px;box-shadow:0 6px 20px rgba(17,24,39,.05)}.desktop-profit-table h3{margin:0 0 10px}.desktop-profit-table table{width:100%;border-collapse:collapse;font-size:13px}.desktop-profit-table th,.desktop-profit-table td{padding:10px;border-bottom:1px solid #edf0f1;text-align:right}.desktop-profit-table th:first-child,.desktop-profit-table td:first-child{text-align:left}.desktop-profit-table th{color:#727b83;font-weight:700}.desktop-profit-table td b{font-variant-numeric:tabular-nums}
+
+/* MANUAL VIEW MODE */
+body.force-desktop{min-width:1180px;overflow-x:auto}body.force-desktop main{max-width:1380px!important;padding:18px 28px 50px!important;background:transparent!important}body.force-desktop .master-ref-header{max-width:none!important;padding-left:28px!important;padding-right:28px!important}body.force-desktop .master-ref-project{min-height:150px!important;display:grid!important;grid-template-columns:190px 1fr!important}body.force-desktop .project-finance-kpis{grid-template-columns:repeat(3,1fr)!important}body.force-desktop .mdash-stats{grid-template-columns:repeat(4,1fr)!important}body.force-desktop .desktop-profit-table{display:block!important}body.force-desktop .nav{display:none!important}body.force-mobile main{max-width:520px!important;margin:0 auto!important;padding-left:14px!important;padding-right:14px!important;padding-bottom:105px!important}body.force-mobile .desktop-profit-table{display:none!important}body.force-mobile .nav{display:block!important}@media(min-width:900px){body.force-mobile{min-width:0!important}body.force-mobile .master-ref-header{max-width:520px!important;margin:0 auto!important}body.force-mobile .mdash-stats{grid-template-columns:1fr 1fr!important}body.force-mobile .nav{display:block!important}}
 </style>
 </head>
 <body>
@@ -1654,7 +1657,8 @@ function migrate(o){
   if(o.bank===undefined)o.bank='Krungthai Business';
   if(o.brand===undefined)o.brand='AREA MAIBAB';
   if(o.openCash===undefined)o.openCash=0;
-  if(!o.ui)o.ui={wallpaper:true,dashboardPids:[]};
+  if(!o.ui)o.ui={wallpaper:true,dashboardPids:[],viewMode:'mobile'};
+  if(o.ui.viewMode!=='desktop'&&o.ui.viewMode!=='mobile')o.ui.viewMode='mobile';
   if(o.ui.wallpaper===undefined)o.ui.wallpaper=true;
   if(!Array.isArray(o.ui.dashboardPids)){
     o.ui.dashboardPids=(o.projects||[]).filter(function(p){return (p.status||'active')!=='delivered'&&(p.status||'active')!=='closed';}).slice(0,3).map(function(p){return p.id;});
@@ -1712,7 +1716,7 @@ function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).sli
 /* ---------- ข้อมูล ---------- */
 var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
 
-function emptyState(){return {projects:[],tx:[],materialApprovals:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[]},customSubs:{},updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],materialApprovals:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 function idbOpen(){return new Promise(function(res,rej){try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){r.result.createObjectStore('kv');};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
 function idbSet(v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'state');t.oncomplete=function(){res(true);};t.onerror=function(){res(false);};t.onabort=function(){res(false);};});}).catch(function(){return false;});}
@@ -2614,7 +2618,7 @@ function sheetHtml(){
       (available.length?available.map(function(p){var st=({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ';return '<button data-act="dashAdd" data-id="'+p.id+'"><span><b>'+esc(p.name)+'</b><small>'+esc(st)+'</small></span><strong>+ เพิ่ม</strong></button>';}).join(''):'<div class="empty">ทุกโครงการถูกเพิ่มในแดชบอร์ดแล้ว</div>')+
       '</div><button class="btn" data-act="closeSheet">ปิด</button>';
   }else if(sh.kind==='settings'){
-    b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
+    b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">แตะแล้วสลับโหมดทันที ไม่ต้องยืนยัน</small></div><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
      (S.role==='owner'?'<div class="field"><label for="brn">ชื่อกิจการ / ชื่อที่แสดง</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
      '<div class="field"><span class="lbl" style="font-size:1.05rem;font-weight:800">ข้อมูลเพื่อแสดงบนเอกสาร</span></div>'+
@@ -2779,6 +2783,8 @@ function render(){
   var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
   var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
   document.body.classList.toggle('wallpaper-on',wall);
+  document.body.classList.toggle('force-desktop',!!(S.ui&&S.ui.viewMode==='desktop'));
+  document.body.classList.toggle('force-mobile',!S.ui||S.ui.viewMode!=='desktop');
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);
 }
@@ -2915,6 +2921,7 @@ document.addEventListener('click',function(e){
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
+  else if(a==='viewMode'){S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';persist();render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';persist();render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
   else if(a==='quoteAddItem'){U.quoteItemCount=Math.min(8,(U.quoteItemCount||1)+1);render();}
