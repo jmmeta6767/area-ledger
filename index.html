@@ -1945,12 +1945,13 @@ function migrate(o){
     if(!p.retPaidDate&&gx&&gx.date)p.retPaidDate=gx.date;
     if(p.deliveryDate)p.retDue=addYearsIso(p.deliveryDate,2);
   });
-  var pids={};o.projects=o.projects.filter(function(p){if(!p||!p.id||pids[p.id])return false;pids[p.id]=1;return true;});
-  var bids={};o.boq=o.boq.filter(function(x){if(!x||!x.id||bids[x.id]||!pids[x.pid])return false;bids[x.id]=1;return true;});
-  var tids={};o.tx=o.tx.filter(function(t){if(!t||!t.id||tids[t.id]||!pids[t.pid])return false;tids[t.id]=1;return true;});
+  /* Preserve legacy records during migration. Never silently drop user accounting data. */
+  var pids={};o.projects.forEach(function(p){if(!p)return;if(!p.id)p.id=uid();if(pids[p.id])p.id=uid();pids[p.id]=1;});
+  var bids={};o.boq.forEach(function(x){if(!x)return;if(!x.id)x.id=uid();if(bids[x.id])x.id=uid();bids[x.id]=1;});
+  var tids={};o.tx.forEach(function(t){if(!t)return;if(!t.id)t.id=uid();if(tids[t.id])t.id=uid();tids[t.id]=1;});
   o.tx.forEach(function(t){
     if(t.boqId===undefined)t.boqId='';
-    if(t.boqId&&!bids[t.boqId])t.boqId='';
+    /* Keep orphan pid/boqId for Health Check; safe repair is explicit, not destructive migration. */
     if(t.type!=='out')t.boqId='';
     if(t.sub===undefined)t.sub='';
     if(t.type==='out'&&LEG[t.cat]){t.sub=t.sub||LEG[t.cat][1];t.cat=LEG[t.cat][0];}
