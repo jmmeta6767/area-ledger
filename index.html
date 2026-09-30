@@ -1878,6 +1878,19 @@ textarea{resize:vertical}
 .project-results-table td:first-child::before{display:none}
 .project-results-table td b{overflow-wrap:anywhere}
 }
+
+/* v163 iPhone landscape/runtime hardening */
+html,body{max-width:100%;overscroll-behavior-x:none}
+img,svg,canvas{max-width:100%}
+input,select,textarea{max-width:100%;min-width:0}
+@media(max-height:500px) and (orientation:landscape){
+  .sheet,.master-sheet{max-height:96dvh!important;border-radius:14px 14px 0 0!important;padding-top:12px!important;padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))!important}
+  .nav-in{padding-top:2px!important;padding-bottom:2px!important}.nav button{min-height:44px!important}
+  .hd,.hd .hd-in,.master-ref-header{min-height:54px!important;height:auto!important}
+  main{padding-bottom:70px!important}.master-form-page{padding-bottom:76px!important}
+  .quote-paper,.rd-paper{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@supports not (height:100dvh){.sheet,.master-sheet{max-height:90vh!important}}
 </style>
 </head>
 <body>
