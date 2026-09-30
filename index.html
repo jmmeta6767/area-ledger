@@ -1673,6 +1673,16 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 
 /* App shell: keep primary navigation available while entering transactions */
 #app:not(.nonav) main{padding-bottom:calc(104px + env(safe-area-inset-bottom))}.nav .preview-add.on{transform:translateY(-8px) scale(.96)}
+/* Mobile interaction fix: sheets/forms must not be covered by primary navigation */
+.master-scrim{z-index:20000!important}
+.master-sheet{max-height:min(86dvh,760px)!important;padding-bottom:calc(108px + env(safe-area-inset-bottom,0px))!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.master-sheet .stack:last-child{margin-bottom:4px}
+.master-form-page{padding-bottom:92px}
+.master-form-page .savebar{bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:30}
+@media(max-width:560px){
+  .master-sheet{border-radius:22px 22px 0 0!important}
+  .sheet .field{scroll-margin-top:18px;scroll-margin-bottom:130px}
+}
 </style>
 </head>
 <body>
@@ -2916,7 +2926,7 @@ function render(){
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='due'?urgentCount():0),act=t[0]==='list'?'openList':'go';nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
-  var nonav=(v==='print'||v==='quoteprint');if(nonav)nav='';
+  var nonav=(v==='print'||v==='quoteprint'||!!U.sheet);if(nonav)nav='';
   var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
   document.body.classList.toggle('wallpaper-on',wall);
   document.body.classList.toggle('force-desktop',!!(S.ui&&S.ui.viewMode==='desktop'));
