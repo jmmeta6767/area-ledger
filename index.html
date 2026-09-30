@@ -1649,6 +1649,8 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 .guarantee-summary{grid-template-columns:repeat(4,minmax(0,1fr))}.guarantee-summary>div:nth-child(3){background:#e9f5ff}.guarantee-summary>div:nth-child(4){background:#e9efff}@media(max-width:560px){.guarantee-summary{grid-template-columns:1fr 1fr}.guarantee-summary>div:first-child{grid-column:1/-1}.guarantee-summary>div:nth-child(4){grid-column:auto}}
 
 .guarantee-row>i.near{background:#e8f3ff;color:#245f9c}.guarantee-row:has(>i.ready){box-shadow:inset 4px 0 0 #4a9d67}.guarantee-row:has(>i.near){box-shadow:inset 4px 0 0 #77a9e8}
+
+.guarantee-filters{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.guarantee-filters::-webkit-scrollbar{display:none}.guarantee-filters button{border:1px solid #dfe4e7;background:#fff;border-radius:999px;padding:8px 11px;white-space:nowrap;font-weight:700;color:#626c75}.guarantee-filters button.on{background:#17222f;color:#fff;border-color:#17222f}
 </style>
 </head>
 <body>
@@ -1930,6 +1932,8 @@ function brandHtml(){
 function retOpen(){return S.projects.filter(function(p){return p.retAmt>0&&!p.retRecv;});}
 function retDays(p){if(!p.retDue)return null;return Math.round((new Date(p.retDue+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);}
 function retTag(p){var d=retDays(p);if(d===null)return '<span class="tag pend">รอวันส่งมอบ</span>';return d<=0?'<span class="tag in">ครบกำหนดรับคืนแล้ว</span>':'<span class="tag pend">อีก '+d+' วัน</span>';}
+function guaranteeStatus(p){var d=retDays(p);if(p.retRecv)return {key:'done',label:'รับคืนแล้ว'};if(d===null)return {key:'delivery',label:'รอวันส่งมอบ'};if(d<=0)return {key:'ready',label:'ครบกำหนด'};if(d<=90)return {key:'near',label:'≤ 90 วัน'};return {key:'wait',label:'รอรับคืน'};}
+
 function catRows(order,byCat,bySub,total){
   return order.map(function(c){
     var subs=bySub[c]||{},ks=Object.keys(subs).sort(function(a,b){return subs[b]-subs[a];});
@@ -2265,9 +2269,10 @@ function vProject(){
 function vGuarantees(){
   var rows=S.projects.filter(function(p){return (+p.retAmt||0)>0;}).sort(function(a,b){if(!!a.retRecv!==!!b.retRecv)return a.retRecv?1:-1;return (a.retDue||'9999')<(b.retDue||'9999')?-1:1;});
   var open=rows.filter(function(p){return !p.retRecv;}),total=open.reduce(function(a,p){return a+(+p.retAmt||0);},0),readyRows=open.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),ready=readyRows.reduce(function(a,p){return a+(+p.retAmt||0);},0),nearRows=open.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;}),near=nearRows.reduce(function(a,p){return a+(+p.retAmt||0);},0);
-  var h='<section class="guarantee-hub"><div class="guarantee-summary"><div><small>เงินประกันที่อยู่ภายนอก</small><b>'+fmt(total)+'</b><span>'+open.length+' โครงการ</span></div><div><small>ครบกำหนดรับคืน</small><b>'+fmt(ready)+'</b><span>'+readyRows.length+' โครงการ · ควรติดตาม</span></div><div><small>ใกล้ครบกำหนด ≤ 90 วัน</small><b>'+fmt(near)+'</b><span>'+nearRows.length+' โครงการ</span></div><div><small>รับคืนแล้ว</small><b>'+fmt(rows.filter(function(p){return p.retRecv;}).reduce(function(a,p){return a+(+p.retAmt||0);},0))+'</b><span>'+rows.filter(function(p){return p.retRecv;}).length+' โครงการ</span></div></div><div class="sec"><h2>ข้อมูลงานประกัน</h2>';
-  if(!rows.length)h+='<div class="empty">ยังไม่มีข้อมูลเงินประกันในโครงการ</div>';
-  rows.forEach(function(p){var d=retDays(p),where=p.client||'ยังไม่ระบุหน่วยงาน/เจ้าของงาน',status=p.retRecv?'รับคืนแล้ว':d===null?'รอวันส่งมอบ':d<=0?'ครบกำหนดรับคืนแล้ว':d<=90?'ใกล้ครบกำหนด':'รอรับคืน';h+='<button class="guarantee-row" data-act="openProj" data-id="'+p.id+'"><div class="gr-main"><b>'+esc(p.name)+'</b><small>อยู่ที่: '+esc(where)+'</small></div><strong>'+fmt(+p.retAmt||0)+'</strong><div class="gr-meta"><span>จ่าย '+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</span><span>รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</span></div><i class="'+(p.retRecv?'done':d!==null&&d<=0?'ready':d!==null&&d<=90?'near':'wait')+'">'+status+'</i></button>';});
+  var counts={all:rows.length,ready:0,near:0,wait:0,done:0,delivery:0};rows.forEach(function(p){var k=guaranteeStatus(p).key;counts[k]=(counts[k]||0)+1;});var gf=U.guaranteeFilter||'all',shown=gf==='all'?rows:rows.filter(function(p){return guaranteeStatus(p).key===gf;});
+  var h='<section class="guarantee-hub"><div class="guarantee-summary"><div><small>เงินประกันที่อยู่ภายนอก</small><b>'+fmt(total)+'</b><span>'+open.length+' โครงการ</span></div><div><small>ครบกำหนดรับคืน</small><b>'+fmt(ready)+'</b><span>'+readyRows.length+' โครงการ · ควรติดตาม</span></div><div><small>ใกล้ครบกำหนด ≤ 90 วัน</small><b>'+fmt(near)+'</b><span>'+nearRows.length+' โครงการ</span></div><div><small>รับคืนแล้ว</small><b>'+fmt(rows.filter(function(p){return p.retRecv;}).reduce(function(a,p){return a+(+p.retAmt||0);},0))+'</b><span>'+rows.filter(function(p){return p.retRecv;}).length+' โครงการ</span></div></div><div class="guarantee-filters"><button data-act="guaranteeFilter" data-v="all" class="'+(gf==='all'?'on':'')+'">ทั้งหมด '+counts.all+'</button><button data-act="guaranteeFilter" data-v="ready" class="'+(gf==='ready'?'on':'')+'">ครบกำหนด '+counts.ready+'</button><button data-act="guaranteeFilter" data-v="near" class="'+(gf==='near'?'on':'')+'">≤ 90 วัน '+counts.near+'</button><button data-act="guaranteeFilter" data-v="wait" class="'+(gf==='wait'?'on':'')+'">รอรับคืน '+counts.wait+'</button><button data-act="guaranteeFilter" data-v="done" class="'+(gf==='done'?'on':'')+'">รับคืนแล้ว '+counts.done+'</button></div><div class="sec"><h2>ข้อมูลงานประกัน</h2>';
+  if(!shown.length)h+='<div class="empty">ไม่มีรายการในสถานะนี้</div>';
+  shown.forEach(function(p){var d=retDays(p),where=p.client||'ยังไม่ระบุหน่วยงาน/เจ้าของงาน',status=p.retRecv?'รับคืนแล้ว':d===null?'รอวันส่งมอบ':d<=0?'ครบกำหนดรับคืนแล้ว':d<=90?'ใกล้ครบกำหนด':'รอรับคืน';h+='<button class="guarantee-row" data-act="openProj" data-id="'+p.id+'"><div class="gr-main"><b>'+esc(p.name)+'</b><small>อยู่ที่: '+esc(where)+'</small></div><strong>'+fmt(+p.retAmt||0)+'</strong><div class="gr-meta"><span>จ่าย '+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</span><span>รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</span></div><i class="'+(p.retRecv?'done':d!==null&&d<=0?'ready':d!==null&&d<=90?'near':'wait')+'">'+status+'</i></button>';});
   return h+'</div><p class="muted guarantee-note">ข้อมูลหน่วยงาน/เจ้าของงานอ้างอิงจากข้อมูลโครงการ และวันรับคืนอ้างอิงกำหนดเงินประกันของแต่ละโครงการ</p></section>';
 }
 
@@ -2910,6 +2915,7 @@ document.addEventListener('click',function(e){
   else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',status:'paid',paidOnly:false};go('list');}
   else if(a==='clearPaidFilter'){U.filter.paidOnly=false;U.filter.status='all';render();}
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
+  else if(a==='guaranteeFilter'){U.guaranteeFilter=v||'all';render();}
   else if(a==='ftype'){U.filter.type=v;render();}
   else if(a==='fstatus'){U.filter.status=v||'all';U.filter.paidOnly=false;render();}
   else if(a==='openProj'){U.from=null;go('project',{pid:id});}
