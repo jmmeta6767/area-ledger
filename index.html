@@ -1702,7 +1702,36 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 .dash-tab-wrap .dash-tab{min-width:0}
 .dash-close{min-width:44px!important;width:44px!important;min-height:54px!important;pointer-events:auto!important;touch-action:manipulation}
 .dash-add{min-width:138px;justify-content:center}
-.dash-tabs{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}.dash-tab,.dash-tab-wrap,.dash-add{scroll-snap-align:start}.dash-tab[aria-selected="true"]{font-weight:800}</style>
+.dash-tabs{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}.dash-tab,.dash-tab-wrap,.dash-add{scroll-snap-align:start}.dash-tab[aria-selected="true"]{font-weight:800}/* UX SYSTEM v1 — mobile-first interaction foundation */
+:root{--tap:44px;--nav-h:78px}
+html{scroll-behavior:smooth}
+button,[role="button"],select,input,label{min-height:var(--tap)}
+button{user-select:none;-webkit-user-select:none}
+button:disabled{opacity:.48;pointer-events:none}
+.hd,.mheader{position:sticky;top:0;z-index:120}
+.hd-in,.master-ref-header{backdrop-filter:saturate(1.1) blur(10px);-webkit-backdrop-filter:saturate(1.1) blur(10px)}
+.hd button,.home-top-actions button,.app-menu-btn,.header-home,.back{min-width:var(--tap)!important;min-height:var(--tap)!important}
+main{overscroll-behavior-y:contain}
+.row,.proj,.project-hub-main,.project-hub-actions button,.master-action,.chip,.list-status-filter button{touch-action:manipulation;-webkit-tap-highlight-color:rgba(240,169,30,.14)}
+.project-hub-actions button{min-height:46px}
+.master-page-actions{position:sticky;top:76px;z-index:25;background:linear-gradient(var(--m-bg,#f1f3f2) 78%,rgba(241,243,242,0));padding:8px 0 12px;margin-top:4px!important}
+.master-list-chips{position:sticky;top:76px;z-index:24;background:var(--m-bg,#f1f3f2);padding:8px 0 5px;margin-top:0!important}
+.list-status-filter{position:sticky;top:124px;z-index:23;background:var(--m-bg,#f1f3f2);padding:4px 0 7px}
+.master-list-selects{position:relative;z-index:2}
+input,select,textarea{font-size:16px!important}
+textarea{resize:vertical}
+.field:focus-within{outline:2px solid rgba(232,169,30,.28);outline-offset:2px;border-radius:14px}
+.nav{padding-bottom:max(env(safe-area-inset-bottom,0px),6px)}
+.nav button{min-height:58px}
+.nav .add{min-width:68px}
+.empty{min-height:96px;display:grid;place-items:center;text-align:center}
+@media(max-width:390px){
+  .master-page-actions{top:68px}
+  .master-list-chips{top:68px}.list-status-filter{top:116px}
+  .project-hub-actions{gap:5px}.project-hub-actions button{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2993,6 +3022,13 @@ document.addEventListener('touchend',function(e){
   if(directAction(el)){e.preventDefault();e.stopPropagation();}
 },{capture:true,passive:false});
 
+/* UX keyboard / accessibility */
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    if(U.sheet){U.sheet=null;render();return;}
+    if(U.appMenu){U.appMenu=false;render();return;}
+  }
+});
 /* ---------- เหตุการณ์ ---------- */
 document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
