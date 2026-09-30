@@ -1683,6 +1683,16 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
   .master-sheet{border-radius:22px 22px 0 0!important}
   .sheet .field{scroll-margin-top:18px;scroll-margin-bottom:130px}
 }
+/* Compact dashboard manager */
+.master-sheet:has(.dash-manager-head){max-height:72dvh!important;padding:16px 18px calc(28px + env(safe-area-inset-bottom,0px))!important}
+.dash-manager-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dash-manager-head small{display:block;color:#7a858e;font-size:11px;font-weight:700}.dash-manager-head h3{margin:0!important}
+.dash-manager-head>button{width:38px;height:38px;border:0;border-radius:50%;background:#e8ebed;color:#53606a;font-size:24px;line-height:1}
+.dash-manager-help{margin:8px 0 14px!important;font-size:13px!important}
+.dash-manager-section{margin-top:12px}.dash-manager-section>b{display:block;font-size:12px;color:#69757f;margin:0 2px 7px}
+.dash-manager-list{display:grid;gap:7px}.dash-manager-list>button,.dash-manager-item{min-height:58px;border:1px solid #e1e5e5;border-radius:13px;background:#fff;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left}
+.dash-manager-list span{min-width:0}.dash-manager-list b,.dash-manager-list small{display:block}.dash-manager-list b{font-size:13px}.dash-manager-list small{font-size:10px;color:#7b858e;margin-top:2px}
+.dash-manager-list strong{font-size:11px;white-space:nowrap;color:#a06a00}.dash-manager-item.on strong{color:#397257}.dash-manager-complete{padding:13px;border-radius:12px;background:#eef7f2;color:#397257;font-size:12px;text-align:center}
 </style>
 </head>
 <body>
@@ -2753,11 +2763,13 @@ function sheetHtml(){
      (p?'<button class="btn dng'+(U.confirm==='p'+p.id?' sure':'')+'" data-act="delProj" data-id="'+p.id+'">'+(U.confirm==='p'+p.id?'แตะอีกครั้งเพื่อลบโครงการและรายการทั้งหมด':'ลบโครงการ')+'</button>':'')+
      '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='dashManager'){
-    var pins=dashPids(),available=S.projects.filter(function(p){return pins.indexOf(p.id)<0;});
-    b='<h3>จัดการแดชบอร์ดโครงการ</h3><p class="muted" style="margin-top:-4px">หน้า “รวมทุกโครงการ” จะแสดงเสมอ เพิ่มโครงการที่ต้องการติดตามเป็นแดชบอร์ดแยกได้</p>'+
-      '<div class="dash-manager-list">'+
-      (available.length?available.map(function(p){var st=({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ';return '<button data-act="dashAdd" data-id="'+p.id+'"><span><b>'+esc(p.name)+'</b><small>'+esc(st)+'</small></span><strong>+ เพิ่ม</strong></button>';}).join(''):'<div class="empty">ทุกโครงการถูกเพิ่มในแดชบอร์ดแล้ว</div>')+
-      '</div><button class="btn" data-act="closeSheet">ปิด</button>';
+    var pins=dashPids(),tracked=pins.map(proj).filter(Boolean),available=S.projects.filter(function(p){return pins.indexOf(p.id)<0;});
+    function dst(p){return ({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ';}
+    b='<div class="dash-manager-head"><div><small>แดชบอร์ด</small><h3>เลือกโครงการที่ติดตาม</h3></div><button data-act="closeSheet" aria-label="ปิด">×</button></div><p class="muted dash-manager-help">“รวมทุกโครงการ” แสดงอยู่เสมอ เลือกเฉพาะงานที่ต้องการเปิดเป็นแท็บด้านบน</p>'+
+      (tracked.length?'<div class="dash-manager-section"><b>กำลังแสดง '+tracked.length+' โครงการ</b><div class="dash-manager-list">'+tracked.map(function(p){return '<div class="dash-manager-item on"><span><b>'+esc(p.name)+'</b><small>'+esc(dst(p))+'</small></span><strong>กำลังติดตาม</strong></div>';}).join('')+'</div></div>':'')+
+      '<div class="dash-manager-section"><b>'+(available.length?'เพิ่มโครงการ':'ครบแล้ว')+'</b><div class="dash-manager-list">'+
+      (available.length?available.map(function(p){return '<button data-act="dashAdd" data-id="'+p.id+'"><span><b>'+esc(p.name)+'</b><small>'+esc(dst(p))+'</small></span><strong>+ เพิ่ม</strong></button>';}).join(''):'<div class="dash-manager-complete">ทุกโครงการอยู่ในแดชบอร์ดแล้ว</div>')+
+      '</div></div>';
   }else if(sh.kind==='settings'){
     b='<h3>ตั้งค่า</h3><div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">แตะแล้วสลับโหมดทันที ไม่ต้องยืนยัน</small></div><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
      '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
