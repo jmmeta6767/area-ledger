@@ -2228,9 +2228,15 @@ function mergeThaSalaPr4Boq(){
 var mirrorQueue=Promise.resolve(),committedState='';
 function persist(){
   if(U.storageReadBlocked&&!committedState){toast('ยังอ่านข้อมูลเดิมไม่สำเร็จ กรุณาปิดแท็บอื่นแล้วเปิดใหม่ก่อนบันทึก');return false;}
-  var prev='',json='',stamp=S.updatedAt;
+  var prev='',json='',stamp=S.updatedAt,current='';
   try{
-    prev=localStorage.getItem(KEY)||committedState;
+    current=localStorage.getItem(KEY)||'';
+    if(committedState&&current&&current!==committedState){
+      U.storageConflict=true;
+      toast('พบข้อมูลใหม่จากอีกแท็บ · หยุดบันทึกเพื่อป้องกันข้อมูลถูกเขียนทับ กรุณาโหลดแอปใหม่');
+      return false;
+    }
+    prev=current||committedState;
     S.updatedAt=Math.max(Date.now(),(+S.updatedAt||0)+1);
     json=JSON.stringify(S);
     localStorage.setItem(KEY,json);
@@ -2241,7 +2247,7 @@ function persist(){
     toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่ กรุณาลองอีกครั้ง');
     return false; /* Never mirror a rejected write into IndexedDB. */
   }
-  committedState=json;
+  committedState=json;U.storageConflict=false;
   if(prev&&prev!==json){try{var po=JSON.parse(prev);if(Array.isArray(po.projects)&&Array.isArray(po.tx))localStorage.setItem(BACKUP_KEY,prev);}catch(ignore){}}
   mirrorQueue=mirrorQueue.catch(function(){}).then(async function(){
     if(prev){try{var backup=JSON.parse(prev);if(Array.isArray(backup.projects)&&Array.isArray(backup.tx))await idbPut('state-backup',prev);}catch(ignore){}}
@@ -3906,6 +3912,7 @@ function saveTx(more){
   go(S.role==='foreman'?'list':(U.from==='project'?'project':'list'));
   toast(was?'บันทึกการแก้ไขแล้ว':'บันทึกรายการแล้ว');
 }
+window.addEventListener('storage',function(e){if(e&&e.key===KEY&&e.newValue&&committedState&&e.newValue!==committedState){U.storageConflict=true;toast('ข้อมูลถูกอัปเดตจากอีกแท็บ · การบันทึกในแท็บนี้ถูกพักจนกว่าจะโหลดใหม่');}});
 window.addEventListener('error',function(e){try{console.error('AREA Ledger runtime error',e.error||e.message);}catch(x){}});
 window.addEventListener('unhandledrejection',function(e){try{console.error('AREA Ledger promise rejection',e.reason);}catch(x){}});
 function boot(){
@@ -3931,7 +3938,7 @@ function boot(){
         tsRows=(S.boq||[]).filter(function(x){return x.pid===ts.id&&x.importBatch==='thasala-pr4-manual-20260930-v1';});
         tsTotal=tsRows.reduce(function(a,x){return a+boqAmount(x);},0);
       }
-      U.thasalaPr4Status={rows:tsRows.length,total:tsTotal,ok:tsRows.length===32&&Math.abs(tsTotal-412812.83)<=.02,version:'v226'};
+      U.thasalaPr4Status={rows:tsRows.length,total:tsTotal,ok:tsRows.length===32&&Math.abs(tsTotal-412812.83)<=.02,version:'v227'};
     }
     if(!U.homePid)U.homePid='__all';
     if(U.homePid!=='__all'&&dashPids().indexOf(U.homePid)<0){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
@@ -3944,7 +3951,7 @@ function boot(){
   Promise.all([idbGet(),idbRead('state-backup')]).then(function(vals){var primary=null,backup=null;try{primary=vals[0]?migrate(JSON.parse(vals[0])):null;}catch(e){U.storageReadBlocked=true;}try{backup=vals[1]?migrate(JSON.parse(vals[1])):null;}catch(e){U.storageReadBlocked=true;}var local=loadLS(),recovery=loadRecovery(),best=primary;if(local&&(!best||(local.updatedAt||0)>(best.updatedAt||0)))best=local;if(recovery&&(!best||(recovery.updatedAt||0)>(best.updatedAt||0)))best=recovery;if(backup&&(!best||(backup.updatedAt||0)>(best.updatedAt||0)))best=backup;start(best);});
   /* Wait for bounded IndexedDB reads before deciding whether this is a new install. */
 }
-if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js?v=226',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});}
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js?v=227',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});}
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
 </script>

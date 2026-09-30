@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v226
+# AREA Ledger V1 — Master v227
 
-Integrity / Recovery / Contract Control Hardening, based on GitHub `main` v225
+Multi-tab Conflict / Integrity Hardening, based on GitHub `main` v226
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v227 fixes
+
+- Reject stale writes when another tab has committed a different `site-ledger-v1` snapshot.
+- Listen for cross-tab storage changes and put the stale tab into conflict-safe mode without mutating records.
+- Preserve the newer localStorage snapshot; the stale tab must reload before it can save again.
+- Add regression coverage for stale-write rejection and storage-event conflict detection.
+- Add GitHub Actions QA so the repository can execute `node tests/qa.cjs` on every main push/PR.
 
 ## v226 fixes
 
