@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v280
+# AREA Ledger V1 — Master v281
 
-Cloudflare Static Asset Redirect Compatibility, based on GitHub `main` v279
-(`cd306e2de926ae97b944a3598c79d80c2fc6d4d5`).
+Deterministic Worker Static Asset Bundle, based on GitHub `main` v280
+(`395e375888200f890043b9e96cd977a003404120`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v281 deterministic Worker static asset bundle
+
+- Moved Worker Static Assets to `gateway/public/`, avoiding parent-directory asset resolution in Git-connected Workers Builds.
+- Deployment assets are pinned to the exact same Git blobs as root `index.html`, service worker, manifest, icons, logo and `_headers`.
+- Gateway contract QA now compares deployment assets byte-for-byte against root runtime assets, preventing drift while keeping the repository root as the source of truth.
+- Legacy `_redirects` remains outside the Worker bundle because SPA fallback is handled by Workers Static Assets.
 
 ## v280 Cloudflare static asset redirect compatibility
 
