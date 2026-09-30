@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v270
+# AREA Ledger V1 — Master v271
 
-Cloudflare Staging Ready, based on GitHub `main` v269
-(`a65c5f20e85103b8f4e21edb4ff048f679459ddd`).
+Cloudflare Runtime Compatibility, based on GitHub `main` v270
+(`c272aba1c27b574fb016fe41806939cb2bf79cae`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v271 Cloudflare runtime compatibility
+
+- Removed unsupported Durable Object `expirationTtl` write options; rate/idempotency state now uses Durable Object alarms for bounded cleanup.
+- CORS OPTIONS responses now emit a bodyless HTTP 204 response.
+- Provider aborts normalize to `PROVIDER_TIMEOUT` / HTTP 504.
+- Browser gateway payload ceiling now matches the Worker at 3 MiB to avoid predictable remote 413/fallback mismatches.
+- This commit is intended to trigger the first connected Cloudflare Workers Build for the staging Worker.
 
 ## v270 Cloudflare staging readiness
 
@@ -319,8 +327,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v270-cloudflare-ready`.
-Registration: `sw.js?v=270`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v271-cloudflare-runtime`.
+Registration: `sw.js?v=271`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
