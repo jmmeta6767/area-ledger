@@ -2735,6 +2735,7 @@ function appMenuHtml(){
     ['projects','build','โครงการ','จัดการงานและส่งออกรายงาน'],
     ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'ติดตามกำหนดชำระ'],
     ['report','list','รายงาน','สรุปบัญชีและภาษี'],
+    ['procurement','build','งานพัสดุ','ขออนุมัติใช้วัสดุ / หนังสือราชการ'],
     ['docs','build','เอกสารธุรกิจ','ใบเสนอราคา / ใบวางบิล / ใบเสร็จ']
   ];
   return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[0]==='due'&&due?'<i>'+Math.min(due,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-docs"><b>เอกสาร</b><div><button data-act="drawerDocList" data-kind="quote">ใบเสนอราคา</button><button data-act="drawerDocList" data-kind="bill">ใบวางบิล</button><button data-act="drawerDocList" data-kind="receipt">ใบเสร็จ</button></div></div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
