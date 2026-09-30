@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v262
+# AREA Ledger V1 — Master v263
 
-Host-neutral PWA Hardening, based on GitHub `main` v261
-(`e9e8c79f66e2c34a40171e6e60ab7a025ae31a39`).
+Portable Recovery / PWA Update Integrity, based on GitHub `main` v262
+(`6cf571ae8e83f140b801fa6c881d80d6e96d4bbd`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v263 portable recovery / PWA update integrity
+
+- Backup sheet can now save a portable `.json` state file through the existing iPhone share/download path, while retaining copy/paste backup compatibility.
+- Service-worker controller changes reload immediately only when no draft, sheet, save, OCR or BOQ import is active; otherwise the update is deferred until the current work is closed.
+- Added regression assertions for portable backup and guarded PWA update hooks.
+- Storage identifiers and IndexedDB schema remain unchanged; no production host or DNS switch.
 
 ## v262 host-neutral PWA / deployment readiness
 
@@ -256,8 +263,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v262-host-neutral-pwa`.
-Registration: `sw.js?v=262`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v263-portable-recovery`.
+Registration: `sw.js?v=263`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.

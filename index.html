@@ -2032,7 +2032,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[]};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],pwaUpdatePending:false};
 
 function defaultChartAccounts(){return[
 {id:'1000',code:'1000',name:'เงินสด',type:'asset',normal:'debit'},
@@ -3589,7 +3589,7 @@ function sheetHtml(){
   }else if(sh.kind==='resetConfirm'){
     b='<h3 style="color:var(--out)">ยืนยันรีเซ็ตข้อมูล?</h3><p class="muted" style="margin:8px 0 4px">การรีเซ็ตจะลบโครงการและรายการบัญชีทั้งหมดในเครื่องนี้ และไม่สามารถย้อนกลับได้หากยังไม่ได้สำรองข้อมูล</p><div class="stack"><button class="btn dng sure" data-act="resetDo">ยืนยันรีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='backup'){
-    b='<h3>สำรองข้อมูล</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกข้อความนี้ไปเก็บไว้ในโน้ต หรือ LINE Keep เมื่อต้องการกู้คืนให้วางกลับในเมนู "กู้คืนข้อมูล"</p><textarea class="csv" id="bkbox" readonly>'+esc(JSON.stringify(S))+'</textarea><div class="stack"><button class="btn pri" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
+    b='<h3>สำรองข้อมูล</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกข้อความนี้ไปเก็บไว้ในโน้ต หรือ LINE Keep เมื่อต้องการกู้คืนให้วางกลับในเมนู "กู้คืนข้อมูล"</p><textarea class="csv" id="bkbox" readonly>'+esc(JSON.stringify(S))+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์สำรอง .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='restore'){
     b='<h3>กู้คืนข้อมูล</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">วางข้อความสำรองที่คัดลอกไว้ทั้งก้อน ข้อมูลปัจจุบันในเครื่องจะถูกแทนที่</p><textarea class="csv" id="rsbox" placeholder="วางข้อมูลสำรองที่นี่">'+esc(U.rsText||'')+'</textarea><div class="stack"><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'กู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='csv'){
@@ -3834,7 +3834,7 @@ document.addEventListener('click',function(e){
     var cd=S.tx.find(function(x){return x.id===id;});
     if(cd){if(accountingPeriodLocked(cd.date,'รายการบัญชี'))return;cd.due='';cd.paid=false;if(!persist())return;U.sheet={kind:'tx',id:id};render();toast('ปิดวันครบกำหนดแล้ว');}
   }
-  else if(a==='closeSheet'){U.sheet=null;U.confirm=null;render();}
+  else if(a==='closeSheet'){U.sheet=null;U.confirm=null;render();pwaApplyPendingUpdate();}
   else if(a==='apPayOpen'){var apt0=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt0)return;if(txOutstandingNet(apt0)<=.01){toast('รายการนี้ชำระครบแล้ว');return;}U.sheet={kind:'apPay',id:id};render();}
   else if(a==='apPaySave'){var apt1=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt1){toast('ไม่พบเจ้าหนี้');return;}var amtAP=Math.round((+(document.getElementById('apPayAmount')||{}).value||0)*100)/100,dateAP=(document.getElementById('apPayDate')||{}).value||today(),payAP=(document.getElementById('apPayMethod')||{}).value||'transfer',remainAP=txOutstandingNet(apt1);if(!(amtAP>0)||amtAP-remainAP>.01){toast('จำนวนชำระต้องมากกว่า 0 และไม่เกินยอดคงเหลือ');return;}if(accountingPeriodLocked(dateAP,'การชำระเจ้าหนี้'))return;var snapAP=JSON.parse(JSON.stringify(apt1)),pmt={id:uid(),date:dateAP,amount:amtAP,pay:payAP,createdAt:Date.now()};apt1.payments=txPayments(apt1).slice();apt1.payments.push(pmt);var stAP=txPaymentState(apt1);apt1.paid=stAP.settled;apt1.pay=stAP.settled&&apt1.payments.length===1?payAP:(apt1.pay||'');if(stAP.settled)apt1.due='';accountingAudit('ap-payment','tx',apt1.id,snapAP,apt1,'ชำระเจ้าหนี้ '+fmt(amtAP));if(!persist()){Object.keys(apt1).forEach(function(k){delete apt1[k];});Object.assign(apt1,snapAP);toast('บันทึกชำระไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast(stAP.settled?'ชำระเจ้าหนี้ครบแล้ว':'บันทึกจ่ายบางส่วนแล้ว · เหลือ '+fmt(stAP.remain));}
   else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(!t){toast('ไม่พบรายการ');return;}if(accountingPeriodLocked(t.date,'รายการบัญชี'))return;if(t.paid){U.sheet=null;render();toast('รายการนี้ชำระแล้ว');return;}var prevPaid=t.paid,prevDue=t.due,prevPay=t.pay;t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';if(!persist()){t.paid=prevPaid;t.due=prevDue;t.pay=prevPay;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}
@@ -3872,6 +3872,7 @@ document.addEventListener('click',function(e){
   }
   else if(a==='install'){U.sheet={kind:'install'};render();}
   else if(a==='backup'){U.sheet={kind:'backup'};render();}
+  else if(a==='backupFile'){var payload=JSON.stringify(S,null,2),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'}));S.lastBackup=Date.now();persist();}
   else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.confirm=null;render();}
   else if(a==='copyBk'){doCopy('bkbox',function(){S.lastBackup=Date.now();if(!persist())return;toast('คัดลอกข้อมูลสำรองแล้ว');});}
   else if(a==='doRestore'){
@@ -4126,7 +4127,16 @@ function boot(){
   Promise.all([idbGet(),idbRead('state-backup')]).then(function(vals){var primary=null,backup=null;try{primary=vals[0]?migrate(JSON.parse(vals[0])):null;}catch(e){U.storageReadBlocked=true;}try{backup=vals[1]?migrate(JSON.parse(vals[1])):null;}catch(e){U.storageReadBlocked=true;}var local=loadLS(),recovery=loadRecovery(),best=primary;if(local&&(!best||(local.updatedAt||0)>(best.updatedAt||0)))best=local;if(recovery&&(!best||(recovery.updatedAt||0)>(best.updatedAt||0)))best=recovery;if(backup&&(!best||(backup.updatedAt||0)>(best.updatedAt||0)))best=backup;start(best);});
   /* Wait for bounded IndexedDB reads before deciding whether this is a new install. */
 }
-if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js?v=262',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});}
+function pwaCanReload(){return !U.saveLock&&!U.draft&&!U.boqImportBusy&&!U.expenseScanBusy&&!U.sheet;}
+function pwaApplyPendingUpdate(){if(!U.pwaUpdatePending||!pwaCanReload())return false;U.pwaUpdatePending=false;location.reload();return true;}
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
+  var pwaController=navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
+    if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
+  });
+  navigator.serviceWorker.register('sw.js?v=263',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+}
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
 </script>
