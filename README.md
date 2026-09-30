@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v274
+# AREA Ledger V1 — Master v275
 
-Storage QA Alignment, based on GitHub `main` v273
-(`5b2b4e64b760a21acd8644011aadf6b7df75d98c`).
+Gateway Contract QA Hardening, based on GitHub `main` v274
+(`0e9e668e7b9252e6908a2532f66d4b8b5ddf6c79`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,11 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v275 gateway contract QA hardening
+
+- Reworked Gateway Contract QA to validate route/origin/protocol/storage semantics with whitespace-insensitive patterns instead of brittle source-format matches.
+- Main regression suite already passes 101 groups on the preceding build; this change does not alter application or gateway runtime behavior.
 
 ## v274 storage QA alignment
 
