@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v286
+# AREA Ledger V1 — Master v287
 
-Host Migration Safety Gate, based on GitHub `main` v285
-(`6b1b70699ceae26f98135ab249b6663c56f4cf2c`).
+Migration Gate QA Fixture Correction, based on GitHub `main` v286
+(`a211440d99b58087860f5ae993465d293cfa2bd7`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,11 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v287 migration gate QA fixture correction
+
+- Corrected the v286 regression fixture: `reset()` intentionally contains sample projects, so a missing backup must be treated as stale/not-ready rather than as an empty-state exception.
+- Runtime migration safety behavior is unchanged; the Cloudflare v286 deployment already passed Workers Build.
 
 ## v286 host migration safety gate
 
