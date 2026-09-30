@@ -40,6 +40,7 @@ assert(/RATE_LIMIT_PER_MINUTE\s*=\s*"20"/.test(wrangler));
 assert(/OCR_PROVIDER\s*=\s*"generic"/.test(wrangler));
 assert(/PROVIDER_TIMEOUT_MS\s*=\s*"10000"/.test(wrangler));
 assert(/PROVIDER_RETRIES\s*=\s*"1"/.test(wrangler));
+assert(/keep_vars\s*=\s*true/.test(wrangler));
 assert(/\[env\.staging\]/.test(wrangler));
 assert(/name\s*=\s*"area-ledger-ai-gateway-staging"/.test(wrangler));
 assert(/GEMINI_MODEL\s*=\s*"gemini-2.5-flash"/.test(wrangler));

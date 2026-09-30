@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v276
+# AREA Ledger V1 — Master v277
 
-Gemini Gateway Adapter, based on GitHub `main` v275
-(`812e096bddc40cf94b1a19568b2ce04863a3ead1`).
+Cloudflare Runtime Variable Persistence, based on GitHub `main` v276
+(`e5e9c05ec621521fd9555ae68f0211fb39839f38`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,12 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v277 Cloudflare runtime variable persistence
+
+- Added top-level `keep_vars=true` so exact dashboard runtime values such as staging `ALLOWED_ORIGINS` survive future Git-triggered Wrangler deployments.
+- Worker secrets remain server-side and are preserved independently by Cloudflare deploys.
+- Added contract QA for this deployment invariant.
 
 ## v276 Gemini gateway adapter
 
