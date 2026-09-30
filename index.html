@@ -2588,10 +2588,10 @@ function thaiGovBoqDeclaredTotal(text){
   var ls=String(text||'').split(/\n+/),cand=[];ls.forEach(function(line){if(/รวมทั้งสิ้น|รวมค่าก่อสร้าง|รวมเป็นเงิน|รวมราคาค่าวัสดุและค่าแรง|รวมค่างาน/i.test(line)){var ns=(line.match(/\d[\d,]*(?:\.\d+)?/g)||[]).map(thaiBoqNum).filter(function(n){return isFinite(n)&&n>0;});if(ns.length)cand.push(Math.max.apply(Math,ns));}});return cand.length?Math.max.apply(Math,cand):0;
 }
 function boqOcrReconcile(rows,declared){
-  var calc=(rows||[]).reduce(function(a,x){return a+boqAmount(x);},0),diff=declared?Math.abs(calc-declared):0,tol=declared?Math.max(5,declared*.005):0;return {declared:+declared||0,calculated:calc,diff:diff,tolerance:tol,ok:!!declared&&diff<=tol};
+  var calc=(rows||[]).reduce(function(a,x){return a+boqAmount(x);},0),d=+declared||0;if(d&&calc&&d<calc*.1)d=0;var diff=d?Math.abs(calc-d):0,tol=d?Math.max(5,d*.005):0;return {declared:d,calculated:calc,diff:diff,tolerance:tol,ok:!!d&&diff<=tol};
 }
 function thaiGovUnit(line){var m=String(line||'').match(/(?:^|\s)(ตร\.ม\.|ตรม\.?|ม\.2|ม2|ลบ\.ม\.|ลบม\.?|ม\.3|ม3|ม\.|เมตร|กก\.|กิโลกรัม|ตัน|ชุด|อัน|ตัว|แผ่น|เส้น|ท่อน|ถุง|ลูก|เที่ยว|งาน)(?:\s|$)/i);return m?m[1]:'';}
-function thaiGovNoise(line){return /(?:ดอกเบี้ย|เงินกู้|factor\s*f|ภาษี|vat|รวม|หมายเหตุ|ประมาณราคา|แบบ\s*ปร\.|ราคากลาง|ค่าใช้จ่ายพิเศษ|สรุป|ผู้ประมาณ|คณะกรรมการ|รายการ|จำนวนเงิน|ราคาต่อหน่วย)/i.test(line);}
+function thaiGovNoise(line){return /(?:ดอกเบี้ย|เงินกู้|factor\s*f|ภาษี|vat|รวม|หมายเหตุ|ประมาณราคา|แบบ\s*ปร\.|ราคากลาง|ค่าใช้จ่ายพิเศษ|สรุป|ผู้ประมาณ|คณะกรรมการ|รายการ|จำนวนเงิน|ราคาต่อหน่วย|กลุ่มงาน|งานโครงสร้างวิศวกรรม|หมวดงาน|ส่วนราชการ|โครงการ)/i.test(line);}
 function thaiGovBoqRows(text){
   var ls=String(text||'').split(/\n+/).map(function(x){return x.replace(/\s+/g,' ').trim();}).filter(Boolean),out=[],rejected=0;
   ls.forEach(function(line){
