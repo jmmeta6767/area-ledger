@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v277
+# AREA Ledger V1 — Master v278
 
-Cloudflare Runtime Variable Persistence, based on GitHub `main` v276
-(`e5e9c05ec621521fd9555ae68f0211fb39839f38`).
+Gateway Control Center, based on GitHub `main` v277
+(`bc607da82e498fb5a312b3c7efb01b7f561be8c1`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v278 Gateway Control Center
+
+- Added owner Settings controls for Local/Cloudflare OCR mode, gateway endpoint, bounded timeout and explicit Remote OCR consent.
+- Added one-tap staging endpoint setup, current `location.origin` display/copy and a direct `/health` opener so Cloudflare `ALLOWED_ORIGINS` can be configured without guessing the browser origin.
+- Hardened browser gateway URL parsing: HTTPS (or localhost HTTP) only, with credentials/query/hash rejected before any remote OCR request.
+- Remote OCR remains opt-in and local OCR remains the backward-compatible default; no API secret is stored in browser state.
 
 ## v277 Cloudflare runtime variable persistence
 
@@ -360,8 +367,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v271-cloudflare-runtime`.
-Registration: `sw.js?v=271`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v278-gateway-control-center`.
+Registration: `sw.js?v=278`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.

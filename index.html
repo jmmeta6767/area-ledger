@@ -2847,10 +2847,19 @@ function aiGatewayConfig(){
   var cfg=S&&S.ai&&typeof S.ai==='object'?S.ai:{};
   return {mode:cfg.mode==='gateway'?'gateway':'local',endpoint:String(cfg.endpoint||'').trim(),remoteOcrConsent:cfg.remoteOcrConsent===true,timeoutMs:Math.max(3000,Math.min(30000,+cfg.timeoutMs||15000))};
 }
+function aiGatewayBase(){
+  var cfg=aiGatewayConfig(),raw=cfg.endpoint;
+  if(!raw)return '';
+  try{
+    var u=new URL(raw),local=u.protocol==='http:'&&u.hostname==='localhost';
+    if(u.protocol!=='https:'&&!local)return '';
+    if(u.username||u.password||u.search||u.hash)return '';
+    return u.href.replace(/\/+$/,'');
+  }catch(_){return '';}
+}
 function aiGatewayEndpoint(path){
-  var cfg=aiGatewayConfig(),base=cfg.endpoint.replace(/\/+$/,'');
+  var cfg=aiGatewayConfig(),base=aiGatewayBase();
   if(cfg.mode!=='gateway'||!cfg.remoteOcrConsent||!base)return '';
-  if(!/^https:\/\//i.test(base)&&!/^http:\/\/localhost(?::\d+)?$/i.test(base))return '';
   return base+'/'+String(path||'').replace(/^\/+/, '');
 }
 function aiGatewayValidatePayload(path,payload){
@@ -3582,6 +3591,13 @@ function sheetHtml(){
      '<div class="field"><label for="bbranch">สำนักงาน</label><select id="bbranch"><option '+(((S.business&&S.business.branch)||'สำนักงานใหญ่')==='สำนักงานใหญ่'?'selected':'')+'>สำนักงานใหญ่</option><option '+((S.business&&S.business.branch)==='สาขา'?'selected':'')+'>สาขา</option></select></div>'+
      '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
      '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+'<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div><small class="muted" style="display:block;margin-top:7px">พื้นหลังสไตล์สำนักงาน/งานก่อสร้างแบบจาง เพื่อไม่รบกวนการอ่านบัญชี</small></div>'+
+     '<div class="field"><span class="lbl" style="font-size:1.05rem;font-weight:800">AI / OCR Gateway</span><small class="muted">โหมด Local เป็นค่าเริ่มต้น · Remote OCR จะไม่ส่งรูปออกจากเครื่องจนกว่าจะเปิดความยินยอม</small></div>'+
+     '<div class="field"><span class="lbl">โหมด OCR</span><div class="seg"><button class="'+(aiGatewayConfig().mode==='local'?'on':'')+'" data-act="aiMode" data-v="local">Local</button><button class="'+(aiGatewayConfig().mode==='gateway'?'on':'')+'" data-act="aiMode" data-v="gateway">Cloudflare</button></div></div>'+
+     '<div class="field"><label for="aiEndpoint">Gateway endpoint</label><input id="aiEndpoint" type="text" inputmode="url" autocapitalize="none" autocomplete="off" value="'+esc(aiGatewayConfig().endpoint)+'" placeholder="https://...workers.dev"><small class="muted" style="display:block;margin-top:7px">API key ไม่ถูกเก็บในแอปหรือเบราว์เซอร์</small></div>'+
+     '<div class="field"><label for="aiTimeout">Timeout (ms)</label><input id="aiTimeout" type="number" inputmode="numeric" min="3000" max="30000" step="1000" value="'+aiGatewayConfig().timeoutMs+'"></div>'+
+     '<button class="tog '+(aiGatewayConfig().remoteOcrConsent?'on':'')+'" data-act="aiConsent"><span class="sw"></span><span><b>อนุญาต Remote OCR</b><small>'+(aiGatewayConfig().remoteOcrConsent?'เปิดแล้ว · รูปจะส่งเฉพาะเมื่อใช้เมนู OCR':'ปิดอยู่ · ใช้ OCR ในเครื่องเท่านั้น')+'</small></span></button>'+
+     '<div class="field"><label for="appOrigin">Origin ของเว็บนี้</label><input id="appOrigin" type="text" readonly value="'+esc(location.origin)+'"><small class="muted" style="display:block;margin-top:7px">ใช้ค่านี้ใน Cloudflare ALLOWED_ORIGINS แบบตรงตัว</small></div>'+
+     '<div class="stack"><button class="btn" data-act="aiUseStaging">ใช้ Cloudflare staging endpoint</button><button class="btn" data-act="copyAppOrigin">คัดลอก Origin</button><button class="btn" data-act="openGatewayHealth">เปิด Gateway /health</button></div>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
      '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
@@ -4002,6 +4018,11 @@ document.addEventListener('click',function(e){
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;if(!persist())return;render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
+  else if(a==='aiMode'){S.ai=S.ai||{};S.ai.mode=v==='gateway'?'gateway':'local';if(!persist())return;render();}
+  else if(a==='aiConsent'){S.ai=S.ai||{};S.ai.remoteOcrConsent=S.ai.remoteOcrConsent!==true;if(!persist())return;render();}
+  else if(a==='aiUseStaging'){S.ai=S.ai||{};S.ai.mode='gateway';S.ai.endpoint='https://area-ledger-ai-gateway-staging.areamaibab.workers.dev';if(!persist())return;render();toast('ตั้งค่า Cloudflare staging แล้ว · เปิด Remote OCR เมื่อพร้อมส่งรูป');}
+  else if(a==='copyAppOrigin'){var origin=location.origin,done=false;try{var tmp=document.createElement('textarea');tmp.value=origin;tmp.style.position='fixed';tmp.style.opacity='0';document.body.appendChild(tmp);tmp.focus();tmp.select();done=document.execCommand('copy');tmp.remove();}catch(_){done=false;}if(!done&&navigator.clipboard)navigator.clipboard.writeText(origin).then(function(){toast('คัดลอก Origin แล้ว');},function(){toast(origin);});else toast(done?'คัดลอก Origin แล้ว':origin);}
+  else if(a==='openGatewayHealth'){var base=aiGatewayBase();if(!base){toast('กรอก Gateway endpoint ที่ถูกต้องก่อน');return;}var health=base+'/health';try{window.open(health,'_blank','noopener');}catch(_){location.href=health;}}
   else if(a==='viewMode'){S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!persist())return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!persist())return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
@@ -4062,7 +4083,9 @@ document.addEventListener('click',function(e){
   else if(a==='saveOpen'){
     S.opening=parseFloat(document.getElementById('op').value)||0;S.openCash=parseFloat(document.getElementById('opc').value)||0;S.bank=document.getElementById('bnk').value.trim();S.brand=document.getElementById('brn').value.trim()||'AREA MAIBAB';
     S.business=S.business||{};S.business.legalName=document.getElementById('blegal').value.trim();S.business.legalNameEn=document.getElementById('blegalen').value.trim();S.business.taxId=document.getElementById('btax').value.trim();S.business.phone=document.getElementById('bphone').value.trim();S.business.email=document.getElementById('bemail').value.trim();S.business.address=document.getElementById('baddr').value.trim();S.business.addressEn=document.getElementById('baddren').value.trim();S.business.branch=document.getElementById('bbranch').value;
-    if(!persist())return;U.sheet=null;render();toast('บันทึกข้อมูลบริษัทแล้ว');
+    S.ai=S.ai||{};S.ai.endpoint=(document.getElementById('aiEndpoint')||{}).value?document.getElementById('aiEndpoint').value.trim():String(S.ai.endpoint||'');var ait=Number((document.getElementById('aiTimeout')||{}).value);S.ai.timeoutMs=Math.max(3000,Math.min(30000,isFinite(ait)&&ait?ait:15000));
+    if(S.ai.endpoint&&!aiGatewayBase()){toast('Gateway endpoint ไม่ถูกต้อง · ใช้ HTTPS และห้ามมี user/password/query/hash');return;}
+    if(!persist())return;U.sheet=null;render();toast('บันทึกข้อมูลบริษัทและ Gateway แล้ว');
   }
   else if(a==='mprev'){U.month=shiftMonth(U.month,-1);render();}
   else if(a==='mnext'){U.month=shiftMonth(U.month,1);render();}
@@ -4186,7 +4209,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=271',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=278',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
