@@ -1665,6 +1665,8 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 .nav-in{pointer-events:auto!important;position:relative;z-index:2}
 .nav button{pointer-events:auto!important;position:relative;z-index:3;-webkit-tap-highlight-color:rgba(0,0,0,.08);touch-action:manipulation}
 .app-drawer-wrap,.app-drawer,.app-drawer button{pointer-events:auto!important}.app-drawer{z-index:2}.app-drawer button{position:relative;z-index:3;touch-action:manipulation}
+
+.header-home{width:42px;height:42px;border:0;background:transparent;display:grid;place-items:center;color:var(--ink);border-radius:12px;flex:none}.header-home svg{width:22px;height:22px}.hd .back,.hd .header-home{touch-action:manipulation;pointer-events:auto}
 </style>
 </head>
 <body>
@@ -1749,7 +1751,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false};
 
 function emptyState(){return {projects:[],tx:[],guarantees:[],materialApprovals:[],quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},updatedAt:0};}
 var IDB_NAME='site-ledger-db';
@@ -1994,7 +1996,25 @@ function toast(msg){
   var d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=msg;document.body.appendChild(d);
   setTimeout(function(){d.remove();},2200);
 }
-function go(v,extra){U.view=v;U.sheet=null;U.confirm=null;U.anim=1;if(extra)for(var k in extra)U[k]=extra[k];render();window.scrollTo(0,0);}
+function navState(){return {view:U.view||'home',pid:U.pid||null,docListKind:U.docListKind||'',docProjectPid:U.docProjectPid||''};}
+function applyNavState(st){if(!st)st={view:'home'};U.view=st.view||'home';U.pid=st.pid||null;U.docListKind=st.docListKind||U.docListKind||'';U.docProjectPid=st.docProjectPid||'';U.sheet=null;U.confirm=null;U.appMenu=false;U.anim=1;render();window.scrollTo(0,0);}
+function go(v,extra,opts){
+  opts=opts||{};var cur=navState(),next={view:v||'home',pid:cur.pid,docListKind:cur.docListKind,docProjectPid:cur.docProjectPid};
+  if(extra)for(var k in extra)next[k]=extra[k];
+  if(!opts.replace&&cur.view!==next.view){U.navStack=U.navStack||[];U.navStack.push(cur);if(U.navStack.length>40)U.navStack.shift();}
+  applyNavState(next);
+  if(!opts.browser){try{history.pushState({areaLedger:true,view:next.view},'',location.href);}catch(e){}}
+}
+function navBack(){
+  U.sheet=null;U.appMenu=false;
+  var st=(U.navStack&&U.navStack.length)?U.navStack.pop():null;
+  if(st){applyNavState(st);return;}
+  if(U.view!=='home'){applyNavState({view:'home',pid:null});return;}
+}
+function navHome(){U.navStack=[];applyNavState({view:'home',pid:null});try{history.replaceState({areaLedger:true,view:'home'},'',location.href);}catch(e){}}
+function navList(){U.filter=U.filter||{type:'all',pid:'',cat:'',status:'all',sub:''};go('list');}
+try{history.replaceState({areaLedger:true,view:'home'},'',location.href);}catch(e){}
+window.addEventListener('popstate',function(){if(U.sheet){U.sheet=null;render();return;}navBack();});
 function newDraft(type,pid){
   type=type||'out';
   var first=S.projects[0]?S.projects[0].id:'';
@@ -2039,7 +2059,7 @@ function homeUrgentAlert(allMode,active,all){
 function header(title,back){
   var menu='<button class="app-menu-btn" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button>';
   if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header"><div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><div class="home-top-actions"><button data-act="settings" aria-label="ตั้งค่า">⚙</button><button data-act="appMenu" aria-label="เมนูเพิ่มเติม">•••</button></div></div>';
-  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="back" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1></div><div class="stripe"></div></div>';
+  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="navBack" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1>'+(back?'<button class="header-home" data-act="navHome" aria-label="กลับหน้าหลัก">'+ic('home')+'</button>':'')+'</div><div class="stripe"></div></div>';
 }
 
 function txIcon(t){
@@ -2884,7 +2904,7 @@ function render(){
 function directAction(el){
   if(!el)return false;
   var a=el.getAttribute('data-act'),v=el.getAttribute('data-v'),id=el.getAttribute('data-id');
-  if(a==='go'||a==='openList'||a==='menuGo'){U.appMenu=false;if(a==='openList')U.filter=U.filter||{type:'all',pid:'',cat:'',status:'all',sub:''};go(v||'home');return true;}
+  if(a==='go'||a==='openList'||a==='menuGo'){U.appMenu=false;if(a==='openList'){navList();return true;}go(v||'home');return true;} if(a==='navBack'){navBack();return true;} if(a==='navHome'){navHome();return true;}
   if(a==='appMenu'){U.appMenu=true;render();return true;}
   if(a==='appMenuClose'){U.appMenu=false;render();return true;}
   if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();return true;}
@@ -2893,13 +2913,13 @@ function directAction(el){
   return false;
 }
 document.addEventListener('pointerup',function(e){
-  var el=e.target&&e.target.closest?e.target.closest('.nav [data-act],.app-drawer-wrap [data-act],.home-top-actions [data-act],.app-menu-btn[data-act]'):null;
+  var el=e.target&&e.target.closest?e.target.closest('.nav [data-act],.app-drawer-wrap [data-act],.home-top-actions [data-act],.app-menu-btn[data-act],.hd [data-act]'):null;
   if(!el)return;
   if(directAction(el)){e.preventDefault();e.stopPropagation();}
 },true);
 document.addEventListener('touchend',function(e){
   if(window.PointerEvent)return;
-  var el=e.target&&e.target.closest?e.target.closest('.nav [data-act],.app-drawer-wrap [data-act],.home-top-actions [data-act],.app-menu-btn[data-act]'):null;
+  var el=e.target&&e.target.closest?e.target.closest('.nav [data-act],.app-drawer-wrap [data-act],.home-top-actions [data-act],.app-menu-btn[data-act],.hd [data-act]'):null;
   if(!el)return;
   if(directAction(el)){e.preventDefault();e.stopPropagation();}
 },{capture:true,passive:false});
@@ -2909,6 +2929,8 @@ document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
+  if(a==='navBack'){navBack();return;}
+  if(a==='navHome'){navHome();return;}
   if(a==='dashSwitch'){
     U.homePid=id||'__all';try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}
     U.sheet=null;go('home');return;
