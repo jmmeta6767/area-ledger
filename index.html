@@ -1653,6 +1653,8 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 .guarantee-filters{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.guarantee-filters::-webkit-scrollbar{display:none}.guarantee-filters button{border:1px solid #dfe4e7;background:#fff;border-radius:999px;padding:8px 11px;white-space:nowrap;font-weight:700;color:#626c75}.guarantee-filters button.on{background:#17222f;color:#fff;border-color:#17222f}
 
 .gr-meta .gr-over{font-weight:800;color:#b33b35}.guarantee-row:has(.gr-over){background:#fffdf8}
+
+.home-guarantee-watch{width:100%;border:0;background:#fff4cf;border-radius:18px;padding:15px 16px;margin:10px 0;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 5px 17px rgba(17,24,39,.04)}.home-guarantee-watch small,.home-guarantee-watch b,.home-guarantee-watch span{display:block}.home-guarantee-watch small{font-weight:800;color:#5e6670}.home-guarantee-watch b{font-size:22px;margin:4px 0}.home-guarantee-watch span{font-size:11px;color:#7a6b42}.home-guarantee-watch>strong{white-space:nowrap;font-size:12px}
 </style>
 </head>
 <body>
@@ -2112,6 +2114,7 @@ function vHome(){
   var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid" aria-label="เลือกโครงการ"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
 
   h+=dashTabs();
+  if(allMode&&retRows.length){var gdue=retRows.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),gnear=retRows.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;});h+='<button class="home-guarantee-watch" data-act="go" data-v="guarantees"><div><small>เงินประกันที่ต้องติดตาม</small><b>'+fmt(retTotal)+'</b><span>'+retRows.length+' โครงการ · '+(gdue.length?'ครบกำหนด '+gdue.length+' โครงการ':gnear.length?'ใกล้ครบกำหนด '+gnear.length+' โครงการ':'กำลังรอรับคืน')+'</span></div><strong>ดูทะเบียน ›</strong></button>';}
 
 
 
