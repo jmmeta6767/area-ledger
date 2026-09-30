@@ -1684,7 +1684,10 @@ body.wallpaper-on .mgroup{
 
 /* v106 Material Document Control */
 .material-doc-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 14px}.material-doc-kpi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.material-doc-kpi small,.material-doc-kpi b{display:block}.material-doc-kpi small{color:var(--muted);font-size:.7rem}.material-doc-kpi b{font-size:1.25rem;margin-top:2px}.material-spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mat-spec{border:1px solid #ddd;padding:8px 10px;margin:8px 0 12px;display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;font-size:11px}.mat-spec div{display:flex;gap:7px}.mat-spec b{min-width:70px}@media(max-width:430px){.material-spec-grid{grid-template-columns:1fr}.material-doc-kpi{gap:5px}}
-.official-no{display:flex;justify-content:space-between;gap:20px;margin:10px 0 16px}.official-paper .mat-body{text-indent:2.5em;min-height:120px}.doc-type-icon{font-size:.68rem}\n</style>
+.official-no{display:flex;justify-content:space-between;gap:20px;margin:10px 0 16px}.official-paper .mat-body{text-indent:2.5em;min-height:120px}.doc-type-icon{font-size:.68rem}\n
+/* v108: visually separate business documents from procurement/government correspondence */
+.doc-group-head{margin:12px 0 10px;padding:18px 20px;border-radius:22px;background:#1f2a35;color:#fff}.doc-group-head b{display:block;font-size:20px;line-height:1.25}.doc-group-head small{display:block;margin-top:5px;color:#c8d0d8;font-size:13px}.procurement-group{margin-top:28px;background:#18212b}.business-doc-grid{margin-bottom:8px}.procurement-doc-grid{margin-top:12px}.procurement-doc-grid .doc-type-icon{min-width:58px}.material-doc-kpi{margin-bottom:12px}@media(max-width:600px){.doc-group-head{margin-left:0;margin-right:0;padding:16px 18px;border-radius:20px}.doc-group-head b{font-size:18px}.procurement-group{margin-top:24px}.business-doc-grid,.procurement-doc-grid{grid-template-columns:1fr 1fr}.business-doc-grid button:last-child{grid-column:1 / -1}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2589,13 +2592,16 @@ function docKindLabel(kind){return kind==='official'?'หนังสือร�
 function docKindList(kind){return (kind==='official'?S.officialLetters:kind==='material'?S.materialApprovals:kind==='bill'?S.bills:kind==='receipt'?S.receipts:S.quotes)||[];}
 function vDocs(){
   var counts={quote:(S.quotes||[]).length,bill:(S.bills||[]).length,receipt:(S.receipts||[]).length,material:(S.materialApprovals||[]).length,official:(S.officialLetters||[]).length};
-  var mm=S.materialApprovals||[],mw=mm.filter(function(x){return x.status==='submitted';}).length,ma=mm.filter(function(x){return x.status==='approved';}).length,mr=mm.filter(function(x){return x.status==='rejected';}).length,ol=S.officialLetters||[],ow=ol.filter(function(x){return ['ready','submitted','received'].indexOf(x.status)>=0;}).length,od=ol.filter(function(x){return x.responseDue&&x.responseDue<today()&&x.status!=='approved'&&x.status!=='rejected';}).length;
-  return '<div class="doc-head master-doc-head"><div><b>ศูนย์เอกสารและงานพัสดุ</b><small>เอกสารธุรกิจ · หนังสือถึงหน่วยงานราชการ · เอกสารพัสดุ</small></div></div>'+
-    '<div class="material-doc-kpi"><div><small>วัสดุรออนุมัติ</small><b>'+mw+'</b></div><div><small>หนังสือรอติดตาม</small><b>'+ow+'</b></div><div><small>เกินกำหนดตอบ</small><b>'+od+'</b></div></div>'+
-    '<div class="doc-type-grid">'+
+  var mm=S.materialApprovals||[],mw=mm.filter(function(x){return x.status==='submitted';}).length,ol=S.officialLetters||[],ow=ol.filter(function(x){return ['ready','submitted','received'].indexOf(x.status)>=0;}).length,od=ol.filter(function(x){return x.responseDue&&x.responseDue<today()&&x.status!=='approved'&&x.status!=='rejected';}).length;
+  return '<div class="doc-group-head"><div><b>เอกสารธุรกิจ</b><small>เอกสารด้านการขาย · วางบิล · รับชำระเงิน</small></div></div>'+
+    '<div class="doc-type-grid business-doc-grid">'+
       '<button data-act="docSection" data-kind="quote"><span class="doc-type-icon">QT</span><b>ใบเสนอราคา</b><small>'+counts.quote+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">BL</span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">RC</span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small><strong>›</strong></button>'+
+    '</div>'+
+    '<div class="doc-group-head procurement-group"><div><b>งานพัสดุและหนังสือราชการ</b><small>เอกสารโครงการ · ขออนุมัติวัสดุ · หนังสือถึงหน่วยงานราชการ</small></div></div>'+
+    '<div class="material-doc-kpi"><div><small>วัสดุรออนุมัติ</small><b>'+mw+'</b></div><div><small>หนังสือรอติดตาม</small><b>'+ow+'</b></div><div><small>เกินกำหนดตอบ</small><b>'+od+'</b></div></div>'+
+    '<div class="doc-type-grid procurement-doc-grid">'+
       '<button data-act="docSection" data-kind="material"><span class="doc-type-icon">MA</span><b>ขออนุมัติใช้วัสดุ</b><small>'+counts.material+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="official"><span class="doc-type-icon">หนังสือ</span><b>หนังสือราชการ</b><small>'+counts.official+' ฉบับ</small><strong>›</strong></button>'+
     '</div>';
