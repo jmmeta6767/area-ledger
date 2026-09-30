@@ -1926,7 +1926,7 @@ function stats(pid){
 }
 function financeMetrics(pid){
   var p=proj(pid),st=stats(pid),contract=p?(+p.contract||0):0,cost=st.outB,forecast=contract-cost,hasRevenue=st.recd>0;
-  return {contract:contract,cost:cost,forecast:forecast,received:st.recd,cashPaid:st.paidOut,cashBalance:st.recd-st.outB,hasRevenue:hasRevenue,netProfit:hasRevenue?st.recd-cost:null};
+  return {contract:contract,cost:cost,forecast:forecast,received:st.recd,cashPaid:st.paidOut,cashBalance:st.recd-st.paidOut,hasRevenue:hasRevenue,netProfit:hasRevenue?st.recd-cost:null};
 }
 function endTag(p){if(!p.endDate)return '';var d=dd(today(),p.endDate);return d<0?'<span class="tag late">เกินสัญญา '+(-d)+' วัน</span>':(d===0?'<span class="tag pend">ครบสัญญาวันนี้</span>':'<span class="tag pend">เหลือ '+d+' วัน</span>');}
 function contractText(p){
@@ -2363,13 +2363,16 @@ function vDue(){
     return h+'</div>';
   }
   function retBlock(){
-    var list=retOpen().sort(function(a,b){return (a.retDue||'9')<(b.retDue||'9')?-1:1;});
-    var h='<div class="sec master-due-card"><h2>เงินประกันที่จ่ายแล้ว · รอรับคืน <span class="num">'+fmt(list.reduce(function(a,p){return a+p.retAmt;},0))+'</span></h2>';
-    if(!list.length)h+='<div class="empty">ไม่มีเงินประกันที่รอคืน</div>';
-    list.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>'+(p.deliveryDate?'ส่งมอบ '+dstr(p.deliveryDate)+' · ':'')+'รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
+    var list=(S.guarantees||[]).filter(function(g){return !g.returned;}).sort(function(a,b){return (a.dueDate||'9')<(b.dueDate||'9')?-1:1;});
+    var legacy=retOpen().filter(function(p){return !list.some(function(g){return g.pid===p.id;});});
+    var total=list.reduce(function(a,g){return a+(+g.amount||0);},0)+legacy.reduce(function(a,p){return a+(+p.retAmt||0);},0);
+    var h='<div class="sec master-due-card"><h2>หลักประกัน · รอรับคืน <span class="num">'+fmt(total)+'</span></h2>';
+    if(!list.length&&!legacy.length)h+='<div class="empty">ไม่มีหลักประกันที่รอคืน</div>';
+    list.forEach(function(g){var p=proj(g.pid),st=guaranteeRecordStatus(g);h+='<button class="row" data-act="editGuarantee" data-id="'+g.id+'"><div class="l"><b>'+esc(g.type||'งานประกัน')+' · '+esc(p?p.name:'ไม่พบโครงการ')+'</b><small>อยู่ที่ '+esc(g.holder||'ไม่ระบุ')+' · '+(g.dueDate?'รับคืนได้ '+dstr(g.dueDate):'ยังไม่ระบุวันรับคืน')+'</small></div><div class="r"><span class="num">'+fmt(+g.amount||0)+'</span><span>'+esc(st.label)+'</span></div></button>';});
+    legacy.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>ข้อมูลเดิม · รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
     return h+'</div>';
   }
-  return block('in','ลูกหนี้ (เงินค้างรับจากเจ้าของงาน)')+block('out','เจ้าหนี้ (ค้างจ่ายร้านวัสดุและช่าง)')+retBlock()+'<p class="muted" style="font-size:.85rem;margin-top:16px">เงินประกันนับเป็นค่าใช้จ่ายตั้งแต่วันที่จ่ายออก และจะบันทึกเป็นรายรับอีกครั้งเมื่อได้รับคืนจริงหลังส่งมอบครบ 2 ปี</p>';
+  return block('in','ลูกหนี้ (เงินค้างรับจากเจ้าของงาน)')+block('out','เจ้าหนี้ (ค้างจ่ายร้านวัสดุและช่าง)')+retBlock()+'<p class="muted" style="font-size:.85rem;margin-top:16px">หลักประกันแบบเงินสด/โอนเชื่อมบัญชีเป็นรายจ่ายเมื่อวาง และเป็นรายรับเมื่อได้รับคืนจริง · หนังสือค้ำประกัน/เช็คเก็บในทะเบียนโดยไม่สร้างกระแสเงินสด</p>';
 }
 
 function vReport(){
