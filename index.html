@@ -1619,6 +1619,9 @@ body{background:#f6f7f7}.master-ref-header{background:#fff!important;color:#1720
 
 /* RIGHT THEME — business documents */
 .master-doc-head{background:transparent!important;border:0!important;padding:8px 2px 12px!important}.master-doc-head b{font-size:20px!important}.master-doc-head small{color:#818991!important}.doc-type-grid{gap:11px!important}.doc-type-grid>button{background:#fff!important;border:0!important;border-radius:19px!important;min-height:88px!important;padding:14px!important;box-shadow:0 6px 18px rgba(17,24,39,.055)!important}.doc-type-grid>button:nth-child(1){background:#e7f8ec!important}.doc-type-grid>button:nth-child(2){background:#e7f2ff!important}.doc-type-grid>button:nth-child(3){background:#ffeaf1!important}.doc-type-icon{background:rgba(255,255,255,.72)!important;border-radius:13px!important}.doc-list-head{background:#fff!important;border-radius:19px!important;padding:14px!important;box-shadow:0 6px 18px rgba(17,24,39,.05)!important;margin:10px 0 12px!important}.doc-list-head .btn.pri{border:0!important;border-radius:13px!important;background:#ffc53d!important;color:#17202b!important}.master-doc-card{background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}.master-doc-row{background:#fff!important;border:0!important;border-radius:17px!important;margin:9px 0!important;padding:14px!important;box-shadow:0 5px 17px rgba(17,24,39,.05)!important}
+
+/* PROCUREMENT WORKSPACE */
+.proc-head{padding:10px 2px 13px}.proc-head b,.proc-head small{display:block}.proc-head b{font-size:20px}.proc-head small{color:#818991;margin-top:3px}.proc-grid{display:grid;gap:11px}.proc-grid>button{border:0;border-radius:20px;background:linear-gradient(135deg,#fff7d9,#ffedb4);min-height:94px;padding:15px;display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;text-align:left;color:#17202b;font:inherit;box-shadow:0 6px 18px rgba(17,24,39,.055)}.proc-grid>button:nth-child(2){background:#f1f3f4}.proc-grid>button:disabled{opacity:.65}.proc-grid b,.proc-grid small{display:block}.proc-grid b{font-size:16px}.proc-grid small{color:#737c84;margin-top:4px}.proc-grid strong{font-size:26px;color:#92999f}.proc-icon{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.7);display:grid;place-items:center;font-weight:900;color:#8b6500}
 </style>
 </head>
 <body>
@@ -2074,7 +2077,7 @@ function vHome(){
   var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid" aria-label="เลือกโครงการ"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
 
   h+=dashTabs();
-  h+='<section class="home-command"><div class="home-command-grid"><button class="home-command-card material" data-act="menuGo" data-v="docs"><span class="home-command-ico">MA</span><span><b>งานพัสดุ</b><small>ขออนุมัติใช้วัสดุ · หนังสือราชการ</small></span><strong>›</strong></button><button class="home-command-card docs" data-act="menuGo" data-v="docs"><span class="home-command-ico">'+ic('build')+'</span><span><b>เอกสารธุรกิจ</b><small>ใบเสนอราคา · ใบวางบิล · ใบเสร็จ</small></span><strong>›</strong></button><button class="home-command-card projects" data-act="go" data-v="projects"><span class="home-command-ico">'+ic('build')+'</span><span><b>โครงการ</b><small>จัดการงานและส่งออกรายงาน</small></span><strong>›</strong></button><button class="home-command-card due" data-act="go" data-v="due"><span class="home-command-ico">'+ic('clock')+'</span><span><b>ค้างรับ / ค้างจ่าย</b><small>ติดตามกำหนดชำระ</small></span><strong>›</strong></button><button class="home-command-card report" data-act="go" data-v="report"><span class="home-command-ico">'+ic('list')+'</span><span><b>รายงาน</b><small>สรุปบัญชีและภาษี</small></span><strong>›</strong></button><button class="home-command-card settings" data-act="settings"><span class="home-command-ico">⚙</span><span><b>ตั้งค่า</b><small>ข้อมูลบริษัทและระบบ</small></span><strong>›</strong></button></div></section>';
+  h+='<section class="home-command"><div class="home-command-grid"><button class="home-command-card material" data-act="go" data-v="procurement"><span class="home-command-ico">MA</span><span><b>งานพัสดุ</b><small>ขออนุมัติใช้วัสดุ · หนังสือราชการ</small></span><strong>›</strong></button><button class="home-command-card docs" data-act="menuGo" data-v="docs"><span class="home-command-ico">'+ic('build')+'</span><span><b>เอกสารธุรกิจ</b><small>ใบเสนอราคา · ใบวางบิล · ใบเสร็จ</small></span><strong>›</strong></button><button class="home-command-card projects" data-act="go" data-v="projects"><span class="home-command-ico">'+ic('build')+'</span><span><b>โครงการ</b><small>จัดการงานและส่งออกรายงาน</small></span><strong>›</strong></button><button class="home-command-card due" data-act="go" data-v="due"><span class="home-command-ico">'+ic('clock')+'</span><span><b>ค้างรับ / ค้างจ่าย</b><small>ติดตามกำหนดชำระ</small></span><strong>›</strong></button><button class="home-command-card report" data-act="go" data-v="report"><span class="home-command-ico">'+ic('list')+'</span><span><b>รายงาน</b><small>สรุปบัญชีและภาษี</small></span><strong>›</strong></button><button class="home-command-card settings" data-act="settings"><span class="home-command-ico">⚙</span><span><b>ตั้งค่า</b><small>ข้อมูลบริษัทและระบบ</small></span><strong>›</strong></button></div></section>';
 
 
   h+='<section class="mproj master-ref-project"><div class="master-ref-photo"><div class="master-ref-building"><svg viewBox="0 0 160 150" aria-hidden="true"><rect x="22" y="58" width="116" height="75" rx="2"/><rect x="35" y="31" width="90" height="27"/><path d="M28 58h104M46 58v75M80 58v75M114 58v75M22 91h116"/><rect x="53" y="99" width="24" height="34"/><rect x="88" y="99" width="24" height="34"/></svg></div></div><div class="mbody master-ref-body"><div class="mtag master-ref-tag">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>โครงการ</span></div><h2>'+esc(allMode?'ทุกโครงการ':(active?active.name:'ยังไม่มีโครงการ'))+'</h2><div class="master-ref-actions">'+(active?'<button class="master-ref-detail" data-act="openProj" data-id="'+active.id+'">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>ดูรายละเอียด</span></button><button class="master-ref-edit" data-act="editProj" data-id="'+active.id+'">แก้ไข</button>':'<button class="master-ref-detail" data-act="go" data-v="projects">ดูโครงการ</button>')+'<button class="master-ref-more" data-act="go" data-v="projects" aria-label="โครงการทั้งหมด">•••</button></div>'+selector+'</div></section>';
@@ -2407,6 +2410,10 @@ function vDocs(){
       '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">BL</span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">RC</span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small><strong>›</strong></button>'+
     '</div>';
+}
+function vProcurement(){
+  var n=(S.materialApprovals||[]).length;
+  return '<div class="proc-head"><div><b>งานพัสดุ</b><small>เอกสารโครงการแยกจากเอกสารธุรกิจ</small></div></div><div class="proc-grid"><button data-act="procurementInfo"><span class="proc-icon">MA</span><span><b>ขออนุมัติใช้วัสดุ</b><small>'+n+' รายการ · โมดูลแรก</small></span><strong>›</strong></button><button disabled aria-disabled="true"><span class="proc-icon">หนังสือ</span><span><b>หนังสือราชการ</b><small>ลำดับถัดไป</small></span><strong>›</strong></button></div>';
 }
 function vDocList(){
   var kind=U.docListKind||'quote',projectFilter=U.docProjectPid||'',projectName=projectFilter?pname(projectFilter):'',list=docKindList(kind).filter(function(q){return !projectFilter||q.pid===projectFilter||q.project===projectName;}).slice().sort(function(a,b){return (a.date||'')<(b.date||'')?1:-1;}),label=docKindLabel(kind),act=kind==='bill'?'newBill':kind==='receipt'?'newReceipt':'newQuote';
@@ -2746,6 +2753,7 @@ function render(){
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
   else if(v==='docs'){title='เอกสารธุรกิจ';body=vDocs();back=true;}
+  else if(v==='procurement'){title='งานพัสดุ';body=vProcurement();back=true;}
   else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
   else if(v==='quoteprint'){title=docTitle(U.docKind||'quote')[0];body=vBusinessDoc();back=true;}
   var tabs=[['home','home','ภาพรวม'],['list','list','รายการ'],['add','plus',''],['projects','build','โครงการ'],['due','clock','ค้างรับ/จ่าย']];
@@ -2795,6 +2803,7 @@ document.addEventListener('click',function(e){
   else if(a==='back'&&U.view==='quoteprint'){U.docListKind=U.docKind||'quote';go('doclist');}
   else if(a==='back'&&U.view==='doclist'){if(U.docProjectPid){var dp=U.docProjectPid;U.docProjectPid='';go('project',{pid:dp});}else go('docs');}
   else if(a==='back'&&U.view==='docs'){go('home');}
+  else if(a==='back'&&U.view==='procurement'){go('home');}
   else if(a==='back'&&U.view==='report'){go('home');}
   else if(a==='back'){U.draft=null;go(U.pid&&U.view==='add'&&U.from==='project'?'project':(U.from||(S.role==='foreman'?'list':'home')));}
   else if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();}
@@ -2891,6 +2900,7 @@ document.addEventListener('click',function(e){
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
   else if(a==='resetDo'){S=emptyState();persist();U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
   else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
+  else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
   else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;persist();render();}
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';persist();render();}
   else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';persist();render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
