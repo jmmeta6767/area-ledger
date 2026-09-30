@@ -1743,6 +1743,28 @@ textarea{resize:vertical}
 .master-list .row:active,.project-hub-main:active,.home-guarantee-watch:active{transform:scale(.995);opacity:.86}
 .toast{position:fixed!important;left:50%!important;bottom:calc(96px + env(safe-area-inset-bottom,0px))!important;transform:translateX(-50%);z-index:30000!important;max-width:min(88vw,420px);padding:11px 16px!important;border-radius:999px!important;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.18)}
 @media(max-width:430px){.savebar{grid-template-columns:1fr}.master-form-page>.seg{top:66px}}
+/* UX SYSTEM v3 — project, due, guarantee, documents */
+.master-due-card>h2{position:sticky;top:72px;z-index:16}
+.master-due-card .row{min-height:72px;touch-action:manipulation}
+.master-due-card .row .l{min-width:0}.master-due-card .row .l>b,.master-due-card .row .l>small{overflow:hidden;text-overflow:ellipsis}
+.guarantee-summary{overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:5px}
+.guarantee-summary>div{scroll-snap-align:start;min-width:min(76vw,260px)}
+.guarantee-filters{display:flex!important;overflow-x:auto;flex-wrap:nowrap!important;gap:7px;scrollbar-width:none;-webkit-overflow-scrolling:touch;position:sticky;top:72px;z-index:22;background:var(--m-bg,#f1f3f2);padding:8px 0}
+.guarantee-filters::-webkit-scrollbar{display:none}.guarantee-filters button{flex:none;min-height:44px;touch-action:manipulation}
+.guarantee-hub .guarantee-row,.guarantee-hub .row{min-height:74px}
+.doc-type-grid button,.proc-grid button{min-height:88px;touch-action:manipulation}
+.doc-list-head{position:sticky;top:70px;z-index:24;background:rgba(241,243,242,.94);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);padding:10px 0}
+.doc-list-head .btn{min-height:48px;white-space:nowrap}
+.master-doc-row{min-height:78px!important;touch-action:manipulation}
+.master-doc-row .l{min-width:0}.master-doc-row .l>b,.master-doc-row .l>small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-hub-card{scroll-margin-top:92px}.project-hub-main{min-height:150px}
+.project-hub-actions{display:grid!important;grid-template-columns:1.3fr 1fr 1fr 1fr}
+@media(max-width:430px){
+ .master-due-card>h2,.guarantee-filters{top:66px}
+ .doc-list-head{top:64px}
+ .project-hub-actions{grid-template-columns:1.35fr .9fr .9fr .9fr}
+ .project-hub-actions button{padding-left:5px!important;padding-right:5px!important}
+}
 </style>
 </head>
 <body>
@@ -2417,7 +2439,7 @@ function vGuarantees(){
   var counts={all:rows.length,ready:readyRows.length,near:nearRows.length,wait:0,nodue:0,done:doneRows.length};rows.forEach(function(g){var k=guaranteeRecordStatus(g).key;if(k==='wait'||k==='nodue')counts[k]++;});
   var gf=U.guaranteeFilter||'all',shown=gf==='all'?rows:rows.filter(function(g){return guaranteeRecordStatus(g).key===gf;});
   var h='<section class="guarantee-hub">'+(projectFilter?'<div class="sec"><b>'+esc(pname(projectFilter))+'</b><button class="btn" style="margin-top:10px" data-act="clearGuaranteeProject">ดูทุกโครงการ</button></div>':'')+'<div class="guarantee-summary"><div><small>หลักประกันที่ยังอยู่ภายนอก</small><b>'+fmt(total)+'</b><span>'+open.length+' รายการ</span></div><div><small>ครบกำหนดรับคืน</small><b>'+fmt(ready)+'</b><span>'+readyRows.length+' รายการ · ควรติดตาม</span></div><div><small>ใกล้ครบกำหนด ≤ 90 วัน</small><b>'+fmt(near)+'</b><span>'+nearRows.length+' รายการ</span></div><div><small>รับคืนแล้ว</small><b>'+fmt(done)+'</b><span>'+doneRows.length+' รายการ</span></div></div>';
-  h+='<div class="guarantee-filters"><button data-act="guaranteeFilter" data-v="all" class="'+(gf==='all'?'on':'')+'">ทั้งหมด '+counts.all+'</button><button data-act="guaranteeFilter" data-v="ready" class="'+(gf==='ready'?'on':'')+'">ครบกำหนด '+counts.ready+'</button><button data-act="guaranteeFilter" data-v="near" class="'+(gf==='near'?'on':'')+'">≤ 90 วัน '+counts.near+'</button><button data-act="guaranteeFilter" data-v="wait" class="'+(gf==='wait'?'on':'')+'">รอรับคืน '+counts.wait+'</button><button data-act="guaranteeFilter" data-v="nodue" class="'+(gf==='nodue'?'on':'')+'">ยังไม่ระบุวัน '+counts.nodue+'</button><button data-act="guaranteeFilter" data-v="done" class="'+(gf==='done'?'on':'')+'">รับคืนแล้ว '+counts.done+'</button></div>';
+  h+='<div class="guarantee-filters" role="tablist" aria-label="กรองสถานะหลักประกัน"><button data-act="guaranteeFilter" data-v="all" class="'+(gf==='all'?'on':'')+'">ทั้งหมด '+counts.all+'</button><button data-act="guaranteeFilter" data-v="ready" class="'+(gf==='ready'?'on':'')+'">ครบกำหนด '+counts.ready+'</button><button data-act="guaranteeFilter" data-v="near" class="'+(gf==='near'?'on':'')+'">≤ 90 วัน '+counts.near+'</button><button data-act="guaranteeFilter" data-v="wait" class="'+(gf==='wait'?'on':'')+'">รอรับคืน '+counts.wait+'</button><button data-act="guaranteeFilter" data-v="nodue" class="'+(gf==='nodue'?'on':'')+'">ยังไม่ระบุวัน '+counts.nodue+'</button><button data-act="guaranteeFilter" data-v="done" class="'+(gf==='done'?'on':'')+'">รับคืนแล้ว '+counts.done+'</button></div>';
   h+='<div class="sec guarantee-register"><div class="gr-title"><h2>ทะเบียนหลักประกัน</h2><button class="btn pri" data-act="newGuarantee">+ เพิ่มงานประกัน</button></div>';
   if(!shown.length)h+='<div class="empty">ไม่มีรายการในสถานะนี้</div>';
   shown.forEach(function(g){var p=proj(g.pid),s=guaranteeRecordStatus(g),cash=g.method==='เงินสด/โอน',dayText=s.key==='ready'?'เกิน/ถึงกำหนด '+Math.abs(s.days||0)+' วัน':s.key==='near'||s.key==='wait'?'เหลือ '+s.days+' วัน':s.label;h+='<button class="guarantee-reg-row guarantee-v2 '+s.key+'" data-act="editGuarantee" data-id="'+g.id+'"><span><b>'+esc(g.type||'งานประกัน')+'</b><small>'+esc(p?p.name:'ไม่พบโครงการ')+' · อยู่ที่ '+esc(g.holder||'ไม่ระบุ')+'</small></span><strong>'+fmt(+g.amount||0)+'</strong><div class="gv2-meta"><span>'+esc(g.method||'ไม่ระบุรูปแบบ')+'</span><span>'+(g.paidDate?'วาง '+dstr(g.paidDate):'ยังไม่ระบุวันที่วาง')+'</span><span>'+(g.dueDate?'รับคืนได้ '+dstr(g.dueDate):'ยังไม่ระบุวันรับคืน')+'</span></div><i>'+dayText+'</i>'+(cash?'<em>เชื่อมบัญชี</em>':'<em>ทะเบียนเท่านั้น</em>')+'</button>';});
@@ -2607,7 +2629,7 @@ function docKindList(kind){return (kind==='bill'?S.bills:kind==='receipt'?S.rece
 function vDocs(){
   var counts={quote:(S.quotes||[]).length,bill:(S.bills||[]).length,receipt:(S.receipts||[]).length};
   return '<div class="doc-head master-doc-head"><div><b>เอกสารธุรกิจ</b><small>เลือกประเภทเอกสาร</small></div></div>'+
-    '<div class="doc-type-grid">'+
+    '<div class="doc-type-grid" aria-label="ประเภทเอกสาร">'+
       '<button data-act="docSection" data-kind="quote"><span class="doc-type-icon">QT</span><b>ใบเสนอราคา</b><small>'+counts.quote+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">BL</span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ</small><strong>›</strong></button>'+
       '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">RC</span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small><strong>›</strong></button>'+
