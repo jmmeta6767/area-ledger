@@ -1796,6 +1796,9 @@ textarea{resize:vertical}
 @supports not (height:100dvh){#app,.master-scrim,.app-drawer-wrap{min-height:100vh}}
 :root[data-view-mode="mobile"] #app{max-width:560px!important}
 :root[data-view-mode="mobile"] main{max-width:560px!important}
+
+/* v145 compact receivable/payable UX */
+.due-page{display:grid;gap:12px;padding-bottom:10px}.due-group{background:var(--m-card,#fff);border:1px solid var(--m-line,#e2e5e5);border-radius:18px;overflow:hidden}.due-group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;border-bottom:1px solid var(--m-line,#e2e5e5)}.due-group-head small{display:block;color:var(--m-mut,#69737d);font-size:.76rem;margin-bottom:2px}.due-group-head h2{margin:0;font-size:1.05rem}.due-group-head>b{font-size:1.18rem;white-space:nowrap}.due-in .due-group-head{background:#f4fbf6}.due-out .due-group-head{background:#fff7f4}.due-guarantee .due-group-head{background:#fff9e8}.due-list .row{border-radius:0!important;border:0!important;border-bottom:1px solid var(--m-line,#e2e5e5)!important;margin:0!important;box-shadow:none!important}.due-list .row:last-child{border-bottom:0!important}.due-empty{padding:18px 16px;color:var(--m-mut,#69737d);font-size:.9rem}.due-note{padding:4px 3px;color:var(--m-mut,#69737d);font-size:.78rem;line-height:1.55}@media(max-width:430px){.due-page{gap:10px}.due-group-head{padding:13px 14px}.due-group-head>b{font-size:1.05rem}}
 </style>
 </head>
 <body>
@@ -2478,24 +2481,25 @@ function vGuarantees(){
 }
 
 function vDue(){
-  function block(type,title){
-    var list=pending(type).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:1;});
-    var h='<div class="sec master-due-card"><h2>'+title+' <span class="num '+(type==='in'?'in':'out')+'">'+fmt(sumNet(list))+'</span></h2>';
-    if(!list.length)h+='<div class="empty">ไม่มียอดค้าง</div>';
-    list.forEach(function(t){h+=rowTx(t,true);});
-    return h+'</div>';
+  function block(type,title,sub){
+    var list=pending(type).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:1;}),total=sumNet(list);
+    var h='<section class="due-group '+(type==='in'?'due-in':'due-out')+'"><div class="due-group-head"><div><small>'+sub+'</small><h2>'+title+'</h2></div><b class="num '+(type==='in'?'in':'out')+'">'+fmt(total)+'</b></div>';
+    if(!list.length)h+='<div class="due-empty">ไม่มีรายการค้าง</div>';
+    else h+='<div class="due-list">'+list.map(function(t){return rowTx(t,true);}).join('')+'</div>';
+    return h+'</section>';
   }
   function retBlock(){
     var list=(S.guarantees||[]).filter(function(g){return !g.returned;}).sort(function(a,b){return (a.dueDate||'9')<(b.dueDate||'9')?-1:1;});
     var legacy=retOpen().filter(function(p){return !list.some(function(g){return g.pid===p.id;});});
     var total=list.reduce(function(a,g){return a+(+g.amount||0);},0)+legacy.reduce(function(a,p){return a+(+p.retAmt||0);},0);
-    var h='<div class="sec master-due-card"><h2>หลักประกัน · รอรับคืน <span class="num">'+fmt(total)+'</span></h2>';
-    if(!list.length&&!legacy.length)h+='<div class="empty">ไม่มีหลักประกันที่รอคืน</div>';
-    list.forEach(function(g){var p=proj(g.pid),st=guaranteeRecordStatus(g);h+='<button class="row" data-act="editGuarantee" data-id="'+g.id+'"><div class="l"><b>'+esc(g.type||'งานประกัน')+' · '+esc(p?p.name:'ไม่พบโครงการ')+'</b><small>อยู่ที่ '+esc(g.holder||'ไม่ระบุ')+' · '+(g.dueDate?'รับคืนได้ '+dstr(g.dueDate):'ยังไม่ระบุวันรับคืน')+'</small></div><div class="r"><span class="num">'+fmt(+g.amount||0)+'</span><span>'+esc(st.label)+'</span></div></button>';});
-    legacy.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>ข้อมูลเดิม · รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
-    return h+'</div>';
+    var h='<section class="due-group due-guarantee"><div class="due-group-head"><div><small>เงินที่ต้องติดตามรับคืน</small><h2>หลักประกัน</h2></div><b class="num">'+fmt(total)+'</b></div>';
+    if(!list.length&&!legacy.length)h+='<div class="due-empty">ไม่มีหลักประกันที่รอคืน</div>';
+    else h+='<div class="due-list">';
+    list.forEach(function(g){var p=proj(g.pid),st=guaranteeRecordStatus(g);h+='<button class="row" data-act="editGuarantee" data-id="'+g.id+'"><div class="l"><b>'+esc(g.type||'งานประกัน')+'</b><small>'+esc(p?p.name:'ไม่พบโครงการ')+' · '+(g.dueDate?'รับคืนได้ '+dstr(g.dueDate):'ยังไม่ระบุวันรับคืน')+'</small></div><div class="r"><span class="num">'+fmt(+g.amount||0)+'</span><span>'+esc(st.label)+'</span></div></button>';});
+    legacy.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>ข้อมูลเดิม · '+(p.retDue?'รับคืนได้ '+dstr(p.retDue):'รอวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
+    return h+'</div></section>';
   }
-  return block('in','ลูกหนี้ (เงินค้างรับจากเจ้าของงาน)')+block('out','เจ้าหนี้ (ค้างจ่ายร้านวัสดุและช่าง)')+retBlock()+'<p class="muted" style="font-size:.85rem;margin-top:16px">หลักประกันแบบเงินสด/โอนเชื่อมบัญชีเป็นรายจ่ายเมื่อวาง และเป็นรายรับเมื่อได้รับคืนจริง · หนังสือค้ำประกัน/เช็คเก็บในทะเบียนโดยไม่สร้างกระแสเงินสด</p>';
+  return '<div class="due-page">'+block('in','ลูกหนี้','เงินค้างรับจากเจ้าของงาน')+block('out','เจ้าหนี้','ค้างจ่ายร้านวัสดุและช่าง')+retBlock()+'<div class="due-note">หลักประกันเงินสด/โอนจะเชื่อมบัญชีเมื่อวางและเมื่อรับคืนจริง ส่วนหนังสือค้ำประกัน/เช็คเก็บในทะเบียนโดยไม่สร้างกระแสเงินสด</div></div>';
 }
 
 function vReport(){
