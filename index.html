@@ -2199,7 +2199,8 @@ function catRows(order,byCat,bySub,total){
 }
 function boqRows(pid){return (S.boq||[]).filter(function(x){return x.pid===pid;});}
 function boqAmount(x){return Math.max(0,+x.qty||0)*Math.max(0,+x.unitPrice||0);}
-function boqSummary(pid){var rows=boqRows(pid),budget=rows.reduce(function(a,x){return a+boqAmount(x);},0),linked=0;S.tx.forEach(function(t){if(t.pid===pid&&t.type==='out'&&t.boqId)linked+=base(t);});return {rows:rows,budget:budget,linkedActual:linked};}
+function boqActual(id){return S.tx.filter(function(t){return t.type==='out'&&t.boqId===id;}).reduce(function(a,t){return a+base(t);},0);}
+function boqSummary(pid){var rows=boqRows(pid),budget=rows.reduce(function(a,x){return a+boqAmount(x);},0),linked=0;rows.forEach(function(x){linked+=boqActual(x.id);});var actual=stats(pid).outB;return {rows:rows,budget:budget,linkedActual:linked,actual:actual,unlinkedActual:Math.max(0,actual-linked),variance:budget-actual,pct:budget>0?actual/budget:0};}
 function budgetPct(p){var s=stats(p.id),b=(+p.budget||0);return b>0?s.outB/b:0;}
 function barCls(x){return x>=1?'over':x>=.85?'warn':'';}
 function dueInfo(t){
@@ -2548,9 +2549,9 @@ function vProject(){
   h+='</div>';
   var bq=boqSummary(p.id);
   h+='<div class="sec master-detail-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h2>BOQ / งบประมาณ</h2><button class="btn" data-act="newBoq" data-id="'+p.id+'">+ เพิ่มรายการ</button></div>'+
-    '<div class="grid4 master-detail-grid"><div><small>งบ BOQ</small><b>'+fmt(bq.budget)+'</b></div><div><small>จำนวนรายการ</small><b>'+bq.rows.length+'</b></div><div><small>ต้นทุนจริงทั้งหมด</small><b class="out">'+fmt(s.outB)+'</b></div><div><small>คงเหลือเทียบ BOQ</small><b class="'+(bq.budget-s.outB>=0?'in':'out')+'">'+fmt(bq.budget-s.outB)+'</b></div></div>';
+    '<div class="grid4 master-detail-grid"><div><small>งบ BOQ</small><b>'+fmt(bq.budget)+'</b></div><div><small>ใช้จริง / งบ</small><b class="'+(bq.pct>1?'out':'')+'">'+(bq.budget?Math.round(bq.pct*100)+'%':'—')+'</b></div><div><small>ต้นทุนจริงทั้งหมด</small><b class="out">'+fmt(bq.actual)+'</b></div><div><small>'+(bq.variance>=0?'คงเหลือ':'เกินงบ')+'</small><b class="'+(bq.variance>=0?'in':'out')+'">'+fmt(Math.abs(bq.variance))+'</b></div></div>'+(bq.budget?'<div class="bar '+barCls(bq.pct)+'" style="margin:10px 0"><i style="width:'+Math.min(100,bq.pct*100)+'%"></i></div>':'')+(bq.unlinkedActual>0?'<div class="muted" style="font-size:.86rem;margin:8px 0">รายจ่ายที่ยังไม่ผูก BOQ '+fmt(bq.unlinkedActual)+' · ควรเชื่อมเพื่อดู variance รายรายการให้ครบ</div>':'');
   if(!bq.rows.length)h+='<div class="empty">ยังไม่มี BOQ · เพิ่มรายการเพื่อวางแผนต้นทุนของโครงการ</div>';
-  bq.rows.forEach(function(x){var xa=S.tx.filter(function(t){return t.type==='out'&&t.boqId===x.id;}).reduce(function(a,t){return a+base(t);},0),xb=boqAmount(x),xr=xb-xa;h+='<div class="listrow"><button style="all:unset;display:flex;flex:1;justify-content:space-between;gap:10px;cursor:pointer" data-act="editBoq" data-id="'+x.id+'"><span><b>'+esc(x.name||'ไม่ระบุรายการ')+'</b><small>'+esc(x.category||'')+' · '+(+x.qty||0)+' '+esc(x.unit||'')+' × '+fmt(+x.unitPrice||0)+'<br>ใช้จริง '+fmt(xa)+' · '+(xr>=0?'เหลือ ':'เกิน ')+fmt(Math.abs(xr))+'</small></span><strong class="num">'+fmt(xb)+'</strong></button><button class="btn" style="width:auto;align-self:center" data-act="expenseFromBoq" data-id="'+x.id+'">ลงรายจ่าย</button></div>';});
+  bq.rows.forEach(function(x){var xa=boqActual(x.id),xb=boqAmount(x),xr=xb-xa,xp=xb>0?xa/xb:0;h+='<div class="listrow"><button style="all:unset;display:flex;flex:1;justify-content:space-between;gap:10px;cursor:pointer" data-act="editBoq" data-id="'+x.id+'"><span><b>'+esc(x.name||'ไม่ระบุรายการ')+'</b><small>'+esc(x.category||'')+' · '+(+x.qty||0)+' '+esc(x.unit||'')+' × '+fmt(+x.unitPrice||0)+'<br>ใช้จริง '+fmt(xa)+' · '+(xb?Math.round(xp*100)+'% · ':'')+(xr>=0?'เหลือ ':'เกิน ')+fmt(Math.abs(xr))+'</small></span><strong class="num">'+fmt(xb)+'</strong></button><button class="btn" style="width:auto;align-self:center" data-act="expenseFromBoq" data-id="'+x.id+'">ลงรายจ่าย</button></div>';});
   h+='</div>';
   var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
   h+='<div class="sec master-detail-card"><h2>ค่าใช้จ่ายตามหมวด</h2>';
@@ -2712,7 +2713,7 @@ function exportFileName(pid,ext){
 }
 function exportXlsx(){
   var pid=U.exportPid||'',list=scopeTx();
-  if(!list.length){toast('ยังไม่มีรายการให้ส่งออก');return;}
+  if(!list.length&&!(S.boq||[]).some(function(x){return !pid||x.pid===pid;})){toast('ยังไม่มีรายการให้ส่งออก');return;}
   var M=2,P=4,B=5;
   function n(v,st){v=Math.round((+v||0)*100)/100;return {v:v,s:st||M};}
   var r1=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน (รวม VAT)','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
@@ -2734,7 +2735,9 @@ function exportXlsx(){
     r4.push([c,'(รวมหมวด)',n(cat[c],B),{v:tot?cat[c]/tot:0,s:P}]);
     Object.keys(sub[c]).sort(function(a,b){return sub[c][b]-sub[c][a];}).forEach(function(k){r4.push(['',k,n(sub[c][k]),{v:tot?sub[c][k]/tot:0,s:P}]);});
   });
-  var blob=xlsxBuild([{name:'รายการ',rows:r1},{name:'สรุปโครงการ',rows:r2},{name:'สรุปรายเดือน',rows:r3},{name:'ค่าใช้จ่ายตามหมวด',rows:r4}]);
+  var r5=[['โครงการ','หมวด BOQ','รายการ BOQ','ปริมาณ','หน่วย','ราคาต่อหน่วย','งบ BOQ','ใช้จริง','คงเหลือ/เกิน','ใช้จริง %','หมายเหตุ']];
+  (S.boq||[]).filter(function(x){return !pid||x.pid===pid;}).forEach(function(x){var ba=boqAmount(x),aa=boqActual(x.id),vr=ba-aa;r5.push([pname(x.pid),x.category||'',x.name||'',n(x.qty),x.unit||'',n(x.unitPrice),n(ba),n(aa),n(vr),{v:ba?aa/ba:0,s:P},x.note||'']);});
+  var blob=xlsxBuild([{name:'รายการ',rows:r1},{name:'สรุปโครงการ',rows:r2},{name:'BOQ',rows:r5},{name:'สรุปรายเดือน',rows:r3},{name:'ค่าใช้จ่ายตามหมวด',rows:r4}]);
   saveFile(exportFileName(pid,'xlsx'),blob);
 }
 function vPrint(){
@@ -2750,6 +2753,7 @@ function vPrint(){
   h+='<div class="sec"><h2>สรุปรายโครงการ</h2><table><tr><th>โครงการ</th><th>สัญญา</th><th>งบ</th><th>รับ</th><th>จ่าย</th><th>กำไร</th></tr>';
   pr.forEach(function(p){var s=stats(p.id),retInfo=p.retAmt?'<br><span class="muted">เงินประกันจ่ายแล้ว '+fmt(p.retAmt)+(p.retPaidDate?' · จ่าย '+dstr(p.retPaidDate):'')+(p.deliveryDate?' · ส่งมอบ '+dstr(p.deliveryDate):'')+(p.retDue?' · รับคืนได้ '+dstr(p.retDue):'')+'</span>':'';h+='<tr><td>'+esc(p.name)+(contractText(p)?'<br><span class="muted">'+esc(contractText(p))+'</span>':'')+retInfo+'</td><td class="num">'+fmt(p.contract)+'</td><td class="num">'+fmt(p.budget)+'</td><td class="num">'+fmt(s.inB)+'</td><td class="num">'+fmt(s.outB)+'</td><td class="num"><b>'+fmt(s.inB-s.outB)+'</b></td></tr>';});
   h+='</table></div>';
+  if(pid){var pboq=boqRows(pid),pbs=boqSummary(pid);if(pboq.length){h+='<div class="sec"><h2>BOQ เทียบต้นทุนจริง</h2><div class="muted" style="margin-bottom:8px">งบ BOQ '+fmt(pbs.budget)+' · ใช้จริง '+fmt(pbs.actual)+' · '+(pbs.variance>=0?'คงเหลือ ':'เกินงบ ')+fmt(Math.abs(pbs.variance))+'</div><table><tr><th>รายการ</th><th>ปริมาณ</th><th>งบ</th><th>ใช้จริง</th><th>คงเหลือ/เกิน</th></tr>';pboq.forEach(function(x){var ba=boqAmount(x),aa=boqActual(x.id),vr=ba-aa;h+='<tr><td>'+esc(x.name)+'<br><span class="muted">'+esc(x.category||'')+'</span></td><td class="num">'+(+x.qty||0)+' '+esc(x.unit||'')+'</td><td class="num">'+fmt(ba)+'</td><td class="num">'+fmt(aa)+'</td><td class="num">'+(vr>=0?fmt(vr):'-'+fmt(Math.abs(vr)))+'</td></tr>';});h+='</table></div>';}}
   var cs=Object.keys(cat).sort(function(a,b){return cat[b]-cat[a];});
   if(cs.length)h+='<div class="sec"><h2>รายจ่ายตามหมวด</h2>'+catRows(cs,cat,sub,o)+'</div>';
   h+='<div class="sec"><h2>รายการทั้งหมด ('+list.length+')</h2><table><tr><th>วันที่</th><th>รายการ</th>'+(pid?'':'<th>โครงการ</th>')+'<th>รับ</th><th>จ่าย</th><th>สถานะ</th></tr>';
