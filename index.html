@@ -2133,7 +2133,7 @@ function vHome(){
   var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid" aria-label="เลือกโครงการ"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
 
   h+=dashTabs();
-  if(allMode&&retRows.length){var gdue=retRows.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),gnear=retRows.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;});h+='<button class="home-guarantee-watch" data-act="go" data-v="guarantees"><div><small>เงินประกันที่ต้องติดตาม</small><b>'+fmt(gExposure)+'</b><span>'+gScope.length+' รายการ · '+(gReady.length?'ครบกำหนด '+gReady.length+' รายการ':gNear.length?'ใกล้ครบกำหนด '+gNear.length+' รายการ':'กำลังรอรับคืน')+'</span></div><strong>ดูทะเบียน ›</strong></button>';}
+  if(gScope.length){h+='<button class="home-guarantee-watch" data-act="go" data-v="guarantees"><div><small>หลักประกันที่ต้องติดตาม</small><b>'+fmt(gExposure)+'</b><span>'+gScope.length+' รายการ · '+(gReady.length?'ครบกำหนด '+gReady.length+' รายการ':gNear.length?'ใกล้ครบกำหนด '+gNear.length+' รายการ':'กำลังรอรับคืน')+'</span></div><strong>ดูทะเบียน ›</strong></button>';}
 
 
 
@@ -2820,12 +2820,12 @@ function urgentCount(){
 
 function appMenuHtml(){
   if(!U.appMenu)return '';
-  var due=urgentCount(),gDue=S.projects.filter(function(p){var d=retDays(p);return p.retAmt>0&&!p.retRecv&&d!==null&&d<=90;}).length,items=[
+  var due=urgentCount(),gDue=(S.guarantees||[]).filter(function(g){var s=guaranteeRecordStatus(g);return !g.returned&&(s.key==='ready'||s.key==='near');}).length,items=[
     ['home','home','ภาพรวม','สรุปสถานะการเงิน'],
     ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
     ['projects','build','โครงการ','จัดการงานและส่งออกรายงาน'],
     ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'ติดตามกำหนดชำระ'],
-    ['guarantees','clock','งานประกัน',gDue?gDue+' โครงการใกล้/ครบกำหนดรับคืน':'ติดตามเงินประกัน อยู่ที่ไหน / เท่าไร / ได้เมื่อไร'],
+    ['guarantees','clock','งานประกัน',gDue?gDue+' รายการใกล้/ครบกำหนดรับคืน':'ติดตามเงินประกัน อยู่ที่ไหน / เท่าไร / ได้เมื่อไร'],
     ['report','list','รายงาน','สรุปบัญชีและภาษี'],
     ['procurement','build','งานพัสดุ','ขออนุมัติใช้วัสดุ / หนังสือราชการ'],
     ['docs','build','เอกสารธุรกิจ','ใบเสนอราคา / ใบวางบิล / ใบเสร็จ']
