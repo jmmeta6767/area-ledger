@@ -1647,6 +1647,8 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 .guarantee-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.guarantee-summary>div:nth-child(3){background:#e9efff}@media(max-width:560px){.guarantee-summary{grid-template-columns:1fr 1fr}.guarantee-summary>div:first-child{grid-column:1/-1}}
 
 .guarantee-summary{grid-template-columns:repeat(4,minmax(0,1fr))}.guarantee-summary>div:nth-child(3){background:#e9f5ff}.guarantee-summary>div:nth-child(4){background:#e9efff}@media(max-width:560px){.guarantee-summary{grid-template-columns:1fr 1fr}.guarantee-summary>div:first-child{grid-column:1/-1}.guarantee-summary>div:nth-child(4){grid-column:auto}}
+
+.guarantee-row>i.near{background:#e8f3ff;color:#245f9c}.guarantee-row:has(>i.ready){box-shadow:inset 4px 0 0 #4a9d67}.guarantee-row:has(>i.near){box-shadow:inset 4px 0 0 #77a9e8}
 </style>
 </head>
 <body>
@@ -2265,7 +2267,7 @@ function vGuarantees(){
   var open=rows.filter(function(p){return !p.retRecv;}),total=open.reduce(function(a,p){return a+(+p.retAmt||0);},0),readyRows=open.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),ready=readyRows.reduce(function(a,p){return a+(+p.retAmt||0);},0),nearRows=open.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;}),near=nearRows.reduce(function(a,p){return a+(+p.retAmt||0);},0);
   var h='<section class="guarantee-hub"><div class="guarantee-summary"><div><small>เงินประกันที่อยู่ภายนอก</small><b>'+fmt(total)+'</b><span>'+open.length+' โครงการ</span></div><div><small>ครบกำหนดรับคืน</small><b>'+fmt(ready)+'</b><span>'+readyRows.length+' โครงการ · ควรติดตาม</span></div><div><small>ใกล้ครบกำหนด ≤ 90 วัน</small><b>'+fmt(near)+'</b><span>'+nearRows.length+' โครงการ</span></div><div><small>รับคืนแล้ว</small><b>'+fmt(rows.filter(function(p){return p.retRecv;}).reduce(function(a,p){return a+(+p.retAmt||0);},0))+'</b><span>'+rows.filter(function(p){return p.retRecv;}).length+' โครงการ</span></div></div><div class="sec"><h2>ข้อมูลงานประกัน</h2>';
   if(!rows.length)h+='<div class="empty">ยังไม่มีข้อมูลเงินประกันในโครงการ</div>';
-  rows.forEach(function(p){var d=retDays(p),where=p.client||'ยังไม่ระบุหน่วยงาน/เจ้าของงาน',status=p.retRecv?'รับคืนแล้ว':d===null?'รอวันส่งมอบ':d<=0?'ครบกำหนดรับคืนแล้ว':'รอรับคืน';h+='<button class="guarantee-row" data-act="openProj" data-id="'+p.id+'"><div class="gr-main"><b>'+esc(p.name)+'</b><small>อยู่ที่: '+esc(where)+'</small></div><strong>'+fmt(+p.retAmt||0)+'</strong><div class="gr-meta"><span>จ่าย '+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</span><span>รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</span></div><i class="'+(p.retRecv?'done':d!==null&&d<=0?'ready':'wait')+'">'+status+'</i></button>';});
+  rows.forEach(function(p){var d=retDays(p),where=p.client||'ยังไม่ระบุหน่วยงาน/เจ้าของงาน',status=p.retRecv?'รับคืนแล้ว':d===null?'รอวันส่งมอบ':d<=0?'ครบกำหนดรับคืนแล้ว':d<=90?'ใกล้ครบกำหนด':'รอรับคืน';h+='<button class="guarantee-row" data-act="openProj" data-id="'+p.id+'"><div class="gr-main"><b>'+esc(p.name)+'</b><small>อยู่ที่: '+esc(where)+'</small></div><strong>'+fmt(+p.retAmt||0)+'</strong><div class="gr-meta"><span>จ่าย '+(p.retPaidDate?dstr(p.retPaidDate):'ยังไม่ระบุ')+'</span><span>รับคืนได้ '+(p.retDue?dstr(p.retDue):'เมื่อระบุวันส่งมอบ')+'</span></div><i class="'+(p.retRecv?'done':d!==null&&d<=0?'ready':d!==null&&d<=90?'near':'wait')+'">'+status+'</i></button>';});
   return h+'</div><p class="muted guarantee-note">ข้อมูลหน่วยงาน/เจ้าของงานอ้างอิงจากข้อมูลโครงการ และวันรับคืนอ้างอิงกำหนดเงินประกันของแต่ละโครงการ</p></section>';
 }
 
@@ -2772,17 +2774,17 @@ function urgentCount(){
 
 function appMenuHtml(){
   if(!U.appMenu)return '';
-  var due=urgentCount(),items=[
+  var due=urgentCount(),gDue=S.projects.filter(function(p){var d=retDays(p);return p.retAmt>0&&!p.retRecv&&d!==null&&d<=90;}).length,items=[
     ['home','home','ภาพรวม','สรุปสถานะการเงิน'],
     ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
     ['projects','build','โครงการ','จัดการงานและส่งออกรายงาน'],
     ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'ติดตามกำหนดชำระ'],
-    ['guarantees','clock','งานประกัน','ติดตามเงินประกัน อยู่ที่ไหน / เท่าไร / ได้เมื่อไร'],
+    ['guarantees','clock','งานประกัน',gDue?gDue+' โครงการใกล้/ครบกำหนดรับคืน':'ติดตามเงินประกัน อยู่ที่ไหน / เท่าไร / ได้เมื่อไร'],
     ['report','list','รายงาน','สรุปบัญชีและภาษี'],
     ['procurement','build','งานพัสดุ','ขออนุมัติใช้วัสดุ / หนังสือราชการ'],
     ['docs','build','เอกสารธุรกิจ','ใบเสนอราคา / ใบวางบิล / ใบเสร็จ']
   ];
-  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[0]==='due'&&due?'<i>'+Math.min(due,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-docs"><b>เอกสาร</b><div><button data-act="drawerDocList" data-kind="quote">ใบเสนอราคา</button><button data-act="drawerDocList" data-kind="bill">ใบวางบิล</button><button data-act="drawerDocList" data-kind="receipt">ใบเสร็จ</button></div></div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
+  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(U.view===x[0]?'on':'')+'"><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+((x[0]==='due'&&due)||(x[0]==='guarantees'&&gDue)?'<i>'+Math.min(x[0]==='due'?due:gDue,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-docs"><b>เอกสาร</b><div><button data-act="drawerDocList" data-kind="quote">ใบเสนอราคา</button><button data-act="drawerDocList" data-kind="bill">ใบวางบิล</button><button data-act="drawerDocList" data-kind="receipt">ใบเสร็จ</button></div></div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings"><span>⚙</span><span>ตั้งค่า</span></button></div></aside></div>';
 }
 
 function render(){
