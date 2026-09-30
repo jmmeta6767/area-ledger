@@ -2596,16 +2596,23 @@ function thaiGovBoqRows(text){
   var ls=String(text||'').split(/\n+/).map(function(x){return x.replace(/\s+/g,' ').trim();}).filter(Boolean),out=[],rejected=0;
   ls.forEach(function(line){
     if(thaiGovNoise(line)){rejected++;return;}
-    var unit=thaiGovUnit(line),rawNums=(line.match(/\d[\d,]*(?:\.\d+)?/g)||[]),nums=rawNums.map(thaiBoqNum).filter(function(n){return isFinite(n)&&n>=0;});
-    var name=line.replace(/\d[\d,]*(?:\.\d+)?/g,' ').replace(new RegExp(unit.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&'),'ig'),' ').replace(/[|#_=°]+/g,' ').replace(/\s+/g,' ').trim();
-    if(!unit||name.length<3||name.length>140||nums.length<3||/กลุ่มงาน|หมวดงาน|โครงสร้างวิศวกรรม|ส่วนราชการ|โครงการ/i.test(name)){rejected++;return;}
-    var qty=nums[0];if(!(qty>0)||qty>1000000){rejected++;return;}
-    var pairs=[];
-    for(var i=1;i<nums.length-1;i++){var price=nums[i],amt=nums[i+1];if(price>0&&amt>0){var err=Math.abs(qty*price-amt)/Math.max(1,amt);if(err<=.03)pairs.push({price:price,amount:amt,error:err});}}
+    var unit=thaiGovUnit(line),um=unit?line.match(new RegExp('(?:^|\\s)'+unit.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')+'(?:\\s|$)','i')):null;
+    if(!unit||!um){rejected++;return;}
+    var unitStart=um.index+(um[0].charAt(0)===' '?1:0),unitEnd=um.index+um[0].length,numRe=/\d[\d,]*(?:\.\d+)?/g,m,nums=[];
+    while((m=numRe.exec(line))){nums.push({raw:m[0],value:thaiBoqNum(m[0]),start:m.index,end:m.index+m[0].length});}
+    var before=nums.filter(function(n){return n.end<=unitStart&&isFinite(n.value);}),after=nums.filter(function(n){return n.start>=unitEnd&&isFinite(n.value)&&n.value>=0;});
+    if(!before.length||after.length<2){rejected++;return;}
+    var qn=before[before.length-1],qty=qn.value;if(!(qty>0)||qty>1000000){rejected++;return;}
+    var name=line.slice(0,qn.start).replace(/^\s*\d+(?:\.\d+){0,4}\s*/,'').replace(/^[-–—\s]+/,'').replace(/\s+/g,' ').trim();
+    if(name.length<3||name.length>180||/กลุ่มงาน|หมวดงาน|โครงสร้างวิศวกรรม|ส่วนราชการ|โครงการ/i.test(name)){rejected++;return;}
+    var tail=line.slice(unitEnd),firstNum=tail.search(/\d/),lead=firstNum>=0?tail.slice(0,firstNum):tail,leadingDash=(lead.match(/(?:^|\s)[-–—](?=\s|$)/g)||[]).length,pairs=[];
+    for(var i=0;i<after.length-1;i++){var price=after[i].value,amt=after[i+1].value;if(price>0&&amt>0){var err=Math.abs(qty*price-amt)/Math.max(1,amt);if(err<=.03)pairs.push({price:price,amount:amt,error:err,start:i});}}
     if(!pairs.length){rejected++;return;}
-    var mat=pairs[0],labor=pairs.length>1?pairs[1]:null;
-    if(mat)out.push({name:name+' — ค่าวัสดุ',category:'ค่าของ',qty:qty,unit:unit,unitPrice:mat.price,note:'OCR ปร.4 · สมการผ่าน · ตรวจสอบก่อนนำเข้า',ocrConfidence:Math.max(0,1-mat.error)});
-    if(labor)out.push({name:name+' — ค่าแรง',category:'ค่าแรง',qty:qty,unit:unit,unitPrice:labor.price,note:'OCR ปร.4 · สมการผ่าน · ตรวจสอบก่อนนำเข้า',ocrConfidence:Math.max(0,1-labor.error)});
+    var mat=null,labor=null;
+    if(pairs.length>=2){mat=pairs[0];labor=pairs[1];}
+    else if(leadingDash>=1)labor=pairs[0];else mat=pairs[0];
+    if(mat)out.push({name:name+' — ค่าวัสดุ',category:'ค่าของ',qty:qty,unit:unit,unitPrice:mat.price,note:'OCR ปร.4 · สมการผ่าน · แยกคอลัมน์ตามตำแหน่งจำนวน/หน่วย',ocrConfidence:Math.max(0,1-mat.error)});
+    if(labor)out.push({name:name+' — ค่าแรง',category:'ค่าแรง',qty:qty,unit:unit,unitPrice:labor.price,note:'OCR ปร.4 · สมการผ่าน · แยกคอลัมน์ตามตำแหน่งจำนวน/หน่วย',ocrConfidence:Math.max(0,1-labor.error)});
   });
   out.rejected=rejected;return out;
 }
