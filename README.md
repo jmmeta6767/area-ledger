@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v271
+# AREA Ledger V1 — Master v272
 
-Cloudflare Runtime Compatibility, based on GitHub `main` v270
-(`c272aba1c27b574fb016fe41806939cb2bf79cae`).
+Cloudflare Build Gate Fix, based on GitHub `main` v271
+(`2c7d1ede2c56ede87976fcf1177a13912fd1460a`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,11 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v272 Cloudflare build gate fix
+
+- Updated stale service-worker version assertions in the regression suite to the current v271 registration so Release QA validates the actual deployed source instead of historical v263/v267 markers.
+- No accounting logic, storage key, IndexedDB schema, gateway contract or runtime settings changed in this release.
 
 ## v271 Cloudflare runtime compatibility
 
