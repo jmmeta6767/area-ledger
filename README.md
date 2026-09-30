@@ -1,6 +1,6 @@
-# AREA Ledger V1 — Master v241
+# AREA Ledger V1 — Master v242
 
-AR Settlement Data Health Hardening, based on GitHub `main` v240
+AR Reconciliation Integrity Hardening, based on GitHub `main` v241
 (`3050c49d9f773047835ce34e1ab3c8096995f662`).
 
 Standalone/PWA accounting and construction project control. This repository remains
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v242 AR reconciliation integrity hardening
+
+- Data Health billing reconciliation now understands nested partial AR settlements instead of treating the full receivable as still unpaid.
+- Settlement receipt links and amounts are validated per nested payment row, while legacy fully-paid receipt links remain compatible.
+- Project statistics now count partial AR cash received and outstanding receivables through the same settlement primitives used by billing, cash flow and journals.
+- Added regression coverage spanning Data Health, Billing Reconciliation and project received/outstanding totals for the same partial receipt.
+- Service worker/cache registration advanced to v242 without storage-key or migration changes.
 
 ## v241 AR settlement Data Health hardening
 
@@ -172,8 +180,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v241-ar-settlement-data-health`.
-Registration: `sw.js?v=241`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v242-ar-reconciliation-integrity`.
+Registration: `sw.js?v=242`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
