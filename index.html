@@ -2172,6 +2172,12 @@ function vHome(){
 }
 
 function vList(){
+  U.filter=U.filter||{};
+  if(!U.filter.type)U.filter.type='all';
+  if(U.filter.pid===undefined)U.filter.pid='';
+  if(U.filter.cat===undefined)U.filter.cat='';
+  if(U.filter.status===undefined)U.filter.status='all';
+  if(U.filter.sub===undefined)U.filter.sub='';
   var F=U.filter,foreman=S.role==='foreman';
   var list=S.tx.filter(function(t){
     if(foreman&&t.type!=='out')return false;
@@ -2855,7 +2861,7 @@ function render(){
   tabs.forEach(function(t){
     if(t[0]==='x')return;
     if(t[0]==='add')nav+='<button class="add preview-add" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>เพิ่มรายการ</span></button>';
-    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='due'?urgentCount():0);nav+='<button class="'+(on?'on':'')+'" data-act="go" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
+    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='due'?urgentCount():0),act=t[0]==='list'?'openList':'go';nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
   var nonav=(v==='add'||v==='print'||v==='quoteprint');if(nonav)nav='';
@@ -2894,7 +2900,8 @@ document.addEventListener('click',function(e){
   if(a==='menuGo'){U.appMenu=false;if(v==='docs')U.docProjectPid='';go(v);return;}
   if(a==='docSection'){U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='projectDocList'){U.docProjectPid=id||'';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
-  if(a==='go')go(v);
+  if(a==='openList'){U.sheet=null;U.appMenu=false;U.filter=U.filter||{type:'all',pid:'',cat:'',status:'all',sub:''};go('list');return;}
+  if(a==='go'){go(v);return;}
   else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
   else if(a==='back'&&U.view==='quoteprint'){U.docListKind=U.docKind||'quote';go('doclist');}
   else if(a==='back'&&U.view==='doclist'){if(U.docProjectPid){var dp=U.docProjectPid;U.docProjectPid='';go('project',{pid:dp});}else go('docs');}
