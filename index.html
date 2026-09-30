@@ -2298,8 +2298,6 @@ function vHome(){
   var selector=S.projects.length>1?'<select class="mselect master-ref-select" data-f="homePid" aria-label="เลือกโครงการ"><option value="__all"'+(allMode?' selected':'')+'>ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(!allMode&&active&&p.id===active.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>':'';
 
   h+=dashTabs();
-  if(gScope.length){h+='<button class="home-guarantee-watch" data-act="go" data-v="guarantees"><div><small>หลักประกันที่ต้องติดตาม</small><b>'+fmt(gExposure)+'</b><span>'+gScope.length+' รายการ · '+(gReady.length?'ครบกำหนด '+gReady.length+' รายการ':gNear.length?'ใกล้ครบกำหนด '+gNear.length+' รายการ':'กำลังรอรับคืน')+'</span></div><strong>ดูทะเบียน ›</strong></button>';}
-  var br=billingReconcile(allMode?'':pid);if(br.count){h+='<button class="home-guarantee-watch" data-act="drawerDocList" data-kind="bill"><div><small>ใบวางบิล / ลูกหนี้</small><b>'+fmt(br.open)+'</b><span>'+br.count+' ฉบับ · รับแล้ว '+fmt(br.paid)+(br.overdue?' · เลยกำหนด '+fmt(br.overdue):'')+(br.issues?' · ⚠ ตรวจพบ '+br.issues+' จุด':'')+'</span></div><strong>ดูใบวางบิล ›</strong></button>';}
 
 
 
