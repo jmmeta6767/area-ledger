@@ -1,0 +1,5 @@
+gateway/.dev.vars
+gateway/.env
+gateway/.env.*
+!gateway/.env.example
+node_modules/

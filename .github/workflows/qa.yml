@@ -1,6 +1,7 @@
 name: AREA Ledger Release QA
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
