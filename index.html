@@ -2226,12 +2226,13 @@ function mergeThaSalaPr4Boq(){
 }
 
 var mirrorQueue=Promise.resolve(),committedState='';
-function persist(){
+function persist(opts){
+  opts=opts||{};
   if(U.storageReadBlocked&&!committedState){toast('ยังอ่านข้อมูลเดิมไม่สำเร็จ กรุณาปิดแท็บอื่นแล้วเปิดใหม่ก่อนบันทึก');return false;}
   var prev='',json='',stamp=S.updatedAt,current='';
   try{
     current=localStorage.getItem(KEY)||'';
-    if(committedState&&current!==committedState){
+    if(!opts.recovery&&committedState&&current!==committedState){
       U.storageConflict=true;
       toast('พบข้อมูลใหม่จากอีกแท็บ · หยุดบันทึกเพื่อป้องกันข้อมูลถูกเขียนทับ กรุณาโหลดแอปใหม่');
       return false;
@@ -3938,20 +3939,20 @@ function boot(){
         tsRows=(S.boq||[]).filter(function(x){return x.pid===ts.id&&x.importBatch==='thasala-pr4-manual-20260930-v1';});
         tsTotal=tsRows.reduce(function(a,x){return a+boqAmount(x);},0);
       }
-      U.thasalaPr4Status={rows:tsRows.length,total:tsTotal,ok:tsRows.length===32&&Math.abs(tsTotal-412812.83)<=.02,version:'v229'};
+      U.thasalaPr4Status={rows:tsRows.length,total:tsTotal,ok:tsRows.length===32&&Math.abs(tsTotal-412812.83)<=.02,version:'v230'};
     }
     if(!U.homePid)U.homePid='__all';
     if(U.homePid!=='__all'&&dashPids().indexOf(U.homePid)<0){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
     if(S.role==='foreman'&&U.view!=='home')U.view='list';
     U.storageBad=!storageOK();
     render();
-    if(best&&best===o&&o!==ls)persist();
+    if(best&&best===o&&o!==ls)persist({recovery:true});
     try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   }
   Promise.all([idbGet(),idbRead('state-backup')]).then(function(vals){var primary=null,backup=null;try{primary=vals[0]?migrate(JSON.parse(vals[0])):null;}catch(e){U.storageReadBlocked=true;}try{backup=vals[1]?migrate(JSON.parse(vals[1])):null;}catch(e){U.storageReadBlocked=true;}var local=loadLS(),recovery=loadRecovery(),best=primary;if(local&&(!best||(local.updatedAt||0)>(best.updatedAt||0)))best=local;if(recovery&&(!best||(recovery.updatedAt||0)>(best.updatedAt||0)))best=recovery;if(backup&&(!best||(backup.updatedAt||0)>(best.updatedAt||0)))best=backup;start(best);});
   /* Wait for bounded IndexedDB reads before deciding whether this is a new install. */
 }
-if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js?v=229',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});}
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js?v=230',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});}
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
 </script>
