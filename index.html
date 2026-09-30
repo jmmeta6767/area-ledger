@@ -1702,7 +1702,7 @@ body.force-mobile main{max-width:560px!important}.force-mobile .master-ref-proje
 .dash-tab-wrap .dash-tab{min-width:0}
 .dash-close{min-width:44px!important;width:44px!important;min-height:54px!important;pointer-events:auto!important;touch-action:manipulation}
 .dash-add{min-width:138px;justify-content:center}
-</style>
+.dash-tabs{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}.dash-tab,.dash-tab-wrap,.dash-add{scroll-snap-align:start}.dash-tab[aria-selected="true"]{font-weight:800}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2146,10 +2146,10 @@ function dashPids(){
   return S.ui.dashboardPids;
 }
 function dashTabs(){
-  var pins=dashPids(),h='<div class="dash-tabs" role="tablist"><button class="dash-tab all '+(U.homePid==='__all'?'on':'')+'" data-act="dashSwitch" data-id="__all"><span>รวมทุกโครงการ</span></button>';
+  var pins=dashPids(),h='<div class="dash-tabs" role="tablist"><button class="dash-tab all '+(U.homePid==='__all'?'on':'')+'" data-act="dashSwitch" data-id="__all" role="tab" aria-selected="'+(U.homePid==='__all'?'true':'false')+'"><span>รวมทุกโครงการ</span></button>';
   pins.forEach(function(id,i){
     var p=proj(id);if(!p)return;
-    h+='<div class="dash-tab-wrap '+(U.homePid===id?'on':'')+'"><button class="dash-tab" data-act="dashSwitch" data-id="'+id+'"><small>โครงการ '+(i+1)+'</small><span>'+esc(p.name)+'</span></button><button class="dash-close" data-act="dashClose" data-id="'+id+'" aria-label="ปิดแดชบอร์ด">×</button></div>';
+    h+='<div class="dash-tab-wrap '+(U.homePid===id?'on':'')+'"><button class="dash-tab" data-act="dashSwitch" data-id="'+id+'" role="tab" aria-selected="'+(U.homePid===id?'true':'false')+'"><small>โครงการ '+(i+1)+'</small><span>'+esc(p.name)+'</span></button><button class="dash-close" data-act="dashClose" data-id="'+id+'" aria-label="ปิดแดชบอร์ด">×</button></div>';
   });
   h+='<button class="dash-add" data-act="dashManager" aria-label="เพิ่มแดชบอร์ด">＋<span>เพิ่มแดชบอร์ด</span></button></div>';
   return h;
@@ -2964,6 +2964,13 @@ function directAction(el){
   if(a==='dashSwitch'){U.homePid=id||'__all';try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}U.sheet=null;render();return true;}
   if(a==='dashManager'){U.sheet={kind:'dashManager'};render();return true;}
   if(a==='dashAdd'){var dp=proj(id);if(dp){var pins=dashPids();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;persist();U.sheet={kind:'dashManager'};render();toast('เพิ่มแดชบอร์ดโครงการแล้ว');}return true;}
+  if(a==='dashClose'){
+    var cp=proj(id);if(!cp)return true;var cs=cp.status||'active';
+    if(cs!=='delivered'&&cs!=='closed'){toast('ปิดแดชบอร์ดได้เมื่อโครงการส่งมอบแล้วหรือปิดโครงการ');return true;}
+    S.ui.dashboardPids=dashPids().filter(function(x){return x!==id;});
+    if(U.homePid===id){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
+    persist();render();toast('ปิดแดชบอร์ดโครงการแล้ว ข้อมูลยังอยู่ครบ');return true;
+  }
   if(a==='appMenu'){U.appMenu=true;render();return true;}
   if(a==='appMenuClose'){U.appMenu=false;render();return true;}
   if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',U.view==='project'?U.pid:null);go('add');focusAmt();return true;}
