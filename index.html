@@ -1765,6 +1765,31 @@ textarea{resize:vertical}
  .project-hub-actions{grid-template-columns:1.35fr .9fr .9fr .9fr}
  .project-hub-actions button{padding-left:5px!important;padding-right:5px!important}
 }
+/* UX SYSTEM v4 — report, settings, sheets, desktop */
+.master-month-nav{position:sticky;top:72px;z-index:24;background:rgba(241,243,242,.94);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);border-radius:14px}
+.master-month-nav button{min-width:48px;min-height:48px;font-size:26px}
+.master-report-grid>div{min-height:88px}.master-report-card{overflow:hidden}.master-report-card svg{display:block;min-height:150px}
+.master-scrim{touch-action:none}.master-sheet{scrollbar-gutter:stable;overscroll-behavior-y:contain}
+.master-sheet>h3{position:sticky;top:-1px;z-index:3;background:var(--surface);padding:6px 0 10px;margin-top:0!important}
+.master-sheet .field{margin:10px 0}.master-sheet .seg button{min-height:46px}
+.master-sheet .stack{position:sticky;bottom:0;z-index:4;background:linear-gradient(transparent,var(--surface) 18%);padding-top:16px;padding-bottom:2px}
+.master-sheet .stack .btn{min-height:48px}
+@media(min-width:701px){
+ body{background:var(--bg)}
+ #app{max-width:1180px!important}
+ main{max-width:1180px!important;padding-left:24px!important;padding-right:24px!important}
+ .nav-in{max-width:900px!important}
+ .hd-in{max-width:1180px!important;margin:0 auto}
+ .master-report-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ .master-report-card{padding:22px!important}
+ .guarantee-summary{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
+ .doc-type-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .master-list-selects{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .project-hub-card{max-width:none}
+ .master-sheet{max-width:720px!important;margin-left:auto;margin-right:auto;border-radius:22px 22px 0 0!important}
+}
+:root[data-view-mode="desktop"] #app{max-width:1180px!important}
+:root[data-view-mode="desktop"] main{max-width:1180px!important}
 </style>
 </head>
 <body>
