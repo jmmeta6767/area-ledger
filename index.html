@@ -2869,13 +2869,16 @@ function appMenuHtml(){
 function render(){
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
+  var validViews={home:1,list:1,add:1,projects:1,project:1,due:1,guarantees:1,report:1,print:1,docs:1,procurement:1,doclist:1,quoteprint:1};
+  if(!validViews[U.view])U.view='home';
+  if(U.view==='project'&&!proj(U.pid)){U.view='projects';U.pid=null;}
   var v=U.view,title='',body='',back=false;
   if(v==='home'){title='บัญชีหน้างาน';body=vHome();}
-  else if(v==='list'){title='รายการทั้งหมด';body=vList();}
+  else if(v==='list'){title='รายการทั้งหมด';body=vList();back=true;}
   else if(v==='add'){title=U.draft&&U.draft.id?'แก้ไขรายการ':'เพิ่มรายการ';body=vAdd();back=true;}
-  else if(v==='projects'){title='โครงการ';body=vProjects();}
+  else if(v==='projects'){title='โครงการ';body=vProjects();back=true;}
   else if(v==='project'){var p=proj(U.pid);title=p?p.name:'โครงการ';body=vProject();back=true;}
-  else if(v==='due'){title='ค้างรับและค้างจ่าย';body=vDue();}
+  else if(v==='due'){title='ค้างรับและค้างจ่าย';body=vDue();back=true;}
   else if(v==='guarantees'){title='งานประกัน';body=vGuarantees();back=true;}
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
