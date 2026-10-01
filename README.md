@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v450
+# AREA Ledger V2 — Master v460
 
-Cloudflare Project Form Mobile Focus / compact project editing on the Cloudflare-only runtime, based on GitHub `main` v440
-(`d3d45b62e2864f9cbc066722238d87cc6a941083`).
+Business Documents Mobile Focus / action-first billing workflow on the Cloudflare-only runtime, based on GitHub `main` v450
+(`f67f237b649098d9940c1882a0984c60ab7036dc`).
 
 Standalone/PWA accounting and construction project control.
+
+## v451–v460 Business Documents Mobile Focus
+
+- **v451 Billing command summary:** the document hub shows open billing-note receivables, overdue amount and cash already received through linked billing documents.
+- **v452 Action First:** overdue and next-7-day billing notes appear before document history.
+- **v453 Quick create:** quotation, billing note and receipt creation stay one tap from the document hub.
+- **v454 Recent documents:** quotation / billing note / receipt activity is merged into one latest-document timeline.
+- **v455 Project scope:** document registers gain a compact project selector without modifying document records.
+- **v456 Billing status tabs:** billing notes can be filtered by All / Open / Overdue / Paid.
+- **v457 Direct receive-money flow:** an open billing note can launch Receive money / issue receipt directly from the register.
+- **v458 Multi-token search:** document number, customer, project, date and note support in-place AND search.
+- **v459 Refresh continuity:** document kind, project scope, billing status and search query persist per Safari tab through `sessionStorage` only.
+- **v460 Hardening:** Cloudflare remains the sole product runtime, Legacy Recovery stays separate, and the frozen accounting storage contract is unchanged. Cloudflare cache: `site-ledger-v460-business-docs-mobile-focus`; registration: `sw.js?v=460`.
 
 ## v442–v450 Cloudflare Project Form Mobile Focus
 
