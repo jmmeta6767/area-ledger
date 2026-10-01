@@ -31,6 +31,16 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Validate Cloudflare deploy secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          OCR_API_KEY: ${{ secrets.OCR_API_KEY }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test -n "$OCR_API_KEY"
+
       - name: Full release QA
         run: |
           node --check gateway/public/sw.js
@@ -55,6 +65,15 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@latest deploy --env staging
 
+      - name: Configure staging OCR secret
+        if: ${{ inputs.target == 'staging' }}
+        working-directory: gateway
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          OCR_API_KEY: ${{ secrets.OCR_API_KEY }}
+        run: printf '%s' "$OCR_API_KEY" | npx --yes wrangler@latest secret put OCR_API_KEY --env staging
+
       - name: Apply staging D1 migrations
         if: ${{ inputs.target == 'staging' }}
         working-directory: gateway
@@ -78,6 +97,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@latest deploy
+
+      - name: Configure production OCR secret
+        if: ${{ inputs.target == 'production' }}
+        working-directory: gateway
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          OCR_API_KEY: ${{ secrets.OCR_API_KEY }}
+        run: printf '%s' "$OCR_API_KEY" | npx --yes wrangler@latest secret put OCR_API_KEY
 
       - name: Apply production D1 migrations
         if: ${{ inputs.target == 'production' }}
