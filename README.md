@@ -1,9 +1,18 @@
-# AREA Ledger V2 — Master v345
+# AREA Ledger V2 — Master v346
 
-Mobile bugfix / dashboard persistence / due-balance UX, based on GitHub `main` v342
-(`fd11a48a74bb3765b0d9b2fde7f045c39482db93`).
+Clean BOQ list / mobile information architecture, based on GitHub `main` v345
+(`0cbabfe549468ff93a4fc0405c4901a48abe57cf`).
 
 Standalone/PWA accounting and construction project control.
+
+## v346 Clean BOQ
+
+- BOQ is now a dedicated list screen: project → BOQ rows → quantity/unit → unit price → BOQ amount.
+- Removed actual-cost, variance, linked-cost, forecast, early-warning and import-history analytics from the BOQ list screen.
+- Project pages now show only a compact BOQ summary (row count + BOQ total) with a single “เปิดรายการ BOQ” action.
+- BOQ import/add/edit remains available, while project/accounting/Owner Operations retain financial analysis responsibilities.
+- Menu/title wording simplified from “BOQ / ต้นทุน” to “BOQ”.
+- Release advanced to v346 / stable; service-worker cache `site-ledger-v346-clean-boq`; storage identifiers remain unchanged.
 
 ## v343–v345 iPhone dashboard / due-balance bugfix
 
