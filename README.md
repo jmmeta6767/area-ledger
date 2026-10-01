@@ -1,9 +1,18 @@
-# AREA Ledger V2 — Master v349
+# AREA Ledger V2 — Master v350
 
-Bottom navigation prioritizes BOQ, based on GitHub `main` v348
-(`a4727095334a84b0bd4d78416133b34e928a56b7`).
+Context-aware BOQ navigation, based on GitHub `main` v349
+(`78fd7eb5aa8c1131908a9304ba75109efdd9fd35`).
 
 Standalone/PWA accounting and construction project control.
+
+## v350 Context-aware BOQ
+
+- The bottom BOQ tab now opens the BOQ for the project the user is currently working with.
+- Priority: current project detail → selected dashboard project → last remembered BOQ project → project chooser.
+- This prevents a tap on BOQ from unexpectedly opening a previously viewed project while the user is looking at another project.
+- The side-drawer BOQ entry still opens the project chooser intentionally for cross-project navigation.
+- Release advanced to v350 / stable; service-worker cache `site-ledger-v350-context-boq`; registration `sw.js?v=350`.
+- Accounting storage identifiers remain unchanged.
 
 ## v349 Bottom navigation prioritizes BOQ
 
