@@ -1,10 +1,26 @@
-# AREA Ledger V2 — Master v600
+# AREA Ledger V2 — Master v700
 
-Stable Source Candidate / final 1–8 development pass layered over v531, based on GitHub `main` v531
-(`14a1aba464c1ea27f841fe6531a79181e5f5a723`).
+Business Stable Source Candidate / phases 1–10 layered over v600, based on GitHub `main` v600
+(`99277ed080ac99783193e059db4c70aa45815c6c`).
 
 Standalone/PWA accounting and construction project control.
 
+## v700 Business Stable Source Candidate
+
+This release executes the next 1–10 development sequence without claiming that account-level Cloudflare deployment or the user's real iPhone data migration has already occurred.
+
+- **1 · Staging live cutover control:** stores privacy-safe full-acceptance evidence only after real platform readiness, D1 reconciliation, R2 probe and Cloud history all pass.
+- **2 · Real data migration gate:** Cloud evidence is tied to current origin + release and expires after 24 hours; migration acceptance remains digest-based and explicit.
+- **3 · iPhone field acceptance:** PWA secure runtime, refresh continuity, safe-area/VisualViewport and local recovery contracts remain under QA; real-device use is still a live acceptance requirement.
+- **4 · Production cutover:** Business Stable cannot pass while Cloud full acceptance is missing/stale/from another origin or release, or while Cloud Sync has an unresolved conflict.
+- **5 · Accounting lockdown:** `accountingBaselineCertificate()` aggregates Accounting Production Gate, Bank Reconciliation, storage schema, document flow and exact-duplicate checks.
+- **6 · Backup / disaster recovery:** a fresh Disaster Recovery Certification is required; recovery success is never inferred from source code alone.
+- **7 · Daily UX finalization:** v600 compact mobile BOQ/table and route persistence remain the stable baseline.
+- **8 · Business operations:** Owner Operations, profitability, AR/AP, cash forecast, guarantee control, reports and exports stay active under regression QA.
+- **9 · Automation action queue:** `businessAutomationQueue()` merges owner actions, month-end exceptions, stale Cloud acceptance and stale DR evidence without posting accounting entries automatically.
+- **10 · Stable Business Gate:** in-app `Business Stable v700` Control Center runs the live Cloud + recovery acceptance sequence and shows phase-by-phase PASS/CHECK.
+- PWA release: `APP_RELEASE=700`; cache: `site-ledger-v700-business-stable-source-candidate`.
+- Live Business Stable still requires real Cloudflare deployment, real ledger migration/reconciliation and real iPhone/Safari evidence.
 ## v600 Stable Source Candidate
 
 This completes the source-code side of the 1–8 Cloudflare plan. Live cutover is accepted only after real account deployment and real ledger reconciliation; the repository does not claim browser-local accounting data has been migrated when no portable backup or recovery-key session is available.
