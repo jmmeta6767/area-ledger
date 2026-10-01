@@ -44,6 +44,9 @@ async function d1ReadLedger(env,ledgerHash){
 }
 function r2Ready(env){return !!(env&&env.LEDGER_FILES&&typeof env.LEDGER_FILES.put==='function'&&typeof env.LEDGER_FILES.get==='function'&&typeof env.LEDGER_FILES.delete==='function');}
 function productionComponents(env){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,d1Ledger=d1Ready(env),r2Files=r2Ready(env),exactOrigins=allowedOrigins(env).length;return {providerConfigured,durableState,d1Ledger,r2Files,exactOrigins,ready:providerConfigured&&durableState&&d1Ledger&&r2Files};}
+async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();return true;}catch(_){return false;}}
+async function productionPlatformStatus(env){const c=productionComponents(env);c.d1Schema=await d1SchemaReady(env);c.ready=!!(c.ready&&c.d1Schema);return c;}
+
 function cleanFileMeta(v,max){return String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max||120);}
 function randomHex(bytes){const a=new Uint8Array(bytes||16);crypto.getRandomValues(a);return Array.from(a).map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function sha256Bytes(bytes){const h=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -203,7 +206,7 @@ export default{async fetch(request,env){
   if(url.pathname==='/v1/platform/status'&&request.method==='GET'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
-    const c=productionComponents(env);return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,components:c,productionReady:c.ready,cloudflareOnly:true},200,origin,rid);
+    const c=await productionPlatformStatus(env);return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,components:c,productionReady:c.ready,cloudflareOnly:true},200,origin,rid);
   }
   if(url.pathname==='/v1/ledger/d1-status'||url.pathname==='/v1/ledger/d1-migrate'||url.pathname==='/v1/ledger/d1-read'||url.pathname==='/v1/ledger/reconcile'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
