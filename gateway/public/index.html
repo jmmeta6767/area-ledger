@@ -2281,7 +2281,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=490,APP_CHANNEL='stable';
+var APP_RELEASE=493,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -2389,6 +2389,26 @@ async function cloudSyncEnableCurrent(){
     cloudSetMeta({hit:false,revision:0,checksum:'',updatedAt:0,savedAt:''});U.cloudConflict=false;U.cloudStatus='ready';
   }finally{U.cloudSyncBusy=false;}
   return cloudSyncPush(false,false);
+}
+async function cloudBootResolve(localState){
+  if(!cloudSyncEnabled())return {state:localState||null,fromCloud:false,pushLocal:false,meta:null,reason:'disabled'};
+  U.cloudStatus='checking';
+  var r=await cloudGateway('GET','/v1/ledger/state');
+  if(!r.ok){U.cloudStatus='offline';return {state:localState||null,fromCloud:false,pushLocal:false,meta:null,reason:'unreachable'};}
+  if(!r.data||!r.data.hit||!r.data.state){
+    cloudSetMeta({hit:false,revision:0,checksum:'',updatedAt:0,savedAt:''});U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='ready';
+    return {state:localState||null,fromCloud:false,pushLocal:!!localState,meta:null,reason:'cloud-empty'};
+  }
+  var remote=null;try{remote=migrate(r.data.state);}catch(_){U.cloudConflict=true;U.cloudStatus='conflict';return {state:localState||null,fromCloud:false,pushLocal:false,meta:r.data.meta||null,reason:'cloud-invalid'};}
+  var h=stateHealth(remote);if(!h.ok){U.cloudConflict=true;U.cloudRemote={state:remote,meta:r.data.meta||null};U.cloudStatus='conflict';return {state:localState||null,fromCloud:false,pushLocal:false,meta:r.data.meta||null,reason:'cloud-health'};}
+  cloudSetMeta(Object.assign({hit:true},r.data.meta||{}));
+  if(!localState){U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {state:remote,fromCloud:true,pushLocal:false,meta:r.data.meta||null,reason:'cloud-only'};}
+  var lr=Math.max(0,+localState.dataRevision||0),rr=Math.max(0,+remote.dataRevision||0);
+  if(rr>lr){U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {state:remote,fromCloud:true,pushLocal:false,meta:r.data.meta||null,reason:'cloud-newer'};}
+  if(lr>rr){U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='pending';return {state:localState,fromCloud:false,pushLocal:true,meta:r.data.meta||null,reason:'local-newer'};}
+  if(JSON.stringify(localState)===JSON.stringify(remote)){U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {state:localState,fromCloud:false,pushLocal:false,meta:r.data.meta||null,reason:'equal'};}
+  U.cloudConflict=true;U.cloudRemote={state:remote,meta:r.data.meta||null};U.cloudStatus='conflict';
+  return {state:localState,fromCloud:false,pushLocal:false,meta:r.data.meta||null,reason:'same-revision-diverged'};
 }
 function loadRecovery(){try{var raw=localStorage.getItem(BACKUP_KEY);if(raw){var o=JSON.parse(raw);if(o&&Array.isArray(o.tx)&&Array.isArray(o.projects))return migrate(o);U.storageReadBlocked=true;}}catch(e){U.storageReadBlocked=true;}return null;}
 function stateHealth(o){
@@ -5259,14 +5279,22 @@ function saveTx(more){
 window.addEventListener('storage',function(e){if(e&&e.key===KEY&&committedState&&e.newValue!==committedState){U.storageConflict=true;toast('ข้อมูลถูกอัปเดตจากอีกแท็บ · การบันทึกในแท็บนี้ถูกพักจนกว่าจะโหลดใหม่');}});
 window.addEventListener('error',function(e){try{console.error('AREA Ledger runtime error',e.error||e.message);}catch(x){}});
 window.addEventListener('unhandledrejection',function(e){try{console.error('AREA Ledger promise rejection',e.reason);}catch(x){}});
+window.addEventListener('online',function(){if(cloudSyncEnabled()&&!U.cloudConflict)cloudSyncSchedule(150);});
+window.addEventListener('offline',function(){if(cloudSyncEnabled())U.cloudStatus='offline';});
 function boot(){
   try{var hp=localStorage.getItem('area-ledger-home-pid');if(hp)U.homePid=hp;}catch(err){}
   var done=false;
-  function start(o){
+  async function start(o){
     if(done)return;done=true;
     var ls=loadLS(),best=ls;
     if(o&&(!ls||(o.updatedAt||0)>(ls.updatedAt||0)))best=o;
-    if(best){S=best;committedState=JSON.stringify(best);}
+    var cloudResolved=await cloudBootResolve(best),cloudChosen=!!(cloudResolved&&cloudResolved.fromCloud);
+    if(cloudResolved&&Object.prototype.hasOwnProperty.call(cloudResolved,'state'))best=cloudResolved.state;
+    if(best){
+      if(cloudChosen){
+        if(!cloudCacheExact(best,cloudResolved.meta||null)){S=best;committedState=JSON.stringify(best);U.cloudStatus='error';}
+      }else{S=best;committedState=JSON.stringify(best);}
+    }
     if(!best&&U.storageReadBlocked){render();toast('อ่านข้อมูลเดิมไม่สำเร็จ · หยุดการบันทึกเพื่อรักษาข้อมูล กรุณาเปิดแอปใหม่หรือใช้ข้อมูลสำรอง');return;}
     /* v441 Cloudflare-only: never synthesize a partial accounting database on a fresh origin.
        Migration/recovery must be explicit so a known-work fallback cannot be mistaken for the full ledger. */
@@ -5290,7 +5318,8 @@ function boot(){
     U.storageBad=!storageOK();
     try{history.replaceState({areaLedger:true,view:U.view||'home',pid:U.pid||null},'',location.href);}catch(e){}
     render();
-    if(best&&best===o&&o!==ls)persist({recovery:true});
+    if(!cloudChosen&&best&&best===o&&o!==ls)persist({recovery:true});
+    if(cloudResolved&&cloudResolved.pushLocal&&!U.cloudConflict)cloudSyncSchedule(120);
     try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   }
   Promise.all([idbGet(),idbRead('state-backup')]).then(function(vals){var primary=null,backup=null;try{primary=vals[0]?migrate(JSON.parse(vals[0])):null;}catch(e){U.storageReadBlocked=true;}try{backup=vals[1]?migrate(JSON.parse(vals[1])):null;}catch(e){U.storageReadBlocked=true;}var local=loadLS(),recovery=loadRecovery(),best=primary;if(local&&(!best||(local.updatedAt||0)>(best.updatedAt||0)))best=local;if(recovery&&(!best||(recovery.updatedAt||0)>(best.updatedAt||0)))best=recovery;if(backup&&(!best||(backup.updatedAt||0)>(best.updatedAt||0)))best=backup;start(best);});
@@ -5304,7 +5333,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=490',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=493',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
