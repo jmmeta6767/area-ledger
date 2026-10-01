@@ -156,7 +156,7 @@ reset();test('storage event marks tab conflicted without mutating records',()=>{
 // Exercise the actual service-worker lifecycle and network/cache error paths.
 const swEvents={},deleted=[],cached=new Map([['./',new Response('cached-v331')]]);let offline=false,quota=false;
 const swc={URL,Response,Promise,self:{location:{origin:'https://ledger.test'},addEventListener(k,f){swEvents[k]=f},skipWaiting:async()=>{},clients:{claim:async()=>{}}},caches:{keys:async()=>['other-app-cache','site-ledger-v311-rc1-cutover','site-ledger-v331-production-stable'],delete:async k=>deleted.push(k),open:async()=>({addAll:async()=>{},put:async(k,v)=>{if(quota)throw Error('quota');cached.set(k,v)},match:async k=>cached.get(k)?.clone()})},fetch:async()=>{if(offline)throw Error('offline');return new Response('network')}};vm.createContext(swc);vm.runInContext(fs.readFileSync('sw.js','utf8'),swc);let lifecycle;swEvents.activate({waitUntil(p){lifecycle=p}});await lifecycle;
-test('SW activation deletes only old Ledger cache',()=>assert.deepEqual(deleted,['site-ledger-v311-rc1-cutover']));
+test('SW activation deletes only old Ledger cache',()=>assert.deepEqual(deleted,['site-ledger-v311-rc1-cutover','site-ledger-v321-rc2-production-candidate']));
 async function swfetch(){let response;swEvents.fetch({request:{method:'GET',mode:'navigate',url:'https://ledger.test/'},respondWith(p){response=p}});return (await response).text()}
 offline=true;assert.equal(await swfetch(),'cached-v331');offline=false;quota=true;assert.equal(await swfetch(),'network');test('SW offline uses current cache; quota failure preserves network response',()=>{});
 
@@ -171,5 +171,6 @@ test('v329 owner daily brief exposes alerts',()=>{const x=c.ownerDailyBrief();as
 test('v330 large data stress check reports counts',()=>{const x=c.largeDataStressCheck();assert.equal(typeof x.counts.tx,'number');assert.equal(x.storageSchema.ok,true)});
 test('v331 production stable gate aggregates candidate deployment PWA rollback stress',()=>{const x=c.productionStableReadiness();assert.equal(x.version,331);assert.equal(x.channel,'stable');assert(x.candidate&&x.deployment&&x.pwa&&x.rollback&&x.stress)});
 
+test('v322 dashboard cleanup remains preserved in Production Stable',()=>{assert.equal(typeof c.dashboardPinProject,'function');const h=c.vHome();assert(!h.includes('OWNER SYSTEM HEALTH'));assert(!h.includes('ACCOUNTING CONTROL CENTER 2.0'));});
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
