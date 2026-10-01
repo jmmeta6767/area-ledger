@@ -2927,6 +2927,7 @@ function aiGatewayValidatePayload(path,payload){
   if(image.length>3*1024*1024)throw new Error('AI gateway payload too large');
   return {image:image,lang:'tha+eng'};
 }
+function recordOcrDiagnostic(x){S.ops=S.ops||{};S.ops.ocrDiagnostic={at:Date.now(),base:String(x.base||''),ok:!!x.ok,status:+x.status||0,errorCode:String(x.errorCode||''),durationMs:Math.max(0,+x.durationMs||0),requestId:String(x.requestId||'').slice(0,80)};try{persist({metaOnly:true});}catch(_){}}
 function aiGatewayValidateExpense(data){
   if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('AI gateway invalid response');
   var out={text:String(data.text||'').slice(0,20000),amount:+data.amount||0,cat:String(data.cat||'ค่าของ').slice(0,80),sub:String(data.sub||'').slice(0,160),partner:String(data.partner||'').slice(0,160)};
@@ -2935,14 +2936,15 @@ function aiGatewayValidateExpense(data){
 }
 async function aiGatewayRequest(path,payload){
   var cfg=aiGatewayConfig(),url=aiGatewayEndpoint(path);if(!url)throw new Error('AI gateway is not configured or consented');
-  var clean=aiGatewayValidatePayload(path,payload),ctrl=typeof AbortController!=='undefined'?new AbortController():null,timer=null,rid='ocr-'+Date.now()+'-'+Math.random().toString(36).slice(2,10);
+  var clean=aiGatewayValidatePayload(path,payload),ctrl=typeof AbortController!=='undefined'?new AbortController():null,timer=null,rid='ocr-'+Date.now()+'-'+Math.random().toString(36).slice(2,10),started=Date.now(),status=0;
   try{
     if(ctrl)timer=setTimeout(function(){ctrl.abort();},cfg.timeoutMs);
-    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined,body:JSON.stringify(clean)});
+    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined,body:JSON.stringify(clean)});status=res.status;
     if(!res.ok)throw new Error('AI gateway HTTP '+res.status);
     var rp=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Gateway-Version')||''):'',rr=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Request-ID')||''):'';
     if(rp!=='1'||rr!==rid)throw new Error('AI gateway response identity mismatch');
-    return aiGatewayValidateExpense(await res.json());
+    var out=aiGatewayValidateExpense(await res.json());recordOcrDiagnostic({base:aiGatewayBase(),ok:true,status:status,durationMs:Date.now()-started,requestId:rid});return out;
+  }catch(e){recordOcrDiagnostic({base:aiGatewayBase(),ok:false,status:status,errorCode:e&&e.name==='AbortError'?'TIMEOUT':String(e&&e.message||'OCR_ERROR').slice(0,80),durationMs:Date.now()-started,requestId:rid});throw e;
   }finally{if(timer)clearTimeout(timer);}
 }
 function expenseOcrResult(text){
@@ -3689,7 +3691,7 @@ function sheetHtml(){
      '<div class="field"><label for="aiTimeout">Timeout (ms)</label><input id="aiTimeout" type="number" inputmode="numeric" min="3000" max="30000" step="1000" value="'+aiGatewayConfig().timeoutMs+'"></div>'+
      '<button class="tog '+(aiGatewayConfig().remoteOcrConsent?'on':'')+'" data-act="aiConsent"><span class="sw"></span><span><b>อนุญาต Remote OCR</b><small>'+(aiGatewayConfig().remoteOcrConsent?'เปิดแล้ว · รูปจะส่งเฉพาะเมื่อใช้เมนู OCR':'ปิดอยู่ · ระบบจะตรวจ /ready ก่อนอนุญาตส่งรูป')+'</small></span></button>'+
      '<div class="field"><label for="appOrigin">Origin ของเว็บนี้</label><input id="appOrigin" type="text" readonly value="'+esc(location.origin)+'"><small class="muted" style="display:block;margin-top:7px">เมื่อแอปกับ Gateway อยู่ host เดียวกัน ระบบอนุญาต same-origin อัตโนมัติ · ALLOWED_ORIGINS ใช้เฉพาะ host ภายนอก</small></div>'+
-     '<div class="stack"><button class="btn" data-act="aiUseStaging">ใช้ Gateway ของ host นี้</button><button class="btn" data-act="aiCheckReady">ตรวจ Gateway readiness</button><button class="btn" data-act="aiSmokeTest">ทดสอบ Cloudflare /health + /ready</button><button class="btn" data-act="copyAppOrigin">คัดลอก Origin</button><button class="btn" data-act="openGatewayHealth">เปิด Gateway /health</button></div>'+
+     '<div class="stack"><button class="btn" data-act="aiUseStaging">ใช้ Gateway ของ host นี้</button><button class="btn" data-act="aiCheckReady">ตรวจ Gateway readiness</button><button class="btn" data-act="aiSmokeTest">ทดสอบ Cloudflare /health + /ready</button><button class="btn" data-act="copyAppOrigin">คัดลอก Origin</button><button class="btn" data-act="openGatewayHealth">เปิด Gateway /health</button></div><small class="muted">OCR diagnostic: '+esc((S.ops&&S.ops.ocrDiagnostic)?((S.ops.ocrDiagnostic.ok?'ล่าสุดผ่าน':'ล่าสุด fallback')+' · '+new Date(S.ops.ocrDiagnostic.at).toLocaleString('th-TH')):'ยังไม่มีการทดสอบ Remote OCR')+' · ไม่เก็บรูป/ข้อความ OCR/ยอดเงิน</small>'+
      '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
      '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="releaseCheck">ตรวจ Release Readiness</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูลจากที่สำรอง</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
      '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
