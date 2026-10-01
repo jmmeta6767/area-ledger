@@ -1,4 +1,4 @@
-const C='site-ledger-v700-business-stable-source-candidate';
+const C='site-ledger-v800-business-stable-1-source-candidate';
 const CORE=['./','index.html','icon-180.png','icon-192.png','icon-512.png','manifest.webmanifest','area-logo-header.jpg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('site-ledger-v')&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
