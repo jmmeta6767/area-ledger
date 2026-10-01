@@ -12,6 +12,7 @@ Standalone/PWA accounting and construction project control.
 - **Expense card shows both states:** **จ่ายแล้ว** and **ค้างจ่าย** appear together inside the same card.
 - **Correct drill-down:** paid income opens paid receipts, pending income opens pending receivables, and the expense card opens all outgoing transactions for the current project.
 - **Portfolio guarantee rule preserved:** **เงินประกันรอคืน** remains visible only on the all-project dashboard.
+- **Dashboard cleanup:** the partial-recovery warning card is removed from the dashboard; backup/restore remains available through Settings and the Legacy Recovery path.
 - **Cloudflare-only runtime:** product changes target `gateway/public/index.html` only; the root runtime remains Legacy Recovery.
 - **Frozen storage:** localStorage `site-ledger-v1` and IndexedDB `site-ledger-db` remain unchanged.
 - **Service worker:** Cloudflare cache `site-ledger-v451-dashboard-expense-consolidation`; registration `sw.js?v=451`.
@@ -34,7 +35,7 @@ Standalone/PWA accounting and construction project control.
 - **Root runtime retired:** repository root `index.html` is now a read-only Legacy Recovery portal for the former Render origin; it is not an accounting app and must not receive product features.
 - **Render is legacy recovery only:** no new AREA Ledger features, accounting logic, UI, OCR or deployment work may target Render.
 - **Explicit fresh-origin recovery:** a new Cloudflare origin no longer calls `restoreThaSalaKnown()` automatically. Empty storage stays empty until the user explicitly restores a backup or starts fresh.
-- **Partial-recovery warning:** existing Cloudflare state carrying the historical Tha Sala fallback marker is labeled as partial recovery and prompts explicit restore before further work.
+- **Partial-recovery detection:** the historical Tha Sala fallback marker remains detectable for recovery diagnostics; as of v451 it is no longer rendered as a blocking dashboard warning.
 - **Legacy snapshot exporter:** the recovery portal reads `site-ledger-v1`, `site-ledger-v1-recovery`, and IndexedDB `site-ledger-db` current/backup snapshots without overwriting them, then exports a checksum-wrapped JSON backup.
 - **Cloudflare-first QA:** regression loads `gateway/public/index.html` and `gateway/public/sw.js`; CI enforces the Cloudflare-only deployment contract on every PR/main push.
 - **Storage contract remains frozen:** Cloudflare continues using localStorage `site-ledger-v1`, recovery key `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 / `kv`.
