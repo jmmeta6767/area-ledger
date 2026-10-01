@@ -10,7 +10,7 @@ const c={console,Date,Math,JSON,Number,String,Array,Object,Promise,Set,Map,RegEx
 vm.createContext(c);vm.runInContext(code,c);c.toast=x=>toasts.push(x);c.render=()=>{};c.go=()=>{};c.idbPut=async(k,v)=>{writes.push([k,v]);return true};c.idbSet=v=>c.idbPut('state',v);
 const run=s=>vm.runInContext(s,c),copy=x=>JSON.parse(JSON.stringify(x));let checks=0;
 function test(name,fn){fn();checks++;console.log('PASS',name)}
-function reset(){c.S=c.emptyState();c.S.projects=[{id:'p',name:'P',contract:1000,budget:500,endDate:'2026-10-31',status:'active'},{id:'q',name:'Q',contract:200}];c.U.pid='p';c.U.sheet=null;c.U.expenseScanBusy=false;c.U.storageReadBlocked=false;c.U.storageConflict=false;c.committedState='';storage.clear();session.clear();fail=false;toasts.length=0;}
+function reset(){c.S=c.emptyState();c.S.projects=[{id:'p',name:'P',contract:1000,budget:500,endDate:'2026-10-31',status:'active'},{id:'q',name:'Q',contract:200}];c.U.pid='p';c.U.sheet=null;c.U.docListKind='';c.U.docProjectPid='';c.U.docBillFilter='all';c.U.docQuery='';c.U.expenseScanBusy=false;c.U.storageReadBlocked=false;c.U.storageConflict=false;c.committedState='';storage.clear();session.clear();fail=false;toasts.length=0;}
 function action(a,id='p',fields={}){for(const [k,v] of Object.entries(fields))elements[k]={value:v,focus(){}};const el={dataset:{act:a,id},getAttribute(k){return k==='data-act'?a:k==='data-id'?id:null},closest(){return this}};listeners.click.forEach(f=>f({target:el,preventDefault(){},stopPropagation(){}}));}
 (async()=>{
 test('JS syntax',()=>assert(scripts.length));
