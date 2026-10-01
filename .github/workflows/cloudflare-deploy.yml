@@ -57,6 +57,8 @@ jobs:
           node tests/cloudflare-deploy.cjs
           node tests/v600-stable.cjs
           node tests/v700-business-stable.cjs
+          node tests/v800-business-stable.cjs
+          node --check tests/live-cloudflare-acceptance.mjs
           node tests/gateway-preflight.cjs
 
       - name: Deploy staging and auto-provision bindings
