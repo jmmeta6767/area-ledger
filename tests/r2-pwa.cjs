@@ -1,0 +1,15 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const html=fs.readFileSync('gateway/public/index.html','utf8');
+const sw=fs.readFileSync('gateway/public/sw.js','utf8');
+assert(html.includes('APP_RELEASE=520'));
+assert(html.includes('sw.js?v=520'));
+assert(sw.includes('site-ledger-v520-r2-attachment-cutover'));
+for(const x of ['cloudFileUpload','cloudFileOpen','cloudPhotoThumb','cloudOffloadOneTxPhoto','cloudOffloadAllTxPhotos'])assert(html.includes('function '+x)||html.includes('async function '+x));
+assert(html.includes("data-act=\"cloudFilesMigrate\""));
+assert(html.includes("data-act=\"cloudPhotoOpen\""));
+assert(html.includes("photoRef:d.photoRef||''"));
+assert(html.includes("photoThumb:d.photoThumb||''"));
+assert(html.includes("photoHash:d.photoHash||''"));
+assert(html.includes("URL.revokeObjectURL(U.sheet.url)"));
+assert(html.includes("R2 ยังไม่พร้อม · รูปยังเก็บในเครื่อง"));
+console.log('PASS R2 PWA attachment cutover');

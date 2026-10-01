@@ -1,9 +1,20 @@
-# AREA Ledger V2 — Master v510
+# AREA Ledger V2 — Master v520
 
-Cloudflare Production Candidate / production readiness, reconciliation and private file inventory layered over v500 recovery hardening, based on GitHub `main` v500
-(`f8677d831808644cb2be969c6d5effd66ca37950`).
+R2 Attachment Cutover / receipt-photo externalization layered over the v510 production candidate, based on GitHub `main` v510
+(`84ac87862903992ae03dc5d8ac99ae1e5e091959`).
 
 Standalone/PWA accounting and construction project control.
+
+## v520 R2 Attachment Cutover
+
+- Added PWA-side authenticated R2 upload/open helpers using the existing Cloud recovery capability; no public bucket URLs are introduced.
+- Expense receipt photos can be moved from base64 ledger state into private R2 while retaining a small local thumbnail plus object reference/hash metadata.
+- New saved expense photos automatically attempt R2 offload when Cloud Sync is enabled; failure is non-destructive and leaves the original photo in local ledger state.
+- Backup / Cloudflare Sync now includes an explicit two-step bulk migration for existing receipt photos.
+- Remote originals open through an authenticated Worker fetch and temporary browser object URL; the object URL is revoked when the sheet closes.
+- Duplicate-photo protection retains a stable photo hash after full-resolution bytes leave ledger state.
+- Release cache: `site-ledger-v520-r2-attachment-cutover`; registration `sw.js?v=520`.
+- Local storage identifiers remain frozen.
 
 ## v510 Cloudflare Production Candidate
 
