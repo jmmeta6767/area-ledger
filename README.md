@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v380
+# AREA Ledger V2 — Master v390
 
-AR/AP Mobile Focus / action-first due control, based on GitHub `main` v370
-(`30d25ba0374b1510aa10e07ed4b91e86cff979d2`).
+Dashboard Mobile Focus / cash-truth progressive disclosure, based on GitHub `main` v380
+(`6695b6df2e83e43a99236f1fe2ea36e9117bc65e`).
 
 Standalone/PWA accounting and construction project control.
+
+## v381–v390 Dashboard Mobile Focus
+
+- **v381 Cash truth:** received/paid dashboard totals include partial AR/AP settlements through the canonical payment rows; outstanding cards show remaining balances.
+- **v382 Action before analytics:** urgent payment/project alerts move above secondary charts so the first mobile scan prioritizes action.
+- **v383 Primary finance fold:** the financial bar visualization remains available but folds below the primary KPI cards.
+- **v384 Payment-date charts:** six-month cashflow follows actual settlement dates and the expense donut includes partial AP payments.
+- **v385 Portfolio fold:** per-project profit cards remain available behind a compact aggregate disclosure instead of filling the dashboard.
+- **v386 Recent activity:** the dashboard shows at most 8 recent rows with a direct “ดูทั้งหมด” path; full history remains in รายการทั้งหมด.
+- **v387 Canonical pending filter:** the dashboard “ค้าง” view uses outstanding balance after settlements instead of legacy paid flags.
+- **v388 Canonical urgent alerts:** fully settled legacy rows no longer trigger deadline warnings; alerts display the true remaining balance.
+- **v389 Refresh continuity:** dashboard fold state is stored per Safari tab in `sessionStorage` only.
+- **v390 Hardening:** root/gateway runtime parity, BOQ/due navigation and frozen accounting storage are regression-tested. Service-worker cache: `site-ledger-v390-dashboard-mobile-focus`; registration: `sw.js?v=390`.
 
 ## v371–v380 AR/AP Mobile Focus
 
