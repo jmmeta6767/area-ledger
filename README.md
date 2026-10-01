@@ -1,9 +1,21 @@
-# AREA Ledger V2 — Master v491
+# AREA Ledger V2 — Master v492
 
-D1 Shadow Migration foundation / normalized Cloudflare database path layered safely over v490 Durable Ledger Sync, based on GitHub `main` v490
-(`91451f405444740754c6a91a4ff16082c3cbcfcf`).
+R2 Attachment Vault foundation / private Cloudflare file path layered over v491 D1 shadow migration, based on GitHub `main` v491
+(`aea971df720dd8c3f7926e4e472c1756d55727ad`).
 
 Standalone/PWA accounting and construction project control.
+
+## v492 R2 Attachment Vault foundation
+
+- Added authenticated R2 file endpoints for status, upload, private read and delete under the same Cloud recovery-key isolation used by Cloud Ledger.
+- Retains the established 4 MiB/file safety limit and accepts only JPEG, PNG, WebP and PDF; active SVG/HTML content is rejected.
+- R2 object keys are scoped to the SHA-256 ledger hash so another ledger capability cannot address the object.
+- Downloads are private/no-store with `nosniff`; the bucket is designed to remain private.
+- Added `0002_ledger_files.sql` so D1 can index R2 object metadata, entity linkage, MIME, size and SHA-256 without storing file bytes in SQL rows.
+- D1 indexing is best-effort during this foundation phase; R2 remains independently retrievable by the ledger capability even when D1 is not yet bound.
+- No R2 bucket name/binding is activated in `wrangler.toml` until the real staging resource exists. Safe activation is documented in `gateway/R2-SETUP.md`.
+- PWA release/cache remain v490 because this phase adds backend infrastructure only.
+
 
 ## v491 D1 Shadow Migration foundation
 
