@@ -50,3 +50,17 @@ The source candidate is complete only when GitHub QA is green. Live Stable 1.0 r
 8. Production uses separate D1/R2 resources, the exact deployed commit has green QA, and the in-app `ตรวจ Cloudflare เต็มระบบ` action returns PASS.
 
 Do not mark a live migration complete from source-code evidence alone.
+
+## v700 Business Stable acceptance
+
+After v600 source acceptance, v700 is the final business-stable gate. Run it on the real target runtime with the real ledger recovery key.
+
+- Run the in-app `Business Stable v700` control center.
+- Cloudflare Full Acceptance must be fresh, same-origin and created by release 700.
+- Accounting Baseline must have no blocking Accounting Production Gate, bank, document-flow, schema or exact-duplicate issue.
+- Disaster Recovery evidence must be fresh within 24 hours.
+- PWA/Secure runtime must pass and Cloud Sync must have no unresolved conflict.
+- Cross-origin restored data requires a valid Migration Acceptance Certificate.
+- Operational alerts remain business work items; the automation queue never silently mutates accounting data.
+
+Only after the live v700 gate returns PASS should the deployment be described as Business Stable.
