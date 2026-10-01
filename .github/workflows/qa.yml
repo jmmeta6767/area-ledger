@@ -35,3 +35,124 @@ jobs:
         run: node tests/gateway-runtime.cjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs
+
+
+  handoff-source:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+      - name: Write chat handoff
+        shell: bash
+        run: |
+          cat > CHAT-HANDOFF.txt <<'EOF'
+          AREA Ledger V2 — NEW CHAT HANDOFF
+          =================================
+          Repository: jmmeta6767/area-ledger
+          Branch: main
+          Master release at handoff: v400
+          Master commit: 5719f539b10645464fb439802c3b0a0c68b460fe
+
+          START COMMAND FOR NEW CHAT
+          --------------------------
+          พัฒนา AREA Ledger V2 ต่อจาก GitHub repository:
+          jmmeta6767/area-ledger
+          branch: main
+
+          ก่อนแก้ไขทุกครั้ง:
+          1) fetch GitHub main ล่าสุด และถือ GitHub main เป็น Source of Truth เพียงแหล่งเดียว
+          2) ตรวจ HEAD/commit ล่าสุดก่อนแก้ ห้ามยึด ZIP หรือ source ในแชทถ้า main ใหม่กว่า
+          3) อ่าน README.md และ tests/qa.cjs ล่าสุดก่อนเริ่ม
+          4) หาก main ใหม่กว่า commit handoff ให้ตรวจ diff และต่อจาก main ล่าสุด ห้ามย้อนทับงานใหม่
+          5) แยก AREA Ledger ออกจาก AREA Maibab Public Website / AREA SEO AI / ระบบบัญชีเงินเดือน 100%
+          6) ห้ามเปลี่ยน storage contract เดิมโดยไม่มีคำสั่งชัดเจน:
+             localStorage = site-ledger-v1
+             recovery = site-ledger-v1-recovery
+             IndexedDB = site-ledger-db v1 / object store kv
+          7) root runtime และ gateway/public runtime ต้อง sync กัน
+          8) ทุกชุดแก้ต้องผ่าน Release QA ก่อน merge main
+          9) ห้ามทำลายข้อมูลเดิม / ห้าม seed ทับข้อมูลผู้ใช้ / ห้าม force push
+          10) เน้น Mobile/iPhone UX, progressive disclosure, ลดความรก และงานที่ใช้บ่อยเข้าถึงเร็ว
+
+          CURRENT MASTER: v400 — Add Transaction Mobile Focus
+          ---------------------------------------------------
+          v391 Context project:
+          - ปุ่มกลาง “เพิ่มรายการ” ใช้ project context จาก Dashboard / Project / BOQ / Due ก่อน fallback last project
+
+          v392 Safe project switching:
+          - เปลี่ยน project แล้วล้าง BOQ link ถ้า BOQ เป็นคนละ project
+
+          v393 Relevant BOQ only:
+          - BOQ selector แสดงเฉพาะเมื่อ project มี BOQ
+
+          v394 Progressive details:
+          - VAT/WHT, รูปใบเสร็จ, หมายเหตุ อยู่ใน “รายละเอียดเพิ่มเติม”
+          - เปิดอัตโนมัติถ้ามี optional data เดิม
+
+          v395 Fast due dates:
+          - รายการค้างมีปุ่ม +7 / +15 / +30 วัน และยังกรอกวันเองได้
+
+          v396 Workflow return:
+          - บันทึกแล้วกลับ Home / Project / BOQ / Due ตามหน้าที่เปิดเพิ่มรายการมา ไม่บังคับไป “รายการทั้งหมด”
+
+          v397 iPhone keyboard:
+          - input หลัก 16px ลด Safari focus zoom
+
+          v398 Repeat entry:
+          - “บันทึกและเพิ่มอีก” ต่อ type/project/category/date เดิม
+
+          v399 Non-destructive UI:
+          - ฟอร์มใหม่ไม่แก้ accounting state ก่อนกดบันทึก
+          - storage contract เดิมคงที่
+
+          v400 Hardening:
+          - BOQ / Due / Dashboard mobile-focus regressions ครบ
+          - SW cache: site-ledger-v400-add-mobile-focus
+          - registration: sw.js?v=400
+
+          IMPORTANT PREVIOUS UX STATE
+          ---------------------------
+          - Bottom nav: ภาพรวม / BOQ / เพิ่มรายการ / โครงการ / ค้างรับ/จ่าย
+          - “รายการทั้งหมด” ยังอยู่ใน side drawer
+          - BOQ เป็น dedicated BOQ-only screen ไม่ปน Contract Control / AI / Timeline / cost analytics
+          - BOQ context-aware: current project > dashboard project > last BOQ project > chooser
+          - BOQ compact header, Quick Find, multi-token search, collapsible sections, refresh/scroll continuity
+          - Refresh อยู่หน้าเดิมด้วย sessionStorage ต่อแท็บ
+          - Project mobile focus ใช้ progressive disclosure สำหรับ contract/AI/timeline/variation/guarantee/cost/list/tools
+          - Due mobile focus มี AR/AP/Guarantee summary, priority queue, project scope, fold state และ canonical outstanding
+          - Dashboard mobile focus ใช้ canonical cash/payment truth, action-first, folded analytics, recent rows <= 8
+          - Dashboard pin stale-tab conflict fix ต้องคงไว้
+          - AR/AP หน้าค้างแสดงยอด outstanding เป็นบวกและรองรับ partial settlement
+
+          REQUIRED FIRST CHECKS IN NEW CHAT
+          ---------------------------------
+          - fetch main
+          - verify HEAD
+          - inspect README.md
+          - inspect tests/qa.cjs
+          - verify APP_RELEASE / SW version
+          - verify index.html == gateway/public/index.html where expected
+          - verify sw.js == gateway/public/sw.js
+          - run or rely on GitHub Release QA before merge
+
+          ZIP NOTE
+          --------
+          ZIP นี้เป็น snapshot สำหรับส่งต่อแชทและตรวจอ้างอิงเท่านั้น
+          GitHub main ยังเป็น Source of Truth หากมี commit ใหม่กว่า snapshot นี้
+          EOF
+      - name: Upload source handoff bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: area-ledger-v400-main-handoff
+          path: |
+            .
+            !.git/**
+            !area-ledger-package.zip
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
