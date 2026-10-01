@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v470
+# AREA Ledger V2 — Master v480
 
-Document Editor Mobile Focus / compact quote-bill-receipt editing on the Cloudflare-only runtime, based on GitHub `main` v460
-(`ba520f508e53678c988d87c886ab78e59768916d`).
+Accounting Control Mobile Focus / monthly-action-first accounting control on the Cloudflare-only runtime, based on GitHub `main` v470
+(`09a3c69bfda7b82b083c29030113251b685e75b4`).
 
 Standalone/PWA accounting and construction project control.
+
+## v471–v480 Accounting Control Mobile Focus
+
+- **v471 Dedicated accounting sheet:** Accounting Control uses a compact Cloudflare mobile sheet instead of one long stack of controls.
+- **v472 First-scan accounting summary:** AR, AP, estimated net VAT and WHT payable stay visible before advanced tools.
+- **v473 Bank reconciliation first:** accounting period, ledger bank balance, statement balance and reconciliation action remain on the first screen.
+- **v474 Action First:** month-end, bank and data-health issues surface before advanced accounting tools.
+- **v475 Primary monthly controls:** Month-End Checklist, Data Health and period open/close remain one-tap actions.
+- **v476 Compact AR/AP aging:** receivable and payable aging move behind one readable disclosure instead of consuming the first screen.
+- **v477 Books and statements fold:** Journal, Chart of Accounts, GL, Trial Balance and management statements remain available as one tool group.
+- **v478 Tax and document fold:** Tax reconciliation/register, document-flow integrity and Audit Trail remain fully available.
+- **v479 Project and management fold:** Project Cost, Control Center 2.0, Executive Accounting Report and Excel export remain available.
+- **v480 Hardening:** Bank Reconciliation and period-close/reopen logic remain unchanged; Cloudflare is the sole product runtime and frozen storage identifiers remain unchanged. Cloudflare cache: `site-ledger-v480-accounting-control-mobile-focus`; registration: `sw.js?v=480`.
 
 ## v461–v470 Document Editor Mobile Focus
 
