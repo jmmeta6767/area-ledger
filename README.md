@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v460
+# AREA Ledger V2 — Master v470
 
-Business Documents Mobile Focus / action-first billing workflow on the Cloudflare-only runtime, based on GitHub `main` v450
-(`f67f237b649098d9940c1882a0984c60ab7036dc`).
+Document Editor Mobile Focus / compact quote-bill-receipt editing on the Cloudflare-only runtime, based on GitHub `main` v460
+(`ba520f508e53678c988d87c886ab78e59768916d`).
 
 Standalone/PWA accounting and construction project control.
+
+## v461–v470 Document Editor Mobile Focus
+
+- **v461 Dedicated document sheets:** quotation and bill/receipt editors use compact Cloudflare mobile sheets instead of generic tall forms.
+- **v462 Primary fields first:** document number/date and customer/project remain visible before secondary details.
+- **v463 Progressive customer/tax details:** address, tax ID, branch, VAT flag, delivery location and seller move behind compact disclosure without changing field IDs.
+- **v464 Compact item entry:** quotation and business-document item cards are shorter while preserving quantity, unit, price and line-discount inputs.
+- **v465 Calculation contract preserved:** quotation subtotal, discount, VAT and grand-total outputs keep the existing calculation path.
+- **v466 Optional note/signature/attachment fold:** secondary quotation details no longer occupy the first screen but remain fully available.
+- **v467 Bill/receipt editor parity:** customer, tax, item, discount, WHT, due-date and note fields keep the existing save contract.
+- **v468 Compact receive-payment sheet:** billing-note settlement shows total / received / remaining first while retaining amount, date, payment method and receipt generation.
+- **v469 iPhone ergonomics:** document inputs remain 16px and primary save actions stay reachable in a compact sticky 44px action bar.
+- **v470 Hardening:** Cloudflare remains the sole product runtime, document/accounting formulas are unchanged, Legacy Recovery stays separate and frozen storage identifiers remain unchanged. Cloudflare cache: `site-ledger-v470-document-editor-mobile-focus`; registration: `sw.js?v=470`.
 
 ## v451–v460 Business Documents Mobile Focus
 
