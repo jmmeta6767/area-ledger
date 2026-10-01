@@ -1,4 +1,4 @@
-const MAX_BODY_BYTES=3*1024*1024,MAX_PROVIDER_BYTES=256*1024,MAX_LEDGER_BYTES=12*1024*1024,LEDGER_CHUNK_BYTES=64*1024,WINDOW_MS=60_000,PROTOCOL_VERSION='1';
+const MAX_BODY_BYTES=3*1024*1024,MAX_PROVIDER_BYTES=256*1024,MAX_LEDGER_BYTES=12*1024*1024,LEDGER_CHUNK_BYTES=64*1024,MAX_FILE_BYTES=4*1024*1024,WINDOW_MS=60_000,PROTOCOL_VERSION='1';
 const buckets=new Map(),idempotency=new Map();
 function requestId(r){const x=r.headers.get('X-AREA-Request-ID')||'';return /^[A-Za-z0-9._:-]{8,96}$/.test(x)?x:crypto.randomUUID();}
 function json(data,status=200,origin='',rid=''){const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Vary':'Origin','X-AREA-Gateway-Version':PROTOCOL_VERSION};if(rid)headers['X-AREA-Request-ID']=rid;if(origin){headers['Access-Control-Allow-Origin']=origin;headers['Access-Control-Allow-Methods']='GET, PUT, POST, OPTIONS';headers['Access-Control-Allow-Headers']='Content-Type, X-AREA-Gateway-Version, X-AREA-Request-ID, X-AREA-Ledger-Key';headers['Access-Control-Expose-Headers']='X-AREA-Gateway-Version, X-AREA-Request-ID';headers['Access-Control-Max-Age']='600';}return new Response(status===204?null:JSON.stringify(data),{status,headers});}
@@ -42,6 +42,40 @@ async function d1ReadLedger(env,ledgerHash){
     return {ok:true,configured:true,hit:true,state,meta:{revision:meta.revision,checksum:meta.checksum,semanticChecksum:meta.semanticChecksum,updatedAt:meta.updatedAt,savedAt:meta.savedAt,entityCount:meta.entityCount,schemaVersion:meta.schemaVersion}};
   }catch(e){return {ok:false,configured:true,error:'D1_READ_FAILED'};}
 }
+function r2Ready(env){return !!(env&&env.LEDGER_FILES&&typeof env.LEDGER_FILES.put==='function'&&typeof env.LEDGER_FILES.get==='function'&&typeof env.LEDGER_FILES.delete==='function');}
+function cleanFileMeta(v,max){return String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max||120);}
+function randomHex(bytes){const a=new Uint8Array(bytes||16);crypto.getRandomValues(a);return Array.from(a).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function sha256Bytes(bytes){const h=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function parseFileDataUrl(value){
+  const m=/^data:(image\/(?:jpeg|png|webp)|application\/pdf);base64,([A-Za-z0-9+/=\r\n]+)$/i.exec(String(value||''));if(!m)throw Error('FILE_TYPE_UNSUPPORTED');
+  let bin;try{bin=atob(m[2].replace(/\s+/g,''));}catch(_){throw Error('FILE_BASE64_INVALID');}
+  if(bin.length<1||bin.length>MAX_FILE_BYTES)throw Error(bin.length>MAX_FILE_BYTES?'FILE_TOO_LARGE':'FILE_EMPTY');
+  const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return {mime:m[1].toLowerCase(),bytes:out};
+}
+function fileObjectPrefix(ledgerHash){return String(ledgerHash||'')+'/';}
+function fileObjectAllowed(ledgerHash,key){key=String(key||'');return /^[0-9a-f]{64}\/[0-9]{8}\/[0-9a-f]{32}$/.test(key)&&key.startsWith(fileObjectPrefix(ledgerHash));}
+async function d1IndexFile(env,row){
+  if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('INSERT INTO ledger_files (object_key,ledger_hash,entity_type,entity_id,file_name,mime,size_bytes,sha256,created_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(object_key) DO UPDATE SET entity_type=excluded.entity_type,entity_id=excluded.entity_id,file_name=excluded.file_name,mime=excluded.mime,size_bytes=excluded.size_bytes,sha256=excluded.sha256').bind(row.key,row.ledgerHash,row.entityType,row.entityId,row.name,row.mime,row.size,row.sha256,row.createdAt).run();return true;}catch(_){return false;}
+}
+async function d1DeleteFileIndex(env,key,ledgerHash){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('DELETE FROM ledger_files WHERE object_key=? AND ledger_hash=?').bind(key,ledgerHash).run();return true;}catch(_){return false;}}
+async function r2Upload(env,ledgerHash,body){
+  if(!r2Ready(env))return {ok:false,error:'R2_NOT_CONFIGURED'};
+  const parsed=parseFileDataUrl(body&&body.dataUrl),entityType=cleanFileMeta(body&&body.entityType,40)||'attachment',entityId=cleanFileMeta(body&&body.entityId,160),name=cleanFileMeta(body&&body.name,120)||'attachment',date=new Date().toISOString().slice(0,10).replace(/-/g,''),key=ledgerHash+'/'+date+'/'+randomHex(16),sha=await sha256Bytes(parsed.bytes.buffer),createdAt=new Date().toISOString();
+  await env.LEDGER_FILES.put(key,parsed.bytes,{httpMetadata:{contentType:parsed.mime},customMetadata:{ledgerHash,entityType,entityId,name,sha256:sha,createdAt}});
+  const indexed=await d1IndexFile(env,{key,ledgerHash,entityType,entityId,name,mime:parsed.mime,size:parsed.bytes.byteLength,sha256:sha,createdAt});
+  return {ok:true,key,mime:parsed.mime,size:parsed.bytes.byteLength,sha256:sha,createdAt,indexed};
+}
+async function r2Get(env,ledgerHash,key){
+  if(!r2Ready(env))return {ok:false,error:'R2_NOT_CONFIGURED',status:501};if(!fileObjectAllowed(ledgerHash,key))return {ok:false,error:'FILE_KEY_DENIED',status:403};
+  const obj=await env.LEDGER_FILES.get(key);if(!obj)return {ok:false,error:'FILE_NOT_FOUND',status:404};
+  const mime=String(obj.httpMetadata&&obj.httpMetadata.contentType||obj.customMetadata&&obj.customMetadata.mime||'application/octet-stream');
+  return {ok:true,obj,mime,size:+obj.size||0,etag:String(obj.httpEtag||obj.etag||'')};
+}
+async function r2Delete(env,ledgerHash,key){
+  if(!r2Ready(env))return {ok:false,error:'R2_NOT_CONFIGURED',status:501};if(!fileObjectAllowed(ledgerHash,key))return {ok:false,error:'FILE_KEY_DENIED',status:403};
+  await env.LEDGER_FILES.delete(key);await d1DeleteFileIndex(env,key,ledgerHash);return {ok:true};
+}
+
 async function ledgerStub(env,key){if(!env.GATEWAY_STATE)return null;const name='ledger:'+await sha256Hex(key),id=env.GATEWAY_STATE.idFromName(name);return env.GATEWAY_STATE.get(id);}
 async function ledgerCall(env,key,path,body){const stub=await ledgerStub(env,key);if(!stub)return null;return stub.fetch('https://internal/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});}
 async function readLedgerJson(r){const len=Number(r.headers.get('Content-Length')||0);if(len&&len>MAX_LEDGER_BYTES)throw Error('LEDGER_PAYLOAD_TOO_LARGE');const text=await r.text();if(new TextEncoder().encode(text).byteLength>MAX_LEDGER_BYTES)throw Error('LEDGER_PAYLOAD_TOO_LARGE');try{return JSON.parse(text);}catch(_){throw Error('LEDGER_JSON_INVALID');}}
@@ -115,10 +149,29 @@ export class GatewayState {
 }
 export default{async fetch(request,env){
   const started=Date.now(),url=new URL(request.url),rid=requestId(request);
-  if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:providerReady(env),durableState:!!env.GATEWAY_STATE,cloudLedger:!!env.GATEWAY_STATE,d1Ledger:d1Ready(env),auditSink:!!env.GATEWAY_AUDIT},200,'',rid);
-  if(url.pathname==='/ready'&&request.method==='GET'){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,'',rid);}
+  if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:providerReady(env),durableState:!!env.GATEWAY_STATE,cloudLedger:!!env.GATEWAY_STATE,d1Ledger:d1Ready(env),r2Files:r2Ready(env),auditSink:!!env.GATEWAY_AUDIT},200,'',rid);
+  if(url.pathname==='/ready'&&request.method==='GET'){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),r2Files:r2Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,'',rid);}
   const origin=corsOrigin(request,env),sentOrigin=request.headers.get('Origin')||'';
   if(request.method==='OPTIONS')return origin?json({ok:true,protocol:PROTOCOL_VERSION},204,origin,rid):json({error:'ORIGIN_DENIED'},403,'',rid);
+  if(url.pathname==='/v1/files/status'||url.pathname==='/v1/files/upload'||url.pathname==='/v1/files/object'||url.pathname==='/v1/files/delete'){
+    if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
+    if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
+    const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);
+    const ledgerHash=await sha256Hex(access);
+    if(url.pathname==='/v1/files/status'&&request.method==='GET')return json({ok:r2Ready(env),configured:r2Ready(env),maxFileBytes:MAX_FILE_BYTES,d1Index:d1Ready(env)},r2Ready(env)?200:501,origin,rid);
+    if(url.pathname==='/v1/files/upload'&&request.method==='POST'){
+      try{const b=await readLedgerJson(request),x=await r2Upload(env,ledgerHash,b);return json(x,x.ok?200:(x.error==='R2_NOT_CONFIGURED'?501:400),origin,rid);}
+      catch(e){const code=String(e&&e.message||'FILE_UPLOAD_ERROR'),status=code==='FILE_TOO_LARGE'?413:code==='LEDGER_PAYLOAD_TOO_LARGE'?413:400;return json({error:code},status,origin,rid);}
+    }
+    if(url.pathname==='/v1/files/object'&&request.method==='GET'){
+      const x=await r2Get(env,ledgerHash,url.searchParams.get('key')||'');if(!x.ok)return json({error:x.error},x.status||500,origin,rid);
+      const h=new Headers({'Content-Type':x.mime,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','X-AREA-Request-ID':rid});if(origin)h.set('Access-Control-Allow-Origin',origin);if(x.etag)h.set('ETag',x.etag);if(x.size)h.set('Content-Length',String(x.size));return new Response(x.obj.body,{status:200,headers:h});
+    }
+    if(url.pathname==='/v1/files/delete'&&request.method==='POST'){
+      let b;try{b=await readJson(request);}catch(e){return json({error:'FILE_DELETE_INVALID'},400,origin,rid);}const x=await r2Delete(env,ledgerHash,String(b&&b.key||''));return json(x,x.ok?200:(x.status||500),origin,rid);
+    }
+    return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
+  }
   if(url.pathname==='/v1/ledger/d1-status'||url.pathname==='/v1/ledger/d1-migrate'||url.pathname==='/v1/ledger/d1-read'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
