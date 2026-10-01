@@ -2681,6 +2681,14 @@ function dashPids(){
   S.ui.dashboardPids=S.ui.dashboardPids.filter(function(id){return !!proj(id);});
   return S.ui.dashboardPids;
 }
+function dashboardPinProject(id){
+  if(!proj(id))return false;
+  S.ui=S.ui||{};var pins=dashPids().slice();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;
+  if(!persist())return false;
+  var saved=dashPids().indexOf(id)>=0;if(!saved)return false;
+  U.homePid=id;try{localStorage.setItem('area-ledger-home-pid',id);}catch(_){}
+  U.sheet=null;return true;
+}
 function dashTabs(){
   var pins=dashPids(),h='<div class="dash-tabs" role="tablist"><button class="dash-tab all '+(U.homePid==='__all'?'on':'')+'" data-act="dashSwitch" data-id="__all" role="tab" aria-selected="'+(U.homePid==='__all'?'true':'false')+'"><span>รวมทุกโครงการ</span></button>';
   pins.forEach(function(id,i){
@@ -2737,7 +2745,7 @@ function vHome(){
   var gScope=(S.guarantees||[]).filter(function(g){return !g.returned&&(allMode||g.pid===pid);}),gExposure=gScope.reduce(function(a,g){return a+(+g.amount||0);},0),gReady=gScope.filter(function(g){return g.dueDate&&dd(today(),g.dueDate)<=0;}),gNear=gScope.filter(function(g){var d=g.dueDate?dd(today(),g.dueDate):null;return d!==null&&d>0&&d<=90;});
   var cfFresh=/\.workers\.dev$/i.test(location.hostname||'')&&!S.projects.length&&!S.tx.length&&!S.boq.length&&!(S.ui&&S.ui.cloudflareFreshDismissed);
   if(cfFresh)h+='<div class="card" style="border:2px solid var(--amber);margin:8px 0 14px"><b>เปิด AREA Ledger บน Cloudflare แล้ว</b><p class="muted" style="margin:6px 0 10px">ข้อมูล Safari ของเว็บเดิมจะไม่ข้ามโดเมนอัตโนมัติ ถ้ามีข้อมูลเดิมให้กู้คืนไฟล์สำรอง .json ก่อนเริ่มบันทึกรายการใหม่</p><div class="stack"><button class="btn pri" data-act="restoreOpen">กู้คืนไฟล์สำรอง</button><button class="btn" data-act="cloudflareFreshDismiss">เริ่มใช้งานใหม่บน Cloudflare</button></div></div>';
-  var sys=S.role==='owner'?ownerSystemHealth(U.month||today().slice(0,7)):null;if(sys)h+='<div class="accounting-control '+(sys.ok?'':'urgent')+'"><div class="cc-head"><div><small>OWNER SYSTEM HEALTH</small><b>'+(sys.ok?'ระบบพร้อม · ไม่พบจุดบล็อก':'ต้องตรวจ '+sys.issues.length+' จุด')+'</b></div><button class="btn" data-act="releaseCheck">ตรวจ Release Gate</button></div><div class="cc-grid"><div><small>Storage</small><b>'+(sys.migration.storageOk?'OK':'CHECK')+'</b></div><div><small>Backup</small><b>'+(!sys.migration.hasData||sys.migration.backupFresh?'FRESH':'STALE')+'</b></div><div><small>Accounting</small><b>'+(sys.accounting.ok?'PASS':'CHECK')+'</b></div><div><small>Gateway</small><b>'+(sys.gateway.mode==='gateway'?(sys.gateway.remoteConsent?'READY':'LOCAL FALLBACK'):'LOCAL')+'</b></div></div></div>';var pf=S.role==='owner'?projectForecastPortfolio(allMode?'':pid):[],pfRisk=pf.filter(function(x){return x.risk!=='normal';});if(pfRisk.length)h+='<div class="accounting-control urgent"><div class="cc-head"><div><small>PROJECT FORECAST CONTROL</small><b>โครงการเสี่ยง '+pfRisk.length+' รายการ</b></div><button class="btn" data-act="accountingProjectCost">เปิด Project Cost</button></div><div class="cc-queue">'+pfRisk.slice(0,3).map(function(x){return '<p class="'+(x.risk==='critical'?'critical':x.risk==='urgent'?'urgent':'watch')+'"><b>'+esc(x.name)+'</b> · '+esc(x.reasons.join(' · '))+' · EAC '+fmt(x.eac)+' · กำไรปลายงาน '+fmt(x.profitAtCompletion)+'</p>';}).join('')+'</div></div>';var ac=accountingControl2(allMode?'':pid,U.month||today().slice(0,7)),ar=ac.base.ar,ap=ac.base.ap;h+='<div class="accounting-control '+(ac.ok?'':'urgent')+'"><div class="cc-head"><div><small>ACCOUNTING CONTROL CENTER 2.0</small><b>บัญชี · กระทบยอด · เอกสาร · ความผิดปกติ</b></div><button class="btn" data-act="accountingOpen">ตรวจบัญชี</button></div><div class="cc-grid"><div><small>ลูกหนี้ AR</small><b>'+fmt(ar.total)+'</b></div><div><small>เจ้าหนี้ AP</small><b>'+fmt(ap.total)+'</b></div><div><small>Bank book</small><b>'+fmt(bankBookBalance(''))+'</b></div><div><small>จุดที่ควรตรวจ</small><b>'+ac.issues.length+'</b></div></div>'+(ac.issues.length?'<div class="cc-queue">'+ac.issues.slice(0,3).map(function(x){return '<p class="'+x.level+'">'+esc(x.text)+'</p>';}).join('')+'</div>':'')+'</div>';
+  // Operational health / accounting / forecast controls intentionally live outside the main dashboard.
   var execProjects=S.projects.filter(function(p){return (p.status||'active')!=='closed';}),execDismissed=(S.ui&&S.ui.executiveDismissed)||{},execRisk=execProjects.map(function(p){var c=contractControl(p.id);return{p:p,c:c,q:contractActionQueue(p.id)};}).filter(function(x){return x.c.days!==null&&x.c.days<=30&&!execDismissed[x.p.id];}).sort(function(a,b){var w={critical:4,urgent:3,watch:2,normal:1};return w[b.c.risk]-w[a.c.risk];});if(execRisk.length)h+='<div class="executive-control"><div class="cc-head"><div><small>EXECUTIVE PROJECT CONTROL</small><b>โครงการใกล้ครบกำหนด</b></div><span>'+execRisk.length+' โครงการ</span></div><div class="executive-list">'+execRisk.slice(0,6).map(function(x){return '<div class="executive-row-wrap '+x.c.risk+'"><button data-act="openProj" data-id="'+x.p.id+'" class="executive-row-main"><span><b>'+esc(x.p.name)+'</b><small>'+esc(({normal:'ปกติ',watch:'เฝ้าระวัง',urgent:'เร่งดำเนินการ',critical:'วิกฤต'})[x.c.risk])+(x.q.length?' · งานค้าง '+x.q.length:'')+'</small></span><em>'+(x.c.days>=0?x.c.days+' วัน':'เกิน '+Math.abs(x.c.days)+' วัน')+'</em></button><button class="executive-dismiss" data-act="execDismiss" data-id="'+x.p.id+'" aria-label="ปิดการแจ้งเตือนโครงการนี้">×</button></div>';}).join('')+'</div></div>';
   var eligibleRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),nearRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;}),waitDelivery=retRows.filter(function(p){return !p.deliveryDate;});
   var retHint=eligibleRet.length?'ครบกำหนด '+eligibleRet.length+' โครงการ':nearRet.length?'ใกล้ครบกำหนด '+nearRet.length+' โครงการ':waitDelivery.length?'รอวันส่งมอบ '+waitDelivery.length+' โครงการ':retRows.length+' โครงการ';
@@ -3943,7 +3951,7 @@ function directAction(el){
   if(a==='go'||a==='openList'||a==='menuGo'){U.appMenu=false;if(a==='openList'){navList();return true;}if((v||'home')==='home'){navHome();return true;}go(v||'home');return true;} if(a==='navBack'){navBack();return true;} if(a==='navHome'){navHome();return true;}
   if(a==='dashSwitch'){U.homePid=id||'__all';try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}U.sheet=null;render();return true;}
   if(a==='dashManager'){U.sheet={kind:'dashManager'};render();return true;}
-  if(a==='dashAdd'){var dp=proj(id);if(dp){var pins=dashPids();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;if(!persist())return true;U.sheet={kind:'dashManager'};render();toast('เพิ่มแดชบอร์ดโครงการแล้ว');}return true;}
+  if(a==='dashAdd'){if(dashboardPinProject(id)){render();toast('เพิ่มแดชบอร์ดและเปิดโครงการแล้ว');}else toast('เพิ่มแดชบอร์ดไม่สำเร็จ · ข้อมูลเดิมยังอยู่');return true;}
   if(a==='dashClose'){
     var cp=proj(id);if(!cp)return true;var cs=cp.status||'active';
     if(cs!=='delivered'&&cs!=='closed'){toast('ปิดแดชบอร์ดได้เมื่อโครงการส่งมอบแล้วหรือปิดโครงการ');return true;}
@@ -4012,7 +4020,7 @@ document.addEventListener('click',function(e){
   }
   if(a==='dashManager'){U.sheet={kind:'dashManager'};render();return;}
   if(a==='dashAdd'){
-    var dp=proj(id);if(dp){var pins=dashPids();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;if(!persist())return;U.sheet={kind:'dashManager'};render();toast('เพิ่มแดชบอร์ดโครงการแล้ว');}return;
+    if(dashboardPinProject(id)){render();toast('เพิ่มแดชบอร์ดและเปิดโครงการแล้ว');}else toast('เพิ่มแดชบอร์ดไม่สำเร็จ · ข้อมูลเดิมยังอยู่');return;
   }
   if(a==='dashClose'){
     var cp=proj(id);if(!cp)return;
