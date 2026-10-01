@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v288
+# AREA Ledger V1 — Master v289
 
-Cloudflare First-run Cutover UX, based on GitHub `main` v287
-(`9ff93170e5567eb4ea0b07dfdb6bd118ede9ea6c`).
+Remote OCR Readiness Gate, based on GitHub `main` v288
+(`3eff2e05a3bbed2b99b8e120d0f483238b462c4b`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v289 Remote OCR readiness gate
+
+- Enabling Remote OCR is now fail-closed: the app performs a non-document `GET /ready` check before consent can become active.
+- Missing Gemini secret, Durable Object readiness failure or network/readiness errors keep Remote OCR disabled; no receipt image is transmitted during the readiness check.
+- Disabling Remote OCR remains immediate and falls back to local OCR.
+- Service-worker cache advanced to v289 and Worker deployment assets stay synchronized with root runtime assets.
 
 ## v288 Cloudflare first-run cutover UX
 
@@ -438,8 +445,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v288-cloudflare-cutover`.
-Registration: `sw.js?v=288`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v289-remote-ocr-readiness`.
+Registration: `sw.js?v=289`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
