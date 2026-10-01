@@ -1,9 +1,20 @@
-# AREA Ledger V2 — Master v351
+# AREA Ledger V2 — Master v352
 
-Compact BOQ mobile header, based on GitHub `main` v350
-(`43134e83d5d10640a9d1807bef3ec651bcd5bdc0`).
+BOQ Quick Find / long-list mobile usability, based on GitHub `main` v351
+(`a9afa61e6a4e894834f908e90a774bc717fadf15`).
 
 Standalone/PWA accounting and construction project control.
+
+## v352 BOQ Quick Find
+
+- BOQ Quick Find appears only when the selected project has 12 or more BOQ rows, so small BOQs stay uncluttered.
+- Search matches BOQ item name, section code, section name, category, unit and note.
+- Filtering happens in-place without rebuilding the page, preserving iPhone keyboard focus and scroll position while typing.
+- Section headings with no matching BOQ rows hide automatically, and a compact result count is updated live.
+- The query is stored only in per-tab `sessionStorage` navigation state for refresh continuity; it never touches accounting storage.
+- Search resets when switching to another BOQ project or returning to the project chooser.
+- Release advanced to v352 / stable; service-worker cache `site-ledger-v352-boq-quick-find`; registration `sw.js?v=352`.
+- Accounting storage identifiers remain unchanged.
 
 ## v351 Compact BOQ mobile header
 
