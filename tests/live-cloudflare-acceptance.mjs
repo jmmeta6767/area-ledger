@@ -15,7 +15,7 @@ async function req(path,opt={}){
 const evidence={base,at:new Date().toISOString(),checks:{}};
 try{
   const health=await req('/health',{method:'GET'}); assert.equal(health.data.productionReady,true);evidence.checks.health=true;
-  const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ready,true);evidence.checks.ready=true;
+  const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ok,true);evidence.checks.ready=true;
   const platform=await req('/v1/platform/status',{method:'GET'});assert.equal(platform.data.productionReady,true);evidence.checks.platform=true;
   const now=Date.now(),state1={projects:[{id:'acceptance-p1',name:'Live Acceptance'}],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:[],quotes:[],bills:[],receipts:[],dataRevision:1,updatedAt:now,acceptanceMarker:'synthetic-no-user-data'};
   const put1=await req('/v1/ledger/state',{method:'PUT',body:JSON.stringify({state:state1,expectedRevision:0,expectedChecksum:''})});assert.equal(put1.data.ok,true);assert.match(put1.data.meta.checksum,/^[0-9a-f]{64}$/);evidence.checks.durableCreate=true;
