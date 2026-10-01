@@ -1,10 +1,18 @@
-# AREA Ledger V1 — Master v321 RC2
+# AREA Ledger V1 — Master v322 Mobile Persistence Hotfix
 
 Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
 (`267152ae8a4569641932019245fa377f4cf2716b`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
+
+## v322 Mobile persistence / dashboard hotfix
+
+- Removed Owner System Health, Project Forecast Control and Accounting Control Center diagnostic cards from the main dashboard; underlying control tools remain available in dedicated screens.
+- Restored the missing `dashboardPinProject()` runtime used by “+ เพิ่มแดชบอร์ด”, with rollback when persistence is rejected.
+- Audit snapshots no longer duplicate receipt/photo data URLs. Legacy audit media is compacted during migration while transaction receipt photos remain intact.
+- Safari quota failures now report a storage-specific message while preserving the previous committed state.
+- Service-worker cache: `site-ledger-v322-mobile-persist-hotfix`; registration: `sw.js?v=322`.
 
 ## Data safety
 
