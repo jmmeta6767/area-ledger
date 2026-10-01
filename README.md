@@ -629,4 +629,4 @@ use the current `main` tree. It was not used or rebuilt for this release.
 
 Storage identifiers remain unchanged. Production Stable is fail-closed: live deployment evidence, PWA runtime, rollback readiness, RC2 gates, and capacity checks must pass before the in-app gate reports ready.
 
-Release QA target: v331 Production Stable 1.0 — 149 regression groups expected after the v322–v331 run.
+Release QA target: v331 Production Stable 1.0 — full regression plus gateway contract/runtime/preflight must pass on latest main.
