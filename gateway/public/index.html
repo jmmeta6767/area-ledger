@@ -1969,7 +1969,7 @@ function migrate(o){
   if(!Array.isArray(o.timeExtensions))o.timeExtensions=[];
   if(!Array.isArray(o.accountingPeriods))o.accountingPeriods=[];
   if(!Array.isArray(o.bankReconciliations))o.bankReconciliations=[];
-  if(!Array.isArray(o.auditLog))o.auditLog=[];
+  if(!Array.isArray(o.auditLog))o.auditLog=[];compactLegacyAuditMedia(o);
   if(!Array.isArray(o.manualJournals))o.manualJournals=[];
   if(!Array.isArray(o.chartAccounts))o.chartAccounts=defaultChartAccounts();
   o.siteEvents=o.siteEvents.map(function(e){if(!e)e={};if(e.id===undefined)e.id=uid();if(e.letterNo===undefined)e.letterNo='';if(e.letterStatus===undefined)e.letterStatus='none';if(e.sentDate===undefined)e.sentDate='';if(e.replyDate===undefined)e.replyDate='';if(e.replyNote===undefined)e.replyNote='';return e;});
@@ -2293,7 +2293,7 @@ function persist(opts){
   }catch(e){
     S.updatedAt=stamp;S.dataRevision=revStamp;
     if(prev){try{S=JSON.parse(prev);}catch(ignore){}}
-    toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่ กรุณาลองอีกครั้ง');
+    var quota=!!(e&&(e.name==='QuotaExceededError'||e.code===22||e.code===1014));toast(quota?'พื้นที่บันทึก Safari เต็ม · ข้อมูลเดิมยังอยู่ กรุณาสำรองข้อมูล/ลดรูปแล้วลองใหม่':'บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่ กรุณาลองอีกครั้ง');
     return false; /* Never mirror a rejected write into IndexedDB. */
   }
   committedState=json;U.storageConflict=false;
@@ -2359,7 +2359,9 @@ function isPeriodClosed(date){var k=periodKey(date);return !!k&&(S.accountingPer
 function accountingPeriodLocked(date,label){if(!date||!isPeriodClosed(date))return false;toast((label||'รายการ')+' อยู่ในงวด '+periodKey(date)+' ที่ปิดบัญชีแล้ว · เปิดงวดก่อนแก้ไข');return true;}
 function closedPeriodSnapshotIntegrity(period){var pr=(S.accountingPeriods||[]).filter(function(x){return x.period===period&&x.status==='closed'&&x.snapshot;}).slice(-1)[0];if(!pr)return{period:period,closed:false,ok:true,issues:[]};var tb=trialBalance(period,''),fs=financialStatements(period,''),now={trialDebit:tb.debit,trialCredit:tb.credit,bankBook:bankBookBalance(period),profit:fs.profitLoss.profit,txCount:(S.tx||[]).filter(function(x){return periodKey(x.date)<=period;}).length,journalCount:accountingJournalEntries('').filter(function(x){return x.date==='0000-00-00'||periodKey(x.date)<=period;}).length},issues=[];['trialDebit','trialCredit','bankBook','profit'].forEach(function(k){if(Math.abs((+now[k]||0)-(+pr.snapshot[k]||0))>.01)issues.push(k);});['txCount','journalCount'].forEach(function(k){if((+now[k]||0)!==(+pr.snapshot[k]||0))issues.push(k);});return{period:period,closed:true,ok:issues.length===0,issues:issues,snapshot:pr.snapshot,current:now};}
 
-function accountingAudit(action,entity,id,before,after,note){S.auditLog=S.auditLog||[];S.auditLog.push({id:uid(),at:Date.now(),date:today(),action:action,entity:entity,entityId:id||'',before:before||null,after:after||null,note:note||''});if(S.auditLog.length>1000)S.auditLog=S.auditLog.slice(-1000);}
+function accountingAuditSnapshot(v){if(v===null||v===undefined)return null;if(Array.isArray(v))return v.map(accountingAuditSnapshot);if(typeof v!=='object')return v;var o={};Object.keys(v).forEach(function(k){if(k==='photo'||k==='image'||k==='dataUrl'||k==='fileData')return;var x=v[k];if(typeof x==='string'&&/^data:(?:image|application)\//i.test(x))return;o[k]=accountingAuditSnapshot(x);});return o;}
+function compactLegacyAuditMedia(o){if(!o||!Array.isArray(o.auditLog))return o;o.auditLog=o.auditLog.map(function(x){if(!x||typeof x!=='object')return x;x.before=accountingAuditSnapshot(x.before);x.after=accountingAuditSnapshot(x.after);return x;});return o;}
+function accountingAudit(action,entity,id,before,after,note){S.auditLog=S.auditLog||[];S.auditLog.push({id:uid(),at:Date.now(),date:today(),action:action,entity:entity,entityId:id||'',before:accountingAuditSnapshot(before),after:accountingAuditSnapshot(after),note:note||''});if(S.auditLog.length>1000)S.auditLog=S.auditLog.slice(-1000);}
 function accountingLedger(pid){return (S.tx||[]).filter(function(x){return !pid||x.pid===pid;}).slice().sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))||(+a.createdAt||0)-(+b.createdAt||0);}).map(function(t){return{id:t.id,date:t.date,pid:t.pid,type:t.type,base:base(t),vat:vatOf(t),wht:whtOf(t),net:net(t),paid:!!t.paid,paidNet:txPaidNet(t),outstandingNet:txOutstandingNet(t),pay:t.pay||'',billId:t.billId||'',receiptId:t.receiptId||'',boqId:t.boqId||''};});}
 function accountChart(){return Array.isArray(S.chartAccounts)&&S.chartAccounts.length?S.chartAccounts:defaultChartAccounts();}
 function accountByCode(code){return accountChart().find(function(a){return a.code===code;})||null;}
@@ -2681,6 +2683,14 @@ function dashPids(){
   S.ui.dashboardPids=S.ui.dashboardPids.filter(function(id){return !!proj(id);});
   return S.ui.dashboardPids;
 }
+function dashboardPinProject(id){
+  if(!proj(id))return false;
+  S.ui=S.ui||{};var before=dashPids().slice(),pins=before.slice();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;
+  if(!persist()){S.ui=S.ui||{};S.ui.dashboardPids=before;return false;}
+  if(dashPids().indexOf(id)<0){S.ui.dashboardPids=before;return false;}
+  U.homePid=id;try{localStorage.setItem('area-ledger-home-pid',id);}catch(_){}
+  U.sheet=null;return true;
+}
 function dashTabs(){
   var pins=dashPids(),h='<div class="dash-tabs" role="tablist"><button class="dash-tab all '+(U.homePid==='__all'?'on':'')+'" data-act="dashSwitch" data-id="__all" role="tab" aria-selected="'+(U.homePid==='__all'?'true':'false')+'"><span>รวมทุกโครงการ</span></button>';
   pins.forEach(function(id,i){
@@ -2737,7 +2747,6 @@ function vHome(){
   var gScope=(S.guarantees||[]).filter(function(g){return !g.returned&&(allMode||g.pid===pid);}),gExposure=gScope.reduce(function(a,g){return a+(+g.amount||0);},0),gReady=gScope.filter(function(g){return g.dueDate&&dd(today(),g.dueDate)<=0;}),gNear=gScope.filter(function(g){var d=g.dueDate?dd(today(),g.dueDate):null;return d!==null&&d>0&&d<=90;});
   var cfFresh=/\.workers\.dev$/i.test(location.hostname||'')&&!S.projects.length&&!S.tx.length&&!S.boq.length&&!(S.ui&&S.ui.cloudflareFreshDismissed);
   if(cfFresh)h+='<div class="card" style="border:2px solid var(--amber);margin:8px 0 14px"><b>เปิด AREA Ledger บน Cloudflare แล้ว</b><p class="muted" style="margin:6px 0 10px">ข้อมูล Safari ของเว็บเดิมจะไม่ข้ามโดเมนอัตโนมัติ ถ้ามีข้อมูลเดิมให้กู้คืนไฟล์สำรอง .json ก่อนเริ่มบันทึกรายการใหม่</p><div class="stack"><button class="btn pri" data-act="restoreOpen">กู้คืนไฟล์สำรอง</button><button class="btn" data-act="cloudflareFreshDismiss">เริ่มใช้งานใหม่บน Cloudflare</button></div></div>';
-  var sys=S.role==='owner'?ownerSystemHealth(U.month||today().slice(0,7)):null;if(sys)h+='<div class="accounting-control '+(sys.ok?'':'urgent')+'"><div class="cc-head"><div><small>OWNER SYSTEM HEALTH</small><b>'+(sys.ok?'ระบบพร้อม · ไม่พบจุดบล็อก':'ต้องตรวจ '+sys.issues.length+' จุด')+'</b></div><button class="btn" data-act="releaseCheck">ตรวจ Release Gate</button></div><div class="cc-grid"><div><small>Storage</small><b>'+(sys.migration.storageOk?'OK':'CHECK')+'</b></div><div><small>Backup</small><b>'+(!sys.migration.hasData||sys.migration.backupFresh?'FRESH':'STALE')+'</b></div><div><small>Accounting</small><b>'+(sys.accounting.ok?'PASS':'CHECK')+'</b></div><div><small>Gateway</small><b>'+(sys.gateway.mode==='gateway'?(sys.gateway.remoteConsent?'READY':'LOCAL FALLBACK'):'LOCAL')+'</b></div></div></div>';var pf=S.role==='owner'?projectForecastPortfolio(allMode?'':pid):[],pfRisk=pf.filter(function(x){return x.risk!=='normal';});if(pfRisk.length)h+='<div class="accounting-control urgent"><div class="cc-head"><div><small>PROJECT FORECAST CONTROL</small><b>โครงการเสี่ยง '+pfRisk.length+' รายการ</b></div><button class="btn" data-act="accountingProjectCost">เปิด Project Cost</button></div><div class="cc-queue">'+pfRisk.slice(0,3).map(function(x){return '<p class="'+(x.risk==='critical'?'critical':x.risk==='urgent'?'urgent':'watch')+'"><b>'+esc(x.name)+'</b> · '+esc(x.reasons.join(' · '))+' · EAC '+fmt(x.eac)+' · กำไรปลายงาน '+fmt(x.profitAtCompletion)+'</p>';}).join('')+'</div></div>';var ac=accountingControl2(allMode?'':pid,U.month||today().slice(0,7)),ar=ac.base.ar,ap=ac.base.ap;h+='<div class="accounting-control '+(ac.ok?'':'urgent')+'"><div class="cc-head"><div><small>ACCOUNTING CONTROL CENTER 2.0</small><b>บัญชี · กระทบยอด · เอกสาร · ความผิดปกติ</b></div><button class="btn" data-act="accountingOpen">ตรวจบัญชี</button></div><div class="cc-grid"><div><small>ลูกหนี้ AR</small><b>'+fmt(ar.total)+'</b></div><div><small>เจ้าหนี้ AP</small><b>'+fmt(ap.total)+'</b></div><div><small>Bank book</small><b>'+fmt(bankBookBalance(''))+'</b></div><div><small>จุดที่ควรตรวจ</small><b>'+ac.issues.length+'</b></div></div>'+(ac.issues.length?'<div class="cc-queue">'+ac.issues.slice(0,3).map(function(x){return '<p class="'+x.level+'">'+esc(x.text)+'</p>';}).join('')+'</div>':'')+'</div>';
   var execProjects=S.projects.filter(function(p){return (p.status||'active')!=='closed';}),execDismissed=(S.ui&&S.ui.executiveDismissed)||{},execRisk=execProjects.map(function(p){var c=contractControl(p.id);return{p:p,c:c,q:contractActionQueue(p.id)};}).filter(function(x){return x.c.days!==null&&x.c.days<=30&&!execDismissed[x.p.id];}).sort(function(a,b){var w={critical:4,urgent:3,watch:2,normal:1};return w[b.c.risk]-w[a.c.risk];});if(execRisk.length)h+='<div class="executive-control"><div class="cc-head"><div><small>EXECUTIVE PROJECT CONTROL</small><b>โครงการใกล้ครบกำหนด</b></div><span>'+execRisk.length+' โครงการ</span></div><div class="executive-list">'+execRisk.slice(0,6).map(function(x){return '<div class="executive-row-wrap '+x.c.risk+'"><button data-act="openProj" data-id="'+x.p.id+'" class="executive-row-main"><span><b>'+esc(x.p.name)+'</b><small>'+esc(({normal:'ปกติ',watch:'เฝ้าระวัง',urgent:'เร่งดำเนินการ',critical:'วิกฤต'})[x.c.risk])+(x.q.length?' · งานค้าง '+x.q.length:'')+'</small></span><em>'+(x.c.days>=0?x.c.days+' วัน':'เกิน '+Math.abs(x.c.days)+' วัน')+'</em></button><button class="executive-dismiss" data-act="execDismiss" data-id="'+x.p.id+'" aria-label="ปิดการแจ้งเตือนโครงการนี้">×</button></div>';}).join('')+'</div></div>';
   var eligibleRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),nearRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;}),waitDelivery=retRows.filter(function(p){return !p.deliveryDate;});
   var retHint=eligibleRet.length?'ครบกำหนด '+eligibleRet.length+' โครงการ':nearRet.length?'ใกล้ครบกำหนด '+nearRet.length+' โครงการ':waitDelivery.length?'รอวันส่งมอบ '+waitDelivery.length+' โครงการ':retRows.length+' โครงการ';
@@ -4405,7 +4414,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=321',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=322',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
