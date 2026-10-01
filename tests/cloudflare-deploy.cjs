@@ -26,6 +26,13 @@ assert(worker.includes('async function productionPlatformStatus'));
 assert(worker.includes('await productionPlatformStatus(env)'));
 console.log('PASS Cloudflare deploy pipeline contract');
 
-assert(fs.readFileSync('gateway/public/index.html','utf8').includes('APP_RELEASE=700'));
+assert(fs.readFileSync('gateway/public/index.html','utf8').includes('APP_RELEASE=800'));
 
 assert(y.includes('node tests/v700-business-stable.cjs'));
+
+assert(y.includes('node tests/live-cloudflare-acceptance.mjs'));
+const auto=fs.readFileSync('.github/workflows/staging-auto-deploy.yml','utf8');
+assert(auto.includes('push:'));
+assert(auto.includes('environment: staging'));
+assert(auto.includes('wrangler@latest deploy --env staging'));
+assert(auto.includes('node tests/live-cloudflare-acceptance.mjs'));
