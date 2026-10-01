@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v370
+# AREA Ledger V2 — Master v380
 
-Project Mobile Focus / risk-aware progressive disclosure, based on GitHub `main` v360
-(`f27e0c853c0851ceb1b9b24576228cad17b78aff`).
+AR/AP Mobile Focus / action-first due control, based on GitHub `main` v370
+(`30d25ba0374b1510aa10e07ed4b91e86cff979d2`).
 
 Standalone/PWA accounting and construction project control.
+
+## v371–v380 AR/AP Mobile Focus
+
+- **v371 Command summary first:** the due screen starts with AR, AP and guarantee totals/counts instead of three long registers.
+- **v372 Project scope:** a compact project selector scopes receivables, payables and guarantees together.
+- **v373 Action First:** overdue and near-term AR/AP plus guarantees nearing return are surfaced in one short priority list above the registers.
+- **v374 Progressive disclosure:** AR, AP and guarantee registers are foldable; urgent/small groups can open automatically while large routine lists stay compact.
+- **v375 Missing-date visibility:** items without a due/return date are counted prominently instead of silently blending into the register.
+- **v376 Partial settlements:** due rows show partial AR/AP settlement state while keeping the displayed amount equal to the true outstanding balance.
+- **v377 Guarantee integration:** the current guarantee register participates in due filtering and urgent badges; legacy project retention remains supported without double counting.
+- **v378 Refresh continuity:** due project scope and fold state persist per Safari tab through `sessionStorage` only.
+- **v379 Canonical outstanding state:** pending lists, due status and urgent counting use outstanding balance after payments, avoiding fully settled rows that still have legacy flags.
+- **v380 Hardening:** root/gateway runtime parity, frozen accounting storage contract and regression coverage preserved. Service-worker cache: `site-ledger-v380-due-mobile-focus`; registration: `sw.js?v=380`.
 
 ## v361–v370 Project Mobile Focus
 
