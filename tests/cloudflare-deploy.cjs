@@ -36,3 +36,6 @@ assert(auto.includes('push:'));
 assert(auto.includes('environment: staging'));
 assert(auto.includes('wrangler@latest deploy --env staging'));
 assert(auto.includes('node tests/live-cloudflare-acceptance.mjs'));
+
+assert(y.includes('node tests/v800-business-stable.cjs'));
+assert(y.includes('node --check tests/live-cloudflare-acceptance.mjs'));
