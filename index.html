@@ -1956,7 +1956,7 @@ function migrate(o){
   }
   o.ui.dashboardPids=o.ui.dashboardPids.filter(function(id){return (o.projects||[]).some(function(p){return p.id===id;});});
   if(!o.business)o.business={legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
-  if(!o.ai||typeof o.ai!=='object'||Array.isArray(o.ai))o.ai={mode:'local',endpoint:'',remoteOcrConsent:false,timeoutMs:15000};if(o.ai.mode!=='gateway')o.ai.mode='local';if(typeof o.ai.endpoint!=='string')o.ai.endpoint='';if(o.ai.remoteOcrConsent!==true)o.ai.remoteOcrConsent=false;if(!isFinite(+o.ai.timeoutMs))o.ai.timeoutMs=15000;
+  if(!o.ai||typeof o.ai!=='object'||Array.isArray(o.ai))o.ai={mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000};if(o.ai.mode!=='gateway')o.ai.mode='local';if(typeof o.ai.endpoint!=='string')o.ai.endpoint='';if(typeof o.ai.remoteOcrConsentBase!=='string')o.ai.remoteOcrConsentBase='';var migratedAiBase=aiGatewayNormalizeBase(o.ai.endpoint),migratedConsentBase=aiGatewayNormalizeBase(o.ai.remoteOcrConsentBase);if(o.ai.mode==='gateway'&&o.ai.remoteOcrConsent===true&&migratedAiBase&&migratedConsentBase===migratedAiBase)o.ai.remoteOcrConsentBase=migratedConsentBase;else{o.ai.remoteOcrConsent=false;o.ai.remoteOcrConsentBase='';}if(!isFinite(+o.ai.timeoutMs))o.ai.timeoutMs=15000;
   if(!Number.isInteger(+o.dataRevision)||+o.dataRevision<0)o.dataRevision=0;else o.dataRevision=+o.dataRevision;
   if(!Number.isInteger(+o.lastBackupRevision)||+o.lastBackupRevision<0)o.lastBackupRevision=-1;else o.lastBackupRevision=+o.lastBackupRevision;
   if(o.business.legalNameEn===undefined)o.business.legalNameEn='';
@@ -2060,7 +2060,7 @@ function defaultChartAccounts(){return[
 ];}
 
 
-function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,timeoutMs:15000},dataRevision:0,lastBackupRevision:-1,updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},dataRevision:0,lastBackupRevision:-1,updatedAt:0};}
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function idbOpen(){return new Promise(function(res,rej){var settled=false,timer=setTimeout(function(){settled=true;U.storageReadBlocked=true;rej(new Error('IndexedDB timeout'));},1500);function fail(e){clearTimeout(timer);settled=true;U.storageReadBlocked=true;rej(e);}try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv');};r.onsuccess=function(){clearTimeout(timer);if(settled){r.result.close();return;}settled=true;res(r.result);};r.onerror=function(){fail(r.error);};r.onblocked=function(){fail(new Error('IndexedDB blocked'));};}catch(e){fail(e);}});}
@@ -2848,13 +2848,8 @@ function boqRowsFromGrid(grid){
 }
 function loadSheetJs(done){if(window.XLSX){done(true);return;}var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';sc.onload=function(){done(!!window.XLSX);};sc.onerror=function(){done(false);};document.head.appendChild(sc);}
 function loadPdfJs(done){if(window.pdfjsLib){done(true);return;}var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';sc.onload=function(){if(window.pdfjsLib)window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';done(!!window.pdfjsLib);};sc.onerror=function(){done(false);};document.head.appendChild(sc);}
-function aiGatewayConfig(){
-  var cfg=S&&S.ai&&typeof S.ai==='object'?S.ai:{};
-  return {mode:cfg.mode==='gateway'?'gateway':'local',endpoint:String(cfg.endpoint||'').trim(),remoteOcrConsent:cfg.remoteOcrConsent===true,timeoutMs:Math.max(3000,Math.min(30000,+cfg.timeoutMs||15000))};
-}
-function aiGatewayBase(){
-  var cfg=aiGatewayConfig(),raw=cfg.endpoint;
-  if(!raw)return '';
+function aiGatewayNormalizeBase(raw){
+  raw=String(raw||'').trim();if(!raw)return '';
   try{
     var u=new URL(raw),local=u.protocol==='http:'&&u.hostname==='localhost';
     if(u.protocol!=='https:'&&!local)return '';
@@ -2862,6 +2857,12 @@ function aiGatewayBase(){
     return u.href.replace(/\/+$/,'');
   }catch(_){return '';}
 }
+function aiGatewayConfig(){
+  var cfg=S&&S.ai&&typeof S.ai==='object'?S.ai:{},mode=cfg.mode==='gateway'?'gateway':'local',endpoint=String(cfg.endpoint||'').trim(),base=aiGatewayNormalizeBase(endpoint),consentBase=aiGatewayNormalizeBase(cfg.remoteOcrConsentBase||'');
+  return {mode:mode,endpoint:endpoint,remoteOcrConsent:mode==='gateway'&&cfg.remoteOcrConsent===true&&!!base&&consentBase===base,remoteOcrConsentBase:consentBase,timeoutMs:Math.max(3000,Math.min(30000,+cfg.timeoutMs||15000))};
+}
+function aiGatewayBase(){return aiGatewayNormalizeBase(aiGatewayConfig().endpoint);}
+function aiGatewayRevokeConsent(){S.ai=S.ai||{};S.ai.remoteOcrConsent=false;S.ai.remoteOcrConsentBase='';}
 function aiGatewaySuggestedBase(){
   try{
     var host=String(location.hostname||'').toLowerCase();
@@ -4062,9 +4063,9 @@ document.addEventListener('click',function(e){
   else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
   else if(a==='cloudflareFreshDismiss'){S.ui=S.ui||{};S.ui.cloudflareFreshDismissed=true;if(!persist({metaOnly:true}))return;render();toast('เริ่มใช้งานใหม่บน Cloudflare · ข้อมูลเว็บเดิมยังไม่ถูกลบ');}
   else if(a==='migrationCheck'){var mr=hostMigrationReadiness();if(!mr.health.ok){toast('ยังไม่พร้อม · Data Health พบ '+mr.health.totalIssues+' จุด');return;}if(!mr.storageOk){toast('ยังไม่พร้อม · Storage มี conflict/read/mirror issue');return;}if(!mr.backupFresh){toast('ยังไม่พร้อม · ข้อมูลเปลี่ยนหลัง backup กรุณาสำรองใหม่');return;}var cfg=aiGatewayConfig();if(cfg.mode==='gateway'&&cfg.remoteOcrConsent){aiGatewayReadiness().then(function(x){toast(x.ok?'พร้อมย้าย Host และ Gateway พร้อม':'ข้อมูลพร้อมย้าย · Gateway ยังไม่พร้อม (Local OCR ยังใช้ได้)');}).catch(function(){toast('ข้อมูลพร้อมย้าย · ตรวจ Gateway ไม่สำเร็จ แต่ Local OCR ยังใช้ได้');});}else toast('ข้อมูลพร้อมย้าย Host · backup revision '+mr.revision+' ตรงกับข้อมูลปัจจุบัน');}
-  else if(a==='aiMode'){S.ai=S.ai||{};S.ai.mode=v==='gateway'?'gateway':'local';if(!persist())return;render();}
-  else if(a==='aiConsent'){S.ai=S.ai||{};if(S.ai.remoteOcrConsent===true){S.ai.remoteOcrConsent=false;if(!persist())return;render();toast('ปิด Remote OCR แล้ว · ใช้ Local OCR');return;}toast('กำลังตรวจ Gateway readiness…');aiGatewayReadiness().then(function(x){var d=x.data||{};if(!x.ok){S.ai.remoteOcrConsent=false;if(d.providerConfigured===false)toast('ยังไม่เปิด Remote OCR · เหลือ Gemini API secret');else if(d.durableState===false)toast('ยังไม่เปิด Remote OCR · Durable Object ยังไม่พร้อม');else toast('ยังไม่เปิด Remote OCR · Gateway readiness ไม่ผ่าน');render();return;}S.ai.remoteOcrConsent=true;if(!persist()){S.ai.remoteOcrConsent=false;return;}render();toast('เปิด Remote OCR แล้ว · ส่งรูปเฉพาะเมื่อคุณสั่ง OCR');}).catch(function(){S.ai.remoteOcrConsent=false;render();toast('ยังไม่เปิด Remote OCR · ตรวจ Gateway ไม่สำเร็จ');});}
-  else if(a==='aiUseStaging'){S.ai=S.ai||{};S.ai.mode='gateway';S.ai.endpoint=aiGatewaySuggestedBase();if(!persist())return;render();toast('ตั้งค่า Gateway แล้ว · เปิด Remote OCR เมื่อพร้อมส่งรูป');}
+  else if(a==='aiMode'){S.ai=S.ai||{};var nextAiMode=v==='gateway'?'gateway':'local';if(nextAiMode==='local')aiGatewayRevokeConsent();S.ai.mode=nextAiMode;if(!persist())return;render();}
+  else if(a==='aiConsent'){S.ai=S.ai||{};if(aiGatewayConfig().remoteOcrConsent){aiGatewayRevokeConsent();if(!persist())return;render();toast('ปิด Remote OCR แล้ว · ใช้ Local OCR');return;}aiGatewayRevokeConsent();var requestedAiBase=aiGatewayBase()||aiGatewaySuggestedBase();toast('กำลังตรวจ Gateway readiness…');aiGatewayReadiness().then(function(x){var d=x.data||{},currentAiBase=aiGatewayBase()||aiGatewaySuggestedBase();if(!x.ok){aiGatewayRevokeConsent();if(d.providerConfigured===false)toast('ยังไม่เปิด Remote OCR · เหลือ Gemini API secret');else if(d.durableState===false)toast('ยังไม่เปิด Remote OCR · Durable Object ยังไม่พร้อม');else toast('ยังไม่เปิด Remote OCR · Gateway readiness ไม่ผ่าน');render();return;}if(!x.base||x.base!==requestedAiBase||currentAiBase!==requestedAiBase){aiGatewayRevokeConsent();render();toast('ยังไม่เปิด Remote OCR · Gateway เปลี่ยนระหว่างตรวจ กรุณายืนยันใหม่');return;}S.ai.endpoint=x.base;S.ai.remoteOcrConsentBase=x.base;S.ai.remoteOcrConsent=true;if(!persist()){aiGatewayRevokeConsent();return;}render();toast('เปิด Remote OCR แล้ว · ผูกกับ Gateway ที่ตรวจผ่านแล้ว');}).catch(function(){aiGatewayRevokeConsent();render();toast('ยังไม่เปิด Remote OCR · ตรวจ Gateway ไม่สำเร็จ');});}
+  else if(a==='aiUseStaging'){S.ai=S.ai||{};var targetAiBase=aiGatewaySuggestedBase(),oldAiBase=aiGatewayBase();if(oldAiBase!==targetAiBase)aiGatewayRevokeConsent();S.ai.mode='gateway';S.ai.endpoint=targetAiBase;if(!persist())return;render();toast('ตั้งค่า Gateway แล้ว · เปิด Remote OCR เมื่อพร้อมส่งรูป');}
   else if(a==='copyAppOrigin'){var origin=location.origin,done=false;try{var tmp=document.createElement('textarea');tmp.value=origin;tmp.style.position='fixed';tmp.style.opacity='0';document.body.appendChild(tmp);tmp.focus();tmp.select();done=document.execCommand('copy');tmp.remove();}catch(_){done=false;}if(!done&&navigator.clipboard)navigator.clipboard.writeText(origin).then(function(){toast('คัดลอก Origin แล้ว');},function(){toast(origin);});else toast(done?'คัดลอก Origin แล้ว':origin);}
   else if(a==='aiCheckReady'){aiGatewayReadiness().then(function(x){var d=x.data||{};if(x.ok)toast('Gateway พร้อมใช้งาน · protocol '+(d.protocol||'?'));else if(d.providerConfigured===false)toast('Gateway ทำงานแล้ว · เหลือ Gemini API secret');else if(d.durableState===false)toast('Gateway ยังขาด Durable Object');else toast('Gateway ยังไม่พร้อม · HTTP '+x.status);}).catch(function(){toast('ตรวจ Gateway ไม่สำเร็จ · ใช้ Local OCR ต่อได้');});}
   else if(a==='openGatewayHealth'){var base=aiGatewayBase()||aiGatewaySuggestedBase();var health=base+'/health';try{window.open(health,'_blank','noopener');}catch(_){location.href=health;}}
@@ -4126,10 +4127,10 @@ document.addEventListener('click',function(e){
   }
   else if(a==='role'){S.role=v;if(!persist())return;U.view=v==='foreman'?'list':'home';render();}
   else if(a==='saveOpen'){
+    var aiEndpointEl=document.getElementById('aiEndpoint'),aiEndpointNext=aiEndpointEl?aiEndpointEl.value.trim():String((S.ai&&S.ai.endpoint)||''),aiBaseNext=aiGatewayNormalizeBase(aiEndpointNext),aiBasePrev=aiGatewayBase();if(aiEndpointNext&&!aiBaseNext){toast('Gateway endpoint ไม่ถูกต้อง · ใช้ HTTPS และห้ามมี user/password/query/hash');return;}
     S.opening=parseFloat(document.getElementById('op').value)||0;S.openCash=parseFloat(document.getElementById('opc').value)||0;S.bank=document.getElementById('bnk').value.trim();S.brand=document.getElementById('brn').value.trim()||'AREA MAIBAB';
     S.business=S.business||{};S.business.legalName=document.getElementById('blegal').value.trim();S.business.legalNameEn=document.getElementById('blegalen').value.trim();S.business.taxId=document.getElementById('btax').value.trim();S.business.phone=document.getElementById('bphone').value.trim();S.business.email=document.getElementById('bemail').value.trim();S.business.address=document.getElementById('baddr').value.trim();S.business.addressEn=document.getElementById('baddren').value.trim();S.business.branch=document.getElementById('bbranch').value;
-    S.ai=S.ai||{};S.ai.endpoint=(document.getElementById('aiEndpoint')||{}).value?document.getElementById('aiEndpoint').value.trim():String(S.ai.endpoint||'');var ait=Number((document.getElementById('aiTimeout')||{}).value);S.ai.timeoutMs=Math.max(3000,Math.min(30000,isFinite(ait)&&ait?ait:15000));
-    if(S.ai.endpoint&&!aiGatewayBase()){toast('Gateway endpoint ไม่ถูกต้อง · ใช้ HTTPS และห้ามมี user/password/query/hash');return;}
+    S.ai=S.ai||{};S.ai.endpoint=aiEndpointNext;var ait=Number((document.getElementById('aiTimeout')||{}).value);S.ai.timeoutMs=Math.max(3000,Math.min(30000,isFinite(ait)&&ait?ait:15000));if(aiBasePrev!==aiBaseNext)aiGatewayRevokeConsent();
     if(!persist())return;U.sheet=null;render();toast('บันทึกข้อมูลบริษัทและ Gateway แล้ว');
   }
   else if(a==='mprev'){U.month=shiftMonth(U.month,-1);render();}
@@ -4258,7 +4259,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=289',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=290',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
