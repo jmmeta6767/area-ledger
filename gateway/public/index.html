@@ -2063,7 +2063,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=350,APP_CHANNEL='stable';
+var APP_RELEASE=351,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -3228,15 +3228,19 @@ function boqImportPreview(pid,rows,name,optInfo){
 function vBoq(){
   var pid=U.boqProjectPid||'',p=pid?proj(pid):null;
   if(pid&&!p){U.boqProjectPid='';pid='';}
-  var h='<div class="master-page-actions boq-top-actions"><button class="master-action primary" data-act="boqPickProject">'+ic('plus')+'<span>เพิ่ม BOQ</span></button><button class="master-action" data-act="boqImport"'+(pid?' data-id="'+pid+'"':'')+'>'+ic('documents')+'<span>นำเข้าไฟล์</span></button></div>';
-  if(!S.projects.length)return h+'<div class="empty">ยังไม่มีโครงการ · สร้างโครงการก่อนเพิ่ม BOQ</div>';
+  var h='';
+  if(!S.projects.length){
+    h='<div class="master-page-actions boq-top-actions"><button class="master-action primary" data-act="boqPickProject">'+ic('plus')+'<span>เพิ่ม BOQ</span></button><button class="master-action" data-act="boqImport">'+ic('documents')+'<span>นำเข้าไฟล์</span></button></div>';
+    return h+'<div class="empty">ยังไม่มีโครงการ · สร้างโครงการก่อนเพิ่ม BOQ</div>';
+  }
   if(!pid){
+    h='<div class="master-page-actions boq-top-actions"><button class="master-action primary" data-act="boqPickProject">'+ic('plus')+'<span>เพิ่ม BOQ</span></button><button class="master-action" data-act="boqImport">'+ic('documents')+'<span>นำเข้าไฟล์</span></button></div>';
     h+='<div class="boq-project-heading"><div><small>BOQ</small><h2>เลือกโครงการ</h2></div><span>'+S.projects.length+' โครงการ</span></div>';
     S.projects.forEach(function(pr){var bs=boqSummary(pr.id);h+='<button class="row" data-act="boqOpenProject" data-id="'+pr.id+'"><div class="l"><b>'+esc(pr.name)+'</b><small>'+bs.rows.length+' รายการ BOQ</small></div><div class="r"><span class="num">'+fmt(bs.budget)+'</span><span>เปิดรายการ ›</span></div></button>';});
     return h;
   }
   p=proj(pid);var rows=boqRows(pid),total=rows.reduce(function(n,x){return n+boqAmount(x);},0);
-  h+='<div class="sec master-detail-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><button class="btn" data-act="boqBackProjects">‹ ทุกโครงการ</button><button class="btn pri" data-act="newBoq" data-id="'+pid+'">+ รายการ</button></div><h2 style="margin-top:14px">'+esc(p.name)+'</h2><div class="kv"><span>รายการ BOQ</span><b>'+rows.length+' รายการ</b></div><div class="kv"><span>มูลค่า BOQ รวม</span><b>'+fmt(total)+'</b></div></div>';
+  h+='<div class="sec master-detail-card boq-compact-head"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div style="min-width:0"><small>BOQ โครงการ</small><h2 style="margin:2px 0 4px;line-height:1.25">'+esc(p.name)+'</h2><span class="muted">'+rows.length+' รายการ · '+fmt(total)+'</span></div><button class="btn" data-act="boqBackProjects">เปลี่ยน</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button class="btn pri" data-act="newBoq" data-id="'+pid+'">+ รายการ</button><button class="btn" data-act="boqImport" data-id="'+pid+'">นำเข้าไฟล์</button></div></div>';
   if(!rows.length)return h+'<div class="empty">ยังไม่มีรายการ BOQ ในโครงการนี้</div>';
   var lastSec='';
   rows.forEach(function(x,i){
@@ -4555,7 +4559,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=350',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=351',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
