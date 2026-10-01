@@ -88,4 +88,8 @@ assert(worker.includes("/v1/files/delete"));
 assert(worker.includes("r2Files:r2Ready(env)"));
 assert(worker.includes("MAX_FILE_BYTES=4*1024*1024"));
 assert(fs.existsSync('gateway/migrations/0002_ledger_files.sql'));
+assert(worker.includes("'/ledger-history'"));
+assert(worker.includes("'/ledger-restore-previous'"));
+assert(worker.includes("cloudLedgerBackup"));
+assert(worker.includes("ledgerRateAllowed"));
 console.log('PASS gateway contract');
