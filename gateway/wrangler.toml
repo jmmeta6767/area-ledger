@@ -33,6 +33,15 @@ class_name = "GatewayState"
 type = "durable-object"
 storage = "sqlite"
 
+# Draft bindings: Wrangler/Cloudflare may auto-provision real resources on deploy.
+# No resource IDs or bucket names are committed.
+[[d1_databases]]
+binding = "LEDGER_DB"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "LEDGER_FILES"
+
 # Staging preflight: configure exact ALLOWED_ORIGINS and provider secrets before deploy.
 # R2 audit binding remains optional and should be enabled only with a retention policy.
 
@@ -55,3 +64,10 @@ class_name = "GatewayState"
 [env.staging.exports.GatewayState]
 type = "durable-object"
 storage = "sqlite"
+
+[[env.staging.d1_databases]]
+binding = "LEDGER_DB"
+migrations_dir = "migrations"
+
+[[env.staging.r2_buckets]]
+binding = "LEDGER_FILES"

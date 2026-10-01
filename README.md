@@ -1,9 +1,19 @@
-# AREA Ledger V2 — Master v520
+# AREA Ledger V2 — Master v530
 
-R2 Attachment Cutover / receipt-photo externalization layered over the v510 production candidate, based on GitHub `main` v510
-(`84ac87862903992ae03dc5d8ac99ae1e5e091959`).
+Cloudflare Auto-Provision + Deploy Pipeline / complete Cloudflare release path layered over v520, based on GitHub `main` v520
+(`3749ce65a7485b4aa6366a302d84e6c0e3264436`).
 
 Standalone/PWA accounting and construction project control.
+
+## v530 Cloudflare Auto-Provision + Deploy Pipeline
+
+- Wrangler declares draft `LEDGER_DB` and `LEDGER_FILES` bindings for production and staging, with no fabricated IDs or bucket names. Current Wrangler can auto-provision D1/R2 resources at deploy time.
+- Staging and production bindings are independent so their resources are isolated by environment.
+- Added a manual GitHub Actions deployment pipeline for staging/production. It runs the complete release QA before any deploy.
+- Deployment provisions resources through Wrangler, applies D1 migrations remotely, then redeploys after schema activation.
+- `/v1/platform/status` validates the D1 ledger + file-index schema before reporting `productionReady: true`; a binding alone is not enough.
+- Cloudflare API token/account ID stay in GitHub Environment secrets. No token, resource UUID, OCR key or private bucket URL is committed.
+- PWA release remains v520 because this release hardens infrastructure/deployment only.
 
 ## v520 R2 Attachment Cutover
 

@@ -47,5 +47,7 @@ jobs:
         run: node tests/r2-pwa.cjs
       - name: Cloudflare production contract QA
         run: node tests/cloudflare-production.cjs
+      - name: Cloudflare deploy pipeline QA
+        run: node tests/cloudflare-deploy.cjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs
