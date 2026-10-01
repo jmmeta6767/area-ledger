@@ -3235,8 +3235,12 @@ function saveFile(name,blob){
   }catch(e){}
   return dl();
 }
+function backupChecksumText(text){
+  text=String(text||'');var h=2166136261>>>0;for(var i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return ('00000000'+h.toString(16)).slice(-8);
+}
+function backupStateChecksum(state){return backupChecksumText(JSON.stringify(state));}
 function backupEnvelope(){
-  return {backupFormat:1,exportedAt:new Date().toISOString(),sourceOrigin:String(location.origin||''),dataRevision:+S.dataRevision||0,state:S};
+  return {backupFormat:2,exportedAt:new Date().toISOString(),sourceOrigin:String(location.origin||''),dataRevision:+S.dataRevision||0,stateChecksum:backupStateChecksum(S),state:S};
 }
 function backupJson(){return JSON.stringify(backupEnvelope(),null,2);}
 function hostMigrationReadiness(){
@@ -3248,7 +3252,7 @@ function hostMigrationReadiness(){
 }
 function restoreParse(text){
   var o=null;try{o=typeof text==='string'?JSON.parse(text.trim()):text;}catch(_){return {ok:false,error:'JSON_INVALID'};}
-  var meta={};if(o&&o.backupFormat===1&&o.state){meta={sourceOrigin:String(o.sourceOrigin||''),exportedAt:String(o.exportedAt||''),dataRevision:+o.dataRevision||0};o=o.state;}
+  var meta={},format=+((o&&o.backupFormat)||0);if(o&&format>=1&&o.state){meta={backupFormat:format,sourceOrigin:String(o.sourceOrigin||''),exportedAt:String(o.exportedAt||''),dataRevision:+o.dataRevision||0,stateChecksum:String(o.stateChecksum||'')};if(format===2){if(!/^[0-9a-f]{8}$/i.test(meta.stateChecksum)||backupStateChecksum(o.state)!==meta.stateChecksum.toLowerCase())return {ok:false,error:'BACKUP_CHECKSUM'};}o=o.state;}
   if(!o||typeof o!=='object'||!Array.isArray(o.projects)||!Array.isArray(o.tx))return {ok:false,error:'BACKUP_SHAPE'};
   try{
     var state=migrate(o);
