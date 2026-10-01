@@ -15,7 +15,7 @@ Standalone/PWA accounting and construction project control.
 - **v447 Safer delete:** destructive project deletion moves into a separate collapsed “จัดการโครงการ” section and retains two-step confirmation.
 - **v448 iPhone sizing:** inputs remain 16px to avoid Safari focus zoom while field height drops to 42px and action height to 44px.
 - **v449 Existing accounting logic preserved:** project save, guarantee expense syncing and delivery +2 year return-date calculation continue using the prior logic.
-- **v450 Cloudflare-only hardening:** product runtime remains `gateway/public/index.html`; the root app stays retired as Legacy Recovery only. Storage keys remain frozen. Cloudflare cache: `site-ledger-v450-project-form-mobile-focus`; registration: `sw.js?v=450`.
+- **v450 Dashboard scope + hardening:** “เงินประกันรอคืน” appears only on the all-project dashboard; project-scoped dashboards keep only received / paid / AR-AP cards. Product runtime remains `gateway/public/index.html`; the root app stays retired as Legacy Recovery only. Storage keys remain frozen. Cloudflare cache: `site-ledger-v450-project-form-mobile-focus`; registration: `sw.js?v=450`.
 
 ## v441 Cloudflare-only Runtime + Recovery Gate
 
