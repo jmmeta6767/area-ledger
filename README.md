@@ -1,9 +1,20 @@
-# AREA Ledger V2 — Master v460
+# AREA Ledger V2 — Master v461
 
-Business Documents Mobile Focus / action-first billing workflow on the Cloudflare-only runtime, based on GitHub `main` v450
-(`f67f237b649098d9940c1882a0984c60ab7036dc`).
+Dashboard Expense Consolidation / clearer income-vs-expense summary on the Cloudflare-only runtime, based on GitHub `main` v460
+(`ba520f508e53678c988d87c886ab78e59768916d`).
 
 Standalone/PWA accounting and construction project control.
+
+## v461 Dashboard Expense Consolidation
+
+- **No duplicate outgoing cards:** paid expense and pending expense are combined into one **รายจ่าย** card.
+- **Income remains separate:** **รับเงินแล้ว** and **ค้างรับ** keep their own cards.
+- **Expense card shows both states:** **จ่ายแล้ว** and **ค้างจ่าย** appear together in the same card.
+- **Correct drill-down:** pending income opens pending receivables and the expense card opens all outgoing transactions for the selected project.
+- **Portfolio guarantee rule preserved:** **เงินประกันรอคืน** remains visible only on the all-project dashboard.
+- **Business Documents v460 preserved:** no document workflow is reverted.
+- **Frozen storage:** localStorage `site-ledger-v1` and IndexedDB `site-ledger-db` remain unchanged.
+- **Service worker:** Cloudflare cache `site-ledger-v461-dashboard-expense-consolidation`; registration `sw.js?v=461`.
 
 ## v451–v460 Business Documents Mobile Focus
 
