@@ -62,3 +62,16 @@ The former Render origin `https://area-ledger.onrender.com` is not an active ARE
 - Do not use Render as a release acceptance target.
 - Do not enter new accounting data on the legacy Render origin.
 - A legacy recovery export must be restored and validated on Cloudflare before work continues.
+
+
+## D1 / R2 staging reconciliation
+
+After real staging resources are created and bound:
+
+```sh
+cd gateway
+npx wrangler d1 migrations apply area-ledger-staging --remote --env staging
+npx wrangler deploy --env staging
+```
+
+Then verify `/health` and `/v1/platform/status`. Both must report D1 + R2 configured before production acceptance. With the Cloud recovery key, run `GET /v1/ledger/reconcile`; if it is unmatched, use the explicit POST repair once and read back again. Do not cut over production while reconciliation is unmatched.

@@ -43,5 +43,7 @@ jobs:
         run: node tests/d1-ledger.cjs
       - name: R2 attachment vault QA
         run: node tests/r2-files.cjs
+      - name: Cloudflare production contract QA
+        run: node tests/cloudflare-production.cjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs

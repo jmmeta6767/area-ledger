@@ -43,6 +43,7 @@ async function d1ReadLedger(env,ledgerHash){
   }catch(e){return {ok:false,configured:true,error:'D1_READ_FAILED'};}
 }
 function r2Ready(env){return !!(env&&env.LEDGER_FILES&&typeof env.LEDGER_FILES.put==='function'&&typeof env.LEDGER_FILES.get==='function'&&typeof env.LEDGER_FILES.delete==='function');}
+function productionComponents(env){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,d1Ledger=d1Ready(env),r2Files=r2Ready(env),exactOrigins=allowedOrigins(env).length;return {providerConfigured,durableState,d1Ledger,r2Files,exactOrigins,ready:providerConfigured&&durableState&&d1Ledger&&r2Files};}
 function cleanFileMeta(v,max){return String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max||120);}
 function randomHex(bytes){const a=new Uint8Array(bytes||16);crypto.getRandomValues(a);return Array.from(a).map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function sha256Bytes(bytes){const h=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -175,12 +176,17 @@ export default{async fetch(request,env){
   if(url.pathname==='/ready'&&request.method==='GET'){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),r2Files:r2Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,'',rid);}
   const origin=corsOrigin(request,env),sentOrigin=request.headers.get('Origin')||'';
   if(request.method==='OPTIONS')return origin?json({ok:true,protocol:PROTOCOL_VERSION},204,origin,rid):json({error:'ORIGIN_DENIED'},403,'',rid);
-  if(url.pathname==='/v1/files/status'||url.pathname==='/v1/files/upload'||url.pathname==='/v1/files/object'||url.pathname==='/v1/files/delete'){
+  if(url.pathname==='/v1/files/status'||url.pathname==='/v1/files/list'||url.pathname==='/v1/files/upload'||url.pathname==='/v1/files/object'||url.pathname==='/v1/files/delete'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
     const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);
     const ledgerHash=await sha256Hex(access);
     if(url.pathname==='/v1/files/status'&&request.method==='GET')return json({ok:r2Ready(env),configured:r2Ready(env),maxFileBytes:MAX_FILE_BYTES,d1Index:d1Ready(env)},r2Ready(env)?200:501,origin,rid);
+    if(url.pathname==='/v1/files/list'&&request.method==='GET'){
+      if(!d1Ready(env))return json({error:'D1_NOT_CONFIGURED'},501,origin,rid);
+      try{const q=await env.LEDGER_DB.prepare('SELECT object_key AS key,entity_type AS entityType,entity_id AS entityId,file_name AS name,mime,size_bytes AS size,sha256,created_at AS createdAt FROM ledger_files WHERE ledger_hash=? ORDER BY created_at DESC LIMIT 500').bind(ledgerHash).all();return json({ok:true,files:(q&&q.results)||[]},200,origin,rid);}
+      catch(_){return json({error:'D1_FILE_INDEX_NOT_READY'},503,origin,rid);}
+    }
     if(url.pathname==='/v1/files/upload'&&request.method==='POST'){
       try{const b=await readLedgerJson(request),x=await r2Upload(env,ledgerHash,b);return json(x,x.ok?200:(x.error==='R2_NOT_CONFIGURED'?501:400),origin,rid);}
       catch(e){const code=String(e&&e.message||'FILE_UPLOAD_ERROR'),status=code==='FILE_TOO_LARGE'?413:code==='LEDGER_PAYLOAD_TOO_LARGE'?413:400;return json({error:code},status,origin,rid);}
@@ -194,13 +200,26 @@ export default{async fetch(request,env){
     }
     return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
   }
-  if(url.pathname==='/v1/ledger/d1-status'||url.pathname==='/v1/ledger/d1-migrate'||url.pathname==='/v1/ledger/d1-read'){
+  if(url.pathname==='/v1/platform/status'&&request.method==='GET'){
+    if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
+    if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
+    const c=productionComponents(env);return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,components:c,productionReady:c.ready,cloudflareOnly:true},200,origin,rid);
+  }
+  if(url.pathname==='/v1/ledger/d1-status'||url.pathname==='/v1/ledger/d1-migrate'||url.pathname==='/v1/ledger/d1-read'||url.pathname==='/v1/ledger/reconcile'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
     const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);
     const ledgerHash=await sha256Hex(access);
     if(url.pathname==='/v1/ledger/d1-status'&&request.method==='GET'){const x=await d1LedgerStatus(env,ledgerHash);return json(x,x.ok?200:(x.configured?503:501),origin,rid);}
     if(url.pathname==='/v1/ledger/d1-read'&&request.method==='GET'){const x=await d1ReadLedger(env,ledgerHash);return json(x,x.ok?200:(x.configured?500:501),origin,rid);}
+    if(url.pathname==='/v1/ledger/reconcile'&&(request.method==='GET'||request.method==='POST')){
+      if(!d1Ready(env))return json({error:'D1_NOT_CONFIGURED'},501,origin,rid);
+      const dr=await ledgerCall(env,access,'ledger-get',{});if(!dr)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);const ds=await dr.json();if(!dr.ok)return json(ds,dr.status,origin,rid);if(!ds.hit)return json({error:'LEDGER_CLOUD_EMPTY'},409,origin,rid);
+      let durableState;try{durableState=JSON.parse(ds.payload);}catch(_){return json({error:'LEDGER_CLOUD_CORRUPT'},500,origin,rid);}
+      let d1=await d1ReadLedger(env,ledgerHash),durableSemantic=await d1SemanticChecksum(durableState),matched=!!(d1.ok&&d1.hit&&d1.meta&&String(d1.meta.semanticChecksum||'')===durableSemantic);
+      if(request.method==='POST'&&!matched){const m=await d1MirrorLedger(env,ledgerHash,durableState,ds.meta||{});if(!m.ok)return json({ok:false,matched:false,repaired:false,error:m.error||'D1_MIRROR_FAILED'},500,origin,rid);d1=await d1ReadLedger(env,ledgerHash);matched=!!(d1.ok&&d1.hit&&d1.meta&&String(d1.meta.semanticChecksum||'')===durableSemantic);}
+      return json({ok:true,matched,repaired:request.method==='POST'&&matched,durable:{revision:ds.meta&&ds.meta.revision||0,semanticChecksum:durableSemantic},d1:d1&&d1.meta||null},matched?200:409,origin,rid);
+    }
     if(url.pathname==='/v1/ledger/d1-migrate'&&request.method==='POST'){
       if(!d1Ready(env))return json({error:'D1_NOT_CONFIGURED'},501,origin,rid);
       const r=await ledgerCall(env,access,'ledger-get',{});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);const x=await r.json();
