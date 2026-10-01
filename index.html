@@ -2063,7 +2063,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=342,APP_CHANNEL='stable';
+var APP_RELEASE=345,APP_CHANNEL='stable';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function storageSchemaContract(){return {ok:KEY==='site-ledger-v1'&&BACKUP_KEY==='site-ledger-v1-recovery'&&IDB_NAME==='site-ledger-db',localStorageKey:KEY,recoveryKey:BACKUP_KEY,indexedDB:IDB_NAME,indexedDBVersion:1,objectStore:'kv'};}
@@ -2281,7 +2281,7 @@ function persist(opts){
     current=localStorage.getItem(KEY)||'';
     if(!opts.recovery&&committedState&&current!==committedState){
       U.storageConflict=true;
-      toast('พบข้อมูลใหม่จากอีกแท็บ · หยุดบันทึกเพื่อป้องกันข้อมูลถูกเขียนทับ กรุณาโหลดแอปใหม่');
+      if(!opts.silentConflict)toast('พบข้อมูลใหม่จากอีกแท็บ · หยุดบันทึกเพื่อป้องกันข้อมูลถูกเขียนทับ กรุณาโหลดแอปใหม่');
       return false;
     }
     prev=current||committedState;
@@ -2739,13 +2739,14 @@ function txIcon(t){
   if(t.type==='in')return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M8 9h6a2 2 0 0 1 0 4h-4a2 2 0 0 0 0 4h6"/></svg>';
   return '<svg viewBox="0 0 24 24"><path d="M5 5h14v14H5Z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>';
 }
-function rowTx(t,showProj){
-  var d=dueInfo(t),tags='',label=t.sub||t.partner||t.cat;
+function rowTx(t,showProj,opts){
+  opts=opts||{};var d=dueInfo(t),tags='',label=t.sub||t.partner||t.cat;
   if(t.vat)tags+='<span class="tag">VAT</span>';
   if(t.wht)tags+='<span class="tag">หัก 3%</span>';
   if(t.paid&&t.pay==='cash')tags+='<span class="tag">เงินสด</span>';
   if(!t.paid){if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';}
-  return '<button class="row tx-modern" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+(t.partner?'<small>'+esc(t.partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
+  var shown=opts.outstanding?txOutstandingNet(t):t.amount,sign=opts.outstanding?'':(t.type==='in'?'+':'−');
+  return '<button class="row tx-modern" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+(t.partner?'<small>'+esc(t.partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+sign+fmt(shown).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
 }
 function timelineRows(list){
   var groups={};list.forEach(function(t){var k=t.date||'undated';(groups[k]||(groups[k]=[])).push(t);});
@@ -2761,11 +2762,24 @@ function dashPids(){
   S.ui.dashboardPids=S.ui.dashboardPids.filter(function(id){return !!proj(id);});
   return S.ui.dashboardPids;
 }
+function dashboardPinStored(id){
+  try{var raw=localStorage.getItem(KEY),o=raw?JSON.parse(raw):null;return !!(o&&o.ui&&Array.isArray(o.ui.dashboardPids)&&o.ui.dashboardPids.indexOf(id)>=0);}catch(_){return false;}
+}
 function dashboardPinProject(id){
   if(!proj(id))return false;
   S.ui=S.ui||{};var pins=dashPids().slice();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;
-  if(!persist())return false;
-  var saved=dashPids().indexOf(id)>=0;if(!saved)return false;
+  if(!persist({metaOnly:true,silentConflict:true})){
+    if(!U.storageConflict)return false;
+    try{
+      var raw=localStorage.getItem(KEY)||'',fresh=raw?migrate(JSON.parse(raw)):null;
+      if(!fresh||!(fresh.projects||[]).some(function(p){return p.id===id;}))return false;
+      fresh.ui=fresh.ui||{};var fp=Array.isArray(fresh.ui.dashboardPids)?fresh.ui.dashboardPids.filter(function(pid){return fresh.projects.some(function(p){return p.id===pid;});}):[];
+      if(fp.indexOf(id)<0)fp.push(id);fresh.ui.dashboardPids=fp;
+      S=fresh;committedState=raw;U.storageConflict=false;
+      if(!persist({metaOnly:true}))return false;
+    }catch(_){return false;}
+  }
+  if(!dashboardPinStored(id))return false;
   U.homePid=id;try{localStorage.setItem('area-ledger-home-pid',id);}catch(_){}
   U.sheet=null;return true;
 }
@@ -3272,10 +3286,10 @@ function vGuarantees(){
 
 function vDue(){
   function block(type,title,sub){
-    var list=pending(type).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:1;}),total=type==='out'?list.reduce(function(n,x){return n+txOutstandingNet(x);},0):sumNet(list);
+    var list=pending(type).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:1;}),total=list.reduce(function(n,x){return n+txOutstandingNet(x);},0);
     var h='<section class="due-group '+(type==='in'?'due-in':'due-out')+'"><div class="due-group-head"><div><small>'+sub+'</small><h2>'+title+'</h2></div><b class="num '+(type==='in'?'in':'out')+'">'+fmt(total)+'</b></div>';
     if(!list.length)h+='<div class="due-empty">ไม่มีรายการค้าง</div>';
-    else h+='<div class="due-list">'+list.map(function(t){return rowTx(t,true);}).join('')+'</div>';
+    else h+='<div class="due-list">'+list.map(function(t){return rowTx(t,true,{outstanding:true});}).join('')+'</div>';
     return h+'</section>';
   }
   function retBlock(){
@@ -4508,7 +4522,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=342',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=345',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
