@@ -2615,7 +2615,7 @@ function disasterRecoveryStaticCheck(){
 }
 async function disasterRecoverySelfCheck(){var st=disasterRecoveryStaticCheck(),rel=await reliabilitySelfCheck();return {at:Date.now(),ok:st.ok&&rel.ok,backupRoundtrip:st.roundtrip,tamperRejected:st.tamperRejected,schemaKeys:st.schemaKeys,guards:st.guards,localStorage:rel.localStorage,indexedDB:rel.indexedDB,serviceWorker:rel.serviceWorker,pwaGuard:rel.pwaGuard,conflictGuard:rel.conflictGuard};}
 function disasterRecoveryEvidence(){var x=S.ops&&S.ops.disasterRecovery||null,age=x&&x.at?Date.now()-x.at:Infinity;return {ok:!!(x&&x.ok&&age>=0&&age<=24*60*60*1000),fresh:age>=0&&age<=24*60*60*1000,evidence:x,ageMs:age};}
-function isStandalone(){return !!(window.navigator.standalone||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
+function isStandalone(){var nav=(window&&window.navigator)||{};return !!(nav.standalone||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
 function toast(msg){
   var old=document.querySelector('.toast');if(old)old.remove();
   var d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=msg;document.body.appendChild(d);
