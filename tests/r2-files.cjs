@@ -7,6 +7,7 @@ assert.equal(typeof ctx.r2Ready,'function');
 assert.equal(typeof ctx.r2Upload,'function');
 assert.equal(typeof ctx.r2Get,'function');
 assert.equal(typeof ctx.r2Delete,'function');
+assert.equal(typeof ctx.r2Probe,'function');
 const sql=fs.readFileSync('gateway/migrations/0002_ledger_files.sql','utf8');
 assert(sql.includes('CREATE TABLE IF NOT EXISTS ledger_files'));
 assert(sql.includes('idx_ledger_files_entity'));
@@ -30,6 +31,7 @@ function fakeR2(){
   const got=await ctx.r2Get(env,hash,up.key);assert.equal(got.ok,true);assert.equal(got.size,3);
   const denied=await ctx.r2Get(env,'b'.repeat(64),up.key);assert.equal(denied.ok,false);assert.equal(denied.status,403);
   const del=await ctx.r2Delete(env,hash,up.key);assert.equal(del.ok,true);assert.equal(bucket.store.size,0);
+  const probe=await ctx.r2Probe(env,hash);assert.equal(probe.ok,true);assert.equal(bucket.store.size,0);
   assert.throws(()=>ctx.parseFileDataUrl('data:image/svg+xml;base64,PHN2Zz4='));
   assert.throws(()=>ctx.parseFileDataUrl('data:image/png;base64,'));
   console.log('PASS R2 attachment vault contract');
