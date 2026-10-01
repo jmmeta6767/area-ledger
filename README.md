@@ -1,9 +1,21 @@
-# AREA Ledger V2 — Master v492
+# AREA Ledger V2 — Master v500
 
-R2 Attachment Vault foundation / private Cloudflare file path layered over v491 D1 shadow migration, based on GitHub `main` v491
-(`aea971df720dd8c3f7926e4e472c1756d55727ad`).
+Cloudflare Recovery Hardening + D1/R2 foundations / durable rollback layered over the private Cloudflare stack, based on GitHub `main` v492
+(`94904a57712a3eef205e653f37cf29c96fbca5c1`).
 
 Standalone/PWA accounting and construction project control.
+
+## v500 Cloudflare Recovery Hardening
+
+- **Durable rollback:** each Cloud Ledger write keeps the immediately previous Durable Object snapshot instead of deleting it.
+- **History API:** `GET /v1/ledger/history` reports current and previous revision metadata without exposing accounting payloads.
+- **Explicit restore:** `POST /v1/ledger/restore-previous` recreates the prior snapshot as a new generation and increments `dataRevision`, so conflict protection never rewinds.
+- **Two-step PWA control:** the Backup / Cloudflare Sync sheet can inspect cloud revisions and restore the previous revision only after explicit confirmation.
+- **Recovery preservation:** replacing local state from Cloudflare still keeps the displaced device state in the frozen recovery snapshot and IndexedDB mirror.
+- **Independent rate limit:** Durable ledger state/history/restore requests have a dedicated Durable Object-backed rate bucket.
+- **D1/R2 retained:** v491 D1 shadow normalization and v492 private R2 attachment APIs remain intact. Durable Object stays authoritative until real staging D1/R2 bindings are provisioned and reconciliation passes.
+- **Release cache:** `site-ledger-v500-cloudflare-recovery-hardening`; registration `sw.js?v=500`.
+- **Frozen local contract:** `site-ledger-v1`, `site-ledger-v1-recovery`, and `site-ledger-db` are unchanged.
 
 ## v492 R2 Attachment Vault foundation
 
