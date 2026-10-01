@@ -79,6 +79,18 @@ async function r2Delete(env,ledgerHash,key){
   if(!r2Ready(env))return {ok:false,error:'R2_NOT_CONFIGURED',status:501};if(!fileObjectAllowed(ledgerHash,key))return {ok:false,error:'FILE_KEY_DENIED',status:403};
   await env.LEDGER_FILES.delete(key);await d1DeleteFileIndex(env,key,ledgerHash);return {ok:true};
 }
+async function r2Probe(env,ledgerHash){
+  if(!r2Ready(env))return {ok:false,error:'R2_NOT_CONFIGURED',status:501};
+  const date=new Date().toISOString().slice(0,10).replace(/-/g,''),key=ledgerHash+'/'+date+'/'+randomHex(16),bytes=new Uint8Array([65,82,69,65]);
+  let wrote=false;
+  try{
+    await env.LEDGER_FILES.put(key,bytes,{httpMetadata:{contentType:'application/octet-stream'},customMetadata:{ledgerHash,probe:'1',createdAt:new Date().toISOString()}});wrote=true;
+    const obj=await env.LEDGER_FILES.get(key);if(!obj)return {ok:false,error:'R2_PROBE_READ_FAILED',status:503};
+    const ab=await new Response(obj.body).arrayBuffer();if(new Uint8Array(ab).byteLength!==bytes.byteLength)return {ok:false,error:'R2_PROBE_VERIFY_FAILED',status:503};
+    return {ok:true,wrote:true,read:true,deleted:true};
+  }catch(_){return {ok:false,error:'R2_PROBE_FAILED',status:503};}
+  finally{if(wrote){try{await env.LEDGER_FILES.delete(key);}catch(_){}}}
+}
 
 async function ledgerStub(env,key){if(!env.GATEWAY_STATE)return null;const name='ledger:'+await sha256Hex(key),id=env.GATEWAY_STATE.idFromName(name);return env.GATEWAY_STATE.get(id);}
 async function ledgerCall(env,key,path,body){const stub=await ledgerStub(env,key);if(!stub)return null;return stub.fetch('https://internal/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});}
@@ -175,16 +187,17 @@ export class GatewayState {
 }
 export default{async fetch(request,env){
   const started=Date.now(),url=new URL(request.url),rid=requestId(request);
-  if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:providerReady(env),durableState:!!env.GATEWAY_STATE,cloudLedger:!!env.GATEWAY_STATE,cloudLedgerBackup:!!env.GATEWAY_STATE,d1Ledger:d1Ready(env),r2Files:r2Ready(env),auditSink:!!env.GATEWAY_AUDIT},200,'',rid);
+  if(url.pathname==='/health'&&request.method==='GET'){const c=await productionPlatformStatus(env);return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:c.providerConfigured,durableState:c.durableState,cloudLedger:c.durableState,cloudLedgerBackup:c.durableState,d1Ledger:c.d1Ledger,d1Schema:c.d1Schema,r2Files:c.r2Files,productionReady:c.ready,auditSink:!!env.GATEWAY_AUDIT},200,'',rid);}
   if(url.pathname==='/ready'&&request.method==='GET'){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),r2Files:r2Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,'',rid);}
   const origin=corsOrigin(request,env),sentOrigin=request.headers.get('Origin')||'';
   if(request.method==='OPTIONS')return origin?json({ok:true,protocol:PROTOCOL_VERSION},204,origin,rid):json({error:'ORIGIN_DENIED'},403,'',rid);
-  if(url.pathname==='/v1/files/status'||url.pathname==='/v1/files/list'||url.pathname==='/v1/files/upload'||url.pathname==='/v1/files/object'||url.pathname==='/v1/files/delete'){
+  if(url.pathname==='/v1/files/status'||url.pathname==='/v1/files/list'||url.pathname==='/v1/files/probe'||url.pathname==='/v1/files/upload'||url.pathname==='/v1/files/object'||url.pathname==='/v1/files/delete'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
     const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);
     const ledgerHash=await sha256Hex(access);
     if(url.pathname==='/v1/files/status'&&request.method==='GET')return json({ok:r2Ready(env),configured:r2Ready(env),maxFileBytes:MAX_FILE_BYTES,d1Index:d1Ready(env)},r2Ready(env)?200:501,origin,rid);
+    if(url.pathname==='/v1/files/probe'&&request.method==='POST'){const x=await r2Probe(env,ledgerHash);return json(x,x.ok?200:(x.status||500),origin,rid);}
     if(url.pathname==='/v1/files/list'&&request.method==='GET'){
       if(!d1Ready(env))return json({error:'D1_NOT_CONFIGURED'},501,origin,rid);
       try{const q=await env.LEDGER_DB.prepare('SELECT object_key AS key,entity_type AS entityType,entity_id AS entityId,file_name AS name,mime,size_bytes AS size,sha256,created_at AS createdAt FROM ledger_files WHERE ledger_hash=? ORDER BY created_at DESC LIMIT 500').bind(ledgerHash).all();return json({ok:true,files:(q&&q.results)||[]},200,origin,rid);}
