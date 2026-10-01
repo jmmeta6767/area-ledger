@@ -2913,11 +2913,13 @@ function aiGatewayValidateExpense(data){
 }
 async function aiGatewayRequest(path,payload){
   var cfg=aiGatewayConfig(),url=aiGatewayEndpoint(path);if(!url)throw new Error('AI gateway is not configured or consented');
-  var clean=aiGatewayValidatePayload(path,payload),ctrl=typeof AbortController!=='undefined'?new AbortController():null,timer=null;
+  var clean=aiGatewayValidatePayload(path,payload),ctrl=typeof AbortController!=='undefined'?new AbortController():null,timer=null,rid='ocr-'+Date.now()+'-'+Math.random().toString(36).slice(2,10);
   try{
     if(ctrl)timer=setTimeout(function(){ctrl.abort();},cfg.timeoutMs);
-    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':('ocr-'+Date.now()+'-'+Math.random().toString(36).slice(2,10))},credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined,body:JSON.stringify(clean)});
+    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined,body:JSON.stringify(clean)});
     if(!res.ok)throw new Error('AI gateway HTTP '+res.status);
+    var rp=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Gateway-Version')||''):'',rr=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Request-ID')||''):'';
+    if(rp!=='1'||rr!==rid)throw new Error('AI gateway response identity mismatch');
     return aiGatewayValidateExpense(await res.json());
   }finally{if(timer)clearTimeout(timer);}
 }
