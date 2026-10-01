@@ -154,10 +154,22 @@ reset();test('multi-tab stale write is rejected without overwriting newer storag
 reset();test('deleted primary in another tab is treated as conflict, not silently recreated',()=>{assert(c.persist());storage.delete(c.KEY);c.S.projects[0].contract=2222;assert.equal(c.persist(),false);assert.equal(storage.has(c.KEY),false);assert.equal(c.U.storageConflict,true)});
 reset();test('storage event marks tab conflicted without mutating records',()=>{assert(c.persist());const before=JSON.stringify(c.S);const newer=copy(c.S);newer.updatedAt=(c.S.updatedAt||0)+1;for(const fn of listeners['window:storage']||[])fn({key:c.KEY,newValue:JSON.stringify(newer)});assert.equal(c.U.storageConflict,true);assert.equal(JSON.stringify(c.S),before)});
 // Exercise the actual service-worker lifecycle and network/cache error paths.
-const swEvents={},deleted=[],cached=new Map([['./',new Response('cached-v321')]]);let offline=false,quota=false;
-const swc={URL,Response,Promise,self:{location:{origin:'https://ledger.test'},addEventListener(k,f){swEvents[k]=f},skipWaiting:async()=>{},clients:{claim:async()=>{}}},caches:{keys:async()=>['other-app-cache','site-ledger-v311-rc1-cutover','site-ledger-v321-rc2-production-candidate'],delete:async k=>deleted.push(k),open:async()=>({addAll:async()=>{},put:async(k,v)=>{if(quota)throw Error('quota');cached.set(k,v)},match:async k=>cached.get(k)?.clone()})},fetch:async()=>{if(offline)throw Error('offline');return new Response('network')}};vm.createContext(swc);vm.runInContext(fs.readFileSync('sw.js','utf8'),swc);let lifecycle;swEvents.activate({waitUntil(p){lifecycle=p}});await lifecycle;
+const swEvents={},deleted=[],cached=new Map([['./',new Response('cached-v331')]]);let offline=false,quota=false;
+const swc={URL,Response,Promise,self:{location:{origin:'https://ledger.test'},addEventListener(k,f){swEvents[k]=f},skipWaiting:async()=>{},clients:{claim:async()=>{}}},caches:{keys:async()=>['other-app-cache','site-ledger-v311-rc1-cutover','site-ledger-v331-production-stable'],delete:async k=>deleted.push(k),open:async()=>({addAll:async()=>{},put:async(k,v)=>{if(quota)throw Error('quota');cached.set(k,v)},match:async k=>cached.get(k)?.clone()})},fetch:async()=>{if(offline)throw Error('offline');return new Response('network')}};vm.createContext(swc);vm.runInContext(fs.readFileSync('sw.js','utf8'),swc);let lifecycle;swEvents.activate({waitUntil(p){lifecycle=p}});await lifecycle;
 test('SW activation deletes only old Ledger cache',()=>assert.deepEqual(deleted,['site-ledger-v311-rc1-cutover']));
 async function swfetch(){let response;swEvents.fetch({request:{method:'GET',mode:'navigate',url:'https://ledger.test/'},respondWith(p){response=p}});return (await response).text()}
-offline=true;assert.equal(await swfetch(),'cached-v321');offline=false;quota=true;assert.equal(await swfetch(),'network');test('SW offline uses current cache; quota failure preserves network response',()=>{});
+offline=true;assert.equal(await swfetch(),'cached-v331');offline=false;quota=true;assert.equal(await swfetch(),'network');test('SW offline uses current cache; quota failure preserves network response',()=>{});
+
+test('v322 production deployment verification is present',()=>{assert.equal(typeof c.productionDeploymentVerification,'function')});
+test('v323 PWA acceptance checks secure runtime and service worker',()=>{assert.equal(typeof c.pwaAcceptanceStatus,'function');const x=c.pwaAcceptanceStatus();assert.equal(typeof x.secure,'boolean')});
+test('v324 rollback checkpoint preserves storage contract',()=>{const x=c.productionRollbackCheckpoint();assert.equal(x.schema.localStorageKey,'site-ledger-v1');assert.equal(x.schema.indexedDB,'site-ledger-db')});
+test('v325 accounting close certificate is fail-closed without close record',()=>{c.S.accountingPeriods=[];assert.equal(c.accountingCloseCertificate('2026-09').ok,false)});
+test('v326 daily cash bank control returns liquidity',()=>{const x=c.dailyCashBankControl();assert.equal(typeof x.liquidity,'number')});
+test('v327 project profitability command center returns portfolio',()=>{const x=c.projectProfitabilityCommandCenter();assert(Array.isArray(x.projects))});
+test('v328 payroll bridge uses existing transactions only',()=>{c.S.tx=[{id:'w1',pid:'p',type:'out',amount:500,cat:'ค่าแรง',paid:true,pay:'cash',date:'2026-09-01'}];const x=c.payrollProjectCostBridge('p');assert.equal(x.count,1);assert.equal(x.total,500)});
+test('v329 owner daily brief exposes alerts',()=>{const x=c.ownerDailyBrief();assert(Array.isArray(x.alerts))});
+test('v330 large data stress check reports counts',()=>{const x=c.largeDataStressCheck();assert.equal(typeof x.counts.tx,'number');assert.equal(x.storageSchema.ok,true)});
+test('v331 production stable gate aggregates candidate deployment PWA rollback stress',()=>{const x=c.productionStableReadiness();assert.equal(x.version,331);assert.equal(x.channel,'stable');assert(x.candidate&&x.deployment&&x.pwa&&x.rollback&&x.stress)});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
