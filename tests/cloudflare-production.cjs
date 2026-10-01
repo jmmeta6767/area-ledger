@@ -15,3 +15,5 @@ assert(!/database_id\s*=\s*"(?!<REAL_)/.test(wrangler),'do not commit fabricated
 assert(!/bucket_name\s*=\s*"area-ledger-files-(?:staging|production)"/.test(wrangler),'resource bindings must be activated only with real Cloudflare resources');
 assert(readme.includes('Cloudflare Production Candidate'));
 console.log('PASS Cloudflare production contract');
+
+assert(worker.includes("/v1/files/probe"));assert(worker.includes("r2Probe"));assert(worker.includes("productionReady"));
