@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v311 RC1
+# AREA Ledger V1 — Master v321 RC2
 
-Cloudflare Cutover / Accounting Close / Reliability Release Candidate, based on GitHub `main` v301
-(`691fe12150f33c3a3b4e581493532087feb9a3ad`).
+Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
+(`267152ae8a4569641932019245fa377f4cf2716b`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,54 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v321 RC2 Production Candidate
+
+- Added a frozen storage-schema contract for localStorage `site-ledger-v1`, recovery `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 and object store `kv`.
+- RC2 Production Candidate Gate combines cutover, Disaster Recovery evidence, Document Flow Integrity, migration acceptance and production Gateway environment safety.
+
+## v320 Disaster Recovery Certification
+
+- Added a non-destructive certification for backup roundtrip, checksum tamper rejection, localStorage, IndexedDB, PWA update guard and stale-write protection.
+- Temporary IndexedDB probes are removed immediately and no accounting data is modified by the test itself.
+
+## v319 Cash / AR / AP / Guarantee forecast
+
+- Executive Accounting Report now calculates cumulative 30/60/90-day cash forecasts.
+- Forecasts combine current bank/cash, due AR, due AP and cash/transfer guarantees due for return.
+
+## v318 Construction Forecast 2.0
+
+- Project Cost now exposes BAC, Actual Cost, outstanding commitment exposure, ETC, EAC, Profit-at-Completion, completion margin, cost variance and budget utilization.
+- Project export columns were upgraded to the same forecast model.
+
+## v317 Document Flow Integrity 2.0
+
+- Added Quote → Bill → Receipt → Payment lineage checks for missing sources, cross-project links, impossible date order, payment linkage and receipt-vs-paid reconciliation.
+- Blocking document-flow issues are part of Accounting Production Gate; non-destructive source amount differences are warnings.
+
+## v316 actionable Month-End
+
+- Month-End Checklist items now open the relevant Data Health, Trial Balance, Statements, Bank, Tax/Document, Control Center or Backup surface directly.
+
+## v315 OCR production control
+
+- OCR result auto-fill now requires a confidence threshold based on detected amount, total label, merchant/category detail and text evidence.
+- Single and batch expense entry reject duplicate receipt-image fingerprints before creating new transactions.
+
+## v314 Migration Acceptance Certificate
+
+- Completed cross-origin restore now records source revision, summary and source/target business-data digests.
+- A certificate surface verifies the current target digest and collection counts after migration.
+
+## v313 Staging / Production Gateway safety
+
+- Gateway endpoints are classified as local, staging, production or external.
+- A production Workers app cannot activate Remote OCR consent against a staging Gateway; switching environments always revokes consent.
+
+## v312 Deployment Control Center
+
+- Added one runtime status surface for app version, Service Worker availability, `/health`, `/ready`, Gateway identity/components, endpoint and live-evidence timestamp.
 
 ## v311 RC1 cutover gate
 
@@ -559,8 +607,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v311-rc1-cutover`.
-Registration: `sw.js?v=311`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v321-rc2-production-candidate`.
+Registration: `sw.js?v=321`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
