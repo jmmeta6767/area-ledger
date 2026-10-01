@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v289
+# AREA Ledger V1 — Master v290
 
-Remote OCR Readiness Gate, based on GitHub `main` v288
-(`3eff2e05a3bbed2b99b8e120d0f483238b462c4b`).
+Remote OCR Consent Binding, based on GitHub `main` v289
+(`a4a7993237a3a142b8804ebe178b0e252a3f534d`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,14 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v290 Remote OCR consent binding
+
+- Remote OCR consent is now bound to the exact normalized Gateway base that passed `/ready`; changing the endpoint invalidates consent before any image can be sent.
+- Switching back to Local OCR revokes remote consent, and selecting a different staging/current-host Gateway requires readiness + consent again.
+- Legacy v289 consent without a bound Gateway base migrates fail-closed and must be re-confirmed once; existing accounting/storage data is untouched.
+- Gateway endpoint validation now happens before Settings state is mutated, and readiness completion is rejected if the Gateway changed while the check was in flight.
+- Service-worker cache advanced to v290 and Worker deployment assets stay synchronized with root runtime assets.
 
 ## v289 Remote OCR readiness gate
 
@@ -445,8 +453,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v289-remote-ocr-readiness`.
-Registration: `sw.js?v=289`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v290-consent-binding`.
+Registration: `sw.js?v=290`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
