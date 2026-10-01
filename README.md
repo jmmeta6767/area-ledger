@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v291
+# AREA Ledger V1 — Master v301
 
-Gateway Readiness Identity Pin, based on GitHub `main` v290
-(`a8d11a2548fd70da4915548f6777da995aeffc66`).
+Release Readiness / Business Hardening Run, based on GitHub `main` v291
+(`6731cfb1bf1e028f34f44ca1d214f5ec3d5a4762`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,56 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v301 Release readiness gate
+
+- Added a versioned Release Readiness gate combining storage safety, backup freshness, accounting production checks, document-number integrity and Gateway mode.
+- Owner Settings and dashboard expose the gate without changing accounting records.
+
+## v300 Owner system health
+
+- Added an Owner System Health dashboard for Storage, Backup, Accounting and Gateway status.
+- The card summarizes blockers without silently repairing or mutating data.
+
+## v299 document-number integrity
+
+- Document numbering now scans existing monthly numbers before generating the next number and skips collisions.
+- Quote/bill/receipt saves reject duplicate document numbers; Accounting Production Gate reports duplicate-number groups.
+
+## v298 project cost-to-complete
+
+- Project Cost Accounting now exposes ETC proxy, EAC proxy, profit/margin at completion and budget overrun.
+- These are management proxies based on the current BOQ budget and recorded actual cost, not automatic statutory WIP recognition.
+
+## v297 Bank Reconciliation revision checkpoint
+
+- Bank reconciliations carry a post-save data revision and transaction-count checkpoint.
+- A reconciliation becomes stale when accounting data changes afterward; duplicate reconciliation signatures are rejected.
+
+## v296 period-close bank gate
+
+- A period with bank activity cannot pass Accounting Production Gate without Bank Reconciliation.
+- Period close remains blocked until the bank gate and the existing accounting invariants pass.
+
+## v295 Remote OCR response binding
+
+- Remote OCR responses must echo gateway protocol v1 and the exact AREA request ID before extracted data is accepted.
+- Header mismatch fails closed into the existing Local OCR fallback path.
+
+## v294 restore replay / origin guard
+
+- Restore records a non-sensitive fingerprint, source origin and restore timestamp.
+- Repeating the same restore requires explicit confirmation and cross-origin migration is shown before replacement.
+
+## v293 backup integrity checksum
+
+- Backup envelope advanced to format 2 with a deterministic integrity checksum over the exported state.
+- Restore remains backward-compatible with raw/format-1 backups; format-2 corruption or alteration is rejected before migration.
+
+## v292 Cloudflare live smoke check
+
+- Settings can run a non-document Cloudflare smoke test against both `/health` and `/ready`.
+- The check requires the same Gateway base and never sends receipt images.
 
 ## v291 Gateway readiness identity pin
 
@@ -460,8 +510,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v291-gateway-identity`.
-Registration: `sw.js?v=291`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v301-release-gate`.
+Registration: `sw.js?v=301`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
