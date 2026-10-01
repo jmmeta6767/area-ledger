@@ -1,9 +1,20 @@
-# AREA Ledger V2 — Master v450
+# AREA Ledger V2 — Master v451
 
-Cloudflare Project Form Mobile Focus / compact project editing on the Cloudflare-only runtime, based on GitHub `main` v440
-(`d3d45b62e2864f9cbc066722238d87cc6a941083`).
+Dashboard Expense Consolidation / clearer income vs expense cards on the Cloudflare-only runtime, based on GitHub `main` v450
+(`f67f237b649098d9940c1882a0984c60ab7036dc`).
 
 Standalone/PWA accounting and construction project control.
+
+## v451 Dashboard Expense Consolidation
+
+- **No duplicate outgoing cards:** paid expense and pending expense are combined into one **รายจ่าย** card.
+- **Income remains separate:** the dashboard shows **รับเงินแล้ว** and **ค้างรับ** as separate receivable views.
+- **Expense card shows both states:** **จ่ายแล้ว** and **ค้างจ่าย** appear together inside the same card.
+- **Correct drill-down:** paid income opens paid receipts, pending income opens pending receivables, and the expense card opens all outgoing transactions for the current project.
+- **Portfolio guarantee rule preserved:** **เงินประกันรอคืน** remains visible only on the all-project dashboard.
+- **Cloudflare-only runtime:** product changes target `gateway/public/index.html` only; the root runtime remains Legacy Recovery.
+- **Frozen storage:** localStorage `site-ledger-v1` and IndexedDB `site-ledger-db` remain unchanged.
+- **Service worker:** Cloudflare cache `site-ledger-v451-dashboard-expense-consolidation`; registration `sw.js?v=451`.
 
 ## v442–v450 Cloudflare Project Form Mobile Focus
 
