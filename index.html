@@ -2420,7 +2420,7 @@ function cutoverReadiness(period){var rel=releaseReadiness(period||today().slice
 function productionStableReadiness(){
  var pc=productionCandidateReadiness(today().slice(0,7)),dep=productionDeploymentVerification(),pwa=pwaAcceptanceStatus(),rollback=productionRollbackCheckpoint(),stress=largeDataStressCheck(),issues=[];
  if(!pc.ok)issues.push('Production Candidate gate ยังไม่ผ่าน');if(!dep.ok)issues.push('Production deployment verification ยังไม่ผ่าน');if(!pwa.ok)issues.push('PWA/Secure runtime ยังไม่ผ่าน');if(!rollback.ok)issues.push('Backup/Rollback checkpoint ยังไม่ผ่าน');if(!stress.ok)issues.push('Large-data capacity มี warning');
- return {version:331,channel:'stable',ok:issues.length===0,issues:issues,candidate:pc,deployment:dep,pwa:pwa,rollback:rollback,stress:stress};
+ return {version:APP_RELEASE,channel:'stable',ok:issues.length===0,issues:issues,candidate:pc,deployment:dep,pwa:pwa,rollback:rollback,stress:stress};
 }
 function largeDataStressCheck(){
  var counts={projects:(S.projects||[]).length,tx:(S.tx||[]).length,boq:(S.boq||[]).length,docs:(S.quotes||[]).length+(S.bills||[]).length+(S.receipts||[]).length,audit:(S.auditLog||[]).length},score=counts.tx+counts.boq+counts.docs+counts.audit;
