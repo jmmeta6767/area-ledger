@@ -1,9 +1,17 @@
-# AREA Ledger V2 — Master v530
+# AREA Ledger V2 — Master v531
 
-Cloudflare Auto-Provision + Deploy Pipeline / complete Cloudflare release path layered over v520, based on GitHub `main` v520
-(`3749ce65a7485b4aa6366a302d84e6c0e3264436`).
+Production OCR Secret Gate / production Gemini parity layered over v530, based on GitHub `main` v530
+(`31a9ca3f7812c89f121dabefb8891c3bfe154538`).
 
 Standalone/PWA accounting and construction project control.
+
+## v531 Production OCR Secret Gate
+
+- Production and staging now use the same Gemini 2.5 Flash provider contract, removing the unconfigured generic-provider gap on a fresh production deployment.
+- The Cloudflare deployment workflow refuses to start unless account ID, API token and OCR API key are present in the selected GitHub Environment.
+- After the first provisioning deploy, the workflow writes `OCR_API_KEY` through Wrangler secret storage, applies D1 migrations, then redeploys.
+- Secrets remain outside Git and are never written to Wrangler vars or source files.
+- PWA release remains v520; this release only closes the production deployment/configuration gate.
 
 ## v530 Cloudflare Auto-Provision + Deploy Pipeline
 

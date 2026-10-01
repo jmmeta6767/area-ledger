@@ -12,7 +12,8 @@ run_worker_first = ["/health", "/ready", "/v1/*"]
 [vars]
 RATE_LIMIT_PER_MINUTE = "20"
 LEDGER_RATE_LIMIT_PER_MINUTE = "60"
-OCR_PROVIDER = "generic"
+OCR_PROVIDER = "gemini"
+GEMINI_MODEL = "gemini-2.5-flash"
 PROVIDER_TIMEOUT_MS = "10000"
 PROVIDER_RETRIES = "1"
 REQUIRE_DURABLE_STATE = "true"
