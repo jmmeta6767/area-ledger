@@ -23,3 +23,5 @@ assert(worker.includes('async function d1SchemaReady'));
 assert(worker.includes('async function productionPlatformStatus'));
 assert(worker.includes('await productionPlatformStatus(env)'));
 console.log('PASS Cloudflare deploy pipeline contract');
+
+assert(fs.readFileSync('gateway/public/index.html','utf8').includes('APP_RELEASE=600'));
