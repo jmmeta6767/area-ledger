@@ -2063,7 +2063,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=330,APP_CHANNEL='stress-test';
+var APP_RELEASE=331,APP_CHANNEL='stable';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function storageSchemaContract(){return {ok:KEY==='site-ledger-v1'&&BACKUP_KEY==='site-ledger-v1-recovery'&&IDB_NAME==='site-ledger-db',localStorageKey:KEY,recoveryKey:BACKUP_KEY,indexedDB:IDB_NAME,indexedDBVersion:1,objectStore:'kv'};}
@@ -2435,6 +2435,11 @@ function productionRollbackCheckpoint(){
 function pwaAcceptanceStatus(){
  var standalone=isStandalone(),sw=!!(navigator&&navigator.serviceWorker),ios=/iP(hone|ad|od)/.test(navigator.userAgent||''),secure=location.protocol==='https:'||location.hostname==='localhost';
  return {ok:secure&&sw,ios:ios,standalone:standalone,serviceWorker:sw,secure:secure,installRecommended:ios&&!standalone};
+}
+function productionStableReadiness(){
+ var pc=productionCandidateReadiness(today().slice(0,7)),dep=productionDeploymentVerification(),pwa=pwaAcceptanceStatus(),rollback=productionRollbackCheckpoint(),stress=largeDataStressCheck(),issues=[];
+ if(!pc.ok)issues.push('Production Candidate gate ยังไม่ผ่าน');if(!dep.ok)issues.push('Production deployment verification ยังไม่ผ่าน');if(!pwa.ok)issues.push('PWA/Secure runtime ยังไม่ผ่าน');if(!rollback.ok)issues.push('Backup/Rollback checkpoint ยังไม่ผ่าน');if(!stress.ok)issues.push('Large-data capacity มี warning');
+ return {version:331,channel:'stable',ok:issues.length===0,issues:issues,candidate:pc,deployment:dep,pwa:pwa,rollback:rollback,stress:stress};
 }
 function productionDeploymentVerification(){
  var d=deploymentControlStatus(),pc=productionCandidateReadiness(today().slice(0,7)),onWorker=/\.workers\.dev$/i.test(location.hostname||'');
