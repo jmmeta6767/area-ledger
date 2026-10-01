@@ -1,9 +1,16 @@
-# AREA Ledger V1 — Master v323
+# AREA Ledger V1 — Master v332
 
 Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
 (`267152ae8a4569641932019245fa377f4cf2716b`).
 
-Standalone/PWA accounting and construction project control. This repository remains
+Standalone/PWA accounting and construction project control.
+
+## v332 Settings cleanup / mobile operations
+
+- Simplified the everyday Settings screen for iPhone use; deployment, host migration, release gates and origin/debug tools moved to one Advanced / System Diagnostics screen.
+- Keeps OCR Local/Cloudflare choice, consent, business/accounting fields, Data Health, backup and restore in the normal Settings flow.
+- Preserves v323 iPhone storage-pressure transaction-edit fix and v322 dashboard cleanup/persistence behavior.
+- Storage identifiers and accounting data contracts remain unchanged. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
 
 ## v322 Dashboard cleanup / persistence
