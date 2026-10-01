@@ -24,4 +24,6 @@ assert(worker.includes('async function productionPlatformStatus'));
 assert(worker.includes('await productionPlatformStatus(env)'));
 console.log('PASS Cloudflare deploy pipeline contract');
 
-assert(fs.readFileSync('gateway/public/index.html','utf8').includes('APP_RELEASE=600'));
+assert(fs.readFileSync('gateway/public/index.html','utf8').includes('APP_RELEASE=700'));
+
+assert(y.includes('node tests/v700-business-stable.cjs'));
