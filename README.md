@@ -1,9 +1,18 @@
-# AREA Ledger V2 — Master v347
+# AREA Ledger V2 — Master v348
 
-Refresh route persistence / iPhone navigation continuity, based on GitHub `main` v346
-(`1d8a3747c6caee8852b928e881777b9587815d4c`).
+BOQ direct-flow / project separation, based on GitHub `main` v347
+(`2d5a864267bf5847f7c462f2cc6a947cb2291929`).
 
 Standalone/PWA accounting and construction project control.
+
+## v348 BOQ direct flow
+
+- Project list now has a direct **BOQ** action; checking BOQ no longer requires opening the full project/contract screen first.
+- Project detail shows one compact BOQ shortcut at the top, before Contract Control Center, and removes the duplicate BOQ card farther down the page.
+- The BOQ action always routes explicitly to the dedicated BOQ screen with the selected project preserved.
+- Project list quick actions were reduced to BOQ / add transaction / edit; Excel and PDF remain in project tools instead of crowding the project list.
+- Dedicated BOQ remains BOQ-only and does not render Contract Control, government-work AI guidance, contract timeline, expense analytics, or project reports.
+- Release advanced to v348 / stable; service-worker cache `site-ledger-v348-boq-direct-flow`; registration `sw.js?v=348`.
 
 ## v347 Refresh stays on current page
 
