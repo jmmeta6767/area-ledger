@@ -1,9 +1,20 @@
-# AREA Ledger V2 — Master v480
+# AREA Ledger V2 — Master v481
 
-Accounting Control Mobile Focus / monthly-action-first accounting control on the Cloudflare-only runtime, based on GitHub `main` v470
-(`09a3c69bfda7b82b083c29030113251b685e75b4`).
+Dashboard Expense Cleanup / consolidated outgoing cash cards on the Cloudflare-only runtime, based on GitHub `main` v480
+(`3670424fa91d1e57661e37224ad1f7fb4b466748`).
 
 Standalone/PWA accounting and construction project control.
+
+## v481 Dashboard Expense Cleanup
+
+- **One outgoing card:** “จ่ายเงินแล้ว” and “ค้างจ่าย” are combined inside one **รายจ่าย** card instead of appearing as duplicate outgoing concepts.
+- **Income stays readable:** **รับเงินแล้ว** and **ค้างรับ** remain separate because they answer different collection questions.
+- **Correct drill-down:** the expense card opens all outgoing transactions for the selected project; pending receivables open only incoming items that still have an outstanding balance.
+- **Partial recovery banner removed:** the large “ข้อมูล Cloudflare ชุดนี้เป็นข้อมูลกู้คืนบางส่วน” dashboard card and its two dashboard buttons are no longer rendered.
+- **Recovery capability retained:** Backup / Restore logic remains available outside the dashboard and Legacy Recovery remains read-only.
+- **Guarantee rule preserved:** **เงินประกันรอคืน** still appears only on the all-project dashboard.
+- **Storage frozen:** localStorage `site-ledger-v1` and IndexedDB `site-ledger-db` remain unchanged.
+- **Service worker:** Cloudflare cache `site-ledger-v481-dashboard-expense-cleanup`; registration `sw.js?v=481`.
 
 ## v471–v480 Accounting Control Mobile Focus
 
@@ -62,7 +73,7 @@ Standalone/PWA accounting and construction project control.
 - **Root runtime retired:** repository root `index.html` is now a read-only Legacy Recovery portal for the former Render origin; it is not an accounting app and must not receive product features.
 - **Render is legacy recovery only:** no new AREA Ledger features, accounting logic, UI, OCR or deployment work may target Render.
 - **Explicit fresh-origin recovery:** a new Cloudflare origin no longer calls `restoreThaSalaKnown()` automatically. Empty storage stays empty until the user explicitly restores a backup or starts fresh.
-- **Partial-recovery warning:** existing Cloudflare state carrying the historical Tha Sala fallback marker is labeled as partial recovery and prompts explicit restore before further work.
+- **Partial-recovery detection:** the historical Tha Sala fallback marker remains detectable for diagnostics; its large dashboard warning was retired in v481.
 - **Legacy snapshot exporter:** the recovery portal reads `site-ledger-v1`, `site-ledger-v1-recovery`, and IndexedDB `site-ledger-db` current/backup snapshots without overwriting them, then exports a checksum-wrapped JSON backup.
 - **Cloudflare-first QA:** regression loads `gateway/public/index.html` and `gateway/public/sw.js`; CI enforces the Cloudflare-only deployment contract on every PR/main push.
 - **Storage contract remains frozen:** Cloudflare continues using localStorage `site-ledger-v1`, recovery key `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 / `kv`.
