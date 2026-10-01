@@ -49,5 +49,7 @@ jobs:
         run: node tests/cloudflare-production.cjs
       - name: Cloudflare deploy pipeline QA
         run: node tests/cloudflare-deploy.cjs
+      - name: v600 stable source candidate QA
+        run: node tests/v600-stable.cjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs
