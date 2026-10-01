@@ -1,9 +1,23 @@
-# AREA Ledger V2 — Master v481
+# AREA Ledger V2 — Master v490
 
-Dashboard Expense Cleanup / consolidated outgoing cash cards on the Cloudflare-only runtime, based on GitHub `main` v480
-(`3670424fa91d1e57661e37224ad1f7fb4b466748`).
+Cloudflare Durable Ledger Sync foundation / conflict-safe opt-in cloud persistence on the Cloudflare-only runtime, based on GitHub `main` v481
+(`f7b2aa141dc067e3caf400267696be10c10aca33`).
 
 Standalone/PWA accounting and construction project control.
+
+## v490 Cloudflare Durable Ledger Sync foundation
+
+- **Cloudflare-only persistence path added:** the existing SQLite-backed `GatewayState` Durable Object now exposes `/v1/ledger/status` and `/v1/ledger/state` for encrypted-in-transit cloud state transport without reactivating Render.
+- **Capability isolation:** each ledger uses a locally generated 256-bit recovery key; the Worker hashes that key before selecting a Durable Object. No ledger key or accounting payload is committed to Git.
+- **Conflict-safe writes:** cloud replacement requires both the last known revision and SHA-256 checksum. Unknown or stale cloud state returns HTTP 409 instead of being overwritten.
+- **Large-state safety:** the Worker validates the ledger shape, caps the cloud payload at 12 MiB and stores it in 64 KiB Durable Object chunks behind a manifest.
+- **Opt-in migration:** Cloud Sync is disabled by default. The backup/recovery sheet is the only activation point so a partial/fallback browser dataset cannot silently become the cloud source of truth.
+- **Offline cache retained:** localStorage `site-ledger-v1` and IndexedDB `site-ledger-db` remain as the local/offline cache and recovery layer during this transition. Successful local writes enqueue a cloud mirror only after the user has enabled Cloud Sync.
+- **Cross-device recovery:** the backup sheet can copy/import the Cloud recovery key, pull the durable Cloudflare state, or explicitly push the current device state. Pulls preserve the prior local dataset in the existing recovery snapshot.
+- **No silent conflict resolution:** divergent local/cloud data requires an explicit user choice; neither side wins automatically.
+- **Release cache:** `site-ledger-v490-cloudflare-ledger-sync`; registration `sw.js?v=490`.
+- **Next migration boundary:** D1 normalization and R2 attachment migration remain separate later phases; v490 deliberately uses the already-bound Durable Object so staging can harden cloud persistence before provisioning new Cloudflare resources.
+
 
 ## v481 Dashboard Expense Cleanup
 
