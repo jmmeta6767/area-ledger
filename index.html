@@ -3316,7 +3316,7 @@ function vProject(){
   var cc=contractControl(p.id),cq=contractActionQueue(p.id);
   h+='<div class="contract-center '+cc.risk+'"><div class="cc-head"><div><small>CONTRACT CONTROL CENTER</small><b>'+esc(({normal:'ปกติ',watch:'เฝ้าระวัง',urgent:'เร่งดำเนินการ',critical:'วิกฤต'})[cc.risk])+'</b></div><span>'+(p.status==='delivered'?'ส่งมอบแล้ว':p.status==='closed'?'ปิดโครงการแล้ว':cc.days===null?'ไม่ระบุวันสิ้นสุด':cc.days>=0?'เหลือ '+cc.days+' วัน':'พ้น '+Math.abs(cc.days)+' วัน')+'</span></div><div class="cc-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(+p.contract||0)+'</b></div><div><small>ต้นทุนจริง</small><b>'+fmt(cc.stats.outB)+'</b></div><div><small>Forecast หลัง Variation</small><b>'+fmt(cc.forecast)+'</b></div><div><small>หนังสือค้าง</small><b>'+cc.pendingLetters+' / รอตอบ '+cc.pendingReplies+'</b></div></div>'+(cq.length?'<div class="cc-queue">'+cq.slice(0,5).map(function(q){return '<p class="'+q.level+'">'+esc(q.text)+'</p>';}).join('')+'</div>':'<div class="cc-ok">ไม่พบ Action Queue สำคัญจากข้อมูลที่บันทึก</div>')+'<div class="cc-actions"><button class="btn" data-act="contractChangeNew" data-id="'+p.id+'">+ เพิ่ม/ลดงาน</button><button class="btn" data-act="timeExtensionNew" data-id="'+p.id+'">+ ขอขยายเวลา</button></div></div>';
 
-  var contractOpen=cc.risk!=='normal';
+  var contractOpen=cc.risk!=='normal'||cq.length>0;
   h+='<details class="project-fold project-contract-fold"'+(contractOpen?' open':'')+'><summary><span>ข้อมูลสัญญา<small>'+(contractOpen?'มีประเด็นที่ควรตรวจ':'แตะเพื่อดูเลขที่สัญญาและกำหนดงาน')+'</small></span></summary><div class="project-fold-body">'+contractBlock(p)+'</div></details>';
 
   var ga=govWorkAdvice(p),gaOpen=!!(ga&&(ga.urgent||ga.expired));
