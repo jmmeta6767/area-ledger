@@ -13,9 +13,9 @@ assert(!/bucket_name\s*=/.test(w),'draft R2 binding must not commit a bucket nam
 assert(w.includes('binding = "LEDGER_DB"'));
 assert(w.includes('binding = "LEDGER_FILES"'));
 assert(y.includes('workflow_dispatch:'));
-assert(y.includes("wrangler@latest deploy --env staging"));
+assert(y.includes("wrangler@4.145.0 deploy --env staging"));
 assert(y.includes("d1 migrations apply LEDGER_DB --remote --env staging"));
-assert(y.includes("wrangler@latest d1 migrations apply LEDGER_DB --remote"));
+assert(y.includes("wrangler@4.145.0 d1 migrations apply LEDGER_DB --remote"));
 assert(y.includes('CLOUDFLARE_API_TOKEN'));
 assert(y.includes('CLOUDFLARE_ACCOUNT_ID'));
 assert(y.includes('OCR_API_KEY'));
@@ -34,7 +34,7 @@ assert(y.includes('node tests/live-cloudflare-acceptance.mjs'));
 const auto=fs.readFileSync('.github/workflows/staging-auto-deploy.yml','utf8');
 assert(auto.includes('push:'));
 assert(auto.includes('environment: staging'));
-assert(auto.includes('wrangler@latest deploy --env staging'));
+assert(auto.includes('wrangler@4.145.0 deploy --env staging'));
 assert(auto.includes('node tests/live-cloudflare-acceptance.mjs'));
 
 assert(y.includes('node tests/v800-business-stable.cjs'));
