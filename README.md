@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v301
+# AREA Ledger V1 — Master v311 RC1
 
-Release Readiness / Business Hardening Run, based on GitHub `main` v291
-(`6731cfb1bf1e028f34f44ca1d214f5ec3d5a4762`).
+Cloudflare Cutover / Accounting Close / Reliability Release Candidate, based on GitHub `main` v301
+(`691fe12150f33c3a3b4e581493532087feb9a3ad`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,55 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v311 RC1 cutover gate
+
+- Release Readiness is now RC1 / v311 and a separate Cutover Gate requires fresh Reliability evidence plus fresh Cloudflare live acceptance when running on Workers or using the Gateway.
+- Cross-origin restores must carry a matched migration receipt before production cutover is considered ready.
+
+## v310 Reliability self-check
+
+- Added non-destructive localStorage, IndexedDB, PWA update-guard and stale-write-guard checks.
+- Reliability evidence is timestamped and valid for 24 hours; the temporary IndexedDB probe is deleted immediately.
+
+## v309 Guarantee / Retention 30/60/90 control
+
+- Guarantee register now groups open exposure into due/overdue, 1–30, 31–60 and 61–90 day buckets with counts and amounts.
+
+## v308 Project Forecast control
+
+- Project Cost now exposes ETC/EAC/profit-at-completion in the UI.
+- Dashboard flags BOQ overrun, negative/low completion margin, high BOQ usage and materially unlinked cost.
+
+## v307 Tax / Document Register
+
+- Added internal sales/purchase tax-document registers and an Accounting Excel sheet.
+- The register is explicitly management support, not an automatic statutory filing.
+
+## v306 Month-End Close Checklist
+
+- Period close now has a visible checklist for Data Health, Trial Balance, Financial Statements, Bank, Tax/Documents, AR, AP and backup freshness.
+- A failed close opens the checklist instead of only showing a generic blocker count.
+
+## v305 Bank Reconciliation fingerprint
+
+- Reconciliation freshness now uses a deterministic bank-book fingerprint for the selected period.
+- Future-period transactions no longer make a prior period stale when its bank-book inputs are unchanged.
+
+## v304 privacy-safe OCR diagnostics
+
+- Remote OCR stores request ID, duration, status and endpoint evidence only.
+- It never stores receipt images, OCR text, amounts or partner names in diagnostics.
+
+## v303 Migration Drill
+
+- Restore screen can validate backup integrity, state health, collection counts and a deterministic business-data digest without changing current data.
+- Completed restores save a source/target digest receipt for cutover verification.
+
+## v302 Cloudflare live acceptance evidence
+
+- Cloudflare smoke checks now save non-document live evidence for `/health` and `/ready`.
+- Evidence is bound to the exact Gateway base and expires after 24 hours for cutover purposes.
 
 ## v301 Release readiness gate
 
@@ -510,8 +559,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v301-release-gate`.
-Registration: `sw.js?v=301`, `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v311-rc1-cutover`.
+Registration: `sw.js?v=311`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
