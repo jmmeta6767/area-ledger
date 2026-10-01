@@ -2063,7 +2063,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=328,APP_CHANNEL='payroll-cost-bridge';
+var APP_RELEASE=329,APP_CHANNEL='owner-daily-brief';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function storageSchemaContract(){return {ok:KEY==='site-ledger-v1'&&BACKUP_KEY==='site-ledger-v1-recovery'&&IDB_NAME==='site-ledger-db',localStorageKey:KEY,recoveryKey:BACKUP_KEY,indexedDB:IDB_NAME,indexedDBVersion:1,objectStore:'kv'};}
@@ -2481,6 +2481,14 @@ function dailyCashBankControl(){
  return {date:today(),bank:cs.bank,cash:cs.cash,liquidity:cs.bank+cs.cash,bankMovement:bankToday,cashMovement:cashToday,bankReconciliation:bankReconciliationStatus(today().slice(0,7))};
 }
 function cashForecastHorizon(days){var cs=cashSplit(),ar=dueWithinDays('ar',days,''),ap=dueWithinDays('ap',days,''),guarantee=guaranteeDueWithinDays(days,'');return {days:days,opening:cs.bank+cs.cash,ar:ar,ap:ap,guarantee:guarantee,ending:cs.bank+cs.cash+ar.sum+guarantee.sum-ap.sum};}
+function ownerDailyBrief(){
+ var rep=businessAccountingReport(today().slice(0,7)),profit=projectProfitabilityCommandCenter(),cash=dailyCashBankControl(),alerts=[];
+ if(rep.cashForecast30<0)alerts.push({level:'critical',text:'Cash forecast 30 วันติดลบ '+fmt(rep.cashForecast30)});
+ if(!cash.bankReconciliation.ok)alerts.push({level:'urgent',text:'Bank reconciliation: '+cash.bankReconciliation.label});
+ profit.projects.filter(function(x){return x.risk==='critical'||x.risk==='urgent';}).slice(0,5).forEach(function(x){alerts.push({level:x.risk,text:x.name+' · forecast margin '+Math.round(x.margin*100)+'%'});});
+ var dueG=guaranteeDueWithinDays(30,'');if(dueG.sum>0)alerts.push({level:'info',text:'เงินประกันคาดรับคืน ≤30 วัน '+fmt(dueG.sum)});
+ return {date:today(),cash:cash,report:rep,profitability:profit,alerts:alerts};
+}
 function businessAccountingReport(period){var fs=financialStatements(period||today().slice(0,7),''),cs=cashSplit(),ar=arAging(''),ap=apAging(''),f30=cashForecastHorizon(30),f60=cashForecastHorizon(60),f90=cashForecastHorizon(90),projects=(S.projects||[]).map(function(p){var x=projectCostAccounting(p.id);return{id:p.id,name:p.name,contract:x.contract,cost:x.actualCost,profit:x.forecastProfit,margin:x.forecastMargin,etc:x.costToCompleteProxy,eac:x.estimateAtCompletion,profitAtCompletion:x.profitAtCompletion,marginAtCompletion:x.marginAtCompletion,ar:x.ar,ap:x.ap};});return{period:period||today().slice(0,7),bank:cs.bank,cash:cs.cash,liquidity:cs.bank+cs.cash,ar:ar.total,ap:ap.total,ar30:f30.ar,ap30:f30.ap,cashForecast30:f30.ending,cashForecast60:f60.ending,cashForecast90:f90.ending,guarantee30:f30.guarantee,guarantee60:f60.guarantee,guarantee90:f90.guarantee,forecast30:f30,forecast60:f60,forecast90:f90,profitLoss:fs.profitLoss,projects:projects};}
 function accountingExportSheets(period){var per=period||today().slice(0,7),tb=trialBalance(per,''),fs0=financialStatements(per,''),gl=generalLedger('',per,''),projects=(S.projects||[]).map(function(p){var x=projectCostAccounting(p.id);return[p.name,x.contract,x.bac,x.actualCost,x.commitments,x.costToCompleteProxy,x.estimateAtCompletion,x.profitAtCompletion,x.marginAtCompletion,x.billed,x.received,x.ar,x.ap];}),audit=accountingAuditView(500);return[
 {name:'Trial Balance',rows:[['รหัส','บัญชี','Debit','Credit','Balance']].concat(tb.rows.map(function(x){return[x.code,x.name,x.debit,x.credit,x.balance];}))},
