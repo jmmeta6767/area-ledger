@@ -25,8 +25,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Main service worker syntax
+      - name: Cloudflare service worker syntax
+        run: node --check gateway/public/sw.js
+      - name: Legacy recovery service worker syntax
         run: node --check sw.js
+      - name: Cloudflare-only deployment contract
+        run: node tests/cloudflare-only.cjs
       - name: Regression QA
         run: node tests/qa.cjs
       - name: Gateway contract QA

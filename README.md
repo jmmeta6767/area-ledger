@@ -1,9 +1,33 @@
-# AREA Ledger V2 — Master v440
+# AREA Ledger V2 — Master v450
 
-Report Mobile Focus / cash-truth progressive disclosure, based on GitHub `main` v430
-(`c71b631a3b9237d8a6bdc78314618ec75856c99a`).
+Cloudflare Project Form Mobile Focus / compact project editing on the Cloudflare-only runtime, based on GitHub `main` v440
+(`d3d45b62e2864f9cbc066722238d87cc6a941083`).
 
 Standalone/PWA accounting and construction project control.
+
+## v442–v450 Cloudflare Project Form Mobile Focus
+
+- **v442 Compact sheet:** project add/edit uses a dedicated compact Cloudflare mobile sheet instead of the generic oversized form spacing.
+- **v443 Primary first:** project name, status, owner, location, contract value and budget stay visible before secondary details.
+- **v444 Contract fold:** contract number/date/start/end move into one progressive disclosure section while preserving the existing field IDs and save logic.
+- **v445 Guarantee fold:** guarantee amount, paid date, delivery date and calculated return date move into one compact fold.
+- **v446 Sticky save bar:** the editor keeps only Cancel + Save in a small bottom action bar so the primary actions stay reachable without covering fields.
+- **v447 Safer delete:** destructive project deletion moves into a separate collapsed “จัดการโครงการ” section and retains two-step confirmation.
+- **v448 iPhone sizing:** inputs remain 16px to avoid Safari focus zoom while field height drops to 42px and action height to 44px.
+- **v449 Existing accounting logic preserved:** project save, guarantee expense syncing and delivery +2 year return-date calculation continue using the prior logic.
+- **v450 Dashboard scope + hardening:** “เงินประกันรอคืน” appears only on the all-project dashboard; project-scoped dashboards keep only received / paid / AR-AP cards. Product runtime remains `gateway/public/index.html`; the root app stays retired as Legacy Recovery only. Storage keys remain frozen. Cloudflare cache: `site-ledger-v450-project-form-mobile-focus`; registration: `sw.js?v=450`.
+
+## v441 Cloudflare-only Runtime + Recovery Gate
+
+- **Cloudflare is the sole active AREA Ledger runtime:** GitHub `main` remains Source of Truth and the deployable app is `gateway/public/index.html` served by Wrangler/Cloudflare.
+- **Root runtime retired:** repository root `index.html` is now a read-only Legacy Recovery portal for the former Render origin; it is not an accounting app and must not receive product features.
+- **Render is legacy recovery only:** no new AREA Ledger features, accounting logic, UI, OCR or deployment work may target Render.
+- **Explicit fresh-origin recovery:** a new Cloudflare origin no longer calls `restoreThaSalaKnown()` automatically. Empty storage stays empty until the user explicitly restores a backup or starts fresh.
+- **Partial-recovery warning:** existing Cloudflare state carrying the historical Tha Sala fallback marker is labeled as partial recovery and prompts explicit restore before further work.
+- **Legacy snapshot exporter:** the recovery portal reads `site-ledger-v1`, `site-ledger-v1-recovery`, and IndexedDB `site-ledger-db` current/backup snapshots without overwriting them, then exports a checksum-wrapped JSON backup.
+- **Cloudflare-first QA:** regression loads `gateway/public/index.html` and `gateway/public/sw.js`; CI enforces the Cloudflare-only deployment contract on every PR/main push.
+- **Storage contract remains frozen:** Cloudflare continues using localStorage `site-ledger-v1`, recovery key `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 / `kv`.
+- **Service worker:** Cloudflare cache `site-ledger-v441-cloudflare-only-recovery-gate`; registration `sw.js?v=441`.
 
 ## v431–v440 Report Mobile Focus
 
