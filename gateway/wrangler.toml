@@ -34,8 +34,7 @@ class_name = "GatewayState"
 type = "durable-object"
 storage = "sqlite"
 
-# Draft bindings: Wrangler/Cloudflare may auto-provision real resources on deploy.
-# No resource IDs or bucket names are committed.
+# Production bindings remain auto-provisionable. Staging D1 is explicitly pinned to the already-created database to make deploys idempotent.
 [[d1_databases]]
 binding = "LEDGER_DB"
 migrations_dir = "migrations"
@@ -68,6 +67,8 @@ storage = "sqlite"
 
 [[env.staging.d1_databases]]
 binding = "LEDGER_DB"
+database_name = "area-ledger-ai-gateway-staging-ledger-db"
+database_id = "9fed2450-55f1-4ec3-ba5f-1e12293bb10a"
 migrations_dir = "migrations"
 
 [[env.staging.r2_buckets]]
