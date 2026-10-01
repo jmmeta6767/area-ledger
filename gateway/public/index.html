@@ -2063,7 +2063,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=321,APP_CHANNEL='rc2';
+var APP_RELEASE=331,APP_CHANNEL='stable';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function storageSchemaContract(){return {ok:KEY==='site-ledger-v1'&&BACKUP_KEY==='site-ledger-v1-recovery'&&IDB_NAME==='site-ledger-db',localStorageKey:KEY,recoveryKey:BACKUP_KEY,indexedDB:IDB_NAME,indexedDBVersion:1,objectStore:'kv'};}
@@ -2417,6 +2417,54 @@ function releaseReadiness(period){
   return {version:APP_RELEASE,channel:APP_CHANNEL,ok:issues.length===0,period:sys.period,issues:issues,warnings:warnings,system:sys};
 }
 function cutoverReadiness(period){var rel=releaseReadiness(period||today().slice(0,7)),issues=rel.issues.slice(),warnings=rel.warnings.slice(),cf=cloudflareAcceptance(),re=reliabilityEvidence(),onCloudflare=/\.workers\.dev$/i.test(location.hostname||''),usingGateway=aiGatewayConfig().mode==='gateway',mig=S.ops&&S.ops.lastMigration||null;if((onCloudflare||usingGateway)&&!cf.ok)issues.push('Cloudflare live acceptance ต้องผ่านภายใน 24 ชม.');if(!re.ok)issues.push('Reliability Self-Check ต้องผ่านภายใน 24 ชม.');if(S.lastRestoreSourceOrigin&&S.lastRestoreSourceOrigin!==location.origin&&!(mig&&mig.matched))issues.push('Migration receipt ไม่ยืนยัน source/target digest');if(!onCloudflare)warnings.push('RC2 candidate ยังไม่ได้ยืนยันการรันบน workers.dev จากอุปกรณ์นี้');return {version:APP_RELEASE,channel:APP_CHANNEL,ok:issues.length===0,period:rel.period,issues:issues,warnings:warnings,release:rel,cloudflare:cf,reliability:re,migration:mig};}
+function productionStableReadiness(){
+ var pc=productionCandidateReadiness(today().slice(0,7)),dep=productionDeploymentVerification(),pwa=pwaAcceptanceStatus(),rollback=productionRollbackCheckpoint(),stress=largeDataStressCheck(),issues=[];
+ if(!pc.ok)issues.push('Production Candidate gate ยังไม่ผ่าน');if(!dep.ok)issues.push('Production deployment verification ยังไม่ผ่าน');if(!pwa.ok)issues.push('PWA/Secure runtime ยังไม่ผ่าน');if(!rollback.ok)issues.push('Backup/Rollback checkpoint ยังไม่ผ่าน');if(!stress.ok)issues.push('Large-data capacity มี warning');
+ return {version:331,channel:'stable',ok:issues.length===0,issues:issues,candidate:pc,deployment:dep,pwa:pwa,rollback:rollback,stress:stress};
+}
+function largeDataStressCheck(){
+ var counts={projects:(S.projects||[]).length,tx:(S.tx||[]).length,boq:(S.boq||[]).length,docs:(S.quotes||[]).length+(S.bills||[]).length+(S.receipts||[]).length,audit:(S.auditLog||[]).length},score=counts.tx+counts.boq+counts.docs+counts.audit;
+ var warnings=[];if(counts.tx>10000)warnings.push('Transactions > 10,000');if(counts.audit>20000)warnings.push('Audit > 20,000');if(score>40000)warnings.push('Dataset ใหญ่ ควร export/archive ก่อนเพิ่มข้อมูลจำนวนมาก');
+ return {ok:warnings.length===0,counts:counts,score:score,warnings:warnings,storageSchema:storageSchemaContract()};
+}
+function ownerDailyBrief(){
+ var rep=businessAccountingReport(today().slice(0,7)),profit=projectProfitabilityCommandCenter(),cash=dailyCashBankControl(),alerts=[];
+ if(rep.cashForecast30<0)alerts.push({level:'critical',text:'Cash forecast 30 วันติดลบ '+fmt(rep.cashForecast30)});
+ if(!cash.bankReconciliation.ok)alerts.push({level:'urgent',text:'Bank reconciliation: '+cash.bankReconciliation.label});
+ profit.projects.filter(function(x){return x.risk==='critical'||x.risk==='urgent';}).slice(0,5).forEach(function(x){alerts.push({level:x.risk,text:x.name+' · forecast margin '+Math.round(x.margin*100)+'%'});});
+ var dueG=guaranteeDueWithinDays(30,'');if(dueG.sum>0)alerts.push({level:'info',text:'เงินประกันคาดรับคืน ≤30 วัน '+fmt(dueG.sum)});
+ return {date:today(),cash:cash,report:rep,profitability:profit,alerts:alerts};
+}
+function payrollProjectCostBridge(pid){
+ var rows=(S.tx||[]).filter(function(t){var label=(String(t.cat||'')+' '+String(t.sub||'')).toLowerCase();return t.type==='out'&&(!pid||t.pid===pid)&&(/ค่าแรง|เงินเดือน|salary|wage|labor/.test(label));});
+ return {pid:pid||'',count:rows.length,total:rows.reduce(function(n,t){return n+base(t);},0),paid:rows.reduce(function(n,t){return n+txPaidNet(t);},0),outstanding:rows.reduce(function(n,t){return n+txOutstandingNet(t);},0),rows:rows};
+}
+function projectProfitabilityCommandCenter(){
+ var rows=(S.projects||[]).map(function(p){var x=projectCostAccounting(p.id),r=projectForecastRisk(p.id);return {pid:p.id,name:p.name,contract:x.contract,bac:x.bac,actual:x.actualCost,commitment:x.commitments,etc:x.costToCompleteProxy,eac:x.estimateAtCompletion,profit:x.profitAtCompletion,margin:x.marginAtCompletion,risk:r.risk,score:r.score};});
+ rows.sort(function(a,b){return b.score-a.score;});return {projects:rows,atRisk:rows.filter(function(x){return x.risk!=='normal';}).length,totalProfit:rows.reduce(function(n,x){return n+x.profit;},0)};
+}
+function dailyCashBankControl(){
+ var cs=cashSplit(),todayTx=(S.tx||[]).filter(function(t){return t.date===today();}),bankToday=0,cashToday=0;
+ todayTx.forEach(function(t){var sign=t.type==='in'?1:-1;if(txPayments(t).length)txPayments(t).forEach(function(p){if(p.date===today()){if(p.pay==='cash')cashToday+=sign*(+p.amount||0);else bankToday+=sign*(+p.amount||0);}});else if(t.paid){if(t.pay==='cash')cashToday+=sign*net(t);else bankToday+=sign*net(t);}});
+ return {date:today(),bank:cs.bank,cash:cs.cash,liquidity:cs.bank+cs.cash,bankMovement:bankToday,cashMovement:cashToday,bankReconciliation:bankReconciliationStatus(today().slice(0,7))};
+}
+function accountingCloseCertificate(period){
+ var per=period||today().slice(0,7),closed=(S.accountingPeriods||[]).filter(function(x){return x.period===per&&x.status==='closed';}).slice(-1)[0],gate=accountingProductionGate(per,''),bank=bankReconciliationStatus(per);
+ return {ok:!!closed&&gate.ok&&bank.ok,period:per,closedAt:closed&&closed.closedAt||0,snapshot:closed&&closed.snapshot||null,gate:gate,bank:bank};
+}
+function productionRollbackCheckpoint(){
+ var r=hostMigrationReadiness(),schema=storageSchemaContract(),dr=disasterRecoveryEvidence();
+ return {ok:schema.ok&&(!r.hasData||r.backupFresh)&&dr.ok,backupFresh:r.backupFresh,revision:r.revision,backupRevision:r.backupRevision,schema:schema,disasterRecovery:dr};
+}
+function pwaAcceptanceStatus(){
+ var nav=(window&&window.navigator)||{},standalone=isStandalone(),sw=!!nav.serviceWorker,ios=/iP(hone|ad|od)/.test(nav.userAgent||''),secure=location.protocol==='https:'||location.hostname==='localhost';
+ return {ok:secure&&sw,ios:ios,standalone:standalone,serviceWorker:sw,secure:secure,installRecommended:ios&&!standalone};
+}
+function productionDeploymentVerification(){
+ var d=deploymentControlStatus(),pc=productionCandidateReadiness(today().slice(0,7)),onWorker=/\.workers\.dev$/i.test(location.hostname||'');
+ var issues=[];if(!onWorker)issues.push('ยังไม่ได้เปิดจาก Workers production host');if(!d.liveOk)issues.push('Live /health + /ready evidence ยังไม่ผ่าน/หมดอายุ');if(d.gatewayMode==='gateway'&&d.gatewayEnvironment==='staging')issues.push('ยังใช้ Staging Gateway');
+ return {ok:issues.length===0&&pc.ok,onWorker:onWorker,deployment:d,candidate:pc,issues:issues};
+}
 function productionCandidateReadiness(period){
   var cut=cutoverReadiness(period||today().slice(0,7)),issues=cut.issues.slice(),warnings=cut.warnings.slice(),dr=disasterRecoveryEvidence(),schema=storageSchemaContract(),flow=documentFlowIntegrity(''),cfg=aiGatewayConfig(),mc=migrationAcceptanceCertificate();
   if(!dr.ok)issues.push('Disaster Recovery Certification ต้องผ่านภายใน 24 ชม.');
@@ -2567,7 +2615,7 @@ function disasterRecoveryStaticCheck(){
 }
 async function disasterRecoverySelfCheck(){var st=disasterRecoveryStaticCheck(),rel=await reliabilitySelfCheck();return {at:Date.now(),ok:st.ok&&rel.ok,backupRoundtrip:st.roundtrip,tamperRejected:st.tamperRejected,schemaKeys:st.schemaKeys,guards:st.guards,localStorage:rel.localStorage,indexedDB:rel.indexedDB,serviceWorker:rel.serviceWorker,pwaGuard:rel.pwaGuard,conflictGuard:rel.conflictGuard};}
 function disasterRecoveryEvidence(){var x=S.ops&&S.ops.disasterRecovery||null,age=x&&x.at?Date.now()-x.at:Infinity;return {ok:!!(x&&x.ok&&age>=0&&age<=24*60*60*1000),fresh:age>=0&&age<=24*60*60*1000,evidence:x,ageMs:age};}
-function isStandalone(){return !!(window.navigator.standalone||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
+function isStandalone(){var nav=(window&&window.navigator)||{};return !!(nav.standalone||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
 function toast(msg){
   var old=document.querySelector('.toast');if(old)old.remove();
   var d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=msg;document.body.appendChild(d);
@@ -4415,7 +4463,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=323',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=331',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
