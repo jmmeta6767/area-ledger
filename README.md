@@ -1,9 +1,19 @@
-# AREA Ledger V1 — Master v332
+# AREA Ledger V2 — Master v342
 
-Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
-(`267152ae8a4569641932019245fa377f4cf2716b`).
+Production Stable 1.1 / Owner Operations hardening, based on GitHub `main` v332
+(`cdf13cf24dfad2f6a68f5cb8dabd74775fb278ba`).
 
 Standalone/PWA accounting and construction project control.
+
+## v333–v342 Owner Operations 1.1
+
+- Added a read-only owner action queue covering AR due/overdue, AP due/overdue, guarantees nearing return, critical/urgent project forecast risk, Bank Reconciliation, backup freshness, and Accounting Production Gate blockers.
+- Added 30/60/90-day Cash Buffer with the earliest negative horizon and a read-only Daily Close status for current-day movements, Data Health, storage state, backup freshness, bank reconciliation, and accounting blockers.
+- Added one Owner Operations entry in normal Settings while keeping deployment/release/host diagnostics consolidated under the v332 Advanced / System Diagnostics screen.
+- Main dashboard remains clean: Owner Operations does not add a new dashboard card.
+- Release advanced to v342 / stable; root and Cloudflare runtime assets are synchronized with service-worker cache `site-ledger-v342-owner-operations` and registration `sw.js?v=342`.
+- Storage identifiers remain unchanged: localStorage `site-ledger-v1`, recovery `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 / object store `kv`.
+- Added v333–v342 regression coverage while preserving the v332 mobile Settings cleanup and all prior accounting/recovery/dashboard/iPhone safeguards.
 
 ## v332 Settings cleanup / mobile operations
 
