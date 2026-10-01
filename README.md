@@ -1,7 +1,7 @@
-# AREA Ledger V1 — Master v287
+# AREA Ledger V1 — Master v288
 
-Migration Gate QA Fixture Correction, based on GitHub `main` v286
-(`a211440d99b58087860f5ae993465d293cfa2bd7`).
+Cloudflare First-run Cutover UX, based on GitHub `main` v287
+(`9ff93170e5567eb4ea0b07dfdb6bd118ede9ea6c`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
@@ -19,6 +19,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Existing Tha Sala expense/BOQ data is never automatically overwritten or
   re-imported on startup. The historical baseline is tested in isolation.
 - No destructive repair, storage-key changes, rebuild, or force push.
+
+## v288 Cloudflare first-run cutover UX
+
+- Fresh `*.workers.dev` installs with no projects/transactions/BOQ now show an explicit migration notice before normal use.
+- The notice offers direct `.json` restore or an explicit “start new on Cloudflare” dismissal; it never copies, deletes or rewrites old-host data automatically.
+- Dismissing the notice is metadata-only and does not advance the backup revision gate.
+- Service-worker cache advanced to v288 and Worker deployment assets are synchronized to the same root blobs.
 
 ## v287 migration gate QA fixture correction
 
@@ -431,8 +438,8 @@ Run `node tests/qa.cjs` and `node --check sw.js`. The suite executes the actual 
 functions and action handlers in a Node VM with controlled storage/DOM/OCR doubles.
 See `QA-v226.md` for coverage and device testing still required.
 
-Service-worker cache: `site-ledger-v286-migration-safety`.
-Registration: `sw.js?v=286`., `updateViaCache: 'none'`.
+Service-worker cache: `site-ledger-v288-cloudflare-cutover`.
+Registration: `sw.js?v=288`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
