@@ -3,7 +3,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
 const app=fs.readFileSync('gateway/public/index.html','utf8');
 const worker=fs.readFileSync('gateway/src/worker.js','utf8');
 
-assert(app.includes("APP_RELEASE=520"),'app release must be v500');
+assert(app.includes("APP_RELEASE=600"),'app release must be v500');
 assert(app.includes("CLOUD_KEY_NAME='area-ledger-cloud-key-v1'"),'cloud capability key missing');
 assert(app.includes("CLOUD_ENABLED_NAME='area-ledger-cloud-sync-enabled-v1'"),'cloud opt-in flag missing');
 assert(app.includes("function cloudSyncEnableCurrent()"),'explicit cloud activation missing');
