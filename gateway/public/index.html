@@ -2281,7 +2281,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=490,APP_CHANNEL='stable';
+var APP_RELEASE=500,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -2389,6 +2389,18 @@ async function cloudSyncEnableCurrent(){
     cloudSetMeta({hit:false,revision:0,checksum:'',updatedAt:0,savedAt:''});U.cloudConflict=false;U.cloudStatus='ready';
   }finally{U.cloudSyncBusy=false;}
   return cloudSyncPush(false,false);
+}
+async function cloudSyncHistory(){
+  if(!cloudLedgerKey(false))return {ok:false,error:'KEY'};
+  var r=await cloudGateway('GET','/v1/ledger/history');if(!r.ok)return {ok:false,error:r.data&&r.data.error||'NETWORK'};
+  U.cloudHistory={current:r.data&&r.data.current||null,previous:r.data&&r.data.previous||null};return {ok:true,current:U.cloudHistory.current,previous:U.cloudHistory.previous};
+}
+async function cloudSyncRestorePrevious(){
+  if(!cloudSyncEnabled())return {ok:false,error:'DISABLED'};
+  U.cloudSyncBusy=true;U.cloudStatus='syncing';
+  try{var r=await cloudGateway('POST','/v1/ledger/restore-previous');if(!r.ok)return {ok:false,error:r.data&&r.data.error||'NETWORK'};if(r.data&&r.data.meta)cloudSetMeta(Object.assign({hit:true},r.data.meta));}
+  finally{U.cloudSyncBusy=false;}
+  var pulled=await cloudSyncPull(true);if(!pulled.ok)return pulled;U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {ok:true,meta:pulled.meta};
 }
 function loadRecovery(){try{var raw=localStorage.getItem(BACKUP_KEY);if(raw){var o=JSON.parse(raw);if(o&&Array.isArray(o.tx)&&Array.isArray(o.projects))return migrate(o);U.storageReadBlocked=true;}}catch(e){U.storageReadBlocked=true;}return null;}
 function stateHealth(o){
@@ -4662,7 +4674,7 @@ function sheetHtml(){
       (csi.enabled&&csm.hit?'<div class="kv"><span>Cloud revision</span><span>'+csm.revision+'</span></div>':'')+
       (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(csm.savedAt)+'</small></div>':'')+
       '<div class="stack">'+
-      (!csi.enabled?'<button class="btn pri" data-act="cloudEnable">เปิด Cloud Sync บน Cloudflare</button>':'<button class="btn pri'+(U.confirm==='cloudPushForce'?' dng sure':'')+'" data-act="cloudPush">'+(U.confirm==='cloudPushForce'?'ยืนยันส่งชุดนี้ทับ Cloudflare':'ซิงก์ขึ้น Cloudflare ตอนนี้')+'</button><button class="btn'+(U.confirm==='cloudPull'?' dng sure':'')+'" data-act="cloudPull">'+(U.confirm==='cloudPull'?'ยืนยันดึงและแทนข้อมูลในเครื่อง':'ดึงข้อมูลจาก Cloudflare')+'</button><button class="btn" data-act="cloudCopyKey">คัดลอกรหัสกู้คืน Cloud</button><button class="btn" data-act="cloudDisable">ปิด Auto Sync</button>')+
+      (!csi.enabled?'<button class="btn pri" data-act="cloudEnable">เปิด Cloud Sync บน Cloudflare</button>':'<button class="btn pri'+(U.confirm==='cloudPushForce'?' dng sure':'')+'" data-act="cloudPush">'+(U.confirm==='cloudPushForce'?'ยืนยันส่งชุดนี้ทับ Cloudflare':'ซิงก์ขึ้น Cloudflare ตอนนี้')+'</button><button class="btn'+(U.confirm==='cloudPull'?' dng sure':'')+'" data-act="cloudPull">'+(U.confirm==='cloudPull'?'ยืนยันดึงและแทนข้อมูลในเครื่อง':'ดึงข้อมูลจาก Cloudflare')+'</button><button class="btn" data-act="cloudHistory">ตรวจรุ่นสำรองบน Cloudflare</button><button class="btn'+(U.confirm==='cloudRestorePrevious'?' dng sure':'')+'" data-act="cloudRestorePrevious">'+(U.confirm==='cloudRestorePrevious'?'ยืนยันย้อน Cloudflare เป็นรุ่นก่อนหน้า':'กู้ Cloudflare รุ่นก่อนหน้า')+'</button><button class="btn" data-act="cloudCopyKey">คัดลอกรหัสกู้คืน Cloud</button><button class="btn" data-act="cloudDisable">ปิด Auto Sync</button>')+
       '<div class="field"><label>รหัสกู้คืน Cloud (สำหรับเครื่องใหม่)</label><input id="cloudKeyImport" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางรหัสจากเครื่องเดิม"><small class="muted">รหัสนี้ใช้เปิดฐาน Cloud เดิม ห้ามส่งให้ผู้อื่น</small></div><button class="btn" data-act="cloudUseKey">ใช้รหัสกู้คืน Cloud</button>'+
       '<input id="cloudKeyBox" value="'+esc(csi.key||'')+'" readonly style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true"></div></div>'+
       '<p class="muted" style="margin:10px 0 6px;font-size:.86rem">ไฟล์ JSON ยังเป็นสำเนากู้คืนแบบพกพา</p><textarea class="csv" id="bkbox" readonly>'+esc(backupJson())+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์ย้ายข้อมูล .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
@@ -4990,6 +5002,13 @@ document.addEventListener('click',function(e){
     if((S.projects.length||S.tx.length||S.boq.length)&&U.confirm!=='cloudPull'){U.confirm='cloudPull';toast('การดึงจะเก็บชุดปัจจุบันไว้เป็น recovery แล้วแทนด้วยข้อมูล Cloudflare · แตะอีกครั้งเพื่อยืนยัน');render();return true;}
     U.confirm=null;cloudSyncPull(true).then(function(r){if(r.ok){render();toast('ดึงข้อมูลจาก Cloudflare แล้ว');}else toast(r.error==='EMPTY'?'Cloudflare ยังไม่มีข้อมูล':'ดึงข้อมูล Cloudflare ไม่สำเร็จ · ข้อมูลในเครื่องยังอยู่');});
   }
+  else if(a==='cloudHistory'){
+    cloudSyncHistory().then(function(r){if(!r.ok){toast('ตรวจรุ่น Cloudflare ไม่สำเร็จ');return;}var p=r.previous,c=r.current;if(!c){toast('Cloudflare ยังไม่มีข้อมูล');return;}toast('Cloud revision '+c.revision+(p?' · สำรองก่อนหน้า '+p.revision:' · ยังไม่มีรุ่นก่อนหน้า'));render();});
+  }
+  else if(a==='cloudRestorePrevious'){
+    if(U.confirm!=='cloudRestorePrevious'){U.confirm='cloudRestorePrevious';toast('ระบบจะเก็บข้อมูล Cloud ปัจจุบันเป็นรุ่นก่อนหน้า แล้วสร้าง revision ใหม่จากชุดก่อนหน้า · แตะยืนยันอีกครั้ง');render();return true;}
+    U.confirm=null;cloudSyncRestorePrevious().then(function(r){if(r.ok){render();toast('กู้ Cloudflare รุ่นก่อนหน้าแล้ว · สร้าง revision ใหม่เรียบร้อย');}else toast(r.error==='LEDGER_PREVIOUS_NOT_FOUND'?'ยังไม่มีรุ่น Cloudflare ก่อนหน้า':'กู้รุ่นก่อนหน้าไม่สำเร็จ · ข้อมูลปัจจุบันยังอยู่');});
+  }
   else if(a==='backupFile'){var backupRev=+S.dataRevision||0,payload=backupJson(),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'})).then(function(ok){if(!ok)return;S.lastBackup=Date.now();S.lastBackupRevision=backupRev;if(!persist({metaOnly:true}))return;render();toast('สำรอง revision '+backupRev+' แล้ว · พร้อมตรวจย้าย host');});}
   else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.restoreInfo='';U.confirm=null;render();}
   else if(a==='copyBk'){var copyRev=+S.dataRevision||0;doCopy('bkbox',function(){S.lastBackup=Date.now();S.lastBackupRevision=copyRev;if(!persist({metaOnly:true}))return;render();toast('คัดลอกข้อมูลสำรอง revision '+copyRev+' แล้ว');});}
@@ -5304,7 +5323,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=490',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=500',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();

@@ -83,6 +83,7 @@ function normalizeLedgerStateBody(body){const state=body&&body.state;if(!state||
 function clientKey(r){return r.headers.get('CF-Connecting-IP')||'unknown';}
 async function durableCall(binding,path,body){if(!binding)return null;const id=binding.idFromName(body.key),stub=binding.get(id),res=await stub.fetch('https://internal/'+path,{method:'POST',body:JSON.stringify(body)});return res.ok?res.json():null;}
 async function rateAllowed(r,env){const limit=Math.max(1,Math.min(120,Number(env.RATE_LIMIT_PER_MINUTE)||20)),key=clientKey(r);if(String(env.REQUIRE_DURABLE_STATE||'').toLowerCase()==='true'&&!env.GATEWAY_STATE)return null;const durable=await durableCall(env.GATEWAY_STATE,'rate',{key,limit,windowMs:WINDOW_MS});if(durable)return durable.allowed===true;const now=Date.now(),old=buckets.get(key);if(!old||now-old.start>=WINDOW_MS){buckets.set(key,{start:now,count:1});return true;}old.count++;return old.count<=limit;}
+async function ledgerRateAllowed(r,env){const limit=Math.max(5,Math.min(240,Number(env.LEDGER_RATE_LIMIT_PER_MINUTE)||60)),key='ledger:'+clientKey(r);if(!env.GATEWAY_STATE)return null;const durable=await durableCall(env.GATEWAY_STATE,'rate',{key,limit,windowMs:WINDOW_MS});return durable?durable.allowed===true:null;}
 async function readJson(r){const len=Number(r.headers.get('Content-Length')||0);if(len&&len>MAX_BODY_BYTES)throw Error('PAYLOAD_TOO_LARGE');const text=await r.text();if(text.length>MAX_BODY_BYTES)throw Error('PAYLOAD_TOO_LARGE');return JSON.parse(text);}
 function validateExpense(b){const image=b&&b.image;if(typeof image!=='string'||!/^data:image\/(jpeg|png|webp);base64,/i.test(image))throw Error('INVALID_IMAGE');return {image,lang:'tha+eng'};}
 function safeProviderUrl(raw){raw=String(raw||'').trim();if(!raw)return '';try{const u=new URL(raw);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error();return u.href;}catch(_){throw Error('PROVIDER_URL_INVALID');}}
@@ -126,11 +127,16 @@ export class GatewayState {
       const all=new Uint8Array(total);let off=0;for(const p of parts){all.set(p,off);off+=p.byteLength;}
       const payload=new TextDecoder().decode(all);return json({hit:true,meta:m,payload});
     }
+    if(path==='/ledger-history'){
+      const current=await storage.get('ledger:manifest'),previous=await storage.get('ledger:previous');
+      const pub=m=>m?{revision:m.revision,updatedAt:m.updatedAt,checksum:m.checksum,bytes:m.bytes,savedAt:m.savedAt}:null;
+      return json({ok:true,current:pub(current),previous:pub(previous)});
+    }
     if(path==='/ledger-put'){
       const payload=String(body.payload||''),bytes=new TextEncoder().encode(payload);if(!payload||bytes.byteLength>MAX_LEDGER_BYTES)return json({error:'LEDGER_PAYLOAD_TOO_LARGE'},413);
       let parsed;try{parsed=JSON.parse(payload);}catch(_){return json({error:'LEDGER_JSON_INVALID'},400);}
-      if(!parsed||typeof parsed!=='object'||!Array.isArray(parsed.projects)||!Array.isArray(parsed.tx))return json({error:'LEDGER_STATE_INVALID'},400);
-      const current=await storage.get('ledger:manifest'),expected=body.expectedRevision==null?null:Math.max(0,+body.expectedRevision||0),incoming=Math.max(0,+body.revision||0);
+      if(!parsed||typeof parsed!=='object'||!Array.isArray(parsed.projects)||!Array.isArray(parsed.tx)||!Array.isArray(parsed.boq))return json({error:'LEDGER_STATE_INVALID'},400);
+      const current=await storage.get('ledger:manifest'),olderPrevious=await storage.get('ledger:previous'),expected=body.expectedRevision==null?null:Math.max(0,+body.expectedRevision||0),incoming=Math.max(0,+body.revision||0);
       if(current&&expected!==null&&expected!==current.revision)return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
       if(current&&!body.expectedChecksum)return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
       if(current&&String(body.expectedChecksum).toLowerCase()!==String(current.checksum||'').toLowerCase())return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
@@ -139,9 +145,25 @@ export class GatewayState {
       const generation=crypto.randomUUID(),chunks=Math.max(1,Math.ceil(bytes.byteLength/LEDGER_CHUNK_BYTES)),checksum=await sha256Hex(payload);
       for(let i=0;i<chunks;i++){const part=bytes.slice(i*LEDGER_CHUNK_BYTES,Math.min(bytes.byteLength,(i+1)*LEDGER_CHUNK_BYTES));await storage.put('ledger:chunk:'+generation+':'+i,part);}
       const manifest={revision:incoming,updatedAt:Math.max(0,+body.updatedAt||0),checksum,bytes:bytes.byteLength,chunks,generation,savedAt:new Date().toISOString()};
+      if(current)await storage.put('ledger:previous',current);else await storage.delete('ledger:previous');
       await storage.put('ledger:manifest',manifest);
-      if(current&&current.generation&&current.generation!==generation){for(let i=0;i<(current.chunks||0);i++)await storage.delete('ledger:chunk:'+current.generation+':'+i);}
-      return json({ok:true,meta:manifest});
+      if(olderPrevious&&olderPrevious.generation&&(!current||olderPrevious.generation!==current.generation)&&olderPrevious.generation!==generation){for(let i=0;i<(olderPrevious.chunks||0);i++)await storage.delete('ledger:chunk:'+olderPrevious.generation+':'+i);}
+      return json({ok:true,meta:manifest,previous:current?{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum,bytes:current.bytes,savedAt:current.savedAt}:null});
+    }
+    if(path==='/ledger-restore-previous'){
+      const current=await storage.get('ledger:manifest'),previous=await storage.get('ledger:previous');if(!current||!previous)return json({error:'LEDGER_PREVIOUS_NOT_FOUND'},404);
+      const parts=[];let total=0;for(let i=0;i<previous.chunks;i++){const v=await storage.get('ledger:chunk:'+previous.generation+':'+i);if(v==null)return json({error:'LEDGER_CHUNK_MISSING'},500);const u=v instanceof Uint8Array?v:new Uint8Array(v);parts.push(u);total+=u.byteLength;}
+      const all=new Uint8Array(total);let off=0;for(const p of parts){all.set(p,off);off+=p.byteLength;}
+      let restored;try{restored=JSON.parse(new TextDecoder().decode(all));}catch(_){return json({error:'LEDGER_JSON_INVALID'},500);}
+      if(!restored||!Array.isArray(restored.projects)||!Array.isArray(restored.tx)||!Array.isArray(restored.boq))return json({error:'LEDGER_STATE_INVALID'},500);
+      restored.dataRevision=Math.max(+current.revision||0,+restored.dataRevision||0)+1;restored.updatedAt=Math.max(Date.now(),(+restored.updatedAt||0)+1);
+      const payload=JSON.stringify(restored),bytes=new TextEncoder().encode(payload);if(bytes.byteLength>MAX_LEDGER_BYTES)return json({error:'LEDGER_PAYLOAD_TOO_LARGE'},413);
+      const generation=crypto.randomUUID(),chunks=Math.max(1,Math.ceil(bytes.byteLength/LEDGER_CHUNK_BYTES)),checksum=await sha256Hex(payload);
+      for(let i=0;i<chunks;i++){const part=bytes.slice(i*LEDGER_CHUNK_BYTES,Math.min(bytes.byteLength,(i+1)*LEDGER_CHUNK_BYTES));await storage.put('ledger:chunk:'+generation+':'+i,part);}
+      const manifest={revision:restored.dataRevision,updatedAt:restored.updatedAt,checksum,bytes:bytes.byteLength,chunks,generation,savedAt:new Date().toISOString(),restoredFrom:previous.revision};
+      await storage.put('ledger:previous',current);await storage.put('ledger:manifest',manifest);
+      if(previous.generation&&previous.generation!==current.generation&&previous.generation!==generation){for(let i=0;i<(previous.chunks||0);i++)await storage.delete('ledger:chunk:'+previous.generation+':'+i);}
+      return json({ok:true,meta:{revision:manifest.revision,updatedAt:manifest.updatedAt,checksum:manifest.checksum,bytes:manifest.bytes,savedAt:manifest.savedAt,restoredFrom:manifest.restoredFrom},previous:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum,bytes:current.bytes,savedAt:current.savedAt}});
     }
     return json({error:'STATE_ROUTE_NOT_FOUND'},404);
   }
@@ -149,7 +171,7 @@ export class GatewayState {
 }
 export default{async fetch(request,env){
   const started=Date.now(),url=new URL(request.url),rid=requestId(request);
-  if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:providerReady(env),durableState:!!env.GATEWAY_STATE,cloudLedger:!!env.GATEWAY_STATE,d1Ledger:d1Ready(env),r2Files:r2Ready(env),auditSink:!!env.GATEWAY_AUDIT},200,'',rid);
+  if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:providerReady(env),durableState:!!env.GATEWAY_STATE,cloudLedger:!!env.GATEWAY_STATE,cloudLedgerBackup:!!env.GATEWAY_STATE,d1Ledger:d1Ready(env),r2Files:r2Ready(env),auditSink:!!env.GATEWAY_AUDIT},200,'',rid);
   if(url.pathname==='/ready'&&request.method==='GET'){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),r2Files:r2Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,'',rid);}
   const origin=corsOrigin(request,env),sentOrigin=request.headers.get('Origin')||'';
   if(request.method==='OPTIONS')return origin?json({ok:true,protocol:PROTOCOL_VERSION},204,origin,rid):json({error:'ORIGIN_DENIED'},403,'',rid);
@@ -188,13 +210,16 @@ export default{async fetch(request,env){
     }
     return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
   }
-  if(url.pathname==='/v1/ledger/state'||url.pathname==='/v1/ledger/status'){
+  if(['/v1/ledger/state','/v1/ledger/status','/v1/ledger/history','/v1/ledger/restore-previous'].includes(url.pathname)){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
     const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);
     if(!env.GATEWAY_STATE)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);
+    const ledgerRate=await ledgerRateAllowed(request,env);if(ledgerRate===null)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);if(!ledgerRate)return json({error:'RATE_LIMITED'},429,origin,rid);
     try{
       if(url.pathname==='/v1/ledger/status'&&request.method==='GET'){const r=await ledgerCall(env,access,'ledger-meta',{});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);const x=await r.json();return json({ok:true,hit:!!x.hit,meta:x.meta||null},r.status,origin,rid);}
+      if(url.pathname==='/v1/ledger/history'&&request.method==='GET'){const r=await ledgerCall(env,access,'ledger-history',{});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);return json(await r.json(),r.status,origin,rid);}
+      if(url.pathname==='/v1/ledger/restore-previous'&&request.method==='POST'){const r=await ledgerCall(env,access,'ledger-restore-previous',{});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);return json(await r.json(),r.status,origin,rid);}
       if(url.pathname==='/v1/ledger/state'&&request.method==='GET'){const r=await ledgerCall(env,access,'ledger-get',{});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);const x=await r.json();if(!r.ok)return json(x,r.status,origin,rid);if(!x.hit)return json({ok:true,hit:false,meta:null,state:null},200,origin,rid);let state;try{state=JSON.parse(x.payload);}catch(_){return json({error:'LEDGER_CLOUD_CORRUPT'},500,origin,rid);}return json({ok:true,hit:true,meta:x.meta,state},200,origin,rid);}
       if(url.pathname==='/v1/ledger/state'&&request.method==='PUT'){const b=normalizeLedgerStateBody(await readLedgerJson(request)),payload=JSON.stringify(b.state);if(new TextEncoder().encode(payload).byteLength>MAX_LEDGER_BYTES)throw Error('LEDGER_PAYLOAD_TOO_LARGE');const r=await ledgerCall(env,access,'ledger-put',{payload,revision:b.revision,updatedAt:b.updatedAt,expectedRevision:b.expectedRevision,expectedChecksum:b.expectedChecksum});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);const x=await r.json();return json(x,r.status,origin,rid);}
       return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
