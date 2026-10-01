@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v410
+# AREA Ledger V2 — Master v420
 
-Project List Mobile Focus / compact project directory, based on GitHub `main` v400
-(`5719f539b10645464fb439802c3b0a0c68b460fe`).
+Transaction List Mobile Focus / canonical outstanding and compact register, based on GitHub `main` v410
+(`609bdd6615f47ee1727166e20cceaa6258426644`).
 
 Standalone/PWA accounting and construction project control.
+
+## v411–v420 Transaction List Mobile Focus
+
+- **v411 Command summary first:** the full transaction register starts with compact count / receive / pay totals before the rows.
+- **v412 Canonical payment status:** paid vs pending filters use true outstanding balance after settlement rows instead of the legacy `paid` flag.
+- **v413 Primary filters:** transaction type and payment status remain visible as the high-frequency controls.
+- **v414 Quick search:** multi-token search matches item detail, partner, category, project, note, date and amount; filtering happens in place to preserve iPhone keyboard focus.
+- **v415 Progressive filters:** project, category and detail filters move under one “ตัวกรองเพิ่มเติม” disclosure that opens automatically when a secondary filter is active.
+- **v416 Month grouping:** the full register is grouped by month with a safe undated bucket for faster scanning.
+- **v417 True pending amounts:** pending rows and summary totals show the remaining balance after partial settlements, not the original face amount.
+- **v418 One-tap reset:** an active register can clear all type/status/search/advanced filters from one action.
+- **v419 Refresh continuity:** quick-search text and filter disclosure state persist per Safari tab through `sessionStorage` only.
+- **v420 Hardening:** root/gateway runtime parity, prior mobile-focus contracts and frozen accounting storage remain protected. Service-worker cache: `site-ledger-v420-transaction-list-mobile-focus`; registration: `sw.js?v=420`.
 
 ## v401–v410 Project List Mobile Focus
 
