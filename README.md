@@ -1,10 +1,24 @@
-# AREA Ledger V2 — Master v531
+# AREA Ledger V2 — Master v600
 
-Production OCR Secret Gate / production Gemini parity layered over v530, based on GitHub `main` v530
-(`31a9ca3f7812c89f121dabefb8891c3bfe154538`).
+Stable Source Candidate / final 1–8 development pass layered over v531, based on GitHub `main` v531
+(`14a1aba464c1ea27f841fe6531a79181e5f5a723`).
 
 Standalone/PWA accounting and construction project control.
 
+## v600 Stable Source Candidate
+
+This completes the source-code side of the 1–8 Cloudflare plan. Live cutover is accepted only after real account deployment and real ledger reconciliation; the repository does not claim browser-local accounting data has been migrated when no portable backup or recovery-key session is available.
+
+- **1 · Staging cutover:** secret-gated Cloudflare deploy pipeline, D1/R2 provisioning declarations, migrations and schema-aware readiness.
+- **2 · Cloud data migration:** conflict-safe Durable Cloud Ledger, explicit D1 migration/readback/reconcile and semantic checksum; no silent fallback promotion.
+- **3 · Accounting integrity:** full regression gate preserves AR/AP, VAT/WHT, bank reconciliation, month-end, document flow, BOQ and guarantees.
+- **4 · iPhone final UX:** compact BOQ/table pass, safe-area/VisualViewport support and refresh continuity through session navigation state.
+- **5 · Receipt/OCR production:** Gemini via Worker secret, confidence/fallback rules, private R2 receipt offload, stable duplicate hash and deferred R2 deletion after local save.
+- **6 · Recovery:** previous Cloud revision rollback, portable JSON recovery, IndexedDB/local cache and conflict-safe sync.
+- **7 · Security/RC:** exact-origin CORS, protocol pinning, capability-key isolation, Durable rate limiting, private/no-store R2 and no committed secrets.
+- **8 · Stable acceptance:** the in-app full acceptance action requires platform readiness + Durable↔D1 match + private R2 write/read/delete probe + Cloud history before PASS.
+- PWA release: `APP_RELEASE=600`; cache: `site-ledger-v600-stable-source-candidate`.
+- Live Stable 1.0 still requires real staging/production evidence in `gateway/PRODUCTION-CUTOVER.md`.
 ## v531 Production OCR Secret Gate
 
 - Production and staging now use the same Gemini 2.5 Flash provider contract, removing the unconfigured generic-provider gap on a fresh production deployment.

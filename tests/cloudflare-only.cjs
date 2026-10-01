@@ -8,9 +8,9 @@ const wrangler=fs.readFileSync('gateway/wrangler.toml','utf8');
 const qa=fs.readFileSync('tests/qa.cjs','utf8');
 const workflow=fs.readFileSync('.github/workflows/qa.yml','utf8');
 
-assert(cloud.includes("APP_RELEASE=520"),'Cloudflare app release must be v481');
-assert(cloud.includes("sw.js?v=520"),'Cloudflare app must register v490 SW');
-assert(cloudSw.includes("site-ledger-v520-r2-attachment-cutover"),'Cloudflare cache must be v481');
+assert(cloud.includes("APP_RELEASE=600"),'Cloudflare app release must be v481');
+assert(cloud.includes("sw.js?v=600"),'Cloudflare app must register v490 SW');
+assert(cloudSw.includes("site-ledger-v600-stable-source-candidate"),'Cloudflare cache must be v481');
 assert(wrangler.includes('directory = "./public"'),'Wrangler must serve gateway/public');
 assert(wrangler.includes('name = "area-ledger-ai-gateway-staging"'),'Cloudflare staging environment missing');
 
