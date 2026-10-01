@@ -35,3 +35,18 @@ After staging reconciliation is green, repeat with separate production resources
 ## Cutover rule
 
 Do not switch a production custom domain or declare the cloud database primary while `productionReady` is false or D1 reconciliation is not matched. Rollback stays inside Cloudflare using Worker version rollback plus Cloud Ledger previous-revision recovery.
+
+## v600 final 1–8 acceptance
+
+The source candidate is complete only when GitHub QA is green. Live Stable 1.0 requires all eight checks below on real Cloudflare resources and the user's real accounting dataset:
+
+1. Staging `/health` and `/v1/platform/status` report `productionReady=true`.
+2. A real ledger backup is captured, Cloud Sync is explicitly enabled, and no partial fallback dataset is promoted automatically.
+3. `GET /v1/ledger/reconcile` returns `matched=true` for the real Durable Cloud Ledger and D1 mirror.
+4. iPhone/Safari refresh returns to the same primary page and offline cache opens without data loss.
+5. Gemini OCR is secret-backed and a non-sensitive sample follows confidence/fallback rules.
+6. Cloud history and previous-revision recovery are verified without losing the displaced device recovery snapshot.
+7. Private R2 probe passes write/read/delete and unknown origins remain denied.
+8. Production uses separate D1/R2 resources, the exact deployed commit has green QA, and the in-app `ตรวจ Cloudflare เต็มระบบ` action returns PASS.
+
+Do not mark a live migration complete from source-code evidence alone.
