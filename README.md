@@ -1,9 +1,21 @@
-# AREA Ledger V2 — Master v440
+# AREA Ledger V2 — Master v441
 
-Report Mobile Focus / cash-truth progressive disclosure, based on GitHub `main` v430
-(`c71b631a3b9237d8a6bdc78314618ec75856c99a`).
+Cloudflare-only Runtime / explicit recovery gate, based on GitHub `main` v440
+(`d3d45b62e2864f9cbc066722238d87cc6a941083`).
 
 Standalone/PWA accounting and construction project control.
+
+## v441 Cloudflare-only Runtime + Recovery Gate
+
+- **Cloudflare is the sole active AREA Ledger runtime:** GitHub `main` remains Source of Truth and the deployable app is `gateway/public/index.html` served by Wrangler/Cloudflare.
+- **Root runtime retired:** repository root `index.html` is now a read-only Legacy Recovery portal for the former Render origin; it is not an accounting app and must not receive product features.
+- **Render is legacy recovery only:** no new AREA Ledger features, accounting logic, UI, OCR or deployment work may target Render.
+- **Explicit fresh-origin recovery:** a new Cloudflare origin no longer calls `restoreThaSalaKnown()` automatically. Empty storage stays empty until the user explicitly restores a backup or starts fresh.
+- **Partial-recovery warning:** existing Cloudflare state carrying the historical Tha Sala fallback marker is labeled as partial recovery and prompts explicit restore before further work.
+- **Legacy snapshot exporter:** the recovery portal reads `site-ledger-v1`, `site-ledger-v1-recovery`, and IndexedDB `site-ledger-db` current/backup snapshots without overwriting them, then exports a checksum-wrapped JSON backup.
+- **Cloudflare-first QA:** regression loads `gateway/public/index.html` and `gateway/public/sw.js`; CI enforces the Cloudflare-only deployment contract on every PR/main push.
+- **Storage contract remains frozen:** Cloudflare continues using localStorage `site-ledger-v1`, recovery key `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 / `kv`.
+- **Service worker:** Cloudflare cache `site-ledger-v441-cloudflare-only-recovery-gate`; registration `sw.js?v=441`.
 
 ## v431–v440 Report Mobile Focus
 
