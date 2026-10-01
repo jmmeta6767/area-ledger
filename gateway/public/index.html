@@ -2164,7 +2164,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=440,APP_CHANNEL='stable';
+var APP_RELEASE=441,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -2970,6 +2970,11 @@ function dashboardCharts(allMode,active,all){
   return h;
 }
 
+function cloudflarePartialRecoveryDetected(){
+  if(S.lastRestoreAt||S.lastRestoreFingerprint)return false;
+  if(S.ops&&S.ops.lastMigration&&S.ops.lastMigration.matched)return false;
+  return !!(S.recoveryNote&&String(S.recoveryNote).indexOf('ท่าศาลา')>=0);
+}
 function vHome(){
   var allMode=U.homePid==='__all',active=allMode?null:(proj(U.homePid)||S.projects[0]||null),pid=active?active.id:'',all=allMode?S.tx.slice():(pid?S.tx.filter(function(t){return t.pid===pid;}):S.tx.slice());
   var paidIn=all.filter(function(t){return t.type==='in'&&txPaidNet(t)>.01;}),paidOut=all.filter(function(t){return t.type==='out'&&txPaidNet(t)>.01;}),inW=all.filter(function(t){return t.type==='in'&&txOutstandingNet(t)>.01;}),outW=all.filter(function(t){return t.type==='out'&&txOutstandingNet(t)>.01;});
@@ -2977,6 +2982,8 @@ function vHome(){
   var gScope=(S.guarantees||[]).filter(function(g){return !g.returned&&(allMode||g.pid===pid);}),gExposure=gScope.reduce(function(a,g){return a+(+g.amount||0);},0),gReady=gScope.filter(function(g){return g.dueDate&&dd(today(),g.dueDate)<=0;}),gNear=gScope.filter(function(g){var d=g.dueDate?dd(today(),g.dueDate):null;return d!==null&&d>0&&d<=90;});
   var cfFresh=/\.workers\.dev$/i.test(location.hostname||'')&&!S.projects.length&&!S.tx.length&&!S.boq.length&&!(S.ui&&S.ui.cloudflareFreshDismissed);
   if(cfFresh)h+='<div class="card" style="border:2px solid var(--amber);margin:8px 0 14px"><b>เปิด AREA Ledger บน Cloudflare แล้ว</b><p class="muted" style="margin:6px 0 10px">ข้อมูล Safari ของเว็บเดิมจะไม่ข้ามโดเมนอัตโนมัติ ถ้ามีข้อมูลเดิมให้กู้คืนไฟล์สำรอง .json ก่อนเริ่มบันทึกรายการใหม่</p><div class="stack"><button class="btn pri" data-act="restoreOpen">กู้คืนไฟล์สำรอง</button><button class="btn" data-act="cloudflareFreshDismiss">เริ่มใช้งานใหม่บน Cloudflare</button></div></div>';
+  var cfPartial=/\.workers\.dev$/i.test(location.hostname||'')&&cloudflarePartialRecoveryDetected();
+  if(cfPartial)h+='<div class="card cloudflare-recovery-warning" style="border:2px solid #c77700;margin:8px 0 14px"><b>ข้อมูล Cloudflare ชุดนี้เป็นข้อมูลกู้คืนบางส่วน</b><p class="muted" style="margin:6px 0 10px">พบชุด fallback ท่าศาลาจากการย้าย host เดิม จึงไม่ควรถือว่าเป็นฐานบัญชีเต็ม กรุณานำไฟล์ข้อมูลเดิมเข้ามาก่อนบันทึกงานต่อ</p><div class="stack"><button class="btn pri" data-act="restoreOpen">นำเข้าไฟล์ข้อมูลเดิม</button><button class="btn" data-act="backup">สำรองชุดปัจจุบันก่อน</button></div></div>';
   // Operational health / accounting / forecast controls intentionally live outside the main dashboard.
   var execProjects=S.projects.filter(function(p){return (p.status||'active')!=='closed';}),execDismissed=(S.ui&&S.ui.executiveDismissed)||{},execRisk=execProjects.map(function(p){var c=contractControl(p.id);return{p:p,c:c,q:contractActionQueue(p.id)};}).filter(function(x){return x.c.days!==null&&x.c.days<=30&&!execDismissed[x.p.id];}).sort(function(a,b){var w={critical:4,urgent:3,watch:2,normal:1};return w[b.c.risk]-w[a.c.risk];});if(execRisk.length)h+='<div class="executive-control"><div class="cc-head"><div><small>EXECUTIVE PROJECT CONTROL</small><b>โครงการใกล้ครบกำหนด</b></div><span>'+execRisk.length+' โครงการ</span></div><div class="executive-list">'+execRisk.slice(0,6).map(function(x){return '<div class="executive-row-wrap '+x.c.risk+'"><button data-act="openProj" data-id="'+x.p.id+'" class="executive-row-main"><span><b>'+esc(x.p.name)+'</b><small>'+esc(({normal:'ปกติ',watch:'เฝ้าระวัง',urgent:'เร่งดำเนินการ',critical:'วิกฤต'})[x.c.risk])+(x.q.length?' · งานค้าง '+x.q.length:'')+'</small></span><em>'+(x.c.days>=0?x.c.days+' วัน':'เกิน '+Math.abs(x.c.days)+' วัน')+'</em></button><button class="executive-dismiss" data-act="execDismiss" data-id="'+x.p.id+'" aria-label="ปิดการแจ้งเตือนโครงการนี้">×</button></div>';}).join('')+'</div></div>';
   var eligibleRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d<=0;}),nearRet=retRows.filter(function(p){var d=retDays(p);return d!==null&&d>0&&d<=90;}),waitDelivery=retRows.filter(function(p){return !p.deliveryDate;});
@@ -4939,10 +4946,9 @@ function boot(){
     if(o&&(!ls||(o.updatedAt||0)>(ls.updatedAt||0)))best=o;
     if(best){S=best;committedState=JSON.stringify(best);}
     if(!best&&U.storageReadBlocked){render();toast('อ่านข้อมูลเดิมไม่สำเร็จ · หยุดการบันทึกเพื่อรักษาข้อมูล กรุณาเปิดแอปใหม่หรือใช้ข้อมูลสำรอง');return;}
-    var recovered=!best&&restoreThaSalaKnown();
-    var mergedThaSala=recovered?mergeThaSalaDocument():false;
-    var mergedThaSalaPr4=recovered?mergeThaSalaPr4Boq():false;
-    if(recovered||mergedThaSala||mergedThaSalaPr4)persist();
+    /* v441 Cloudflare-only: never synthesize a partial accounting database on a fresh origin.
+       Migration/recovery must be explicit so a known-work fallback cannot be mistaken for the full ledger. */
+    var recovered=false,mergedThaSala=false,mergedThaSalaPr4=false;
     /* v226: verify the historical baseline without overwriting user edits. */
     var ts=(S.projects||[]).find(function(x){return x.id==='thasala-m7'||(x.name||'').indexOf('ท่าศาลา')>-1;});
     if(ts){
@@ -4976,7 +4982,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=440',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=441',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
