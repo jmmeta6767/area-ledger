@@ -1,10 +1,20 @@
-# AREA Ledger V1 — Master v323
+# AREA Ledger V2 — Master v341
 
-Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
-(`267152ae8a4569641932019245fa377f4cf2716b`).
+Production Stable 1.1 / Owner Operations hardening, based on GitHub `main` v331
+(`423e3b5182c40425d3cf862a1c93af1dcc7f67d5`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
+
+## v332–v341 Owner Operations 1.1
+
+- Added an owner-only operational queue for AR due/overdue, AP due/overdue, guarantees nearing return, critical/urgent project forecast risk, Bank Reconciliation, backup freshness, and Accounting Production Gate blockers.
+- Added 30/60/90-day cash-buffer status and the first negative forecast horizon without creating or modifying accounting entries.
+- Added a read-only Daily Close status that checks current-day movements, Data Health, storage conflict state, backup freshness, bank reconciliation, and the accounting gate.
+- Added dedicated Owner Operations and Production Stable sheets under Settings. These controls remain outside the main dashboard to preserve the v322 cleanup.
+- Production release advanced to v341 / stable. Service-worker cache: `site-ledger-v341-owner-operations`; registration: `sw.js?v=341`.
+- Storage identifiers remain frozen: localStorage `site-ledger-v1`, recovery `site-ledger-v1-recovery`, IndexedDB `site-ledger-db` v1 / object store `kv`.
+- Added regression coverage for v332–v341 owner operations while retaining all prior accounting, recovery, iPhone/Safari, dashboard-persistence, gateway, and production-gate checks.
 
 ## v322 Dashboard cleanup / persistence
 
