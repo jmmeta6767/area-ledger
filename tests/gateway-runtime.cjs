@@ -26,7 +26,7 @@ function workerNo204Body(ctx){const r=ctx.worker.fetch(new Request('https://gate
  assert.equal(await workerNo204Body(ctx),true);
  res=await state.fetch(new Request('https://internal/idem-get',{method:'POST',body:JSON.stringify({key:'x',windowMs:60000})}));body=await res.json();assert.equal(body.hit,true);assert.equal(body.value.amount,9);
  const ledgerObjects=new Map();
- const ledgerBinding={idFromName(name){return name;},get(id){if(!ledgerObjects.has(id)){const mm=new Map(),ss={async get(k){return mm.get(k)},async put(k,v){mm.set(k,v)},async delete(k){return mm.delete(k)},async deleteAll(){mm.clear()},async setAlarm(){}},obj=new ctx.GatewayState({storage:ss});ledgerObjects.set(id,obj);}return {fetch:req=>ledgerObjects.get(id).fetch(req)};}};
+ const ledgerBinding={idFromName(name){return name;},get(id){if(!ledgerObjects.has(id)){const mm=new Map(),ss={async get(k){return mm.get(k)},async put(k,v){mm.set(k,v)},async delete(k){return mm.delete(k)},async deleteAll(){mm.clear()},async setAlarm(){}},obj=new ctx.GatewayState({storage:ss});ledgerObjects.set(id,obj);}return {fetch:(input,init)=>ledgerObjects.get(id).fetch(input instanceof Request?input:new Request(input,init))};}};
  const ledgerEnv={GATEWAY_STATE:ledgerBinding};
  const ledgerKey='A'.repeat(43),lh={'Origin':'https://gateway.test','Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Ledger-Key':ledgerKey};
  res=await ctx.worker.fetch(new Request('https://gateway.test/v1/ledger/status',{method:'GET',headers:lh}),ledgerEnv);body=await res.json();if(res.status!==200)throw new Error('ledger status '+res.status+' '+JSON.stringify(body));assert.equal(body.hit,false);
