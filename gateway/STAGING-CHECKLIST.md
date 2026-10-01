@@ -17,3 +17,10 @@
 - [ ] Fresh Cloudflare origin does not synthesize partial accounting data.
 - [ ] Legacy recovery export, when needed, is explicitly restored and validated on Cloudflare.
 - [ ] Rollback stays within Cloudflare/runtime settings; do not resume Render as an active app.
+
+- [ ] /v1/platform/status: productionReady=true before production cutover.
+- [ ] D1 staging binding exists and all migrations are applied.
+- [ ] /v1/ledger/reconcile returns matched=true after explicit migration.
+- [ ] Private R2 staging binding exists; upload/read/delete smoke test passes.
+- [ ] /v1/files/list returns only this ledger capability's indexed files.
+- [ ] Staging and production D1/R2 resources are separate.

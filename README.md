@@ -1,9 +1,19 @@
-# AREA Ledger V2 — Master v500
+# AREA Ledger V2 — Master v510
 
-Cloudflare Recovery Hardening + D1/R2 foundations / durable rollback layered over the private Cloudflare stack, based on GitHub `main` v492
-(`94904a57712a3eef205e653f37cf29c96fbca5c1`).
+Cloudflare Production Candidate / production readiness, reconciliation and private file inventory layered over v500 recovery hardening, based on GitHub `main` v500
+(`f8677d831808644cb2be969c6d5effd66ca37950`).
 
 Standalone/PWA accounting and construction project control.
+
+## v510 Cloudflare Production Candidate
+
+- Added `/v1/platform/status` with an explicit `productionReady` gate requiring OCR provider, Durable Object, D1 and R2 components.
+- Added authenticated `/v1/ledger/reconcile` to compare Durable Cloud Ledger vs normalized D1 semantic checksums; POST explicitly repairs the D1 shadow from the authoritative Durable snapshot and rechecks it.
+- Added authenticated `/v1/files/list` backed by the private D1 file index so R2 attachment inventory can be audited without exposing file bytes.
+- Added a dedicated 60/minute ledger rate-limit setting and retained Durable Object-backed enforcement.
+- Added `tests/cloudflare-production.cjs` to CI and a production cutover runbook. The gate deliberately fails readiness until real D1/R2 resources are bound.
+- No fake Cloudflare resource IDs, bucket names, tokens or secrets are committed. Staging and production resources must remain separate.
+- PWA runtime/cache stays v500 because v510 is backend production-readiness hardening; frozen local storage identifiers remain unchanged.
 
 ## v500 Cloudflare Recovery Hardening
 
