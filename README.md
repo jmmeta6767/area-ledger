@@ -1,16 +1,10 @@
-# AREA Ledger V1 — Master v322
+# AREA Ledger V1 — Master v331 Production Stable 1.0
 
 Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
 (`267152ae8a4569641932019245fa377f4cf2716b`).
 
 Standalone/PWA accounting and construction project control. This repository remains
 separate from AREA Maibab Public Website and AREA SEO AI.
-
-## v322 Dashboard cleanup / persistence
-
-- Removed Owner System Health, Project Forecast Control and Accounting Control Center 2.0 cards from the main dashboard; their underlying controls remain available in dedicated screens.
-- Adding a project dashboard now persists the pin, verifies it after persistence, closes the manager and opens the new project tab immediately.
-- Added regression coverage for dashboard cleanup and pin survival through migration/reload normalization.
 
 ## Data safety
 
@@ -618,3 +612,21 @@ Registration: `sw.js?v=321`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
+
+
+## v322–v331 Production Stable run
+
+- v322 production deployment verification.
+- v323 iPhone Safari / PWA acceptance checks.
+- v324 backup + rollback checkpoint.
+- v325 accounting close certificate.
+- v326 daily bank / cash control.
+- v327 project profitability command center.
+- v328 payroll-to-project-cost bridge using existing wage transactions; no new payroll storage collection.
+- v329 owner daily brief and alerts.
+- v330 large-data capacity / stress guard.
+- v331 Production Stable 1.0 readiness gate.
+
+Storage identifiers remain unchanged. Production Stable is fail-closed: live deployment evidence, PWA runtime, rollback readiness, RC2 gates, and capacity checks must pass before the in-app gate reports ready.
+
+Release QA target: v331 Production Stable 1.0 — full regression plus gateway contract/runtime/preflight must pass on latest main.
