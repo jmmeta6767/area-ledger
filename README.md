@@ -1,9 +1,21 @@
-# AREA Ledger V2 — Master v352
+# AREA Ledger V2 — Master v360
 
-BOQ Quick Find / long-list mobile usability, based on GitHub `main` v351
-(`a9afa61e6a4e894834f908e90a774bc717fadf15`).
+BOQ Mobile Productivity / long-list continuity hardening, based on GitHub `main` v352
+(`ef9db44ff2b7d45973be0d9b3742ed6c7aa5b357`).
 
 Standalone/PWA accounting and construction project control.
+
+## v353–v360 BOQ Mobile Productivity
+
+- **v353 Multi-token Quick Find:** BOQ search accepts several words and matches them with AND logic across item, section/code, category, unit and note.
+- **v354 Quick Clear:** a compact “ล้าง” action appears only when a BOQ query exists; clearing happens in place without adding dashboard-style clutter.
+- **v355 Section summaries:** long BOQs show compact row-count and BOQ-value summaries inside section headings.
+- **v356 Collapsible sections:** BOQs with 12+ rows and 2+ sections can collapse/expand sections. Collapse state is per browser tab only; active search temporarily reveals matching rows.
+- **v357 Edit return anchor:** opening/editing a BOQ row remembers the row and returns the user near that item after save/close.
+- **v358 Scroll continuity:** BOQ scroll/collapse/anchor state survives refresh in the same tab via `sessionStorage`; accounting storage is untouched.
+- **v359 Project chooser priority:** BOQ project chooser lists dashboard-pinned projects first, then active/waiting projects, then delivered/closed projects.
+- **v360 Hardening:** root/gateway runtime parity, frozen storage contract, regression coverage and service-worker bump to `site-ledger-v360-boq-mobile-productivity` / `sw.js?v=360`.
+- Dedicated BOQ remains BOQ-only; Contract Control, AI contract guidance, cost analytics and reports stay out of the BOQ list.
 
 ## v352 BOQ Quick Find
 
