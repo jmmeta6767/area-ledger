@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v390
+# AREA Ledger V2 — Master v400
 
-Dashboard Mobile Focus / cash-truth progressive disclosure, based on GitHub `main` v380
-(`6695b6df2e83e43a99236f1fe2ea36e9117bc65e`).
+Add Transaction Mobile Focus / contextual fast entry, based on GitHub `main` v390
+(`ee695f5d5b02cb3ce32ad60dcfca23f1bd996f04`).
 
 Standalone/PWA accounting and construction project control.
+
+## v391–v400 Add Transaction Mobile Focus
+
+- **v391 Context project:** the center “เพิ่มรายการ” button defaults to the project currently being viewed on Dashboard, Project, BOQ or Due screens before falling back to the last project.
+- **v392 Safe project switching:** changing the project clears any BOQ link that belongs to another project.
+- **v393 Relevant BOQ only:** the BOQ selector appears only when the selected project actually has BOQ rows.
+- **v394 Progressive details:** tax, receipt-photo attachment and note fields move under “รายละเอียดเพิ่มเติม”; the section opens automatically when optional data already exists.
+- **v395 Fast due dates:** unpaid entries get one-tap +7 / +15 / +30 day choices while retaining direct date input.
+- **v396 Workflow return:** after saving, users return to Home, Project, BOQ or Due when that screen launched the entry flow instead of always being sent to the full transaction list.
+- **v397 iPhone keyboard:** primary add-form inputs use 16px mobile text sizing to prevent Safari focus zoom.
+- **v398 Repeat entry:** “บันทึกและเพิ่มอีก” continues the same type, project, category and date.
+- **v399 Non-destructive UI:** the streamlined form does not mutate accounting state until save and keeps the frozen storage contract.
+- **v400 Hardening:** BOQ, Due and Dashboard mobile-focus contracts remain covered. Service-worker cache: `site-ledger-v400-add-mobile-focus`; registration: `sw.js?v=400`.
 
 ## v381–v390 Dashboard Mobile Focus
 
