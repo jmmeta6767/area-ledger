@@ -2063,7 +2063,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=348,APP_CHANNEL='stable';
+var APP_RELEASE=349,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -4056,7 +4056,7 @@ function render(){
   else if(v==='procurement'){title='งานพัสดุ';body=vProcurement();back=true;}
   else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
   else if(v==='quoteprint'){title=docTitle(U.docKind||'quote')[0];body=vBusinessDoc();back=true;}
-  var tabs=[['home','home','ภาพรวม'],['list','list','รายการ'],['add','plus',''],['projects','build','โครงการ'],['due','clock','ค้างรับ/จ่าย']];
+  var tabs=[['home','home','ภาพรวม'],['boq','documents','BOQ'],['add','plus',''],['projects','build','โครงการ'],['due','clock','ค้างรับ/จ่าย']];
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
     if(t[0]==='x')return;
@@ -4548,7 +4548,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=348',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=349',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
