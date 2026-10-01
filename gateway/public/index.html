@@ -2060,6 +2060,16 @@ input,select,textarea{max-width:100%;min-width:0}
 .mdash-stats-project .mdash-stat-icon{width:34px;height:34px;margin-bottom:8px}
 @media(max-width:370px){.mdash-stats-project{grid-template-columns:1fr 1fr!important}.mdash-stats-project button:last-child{grid-column:1/-1;min-height:108px!important}}
 </style>
+<style>
+/* v451: consolidate paid and pending expense on dashboard */
+.mdash-expense-card .mdash-expense-split{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px}
+.mdash-expense-card .mdash-expense-split i{min-width:0;font-style:normal;padding:5px 6px;border-radius:9px;background:var(--m-bg)}
+.mdash-expense-card .mdash-expense-split small{margin:0!important;padding:0!important;font-size:9.5px!important}
+.mdash-expense-card .mdash-expense-split b{display:block!important;margin-top:1px!important;font-size:15px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+.mdash-expense-card>small{margin-top:6px!important}
+@media(max-width:390px){.mdash-expense-card .mdash-expense-split{gap:4px}.mdash-expense-card .mdash-expense-split i{padding:4px}.mdash-expense-card .mdash-expense-split b{font-size:13px!important}}
+@media(prefers-color-scheme:dark){.mdash-expense-card .mdash-expense-split i{background:#0f151c}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2207,7 +2217,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=450,APP_CHANNEL='stable';
+var APP_RELEASE=451,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -3044,7 +3054,7 @@ function vHome(){
   var dashProjects=allMode?S.projects:(active?[active]:[]),jobValue=dashProjects.reduce(function(a,p){return a+(+p.contract||0);},0),actualCost=dashProjects.reduce(function(a,p){return a+stats(p.id).outB;},0),forecastProfit=jobValue-actualCost,realizedProfit=rec>0?rec-actualCost:null;
   h+='<section class="project-finance-kpis"><div><small>มูลค่างาน</small><b>'+fmt(jobValue)+'</b><span>จากมูลค่าสัญญาในข้อมูลโครงการ</span></div><div><small>ต้นทุน</small><b class="out">'+fmt(actualCost)+'</b><span>รายจ่ายที่บันทึกในโครงการ</span></div><div><small>กำไรคาดการณ์</small><b class="'+(forecastProfit>=0?'in':'out')+'">'+fmt(forecastProfit)+'</b><span>มูลค่างานตามสัญญา − รายจ่ายโครงการ</span></div><div class="realized-profit"><small>'+(rec>0?(realizedProfit>=0?'กำไรสุทธิ':'ขาดทุนสุทธิ'):'กำไร/ขาดทุนสุทธิ')+'</small>'+(rec>0?'<b class="'+(realizedProfit!==null&&realizedProfit>=0?'in':'out')+'">'+fmt(realizedProfit||0)+'</b><span>รายรับที่ได้รับจริง − รายจ่ายที่จ่ายจริง</span>':'<b class="pending-profit">รอรับรายได้</b><span>จะแสดงผลเมื่อมีรายรับจริงในโครงการ</span>')+'</div></section>';
 
-  h+='<section class="mstats mdash-stats'+(allMode?'':' mdash-stats-project')+'"><button data-act="homePaid" data-v="in"><span class="mdash-stat-icon blue">'+txIcon({type:'in',sub:'',cat:''})+'</span><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ</small></button><button data-act="homePaid" data-v="out"><span class="mdash-stat-icon pink"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4Z"/><path d="M7 7V4h10v3M15 13h5"/></svg></span><span>จ่ายเงินแล้ว</span><b class="out">'+fmt(spent)+'</b><small>'+paidOut.length+' รายการ</small></button><button data-act="go" data-v="due"><span class="mdash-stat-icon amber"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>ค้างรับ / ค้างจ่าย</span><b><span class="in">'+fmt(outstandingIn)+'</span> / <span class="out">'+fmt(outstandingOut)+'</span></b><small>รับ '+inW.length+' · จ่าย '+outW.length+' รายการ</small></button>'+(allMode?'<button data-act="go" data-v="guarantees"><span class="mdash-stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m9 12 2 2 4-5"/></svg></span><span>เงินประกันรอคืน</span><b class="mteal">'+fmt(gExposure)+'</b><small>'+gScope.length+' รายการ'+(gReady.length?' · ครบกำหนด '+gReady.length:gNear.length?' · ≤90 วัน '+gNear.length:'')+'</small></button>':'')+'</section>';
+  h+='<section class="mstats mdash-stats'+(allMode?'':' mdash-stats-project')+'"><button data-act="homePaid" data-v="in"><span class="mdash-stat-icon blue">'+txIcon({type:'in',sub:'',cat:''})+'</span><span>รับเงินแล้ว</span><b class="in">'+fmt(rec)+'</b><small>'+paidIn.length+' รายการ</small></button><button data-act="homePending" data-v="in"><span class="mdash-stat-icon amber"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span>ค้างรับ</span><b class="in">'+fmt(outstandingIn)+'</b><small>'+inW.length+' รายการ</small></button><button class="mdash-expense-card" data-act="homeExpense"><span class="mdash-stat-icon pink"><svg viewBox="0 0 24 24"><path d="M4 7h16v12H4Z"/><path d="M7 7V4h10v3M15 13h5"/></svg></span><span>รายจ่าย</span><div class="mdash-expense-split"><i><small>จ่ายแล้ว</small><b class="out">'+fmt(spent)+'</b></i><i><small>ค้างจ่าย</small><b class="out">'+fmt(outstandingOut)+'</b></i></div><small>รวม '+(paidOut.length+outW.length)+' รายการ</small></button>'+(allMode?'<button data-act="go" data-v="guarantees"><span class="mdash-stat-icon teal"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6Z"/><path d="m9 12 2 2 4-5"/></svg></span><span>เงินประกันรอคืน</span><b class="mteal">'+fmt(gExposure)+'</b><small>'+gScope.length+' รายการ'+(gReady.length?' · ครบกำหนด '+gReady.length:gNear.length?' · ≤90 วัน '+gNear.length:'')+'</small></button>':'')+'</section>';
   h+=homeUrgentAlert(allMode,active,all);
   var chartMax=Math.max(jobValue,actualCost,Math.abs(forecastProfit),1),chartProfit=Math.max(0,forecastProfit);
   h+='<details class="home-fold home-finance-fold" data-home-key="finance"'+(homeFoldOpen('finance',false)?' open':'')+'><summary><span>ภาพรวมการเงิน<small>มูลค่างาน · ต้นทุน · กำไรคาดการณ์</small></span></summary><div class="home-fold-body"><section class="mobile-financial-chart"><div class="mfc-head"><div><b>ภาพรวมการเงินโครงการ</b><small>'+(allMode?'รวมทุกโครงการ':'โครงการนี้')+'</small></div></div><div class="mfc-bars"><div class="mfc-col"><strong>'+fmt(jobValue)+'</strong><i class="mfc-bar" style="height:'+Math.max(3,jobValue/chartMax*105)+'px"></i><span>มูลค่างาน</span></div><div class="mfc-col"><strong>'+fmt(actualCost)+'</strong><i class="mfc-bar" style="height:'+Math.max(3,actualCost/chartMax*105)+'px"></i><span>ต้นทุน</span></div><div class="mfc-col"><strong>'+fmt(forecastProfit)+'</strong><i class="mfc-bar" style="height:'+Math.max(3,chartProfit/chartMax*105)+'px"></i><span>กำไรคาดการณ์</span></div></div></section></div></details>';
@@ -4694,6 +4704,8 @@ document.addEventListener('click',function(e){
   }
   else if(a==='delTx'){var dtx=S.tx.find(function(x){return x.id===id;});if(!dtx)return;if(accountingPeriodLocked(dtx.date,'รายการบัญชี'))return;if(U.confirm==='tx'+id){var oldTx=S.tx.slice();S.tx=S.tx.filter(function(x){return x.id!==id;});if(!persist()){S.tx=oldTx;toast('ลบไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
   else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',status:'paid',paidOnly:false};go('list');}
+  else if(a==='homePending'){var hpn=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hpn?hpn.id:'',cat:'',sub:'',status:'pending',paidOnly:false};go('list');}
+  else if(a==='homeExpense'){var hpe=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:'out',pid:hpe?hpe.id:'',cat:'',sub:'',status:'all',paidOnly:false};go('list');}
   else if(a==='clearPaidFilter'){U.filter.paidOnly=false;U.filter.status='all';render();}
   else if(a==='homeFilter'){U.homeFilter=v||'all';render();}
   else if(a==='guaranteeFilter'){U.guaranteeFilter=v||'all';saveNavSession();render();}
@@ -5030,7 +5042,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=450',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=451',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
