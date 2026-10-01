@@ -1,9 +1,21 @@
-# AREA Ledger V2 — Master v441
+# AREA Ledger V2 — Master v450
 
-Cloudflare-only Runtime / explicit recovery gate, based on GitHub `main` v440
+Cloudflare Project Form Mobile Focus / compact project editing on the Cloudflare-only runtime, based on GitHub `main` v440
 (`d3d45b62e2864f9cbc066722238d87cc6a941083`).
 
 Standalone/PWA accounting and construction project control.
+
+## v442–v450 Cloudflare Project Form Mobile Focus
+
+- **v442 Compact sheet:** project add/edit uses a dedicated compact Cloudflare mobile sheet instead of the generic oversized form spacing.
+- **v443 Primary first:** project name, status, owner, location, contract value and budget stay visible before secondary details.
+- **v444 Contract fold:** contract number/date/start/end move into one progressive disclosure section while preserving the existing field IDs and save logic.
+- **v445 Guarantee fold:** guarantee amount, paid date, delivery date and calculated return date move into one compact fold.
+- **v446 Sticky save bar:** the editor keeps only Cancel + Save in a small bottom action bar so the primary actions stay reachable without covering fields.
+- **v447 Safer delete:** destructive project deletion moves into a separate collapsed “จัดการโครงการ” section and retains two-step confirmation.
+- **v448 iPhone sizing:** inputs remain 16px to avoid Safari focus zoom while field height drops to 42px and action height to 44px.
+- **v449 Existing accounting logic preserved:** project save, guarantee expense syncing and delivery +2 year return-date calculation continue using the prior logic.
+- **v450 Cloudflare-only hardening:** product runtime remains `gateway/public/index.html`; the root app stays retired as Legacy Recovery only. Storage keys remain frozen. Cloudflare cache: `site-ledger-v450-project-form-mobile-focus`; registration: `sw.js?v=450`.
 
 ## v441 Cloudflare-only Runtime + Recovery Gate
 
