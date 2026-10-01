@@ -63,7 +63,8 @@ export class GatewayState {
       if(!parsed||typeof parsed!=='object'||!Array.isArray(parsed.projects)||!Array.isArray(parsed.tx))return json({error:'LEDGER_STATE_INVALID'},400);
       const current=await storage.get('ledger:manifest'),expected=body.expectedRevision==null?null:Math.max(0,+body.expectedRevision||0),incoming=Math.max(0,+body.revision||0);
       if(current&&expected!==null&&expected!==current.revision)return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
-      if(current&&body.expectedChecksum&&String(body.expectedChecksum).toLowerCase()!==String(current.checksum||'').toLowerCase())return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
+      if(current&&!body.expectedChecksum)return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
+      if(current&&String(body.expectedChecksum).toLowerCase()!==String(current.checksum||'').toLowerCase())return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
       if(!current&&expected!==null&&expected!==0)return json({error:'LEDGER_REVISION_CONFLICT',current:null},409);
       if(current&&incoming<current.revision)return json({error:'LEDGER_REVISION_CONFLICT',current:{revision:current.revision,updatedAt:current.updatedAt,checksum:current.checksum}},409);
       const generation=crypto.randomUUID(),chunks=Math.max(1,Math.ceil(bytes.byteLength/LEDGER_CHUNK_BYTES)),checksum=await sha256Hex(payload);
