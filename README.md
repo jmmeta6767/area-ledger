@@ -1,9 +1,21 @@
-# AREA Ledger V2 — Master v490
+# AREA Ledger V2 — Master v491
 
-Cloudflare Durable Ledger Sync foundation / conflict-safe opt-in cloud persistence on the Cloudflare-only runtime, based on GitHub `main` v481
-(`f7b2aa141dc067e3caf400267696be10c10aca33`).
+D1 Shadow Migration foundation / normalized Cloudflare database path layered safely over v490 Durable Ledger Sync, based on GitHub `main` v490
+(`91451f405444740754c6a91a4ff16082c3cbcfcf`).
 
 Standalone/PWA accounting and construction project control.
+
+## v491 D1 Shadow Migration foundation
+
+- Added `gateway/migrations/0001_cloud_ledger.sql` with `ledger_meta` + `ledger_entities`, foreign-key cleanup and project/kind indexes.
+- Added capability-key-isolated D1 shadow endpoints: `/v1/ledger/d1-status`, `/v1/ledger/d1-migrate` and `/v1/ledger/d1-read`.
+- D1 readback validates a semantic SHA-256 checksum before a mirror is accepted.
+- State collections are stored as entity rows while top-level settings/metadata remain lossless in `ledger_meta.state_meta_json`.
+- Large collection writes are chunked for D1; excessive statement count fails closed instead of truncating data.
+- The existing Durable Object remains authoritative during shadow migration. D1 does **not** become primary until real staging bindings exist and migration/readback reconciliation passes.
+- No Cloudflare database ID, account token or secret is fabricated or committed. Safe binding order is documented in `gateway/D1-SETUP.md`.
+- The PWA runtime remains release v490/cache v490 in this infrastructure-only phase; storage keys remain frozen.
+
 
 ## v490 Cloudflare Durable Ledger Sync foundation
 

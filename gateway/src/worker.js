@@ -7,6 +7,41 @@ function corsOrigin(r,env){const o=r.headers.get('Origin')||'';if(!o)return '';c
 function protocolOk(r){return r.headers.get('X-AREA-Gateway-Version')===PROTOCOL_VERSION;}
 function ledgerAccessKey(r){const k=String(r.headers.get('X-AREA-Ledger-Key')||'').trim();return /^[A-Za-z0-9_-]{32,128}$/.test(k)?k:'';}
 async function sha256Hex(text){const b=new TextEncoder().encode(String(text||'')),h=await crypto.subtle.digest('SHA-256',b);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+const LEDGER_COLLECTIONS=['projects','tx','boq','guarantees','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts','quotes','bills','receipts'];
+function d1Ready(env){return !!(env&&env.LEDGER_DB&&typeof env.LEDGER_DB.prepare==='function'&&typeof env.LEDGER_DB.batch==='function');}
+function canonicalValue(v){if(Array.isArray(v))return v.map(canonicalValue);if(v&&typeof v==='object'){const o={};Object.keys(v).sort().forEach(k=>{o[k]=canonicalValue(v[k]);});return o;}return v;}
+function d1StateParts(state){const meta={},collections={};Object.keys(state||{}).forEach(k=>{if(LEDGER_COLLECTIONS.indexOf(k)<0)meta[k]=state[k];});LEDGER_COLLECTIONS.forEach(k=>{collections[k]=Array.isArray(state&&state[k])?state[k]:[];});return {meta,collections};}
+async function d1SemanticChecksum(state){return sha256Hex(JSON.stringify(canonicalValue(d1StateParts(state))));}
+function d1JsonChunks(list,maxBytes){maxBytes=maxBytes||500000;const out=[];let cur=[],bytes=2,enc=new TextEncoder();for(const item of list||[]){const text=JSON.stringify(item),n=enc.encode(text).byteLength+(cur.length?1:0);if(cur.length&&bytes+n>maxBytes){out.push(cur);cur=[];bytes=2;}cur.push(item);bytes+=n;}if(cur.length)out.push(cur);return out;}
+async function d1LedgerStatus(env,ledgerHash){
+  if(!d1Ready(env))return {ok:false,configured:false,error:'D1_NOT_CONFIGURED'};
+  try{const row=await env.LEDGER_DB.prepare('SELECT revision,checksum,semantic_checksum AS semanticChecksum,updated_at AS updatedAt,saved_at AS savedAt,entity_count AS entityCount,schema_version AS schemaVersion FROM ledger_meta WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first();return {ok:true,configured:true,hit:!!row,meta:row||null};}
+  catch(e){return {ok:false,configured:true,error:'D1_SCHEMA_NOT_READY'};}
+}
+async function d1MirrorLedger(env,ledgerHash,state,sourceMeta){
+  if(!d1Ready(env))return {ok:false,configured:false,error:'D1_NOT_CONFIGURED'};
+  const parts=d1StateParts(state),semantic=await d1SemanticChecksum(state),entityCount=LEDGER_COLLECTIONS.reduce((n,k)=>n+parts.collections[k].length,0),savedAt=String(sourceMeta&&sourceMeta.savedAt||new Date().toISOString()),revision=Math.max(0,+state.dataRevision||+(sourceMeta&&sourceMeta.revision)||0),updatedAt=Math.max(0,+state.updatedAt||+(sourceMeta&&sourceMeta.updatedAt)||0),sourceChecksum=String(sourceMeta&&sourceMeta.checksum||await sha256Hex(JSON.stringify(state)));
+  const stmts=[
+    env.LEDGER_DB.prepare('INSERT INTO ledger_meta (ledger_hash,revision,checksum,semantic_checksum,updated_at,saved_at,state_meta_json,entity_count,schema_version) VALUES (?,?,?,?,?,?,?,?,1) ON CONFLICT(ledger_hash) DO UPDATE SET revision=excluded.revision,checksum=excluded.checksum,semantic_checksum=excluded.semantic_checksum,updated_at=excluded.updated_at,saved_at=excluded.saved_at,state_meta_json=excluded.state_meta_json,entity_count=excluded.entity_count,schema_version=excluded.schema_version').bind(ledgerHash,revision,sourceChecksum,semantic,updatedAt,savedAt,JSON.stringify(parts.meta),entityCount),
+    env.LEDGER_DB.prepare('DELETE FROM ledger_entities WHERE ledger_hash=?').bind(ledgerHash)
+  ];
+  for(const kind of LEDGER_COLLECTIONS){let ord=0;for(const chunk of d1JsonChunks(parts.collections[kind],500000)){stmts.push(env.LEDGER_DB.prepare("INSERT INTO ledger_entities (ledger_hash,kind,entity_id,pid,data_json,ord) SELECT ?,?,CAST(json_extract(value,'$.id') AS TEXT),NULLIF(CAST(json_extract(value,'$.pid') AS TEXT),''),value,CAST(key AS INTEGER)+? FROM json_each(?)").bind(ledgerHash,kind,ord,JSON.stringify(chunk)));ord+=chunk.length;}}
+  if(stmts.length>48)return {ok:false,configured:true,error:'D1_MIRROR_TOO_MANY_BATCHES',statements:stmts.length,entityCount};
+  try{await env.LEDGER_DB.batch(stmts);return {ok:true,configured:true,hit:true,meta:{revision,checksum:sourceChecksum,semanticChecksum:semantic,updatedAt,savedAt,entityCount,schemaVersion:1},statements:stmts.length};}
+  catch(e){return {ok:false,configured:true,error:'D1_MIRROR_FAILED'};}
+}
+async function d1ReadLedger(env,ledgerHash){
+  if(!d1Ready(env))return {ok:false,configured:false,error:'D1_NOT_CONFIGURED'};
+  try{
+    const meta=await env.LEDGER_DB.prepare('SELECT revision,checksum,semantic_checksum AS semanticChecksum,updated_at AS updatedAt,saved_at AS savedAt,state_meta_json AS stateMetaJson,entity_count AS entityCount,schema_version AS schemaVersion FROM ledger_meta WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first();
+    if(!meta)return {ok:true,configured:true,hit:false,state:null,meta:null};
+    const q=await env.LEDGER_DB.prepare('SELECT kind,data_json AS dataJson,ord FROM ledger_entities WHERE ledger_hash=? ORDER BY kind,ord').bind(ledgerHash).all(),state=JSON.parse(meta.stateMetaJson||'{}');
+    LEDGER_COLLECTIONS.forEach(k=>{state[k]=[];});
+    for(const row of (q&&q.results)||[]){if(LEDGER_COLLECTIONS.indexOf(row.kind)<0)continue;state[row.kind].push(JSON.parse(row.dataJson));}
+    const semantic=await d1SemanticChecksum(state);if(semantic!==String(meta.semanticChecksum||''))return {ok:false,configured:true,error:'D1_CHECKSUM_MISMATCH',meta:{revision:meta.revision,entityCount:meta.entityCount}};
+    return {ok:true,configured:true,hit:true,state,meta:{revision:meta.revision,checksum:meta.checksum,semanticChecksum:meta.semanticChecksum,updatedAt:meta.updatedAt,savedAt:meta.savedAt,entityCount:meta.entityCount,schemaVersion:meta.schemaVersion}};
+  }catch(e){return {ok:false,configured:true,error:'D1_READ_FAILED'};}
+}
 async function ledgerStub(env,key){if(!env.GATEWAY_STATE)return null;const name='ledger:'+await sha256Hex(key),id=env.GATEWAY_STATE.idFromName(name);return env.GATEWAY_STATE.get(id);}
 async function ledgerCall(env,key,path,body){const stub=await ledgerStub(env,key);if(!stub)return null;return stub.fetch('https://internal/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});}
 async function readLedgerJson(r){const len=Number(r.headers.get('Content-Length')||0);if(len&&len>MAX_LEDGER_BYTES)throw Error('LEDGER_PAYLOAD_TOO_LARGE');const text=await r.text();if(new TextEncoder().encode(text).byteLength>MAX_LEDGER_BYTES)throw Error('LEDGER_PAYLOAD_TOO_LARGE');try{return JSON.parse(text);}catch(_){throw Error('LEDGER_JSON_INVALID');}}
@@ -80,10 +115,26 @@ export class GatewayState {
 }
 export default{async fetch(request,env){
   const started=Date.now(),url=new URL(request.url),rid=requestId(request);
-  if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:providerReady(env),durableState:!!env.GATEWAY_STATE,cloudLedger:!!env.GATEWAY_STATE,auditSink:!!env.GATEWAY_AUDIT},200,'',rid);
-  if(url.pathname==='/ready'&&request.method==='GET'){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,'',rid);}
+  if(url.pathname==='/health'&&request.method==='GET')return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:providerReady(env),durableState:!!env.GATEWAY_STATE,cloudLedger:!!env.GATEWAY_STATE,d1Ledger:d1Ready(env),auditSink:!!env.GATEWAY_AUDIT},200,'',rid);
+  if(url.pathname==='/ready'&&request.method==='GET'){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,'',rid);}
   const origin=corsOrigin(request,env),sentOrigin=request.headers.get('Origin')||'';
   if(request.method==='OPTIONS')return origin?json({ok:true,protocol:PROTOCOL_VERSION},204,origin,rid):json({error:'ORIGIN_DENIED'},403,'',rid);
+  if(url.pathname==='/v1/ledger/d1-status'||url.pathname==='/v1/ledger/d1-migrate'||url.pathname==='/v1/ledger/d1-read'){
+    if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
+    if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
+    const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);
+    const ledgerHash=await sha256Hex(access);
+    if(url.pathname==='/v1/ledger/d1-status'&&request.method==='GET'){const x=await d1LedgerStatus(env,ledgerHash);return json(x,x.ok?200:(x.configured?503:501),origin,rid);}
+    if(url.pathname==='/v1/ledger/d1-read'&&request.method==='GET'){const x=await d1ReadLedger(env,ledgerHash);return json(x,x.ok?200:(x.configured?500:501),origin,rid);}
+    if(url.pathname==='/v1/ledger/d1-migrate'&&request.method==='POST'){
+      if(!d1Ready(env))return json({error:'D1_NOT_CONFIGURED'},501,origin,rid);
+      const r=await ledgerCall(env,access,'ledger-get',{});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);const x=await r.json();
+      if(!r.ok)return json(x,r.status,origin,rid);if(!x.hit)return json({error:'LEDGER_CLOUD_EMPTY'},409,origin,rid);
+      let state;try{state=JSON.parse(x.payload);}catch(_){return json({error:'LEDGER_CLOUD_CORRUPT'},500,origin,rid);}
+      const h=await d1MirrorLedger(env,ledgerHash,state,x.meta||{});return json(h,h.ok?200:500,origin,rid);
+    }
+    return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
+  }
   if(url.pathname==='/v1/ledger/state'||url.pathname==='/v1/ledger/status'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);

@@ -39,5 +39,7 @@ jobs:
         run: node tests/gateway-runtime.cjs
       - name: Cloudflare ledger sync QA
         run: node tests/cloud-ledger-sync.cjs
+      - name: D1 ledger shadow QA
+        run: node tests/d1-ledger.cjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs
