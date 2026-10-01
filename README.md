@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v420
+# AREA Ledger V2 — Master v430
 
-Transaction List Mobile Focus / canonical outstanding and compact register, based on GitHub `main` v410
-(`609bdd6615f47ee1727166e20cceaa6258426644`).
+Guarantee Mobile Focus / action-first retention tracking, based on GitHub `main` v420
+(`1db652903d450b98a7a766a2a2fbb79301a1300b`).
 
 Standalone/PWA accounting and construction project control.
+
+## v421–v430 Guarantee Mobile Focus
+
+- **v421 Action buckets:** guarantee rows are classified into ≤30-day action, 31–90-day near-term, wait, missing-date and returned states.
+- **v422 Action First:** guarantees due/overdue within 30 days appear above the register so return follow-up is visible before history.
+- **v423 Project scope:** the guarantee page gains a compact project selector when several projects exist.
+- **v424 Simpler filters:** the first-screen status strip is reduced to All / ≤30 / 31–90 / Wait / Returned; missing-date items remain a dedicated warning action.
+- **v425 Compact register:** guarantee rows show type, project, holder, amount, countdown and return date without repeating full metadata in the list.
+- **v426 Exact countdown:** overdue, today and future return timing use direct day-based language.
+- **v427 Quick search:** longer guarantee registers support multi-token search across project, type, holder, method, location and note.
+- **v428 Refresh continuity:** guarantee project scope, filter and search query persist per Safari tab through `sessionStorage` only.
+- **v429 Missing-date control:** guarantees without a return date surface as an explicit action instead of disappearing inside the register.
+- **v430 Hardening:** root/gateway runtime parity, prior mobile-focus contracts and frozen accounting storage remain protected. Service-worker cache: `site-ledger-v430-guarantee-mobile-focus`; registration: `sw.js?v=430`.
 
 ## v411–v420 Transaction List Mobile Focus
 
