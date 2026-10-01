@@ -1,4 +1,4 @@
-# AREA Ledger V1 — Master v321 RC2
+# AREA Ledger V1 — Master v331 Production Stable 1.0
 
 Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
 (`267152ae8a4569641932019245fa377f4cf2716b`).
@@ -612,3 +612,19 @@ Registration: `sw.js?v=321`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
+
+
+## v322–v331 Production Stable run
+
+- v322 production deployment verification.
+- v323 iPhone Safari / PWA acceptance checks.
+- v324 backup + rollback checkpoint.
+- v325 accounting close certificate.
+- v326 daily bank / cash control.
+- v327 project profitability command center.
+- v328 payroll-to-project-cost bridge using existing wage transactions; no new payroll storage collection.
+- v329 owner daily brief and alerts.
+- v330 large-data capacity / stress guard.
+- v331 Production Stable 1.0 readiness gate.
+
+Storage identifiers remain unchanged. Production Stable is fail-closed: live deployment evidence, PWA runtime, rollback readiness, RC2 gates, and capacity checks must pass before the in-app gate reports ready.
