@@ -3221,7 +3221,7 @@ function vBoq(){
   return h;
 }
 
-function boqLinkScorefunction boqLinkScore(t,x){var a=((t.sub||'')+' '+(t.cat||'')+' '+(t.note||'')).toLowerCase(),n=((x.name||'')+' '+(x.category||'')+' '+(x.sectionName||'')).toLowerCase(),sc=0;if(t.cat&&x.category&&t.cat===x.category)sc+=3;a.split(/\s+/).filter(function(w){return w.length>2;}).forEach(function(w){if(n.indexOf(w)>=0)sc+=2;});var rem=Math.max(0,boqAmount(x)-boqActual(x.id)),amt=+t.amount||0;if(rem>0&&amt>0){var d=Math.abs(rem-amt)/Math.max(rem,amt);if(d<.05)sc+=4;else if(d<.1)sc+=3;else if(d<.3)sc+=1;}return sc;}
+function boqLinkScore(t,x){var a=((t.sub||'')+' '+(t.cat||'')+' '+(t.note||'')).toLowerCase(),n=((x.name||'')+' '+(x.category||'')+' '+(x.sectionName||'')).toLowerCase(),sc=0;if(t.cat&&x.category&&t.cat===x.category)sc+=3;a.split(/\s+/).filter(function(w){return w.length>2;}).forEach(function(w){if(n.indexOf(w)>=0)sc+=2;});var rem=Math.max(0,boqAmount(x)-boqActual(x.id)),amt=+t.amount||0;if(rem>0&&amt>0){var d=Math.abs(rem-amt)/Math.max(rem,amt);if(d<.05)sc+=4;else if(d<.1)sc+=3;else if(d<.3)sc+=1;}return sc;}
 function candLinkPlan(tx,rows){var picks=[],used={};(tx||[]).forEach(function(t){var c=(rows||[]).map(function(x){return{x:x,s:boqLinkScore(t,x)};}).sort(function(a,b){return b.s-a.s;}),a=c[0],b=c[1],conf=a?(a.s>=7&&(!b||a.s-b.s>=2)?'high':a.s>=4?'medium':'low'):'low';if(conf==='high'&&!used[a.x.id]){used[a.x.id]=1;picks.push({tx:t,boq:a.x,score:a.s,confidence:conf});}});return{picks:picks,ready:picks.length};}
 var GOV_WORK_KNOWLEDGE={version:'2026-09-30-v1',principles:[
 'เมื่อเกิดปัญหาหรืออุปสรรคหน้างานราชการที่อาจกระทบเวลา แบบ ปริมาณ วิธีทำงาน หรือสิทธิของผู้รับจ้าง ให้รีบจัดทำหลักฐานและหนังสือแจ้ง/ชี้แจงต่อผู้ควบคุมงานหรือหน่วยงานตามช่องทางในสัญญา ไม่ควรรอจนสิ้นสุดสัญญา',
@@ -3259,7 +3259,7 @@ function vProject(){
   h+='</div>';
   var bq=boqSummary(p.id);
   h+='<div class="sec master-detail-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h2>BOQ</h2><button class="btn" data-act="boqOpenProject" data-id="'+p.id+'">เปิดรายการ BOQ</button></div><div class="kv"><span>จำนวนรายการ</span><b>'+bq.rows.length+' รายการ</b></div><div class="kv"><span>มูลค่า BOQ รวม</span><b>'+fmt(bq.budget)+'</b></div></div>';
-  var cats=Object.keys(s.byCat)var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
+  var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
   h+='<div class="sec master-detail-card"><h2>ค่าใช้จ่ายตามหมวด</h2>';
   if(!cats.length)h+='<div class="empty">ยังไม่มีรายจ่าย</div>';
   h+=(cats.length?donut(s.byCat,s.outB):'')+catRows(cats,s.byCat,s.bySub,s.outB);
