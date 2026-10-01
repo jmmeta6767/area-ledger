@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v430
+# AREA Ledger V2 — Master v440
 
-Guarantee Mobile Focus / action-first retention tracking, based on GitHub `main` v420
-(`1db652903d450b98a7a766a2a2fbb79301a1300b`).
+Report Mobile Focus / cash-truth progressive disclosure, based on GitHub `main` v430
+(`c71b631a3b9237d8a6bdc78314618ec75856c99a`).
 
 Standalone/PWA accounting and construction project control.
+
+## v431–v440 Report Mobile Focus
+
+- **v431 Cash truth:** monthly cash-in/out uses actual settlement dates for both AR and AP, including partial payments.
+- **v432 First-scan command:** actual cash in, cash out and net cash flow appear before secondary analytics.
+- **v433 Action First:** billing-link issues, open monthly bills and estimated tax obligations surface as concise monthly actions.
+- **v434 Progressive disclosure:** six-month chart, expense categories, billing health, tax, project results and export tools move into foldable sections.
+- **v435 Billing health:** the billing fold auto-opens when reconciliation finds linkage issues and keeps safe-repair access.
+- **v436 Clear labels:** booked income/expense difference is separated from actual cash-flow net instead of presenting mixed concepts as one profit figure.
+- **v437 Full capability retained:** tax detail, project performance table and Excel/PDF/CSV export remain available behind folds.
+- **v438 iPhone layout:** report controls keep compact month navigation and 16px mobile inputs.
+- **v439 Refresh continuity:** report fold state persists per Safari tab through `sessionStorage` only.
+- **v440 Hardening:** root/gateway runtime parity, prior mobile-focus contracts and frozen accounting storage remain protected. Service-worker cache: `site-ledger-v440-report-mobile-focus`; registration: `sw.js?v=440`.
 
 ## v421–v430 Guarantee Mobile Focus
 
