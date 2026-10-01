@@ -2063,7 +2063,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=347,APP_CHANNEL='stable';
+var APP_RELEASE=348,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -3009,7 +3009,7 @@ function vProjects(){
       '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
       '<div class="project-hub-kpis"><span><small>ใช้งบ</small><b>'+Math.round(x*100)+'%</b></span><span><small>รับแล้ว</small><b class="in">'+fmt(st.recd)+'</b></span><span><small>จ่ายแล้ว</small><b class="out">'+fmt(st.paidOut)+'</b></span><span><small>คงเหลือสุทธิ</small><b class="'+(paid>=0?'in':'out')+'">'+fmt(paid)+'</b></span></div>'+
       ((st.recPend||st.payPend)?'<div class="project-hub-pending">ค้างรับ '+fmt(st.recPend)+' · ค้างจ่าย '+fmt(st.payPend)+' · สุทธิ '+fmt(pend)+'</div>':'')+
-      '</button><div class="project-hub-actions"><button data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button data-act="exportProjectXlsx" data-id="'+p.id+'">Excel</button><button data-act="exportProjectPdf" data-id="'+p.id+'">PDF</button><button data-act="editProj" data-id="'+p.id+'">แก้ไข</button></div></article>';
+      '</button><div class="project-hub-actions"><button class="primary" data-act="boqOpenProject" data-id="'+p.id+'">BOQ</button><button data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button data-act="editProj" data-id="'+p.id+'">แก้ไข</button></div></article>';
   });
   return h;
 }
@@ -3257,6 +3257,7 @@ function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
   var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB,actualCost=s.outB,forecastProfit=approvedContractValue(p.id)-actualCost;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div>';
+  var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button></div></div>';
   var cc=contractControl(p.id),cq=contractActionQueue(p.id);h+='<div class="contract-center '+cc.risk+'"><div class="cc-head"><div><small>CONTRACT CONTROL CENTER</small><b>'+esc(({normal:'ปกติ',watch:'เฝ้าระวัง',urgent:'เร่งดำเนินการ',critical:'วิกฤต'})[cc.risk])+'</b></div><span>'+(p.status==='delivered'?'ส่งมอบแล้ว':p.status==='closed'?'ปิดโครงการแล้ว':cc.days===null?'ไม่ระบุวันสิ้นสุด':cc.days>=0?'เหลือ '+cc.days+' วัน':'พ้น '+Math.abs(cc.days)+' วัน')+'</span></div><div class="cc-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(+p.contract||0)+'</b></div><div><small>ต้นทุนจริง</small><b>'+fmt(cc.stats.outB)+'</b></div><div><small>Forecast หลัง Variation</small><b>'+fmt(cc.forecast)+'</b></div><div><small>หนังสือค้าง</small><b>'+cc.pendingLetters+' / รอตอบ '+cc.pendingReplies+'</b></div></div>'+(cq.length?'<div class="cc-queue">'+cq.slice(0,5).map(function(q){return '<p class="'+q.level+'">'+esc(q.text)+'</p>';}).join('')+'</div>':'<div class="cc-ok">ไม่พบ Action Queue สำคัญจากข้อมูลที่บันทึก</div>')+'<div class="cc-actions"><button class="btn" data-act="contractChangeNew" data-id="'+p.id+'">+ เพิ่ม/ลดงาน</button><button class="btn" data-act="timeExtensionNew" data-id="'+p.id+'">+ ขอขยายเวลา</button></div></div>';
   h+=contractBlock(p);
   var ga=govWorkAdvice(p);h+='<div class="gov-ai-card '+(ga&&ga.urgent?'urgent':'')+'"><div class="gov-ai-head"><span><small>AI · งานภาครัฐ / งานสัญญา</small><b>รักษาสิทธิเมื่อหน้างานติดขัด</b></span>'+(ga&&ga.days!==null?'<em>'+(ga.days>=0?'เหลือ '+ga.days+' วัน':'พ้นกำหนด '+Math.abs(ga.days)+' วัน')+'</em>':'')+'</div><div class="gov-ai-points"><p><b>1. มีปัญหา → ทำหนังสือทันที</b> เก็บรูป หลักฐาน วันเวลา และแจ้งผู้ควบคุมงาน/หน่วยงานเป็นลายลักษณ์อักษร อย่ารอจนหมดสัญญา</p><p><b>2. ต้องการเปลี่ยนแบบ/ขอคำสั่ง/ขยายเวลา → ดำเนินการก่อนสิ้นสุดกำหนด</b> การพ้นกำหนดอาจกระทบสิทธิและทำให้ขั้นตอนยุ่งยาก</p><p><b>3. ยังมีเวลา → ขอประชุมหาทางออก</b> ปรึกษาผู้ควบคุมงานและขอให้มีบันทึกการประชุมหรือคำสั่งที่ตรวจสอบย้อนหลังได้</p></div><small class="gov-ai-note">ระบบใช้เป็นคำเตือนเชิงบริหารสัญญา · สิทธิและขั้นตอนจริงให้ตรวจสัญญา หนังสือสั่งการ และระเบียบที่ใช้กับโครงการนั้น</small><button class="btn gov-risk-btn" data-act="govRiskOpen" data-id="'+p.id+'">ประเมินความเสี่ยง / ร่างหนังสือ</button></div>';
@@ -3278,8 +3279,6 @@ function vProject(){
     if(!p.retRecv){var rd=retDays(p);if(rd!==null&&rd<=0)h+='<div class="stack"><button class="btn pri" data-act="retRecv" data-id="'+p.id+'">บันทึกรับเงินประกันคืนแล้ว</button></div>';else h+='<div class="muted" style="margin-top:12px;font-size:.88rem">ยังบันทึกรับคืนไม่ได้ · '+(rd===null?'กรอกวันที่ส่งมอบงานก่อน':'เหลืออีก '+rd+' วัน')+'</div>';}
   }else h+='<div class="empty">ยังไม่ได้บันทึกเงินประกันสัญญา แตะ "แก้ไขโครงการ" เพื่อเพิ่ม</div>';
   h+='</div>';
-  var bq=boqSummary(p.id);
-  h+='<div class="sec master-detail-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h2>BOQ</h2><button class="btn" data-act="boqOpenProject" data-id="'+p.id+'">เปิดรายการ BOQ</button></div><div class="kv"><span>จำนวนรายการ</span><b>'+bq.rows.length+' รายการ</b></div><div class="kv"><span>มูลค่า BOQ รวม</span><b>'+fmt(bq.budget)+'</b></div></div>';
   var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
   h+='<div class="sec master-detail-card"><h2>ค่าใช้จ่ายตามหมวด</h2>';
   if(!cats.length)h+='<div class="empty">ยังไม่มีรายจ่าย</div>';
@@ -4120,7 +4119,7 @@ function directAction(el){
   if(a==='healthRepair'){var rr=repairStateSafe();if(!rr.ok){toast('ซ่อมไม่สำเร็จ ข้อมูลเดิมยังอยู่');return true;}var rh=stateHealth(S);toast(rr.fixed?'ซ่อม reference แล้ว '+rr.fixed+' จุด':'ไม่พบ reference ที่ซ่อมอัตโนมัติได้');U.sheet={kind:'health',health:rh};render();return true;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.getAttribute('data-kind')||'quote';go('doclist');return true;}
   if(a==='openProj'){U.pid=id;go('project',{pid:id});return true;}
-  if(a==='boqOpenProject'){U.boqProjectPid=id||'';U.pid=id||U.pid;if(U.view==='boq'){U.sheet=null;render();}else go('boq');return true;}
+  if(a==='boqOpenProject'){var bp=id||U.pid||'';if(!bp||!proj(bp)){toast('ไม่พบโครงการ BOQ');return true;}U.boqProjectPid=bp;U.pid=bp;U.sheet=null;if(U.view==='boq'){saveNavSession();render();}else go('boq',{pid:bp,boqProjectPid:bp});return true;}
   if(a==='boqBackProjects'){U.boqProjectPid='';U.sheet=null;render();return true;}
   if(a==='boqPickProject'){U.appMenu=false;if(!S.projects.length){toast('สร้างโครงการก่อนเพิ่ม BOQ');go('projects');return true;}if(S.projects.length===1){U.sheet={kind:'boq',id:null,pid:S.projects[0].id};render();return true;}U.sheet={kind:'boqProjectPick'};render();return true;}
   if(a==='boqImport'){if(!S.projects.length){toast('สร้างโครงการก่อนนำเข้า BOQ');go('projects');return true;}if(id&&proj(id)){U.sheet={kind:'boqImportFile',pid:id};render();return true;}if(S.projects.length===1){U.sheet={kind:'boqImportFile',pid:S.projects[0].id};render();return true;}U.sheet={kind:'boqImportProject'};render();return true;}
@@ -4549,7 +4548,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=347',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=348',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
