@@ -25,5 +25,16 @@ function workerNo204Body(ctx){const r=ctx.worker.fetch(new Request('https://gate
  await state.fetch(new Request('https://internal/idem-set',{method:'POST',body:JSON.stringify({key:'x',windowMs:60000,value:{amount:9}})}));
  assert.equal(await workerNo204Body(ctx),true);
  res=await state.fetch(new Request('https://internal/idem-get',{method:'POST',body:JSON.stringify({key:'x',windowMs:60000})}));body=await res.json();assert.equal(body.hit,true);assert.equal(body.value.amount,9);
+ const ledgerObjects=new Map();
+ const ledgerBinding={idFromName(name){return name;},get(id){if(!ledgerObjects.has(id)){const mm=new Map(),ss={async get(k){return mm.get(k)},async put(k,v){mm.set(k,v)},async delete(k){return mm.delete(k)},async deleteAll(){mm.clear()},async setAlarm(){}},obj=new ctx.GatewayState({storage:ss});ledgerObjects.set(id,obj);}return {fetch:req=>ledgerObjects.get(id).fetch(req)};}};
+ const ledgerEnv={GATEWAY_STATE:ledgerBinding};
+ const ledgerKey='A'.repeat(43),lh={'Origin':'https://gateway.test','Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Ledger-Key':ledgerKey};
+ res=await ctx.worker.fetch(new Request('https://gateway.test/v1/ledger/status',{method:'GET',headers:lh}),ledgerEnv);body=await res.json();assert.equal(res.status,200);assert.equal(body.hit,false);
+ const ledgerState={projects:[{id:'p1',name:'P'}],tx:[],boq:[],dataRevision:1,updatedAt:100};
+ res=await ctx.worker.fetch(new Request('https://gateway.test/v1/ledger/state',{method:'PUT',headers:lh,body:JSON.stringify({state:ledgerState,expectedRevision:0})}),ledgerEnv);body=await res.json();assert.equal(res.status,200);assert.equal(body.ok,true);assert.equal(body.meta.revision,1);
+ res=await ctx.worker.fetch(new Request('https://gateway.test/v1/ledger/state',{method:'GET',headers:lh}),ledgerEnv);body=await res.json();assert.equal(res.status,200);assert.equal(body.hit,true);assert.equal(body.state.projects[0].id,'p1');assert.equal(body.meta.revision,1);
+ res=await ctx.worker.fetch(new Request('https://gateway.test/v1/ledger/state',{method:'PUT',headers:lh,body:JSON.stringify({state:Object.assign({},ledgerState,{dataRevision:2,updatedAt:200}),expectedRevision:0})}),ledgerEnv);body=await res.json();assert.equal(res.status,409);assert.equal(body.error,'LEDGER_REVISION_CONFLICT');assert.equal(body.current.revision,1);
+ const noKey={'Origin':'https://gateway.test','X-AREA-Gateway-Version':'1'};res=await ctx.worker.fetch(new Request('https://gateway.test/v1/ledger/state',{method:'GET',headers:noKey}),ledgerEnv);assert.equal(res.status,401);
+ const evilLedger={'Origin':'https://evil.test','X-AREA-Gateway-Version':'1','X-AREA-Ledger-Key':ledgerKey};res=await ctx.worker.fetch(new Request('https://gateway.test/v1/ledger/state',{method:'GET',headers:evilLedger}),ledgerEnv);assert.equal(res.status,403);
  console.log('PASS gateway runtime');
 })().catch(e=>{console.error(e);process.exitCode=1});
