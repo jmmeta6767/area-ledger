@@ -1,4 +1,4 @@
-# AREA Ledger V1 — Master v322
+# AREA Ledger V1 — Master v323
 
 Production Candidate / Migration / Recovery / Forecast hardening, based on GitHub `main` v311
 (`267152ae8a4569641932019245fa377f4cf2716b`).
@@ -11,6 +11,13 @@ separate from AREA Maibab Public Website and AREA SEO AI.
 - Removed Owner System Health, Project Forecast Control and Accounting Control Center 2.0 cards from the main dashboard; their underlying controls remain available in dedicated screens.
 - Adding a project dashboard now persists the pin, verifies it after persistence, closes the manager and opens the new project tab immediately.
 - Added regression coverage for dashboard cleanup and pin survival through migration/reload normalization.
+
+## v323 iPhone edit / storage hotfix
+
+- Audit before/after snapshots no longer duplicate receipt/photo data URLs.
+- Legacy audit snapshots are compacted during migration; original transaction receipt photos remain unchanged.
+- Safari quota failures are reported explicitly while fail-closed rollback preserves the previous committed state.
+- Service-worker cache: `site-ledger-v323-ios-edit-storage`; registration: `sw.js?v=323`.
 
 ## Data safety
 
