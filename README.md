@@ -1,9 +1,18 @@
-# AREA Ledger V2 — Master v348
+# AREA Ledger V2 — Master v349
 
-BOQ direct-flow / project separation, based on GitHub `main` v347
-(`2d5a864267bf5847f7c462f2cc6a947cb2291929`).
+Bottom navigation prioritizes BOQ, based on GitHub `main` v348
+(`a4727095334a84b0bd4d78416133b34e928a56b7`).
 
 Standalone/PWA accounting and construction project control.
+
+## v349 Bottom navigation prioritizes BOQ
+
+- Replaced the bottom navigation **รายการ** tab with **BOQ** because BOQ is a higher-frequency mobile workflow.
+- The BOQ tab opens the dedicated BOQ screen directly and preserves the last selected BOQ project through the existing per-tab navigation state.
+- **รายการทั้งหมด** remains available in the side drawer; no transaction functionality was removed.
+- Bottom navigation is now: ภาพรวม / BOQ / เพิ่มรายการ / โครงการ / ค้างรับ/จ่าย.
+- Release advanced to v349 / stable; service-worker cache `site-ledger-v349-bottom-nav-boq`; registration `sw.js?v=349`.
+- Accounting storage identifiers remain unchanged.
 
 ## v348 BOQ direct flow
 
