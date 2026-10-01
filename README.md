@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v400
+# AREA Ledger V2 — Master v410
 
-Add Transaction Mobile Focus / contextual fast entry, based on GitHub `main` v390
-(`ee695f5d5b02cb3ce32ad60dcfca23f1bd996f04`).
+Project List Mobile Focus / compact project directory, based on GitHub `main` v400
+(`5719f539b10645464fb439802c3b0a0c68b460fe`).
 
 Standalone/PWA accounting and construction project control.
+
+## v401–v410 Project List Mobile Focus
+
+- **v401 Status-first directory:** the project list groups work into กำลังทำ / ส่งมอบ / ปิด / ทั้งหมด, with active + waiting projects as the normal first view.
+- **v402 Compact first scan:** each project card keeps only budget use, received cash and paid cash in the primary scan; the former four-column KPI grid is removed from the list view.
+- **v403 Current-work default:** when current projects exist, the directory opens on active/waiting work instead of filling the screen with delivered/closed history.
+- **v404 Work-order sorting:** active projects sort before waiting, delivered and closed work; active work with nearer contract end dates rises earlier.
+- **v405 Attention chips:** near/overdue contract dates and outstanding AR/AP surface as short action-oriented chips without expanding the card.
+- **v406 Quick project search:** multi-token search matches project name, location, client and contract number for longer project lists.
+- **v407 Refresh continuity:** project status filter and search query persist per Safari tab through `sessionStorage` only.
+- **v408 Three quick actions:** project cards keep exactly BOQ / + รายการ / แก้ไข, and the action grid is corrected to three equal columns.
+- **v409 iPhone search:** project search filters in place to preserve keyboard focus and uses 16px mobile input sizing to prevent Safari focus zoom.
+- **v410 Hardening:** root/gateway runtime parity, prior BOQ/Due/Dashboard/Add mobile-focus contracts and the frozen accounting storage contract remain protected. Service-worker cache: `site-ledger-v410-project-list-mobile-focus`; registration: `sw.js?v=410`.
 
 ## v391–v400 Add Transaction Mobile Focus
 
