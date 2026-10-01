@@ -11,7 +11,7 @@ assert(worker.includes("/v1/ledger/restore-previous"));
 assert(worker.includes("d1SemanticChecksum"));
 assert(worker.includes("R2_NOT_CONFIGURED"));
 assert(wrangler.includes('LEDGER_RATE_LIMIT_PER_MINUTE = "60"'));
-assert(!/database_id\s*=\s*"(?!<REAL_)/.test(wrangler),'do not commit fabricated D1 IDs');
+assert(wrangler.includes('database_id = "9fed2450-55f1-4ec3-ba5f-1e12293bb10a"'),'staging must pin the real existing D1 database');
 assert(!/bucket_name\s*=\s*"area-ledger-files-(?:staging|production)"/.test(wrangler),'resource bindings must be activated only with real Cloudflare resources');
 assert(readme.includes('Cloudflare Production Candidate'));
 console.log('PASS Cloudflare production contract');
