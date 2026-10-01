@@ -1,9 +1,17 @@
-# AREA Ledger V2 — Master v342
+# AREA Ledger V2 — Master v345
 
-Production Stable 1.1 / Owner Operations hardening, based on GitHub `main` v332
-(`cdf13cf24dfad2f6a68f5cb8dabd74775fb278ba`).
+Mobile bugfix / dashboard persistence / due-balance UX, based on GitHub `main` v342
+(`fd11a48a74bb3765b0d9b2fde7f045c39482db93`).
 
 Standalone/PWA accounting and construction project control.
+
+## v343–v345 iPhone dashboard / due-balance bugfix
+
+- Dashboard pinning is now a metadata-only write and can safely reconcile a stale-tab conflict against the latest stored state without overwriting newer accounting/project data.
+- A dashboard pin is reported as successful only after the pin is verified in persisted `site-ledger-v1` state; the selected project tab then opens immediately.
+- Due / AR / AP rows display the positive outstanding balance instead of a debit-style minus sign. Group totals now use outstanding balances for both receivables and payables, including partial settlements.
+- Release advanced to v345 / stable with service-worker cache `site-ledger-v345-mobile-bugfix` and registration `sw.js?v=345`.
+- Storage keys/schema remain frozen and the main dashboard remains free of Owner Operations / diagnostics cards.
 
 ## v333–v342 Owner Operations 1.1
 
