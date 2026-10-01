@@ -2457,7 +2457,7 @@ function productionRollbackCheckpoint(){
  return {ok:schema.ok&&(!r.hasData||r.backupFresh)&&dr.ok,backupFresh:r.backupFresh,revision:r.revision,backupRevision:r.backupRevision,schema:schema,disasterRecovery:dr};
 }
 function pwaAcceptanceStatus(){
- var standalone=isStandalone(),sw=!!(navigator&&navigator.serviceWorker),ios=/iP(hone|ad|od)/.test(navigator.userAgent||''),secure=location.protocol==='https:'||location.hostname==='localhost';
+ var nav=(window&&window.navigator)||{},standalone=isStandalone(),sw=!!nav.serviceWorker,ios=/iP(hone|ad|od)/.test(nav.userAgent||''),secure=location.protocol==='https:'||location.hostname==='localhost';
  return {ok:secure&&sw,ios:ios,standalone:standalone,serviceWorker:sw,secure:secure,installRecommended:ios&&!standalone};
 }
 function productionDeploymentVerification(){
