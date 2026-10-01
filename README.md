@@ -1,9 +1,22 @@
-# AREA Ledger V2 — Master v360
+# AREA Ledger V2 — Master v370
 
-BOQ Mobile Productivity / long-list continuity hardening, based on GitHub `main` v352
-(`ef9db44ff2b7d45973be0d9b3742ed6c7aa5b357`).
+Project Mobile Focus / risk-aware progressive disclosure, based on GitHub `main` v360
+(`f27e0c853c0851ceb1b9b24576228cad17b78aff`).
 
 Standalone/PWA accounting and construction project control.
+
+## v361–v370 Project Mobile Focus
+
+- **v361 High-frequency actions first:** project top card now keeps BOQ, add transaction and edit project together; duplicate bottom actions are removed.
+- **v362 Contract detail fold:** Contract Control Center remains visible, while detailed contract fields fold below it. Non-normal contract risk opens details automatically.
+- **v363 Risk-aware government guidance:** government-contract AI guidance folds during normal operation and opens automatically near/past contract deadlines.
+- **v364 Timeline progressive disclosure:** contract timeline shows a compact event/follow-up summary and auto-opens when letters or follow-ups need attention.
+- **v365 Variation/EOT fold:** contract changes and time extensions move into a compact panel that auto-opens while a decision is pending.
+- **v366 Guarantee detail fold:** guarantee register amount/count remains visible; detailed retention flow expands automatically when return is within 30 days or due.
+- **v367 Cost-category fold:** detailed category/donut analytics move below a compact summary instead of occupying the primary project scan.
+- **v368 Transaction-list fold:** short project lists remain open; long lists collapse behind a count/pending summary.
+- **v369 Project tools fold:** Excel/PDF/business documents stay available in a dedicated compact panel instead of crowding the main project flow.
+- **v370 Hardening:** risk-aware open rules are regression-tested; BOQ direct flow and frozen accounting storage are preserved. Service-worker cache: `site-ledger-v370-project-mobile-focus`; registration: `sw.js?v=370`.
 
 ## v353–v360 BOQ Mobile Productivity
 
