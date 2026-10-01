@@ -2183,7 +2183,7 @@ function migrate(o){
   o.ui.dashboardPids=o.ui.dashboardPids.filter(function(id){return (o.projects||[]).some(function(p){return p.id===id;});});
   if(!o.business)o.business={legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false};
   if(!o.ai||typeof o.ai!=='object'||Array.isArray(o.ai))o.ai={mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000};if(o.ai.mode!=='gateway')o.ai.mode='local';if(typeof o.ai.endpoint!=='string')o.ai.endpoint='';if(typeof o.ai.remoteOcrConsentBase!=='string')o.ai.remoteOcrConsentBase='';var migratedAiBase=aiGatewayNormalizeBase(o.ai.endpoint),migratedConsentBase=aiGatewayNormalizeBase(o.ai.remoteOcrConsentBase);if(o.ai.mode==='gateway'&&o.ai.remoteOcrConsent===true&&migratedAiBase&&migratedConsentBase===migratedAiBase)o.ai.remoteOcrConsentBase=migratedConsentBase;else{o.ai.remoteOcrConsent=false;o.ai.remoteOcrConsentBase='';}if(!isFinite(+o.ai.timeoutMs))o.ai.timeoutMs=15000;
-  if(!o.ops||typeof o.ops!=='object'||Array.isArray(o.ops))o.ops={};if(o.ops.cloudflareSmoke===undefined)o.ops.cloudflareSmoke=null;if(o.ops.migrationDrill===undefined)o.ops.migrationDrill=null;if(o.ops.lastMigration===undefined)o.ops.lastMigration=null;if(o.ops.ocrDiagnostic===undefined)o.ops.ocrDiagnostic=null;if(o.ops.reliability===undefined)o.ops.reliability=null;if(o.ops.disasterRecovery===undefined)o.ops.disasterRecovery=null;if(o.ops.fullAcceptance===undefined)o.ops.fullAcceptance=null;if(o.ops.businessStable===undefined)o.ops.businessStable=null;
+  if(!o.ops||typeof o.ops!=='object'||Array.isArray(o.ops))o.ops={};if(o.ops.cloudflareSmoke===undefined)o.ops.cloudflareSmoke=null;if(o.ops.migrationDrill===undefined)o.ops.migrationDrill=null;if(o.ops.lastMigration===undefined)o.ops.lastMigration=null;if(o.ops.ocrDiagnostic===undefined)o.ops.ocrDiagnostic=null;if(o.ops.reliability===undefined)o.ops.reliability=null;if(o.ops.disasterRecovery===undefined)o.ops.disasterRecovery=null;if(o.ops.fullAcceptance===undefined)o.ops.fullAcceptance=null;if(o.ops.businessStable===undefined)o.ops.businessStable=null;if(o.ops.fieldAcceptance===undefined)o.ops.fieldAcceptance=null;if(o.ops.accountingFreeze===undefined)o.ops.accountingFreeze=null;if(o.ops.stable1===undefined)o.ops.stable1=null;
   if(!Number.isInteger(+o.dataRevision)||+o.dataRevision<0)o.dataRevision=0;else o.dataRevision=+o.dataRevision;
   if(!Number.isInteger(+o.lastBackupRevision)||+o.lastBackupRevision<0)o.lastBackupRevision=-1;else o.lastBackupRevision=+o.lastBackupRevision;
   if(typeof o.lastRestoreFingerprint!=='string')o.lastRestoreFingerprint='';if(typeof o.lastRestoreSourceOrigin!=='string')o.lastRestoreSourceOrigin='';if(!isFinite(+o.lastRestoreAt)||+o.lastRestoreAt<0)o.lastRestoreAt=0;else o.lastRestoreAt=+o.lastRestoreAt;
@@ -2288,8 +2288,9 @@ function defaultChartAccounts(){return[
 ];}
 
 
-function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=700,APP_CHANNEL='stable';
+function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
+var APP_RELEASE=800,APP_CHANNEL='stable';
+var ACCOUNTING_POLICY_VERSION='1.0';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -2838,6 +2839,19 @@ function businessStableReadiness(){
  if(U.cloudConflict)issues.push('Cloud Sync conflict ยังไม่ถูกแก้');
  if(S.lastRestoreSourceOrigin&&S.lastRestoreSourceOrigin!==location.origin&&!mig.ok)issues.push('Migration Acceptance Certificate ยังไม่ผ่าน');
  return {ok:issues.length===0,version:APP_RELEASE,channel:'business-stable',issues:issues,source:source,cloud:cloud,accounting:acct,disasterRecovery:dr,pwa:pwa,migration:mig,actions:businessAutomationQueue()};
+}
+function fieldAcceptanceEvidence(){
+ var x=S.ops&&S.ops.fieldAcceptance||{},keys=['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'],checks={};keys.forEach(function(k){checks[k]=!!x[k];});var age=x.at?Date.now()-x.at:Infinity,fresh=age>=0&&age<=7*24*60*60*1000,sameRelease=+x.release===APP_RELEASE,ok=fresh&&sameRelease&&keys.every(function(k){return checks[k];});
+ return {ok:ok,fresh:fresh,sameRelease:sameRelease,checks:checks,at:+x.at||0,release:+x.release||0};
+}
+function accountingFreezeEvidence(){
+ var per=today().slice(0,7),base=accountingBaselineCertificate(per),x=S.ops&&S.ops.accountingFreeze||null,fresh=!!(x&&Date.now()-x.at>=0&&Date.now()-x.at<=31*24*60*60*1000),samePolicy=!!(x&&x.policy===ACCOUNTING_POLICY_VERSION),sameRelease=!!(x&&+x.release===APP_RELEASE);return {ok:!!(base.ok&&fresh&&samePolicy&&sameRelease),baseline:base,evidence:x,fresh:fresh,samePolicy:samePolicy,sameRelease:sameRelease};
+}
+function stableRuntimeEnvironment(){return /(?:^|-)staging(?:\.|-|$)/i.test(String(location.hostname||''))?'staging':'production';}
+function stable1Readiness(){
+ var bs=businessStableReadiness(),field=fieldAcceptanceEvidence(),freeze=accountingFreezeEvidence(),env=stableRuntimeEnvironment(),issues=bs.issues.slice();
+ if(!field.ok)issues.push('iPhone Field Acceptance ยังไม่ครบ/หมดอายุ');if(!freeze.ok)issues.push('Accounting Freeze ยังไม่ผ่าน/หมดอายุ');if(env!=='production')issues.push('ยังอยู่ Staging · Stable 1.0 ต้องยืนยันบน Production');
+ return {ok:issues.length===0,version:APP_RELEASE,channel:'business-stable-1.0',environment:env,issues:issues,business:bs,field:field,accountingFreeze:freeze};
 }
 function largeDataStressCheck(){
  var counts={projects:(S.projects||[]).length,tx:(S.tx||[]).length,boq:(S.boq||[]).length,docs:(S.quotes||[]).length+(S.bills||[]).length+(S.receipts||[]).length,audit:(S.auditLog||[]).length},score=counts.tx+counts.boq+counts.docs+counts.audit;
@@ -4694,18 +4708,21 @@ function sheetHtml(){
       ['1','Staging / Cloudflare Runtime',bs.cloud.ok],
       ['2','Real Data / D1 Reconcile',bs.cloud.ok],
       ['3','Accounting Integrity',bs.accounting.ok],
-      ['4','iPhone / PWA Runtime',bs.pwa.ok],
-      ['5','Receipt / OCR / R2',bs.cloud.ok],
+      ['4','iPhone Field Acceptance',fa.ok],
+      ['5','Receipt / OCR / R2',bs.cloud.ok&&fa.checks.receiptR2&&fa.checks.ocr],
       ['6','Backup / Recovery',bs.disasterRecovery.ok],
       ['7','Security / Production RC',bs.source.ok],
       ['8','Business Operations',typeof ownerOperationsSummary==='function'],
       ['9','Automation Action Queue',typeof businessAutomationQueue==='function'],
-      ['10','Stable Business Gate',bs.ok]
+      ['10','Stable Business 1.0 Gate',s1.ok]
     ];
-    b='<h3>AREA Ledger · Business Stable v700</h3><p class="muted">Control Center 1–10 · PASS จริงต้องอิงข้อมูลและ Cloudflare runtime ปัจจุบัน</p>'+
+    var fa=fieldAcceptanceEvidence(),af=accountingFreezeEvidence(),s1=stable1Readiness();
+    b='<h3>AREA Ledger · Business Stable v800</h3><p class="muted">Stable 1.0 Control Center · แยก source readiness ออกจากหลักฐานใช้งานจริง</p>'+
       '<div class="card">'+phase.map(function(x){return '<div class="kv"><span>'+x[0]+' · '+esc(x[1])+'</span><b class="'+(x[2]?'in':'out')+'">'+(x[2]?'PASS':'CHECK')+'</b></div>';}).join('')+'</div>'+
       (bs.issues.length?'<div class="sec"><b>Blockers</b>'+bs.issues.map(function(x){return '<div class="kv"><span>'+esc(x)+'</span><b class="out">CHECK</b></div>';}).join('')+'</div>':'<div class="role" style="color:var(--in)">Business Stable Gate: PASS</div>')+
       '<div class="sec"><b>Action Queue · '+ba.length+'</b>'+(ba.length?ba.slice(0,12).map(function(x){return '<div class="kv"><span><b>'+esc(x.title)+'</b><small>'+esc(x.detail||'')+'</small></span><b class="'+(x.level==='critical'||x.level==='urgent'?'out':'')+'">'+esc(x.level.toUpperCase())+'</b></div>';}).join(''):'<div class="empty">ไม่มีรายการเตือน</div>')+'</div>'+
+      '<div class="sec"><b>iPhone Field Acceptance</b>'+[['refresh','Refresh อยู่หน้าเดิม'],['offlineOnline','Offline → Online'],['receiptR2','รูปใบเสร็จ → R2'],['ocr','OCR ใบเสร็จ'],['editRoundTrip','เพิ่ม/แก้/เปิดใหม่ข้อมูลตรง'],['networkSwitch','สลับ Wi‑Fi/5G']].map(function(x){var on=fa.checks[x[0]];return '<div class="kv"><span>'+x[1]+'</span><button class="btn '+(on?'pri':'')+'" data-act="fieldAcceptToggle" data-v="'+x[0]+'">'+(on?'ผ่านแล้ว':'ยืนยันหลังทดสอบ')+'</button></div>';}).join('')+'</div>'+
+      '<div class="sec"><b>Accounting Freeze · policy '+ACCOUNTING_POLICY_VERSION+'</b><div class="kv"><span>Baseline เดือนปัจจุบัน</span><b class="'+(af.baseline.ok?'in':'out')+'">'+(af.baseline.ok?'PASS':'CHECK')+'</b></div><div class="kv"><span>Freeze evidence</span><b class="'+(af.ok?'in':'out')+'">'+(af.ok?'ACTIVE':'CHECK')+'</b></div><button class="btn" data-act="accountingFreezeStamp">ยืนยัน Accounting Freeze</button></div>'+
       '<div class="stack"><button class="btn pri" data-act="businessStableRun">รัน Acceptance 1–10</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="ownerOps">Owner Operations</button><button class="btn" data-act="systemAdvanced">Advanced Diagnostics</button></div>';
   }else if(sh.kind==='systemAdvanced'){
     var mr=hostMigrationReadiness(),cfg=aiGatewayConfig(),pe=productionStableReadiness();
@@ -4945,12 +4962,18 @@ function directAction(el){
   if(a==='systemAdvanced'){U.appMenu=false;U.sheet={kind:'systemAdvanced'};render();return true;}
   if(a==='productionStableCheck'){var ps=productionStableReadiness();toast(ps.ok?'Production Stable Gate: PASS':'Production Stable Gate: CHECK '+ps.issues.length+' จุด');return true;}
   if(a==='businessStableOpen'){U.sheet={kind:'businessStable'};render();return true;}
+  if(a==='fieldAcceptToggle'){
+    var k=el.getAttribute('data-v')||'';if(['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'].indexOf(k)<0)return true;S.ops=S.ops||{};var f=S.ops.fieldAcceptance||{};f[k]=!f[k];f.at=Date.now();f.release=APP_RELEASE;S.ops.fieldAcceptance=f;persist({metaOnly:true});U.sheet={kind:'businessStable'};render();return true;
+  }
+  if(a==='accountingFreezeStamp'){
+    var bline=accountingBaselineCertificate(today().slice(0,7));if(!bline.ok){toast('Accounting Baseline ยังมี '+bline.issues.length+' blocker');return true;}S.ops=S.ops||{};S.ops.accountingFreeze={at:Date.now(),release:APP_RELEASE,policy:ACCOUNTING_POLICY_VERSION,period:bline.period};persist({metaOnly:true});U.sheet={kind:'businessStable'};render();toast('Accounting Freeze '+ACCOUNTING_POLICY_VERSION+' ยืนยันแล้ว');return true;
+  }
   if(a==='businessStableRun'){
     toast('กำลังรัน Acceptance 1–10…');
     Promise.all([cloudFullAcceptance(),disasterRecoverySelfCheck()]).then(function(v){
       S.ops=S.ops||{};S.ops.disasterRecovery=v[1];S.ops.businessStable={at:Date.now(),release:APP_RELEASE,cloud:!!(v[0]&&v[0].ok),recovery:!!(v[1]&&v[1].ok)};
       try{persist({metaOnly:true});}catch(_){}
-      U.sheet={kind:'businessStable'};render();var z=businessStableReadiness();toast(z.ok?'Business Stable v700: PASS':'Business Stable v700: CHECK '+z.issues.length+' จุด');
+      U.sheet={kind:'businessStable'};render();var z=businessStableReadiness();var s1=stable1Readiness();toast(s1.ok?'Business Stable 1.0: PASS':'v800 Acceptance: CHECK '+s1.issues.length+' จุด');
     }).catch(function(){U.sheet={kind:'businessStable'};render();toast('Acceptance 1–10 ยังไม่ผ่าน · ตรวจ Cloudflare/Recovery');});
     return true;
   }
@@ -5448,7 +5471,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=700',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();

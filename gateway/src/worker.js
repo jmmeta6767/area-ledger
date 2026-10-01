@@ -42,6 +42,12 @@ async function d1ReadLedger(env,ledgerHash){
     return {ok:true,configured:true,hit:true,state,meta:{revision:meta.revision,checksum:meta.checksum,semanticChecksum:meta.semanticChecksum,updatedAt:meta.updatedAt,savedAt:meta.savedAt,entityCount:meta.entityCount,schemaVersion:meta.schemaVersion}};
   }catch(e){return {ok:false,configured:true,error:'D1_READ_FAILED'};}
 }
+async function d1ReconcileDiff(durableState,d1State){
+  const a=d1StateParts(durableState||{}),b=d1StateParts(d1State||{}),collections={};let mismatchCount=0;
+  for(const kind of LEDGER_COLLECTIONS){const ac=a.collections[kind].length,bc=b.collections[kind].length,ah=await sha256Hex(JSON.stringify(canonicalValue(a.collections[kind]))),bh=await sha256Hex(JSON.stringify(canonicalValue(b.collections[kind]))),matched=ah===bh;collections[kind]={durableCount:ac,d1Count:bc,matched};if(!matched)mismatchCount++;}
+  const am=await sha256Hex(JSON.stringify(canonicalValue(a.meta))),bm=await sha256Hex(JSON.stringify(canonicalValue(b.meta))),metaMatched=am===bm;if(!metaMatched)mismatchCount++;
+  return {matched:mismatchCount===0,mismatchCount,metaMatched,collections};
+}
 function r2Ready(env){return !!(env&&env.LEDGER_FILES&&typeof env.LEDGER_FILES.put==='function'&&typeof env.LEDGER_FILES.get==='function'&&typeof env.LEDGER_FILES.delete==='function');}
 function productionComponents(env){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,d1Ledger=d1Ready(env),r2Files=r2Ready(env),exactOrigins=allowedOrigins(env).length;return {providerConfigured,durableState,d1Ledger,r2Files,exactOrigins,ready:providerConfigured&&durableState&&d1Ledger&&r2Files};}
 async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();return true;}catch(_){return false;}}
@@ -234,7 +240,7 @@ export default{async fetch(request,env){
       let durableState;try{durableState=JSON.parse(ds.payload);}catch(_){return json({error:'LEDGER_CLOUD_CORRUPT'},500,origin,rid);}
       let d1=await d1ReadLedger(env,ledgerHash),durableSemantic=await d1SemanticChecksum(durableState),matched=!!(d1.ok&&d1.hit&&d1.meta&&String(d1.meta.semanticChecksum||'')===durableSemantic);
       if(request.method==='POST'&&!matched){const m=await d1MirrorLedger(env,ledgerHash,durableState,ds.meta||{});if(!m.ok)return json({ok:false,matched:false,repaired:false,error:m.error||'D1_MIRROR_FAILED'},500,origin,rid);d1=await d1ReadLedger(env,ledgerHash);matched=!!(d1.ok&&d1.hit&&d1.meta&&String(d1.meta.semanticChecksum||'')===durableSemantic);}
-      return json({ok:true,matched,repaired:request.method==='POST'&&matched,durable:{revision:ds.meta&&ds.meta.revision||0,semanticChecksum:durableSemantic},d1:d1&&d1.meta||null},matched?200:409,origin,rid);
+      const diff=await d1ReconcileDiff(durableState,d1&&d1.state||{});return json({ok:true,matched,repaired:request.method==='POST'&&matched,durable:{revision:ds.meta&&ds.meta.revision||0,semanticChecksum:durableSemantic},d1:d1&&d1.meta||null,diff},matched?200:409,origin,rid);
     }
     if(url.pathname==='/v1/ledger/d1-migrate'&&request.method==='POST'){
       if(!d1Ready(env))return json({error:'D1_NOT_CONFIGURED'},501,origin,rid);

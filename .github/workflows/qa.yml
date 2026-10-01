@@ -51,7 +51,11 @@ jobs:
         run: node tests/cloudflare-deploy.cjs
       - name: v600 stable source baseline QA
         run: node tests/v600-stable.cjs
-      - name: v700 business stable QA
+      - name: v700 business stable baseline QA
         run: node tests/v700-business-stable.cjs
+      - name: v800 business stable 1.0 QA
+        run: node tests/v800-business-stable.cjs
+      - name: Live acceptance script syntax
+        run: node --check tests/live-cloudflare-acceptance.mjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs

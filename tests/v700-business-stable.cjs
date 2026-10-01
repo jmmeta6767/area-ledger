@@ -1,9 +1,9 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const html=fs.readFileSync('gateway/public/index.html','utf8');
 const sw=fs.readFileSync('gateway/public/sw.js','utf8');
-assert(html.includes("APP_RELEASE=700,APP_CHANNEL='stable'"));
-assert(html.includes('sw.js?v=700'));
-assert(sw.includes('site-ledger-v700-business-stable-source-candidate'));
+assert(html.includes("APP_RELEASE=800,APP_CHANNEL='stable'"));
+assert(html.includes('sw.js?v=800'));
+assert(sw.includes('site-ledger-v800-business-stable-1-source-candidate'));
 for(const fn of ['cloudFullAcceptanceEvidence','accountingBaselineCertificate','businessAutomationQueue','businessStableSourceReadiness','businessStableReadiness'])assert(html.includes('function '+fn));
 assert(html.includes('fullAcceptance:null'));
 assert(html.includes('businessStable:null'));

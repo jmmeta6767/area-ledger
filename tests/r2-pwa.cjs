@@ -1,9 +1,9 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const html=fs.readFileSync('gateway/public/index.html','utf8');
 const sw=fs.readFileSync('gateway/public/sw.js','utf8');
-assert(html.includes('APP_RELEASE=700'));
-assert(html.includes('sw.js?v=700'));
-assert(sw.includes('site-ledger-v700-business-stable-source-candidate'));
+assert(html.includes('APP_RELEASE=800'));
+assert(html.includes('sw.js?v=800'));
+assert(sw.includes('site-ledger-v800-business-stable-1-source-candidate'));
 for(const x of ['cloudFileUpload','cloudFileOpen','cloudPhotoThumb','cloudOffloadOneTxPhoto','cloudOffloadAllTxPhotos'])assert(html.includes('function '+x)||html.includes('async function '+x));
 assert(html.includes("data-act=\"cloudFilesMigrate\""));
 assert(html.includes("data-act=\"cloudPhotoOpen\""));

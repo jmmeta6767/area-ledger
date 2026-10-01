@@ -64,3 +64,18 @@ After v600 source acceptance, v700 is the final business-stable gate. Run it on 
 - Operational alerts remain business work items; the automation queue never silently mutates accounting data.
 
 Only after the live v700 gate returns PASS should the deployment be described as Business Stable.
+
+## v800 Business Stable 1.0 acceptance
+
+v800 separates automated staging evidence from the user's real production evidence.
+
+1. A staging deploy must finish with `tests/live-cloudflare-acceptance.mjs` PASS: platform ready, Durable CAS, D1 reconcile, R2 write/list/read/delete/index, history and restore.
+2. Real ledger migration must be initiated from the user's current device after a fresh portable backup; synthetic live-acceptance data is never substituted for user data.
+3. Reconcile diagnostics must show `mismatchCount=0` for the real capability before production cutover.
+4. The six iPhone field checks must be manually confirmed after testing on the current release and expire after seven days/release change.
+5. Accounting Freeze policy 1.0 may be stamped only when Accounting Baseline has no blockers.
+6. Disaster Recovery evidence must be fresh and Cloud Sync conflict-free.
+7. Production resources and GitHub Environment remain separate from staging.
+8. Production deploy must pass its own platform checks before real data is considered cut over.
+9. Operational alerts remain non-mutating and are not a substitute for month-end/accounting review.
+10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.

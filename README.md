@@ -1,10 +1,27 @@
-# AREA Ledger V2 — Master v700
+# AREA Ledger V2 — Master v800
 
-Business Stable Source Candidate / phases 1–10 layered over v600, based on GitHub `main` v600
-(`99277ed080ac99783193e059db4c70aa45815c6c`).
+Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701, based on GitHub `main` v701
+(`270f7de5b61dcd2a72a1f263a646158c884157ee`).
 
 Standalone/PWA accounting and construction project control.
 
+## v800 Business Stable 1.0 Source Candidate
+
+v800 executes the 1–10 stabilization plan while keeping real-user migration and production cutover fail-closed.
+
+- **1 · Staging acceptance:** every staging deploy now runs a real public Worker acceptance drill after deployment.
+- **2 · Real ledger migration:** the app still requires explicit Cloud Sync opt-in and migration evidence; no browser dataset is promoted automatically.
+- **3 · Durable ↔ D1 reconciliation:** reconciliation now returns privacy-safe per-collection count/hash match diagnostics without exposing accounting values.
+- **4 · iPhone field acceptance:** six explicit real-device checks are recorded separately from source QA and expire after seven days / release changes.
+- **5 · Receipt/OCR/R2:** live acceptance verifies private R2 write/list/read/delete plus D1 file indexing; app field acceptance separately confirms receipt and OCR UX.
+- **6 · Recovery:** live acceptance performs a two-revision Durable CAS write, history check, previous-revision restore and post-restore D1 reconcile.
+- **7 · Monitoring / security:** action queue remains non-mutating; live acceptance uses synthetic isolated data and never uses the user's recovery key.
+- **8 · Accounting freeze:** policy `1.0` can be stamped only after the current accounting baseline has no blockers; evidence is release/policy/freshness bound.
+- **9 · UX / management:** v700 Owner Operations and mobile-first flows remain the stable operational baseline.
+- **10 · Stable 1.0 gate:** `stable1Readiness()` additionally requires real iPhone evidence, accounting freeze and a production runtime. Staging can never claim Business Stable 1.0 PASS.
+- New staging auto-deploy workflow deploys trusted `main` changes only to the `staging` GitHub Environment, applies D1 migrations and runs the live acceptance drill.
+- PWA release: `APP_RELEASE=800`; cache: `site-ledger-v800-business-stable-1-source-candidate`.
+- Production deployment and the user's real ledger migration remain explicit live operations; source/staging success does not claim they already happened.
 ## v700 Business Stable Source Candidate
 
 This release executes the next 1–10 development sequence without claiming that account-level Cloudflare deployment or the user's real iPhone data migration has already occurred.
