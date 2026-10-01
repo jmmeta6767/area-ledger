@@ -1,9 +1,19 @@
-# AREA Ledger V2 — Master v350
+# AREA Ledger V2 — Master v351
 
-Context-aware BOQ navigation, based on GitHub `main` v349
-(`78fd7eb5aa8c1131908a9304ba75109efdd9fd35`).
+Compact BOQ mobile header, based on GitHub `main` v350
+(`43134e83d5d10640a9d1807bef3ec651bcd5bdc0`).
 
 Standalone/PWA accounting and construction project control.
+
+## v351 Compact BOQ mobile header
+
+- When a BOQ project is selected, the large BOQ summary area is replaced by one compact mobile header.
+- The compact header shows project name, BOQ row count and BOQ total on one summary line.
+- High-frequency actions are directly available: **+ รายการ**, **นำเข้าไฟล์**, and **เปลี่ยนโครงการ**.
+- The project chooser retains the original add/import entry points when no project is selected.
+- Removed duplicate selected-project labels such as separate “รายการ BOQ” and “มูลค่า BOQ รวม” rows to expose BOQ items sooner.
+- Release advanced to v351 / stable; service-worker cache `site-ledger-v351-boq-compact-header`; registration `sw.js?v=351`.
+- Accounting storage identifiers remain unchanged.
 
 ## v350 Context-aware BOQ
 
