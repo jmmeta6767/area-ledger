@@ -2063,7 +2063,8 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=346,APP_CHANNEL='stable';
+var APP_RELEASE=347,APP_CHANNEL='stable';
+var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
 function storageSchemaContract(){return {ok:KEY==='site-ledger-v1'&&BACKUP_KEY==='site-ledger-v1-recovery'&&IDB_NAME==='site-ledger-db',localStorageKey:KEY,recoveryKey:BACKUP_KEY,indexedDB:IDB_NAME,indexedDBVersion:1,objectStore:'kv'};}
@@ -2656,14 +2657,34 @@ function leaveAddTo(target){
   if(!draftDirty()){U.draft=null;target();return true;}
   U.sheet={kind:'leaveAdd',target:target};render();return false;
 }
-function navState(){return {view:U.view||'home',pid:U.pid||null,docListKind:U.docListKind||'',docProjectPid:U.docProjectPid||''};}
-function applyNavState(st){if(!st)st={view:'home'};U.view=st.view||'home';U.pid=st.pid||null;U.docListKind=st.docListKind||U.docListKind||'';U.docProjectPid=st.docProjectPid||'';U.sheet=null;U.confirm=null;U.appMenu=false;U.anim=1;render();window.scrollTo(0,0);}
+function navState(){return {view:U.view||'home',pid:U.pid||null,docListKind:U.docListKind||'',docProjectPid:U.docProjectPid||'',docKind:U.docKind||'',docId:U.docId||'',exportPid:U.exportPid||'',month:U.month||today().slice(0,7),boqProjectPid:U.boqProjectPid||'',guaranteeProjectPid:U.guaranteeProjectPid||'',guaranteeFilter:U.guaranteeFilter||'all',filter:U.filter?Object.assign({},U.filter):null};}
+function navSessionAllowed(v){return ['home','list','projects','project','boq','due','guarantees','report','print','docs','procurement','doclist','quoteprint'].indexOf(v)>=0;}
+function saveNavSession(st){
+  try{
+    st=st||navState();if(!navSessionAllowed(st.view))return false;
+    sessionStorage.setItem(NAV_SESSION_KEY,JSON.stringify(st));return true;
+  }catch(_){return false;}
+}
+function loadNavSession(){
+  try{var raw=sessionStorage.getItem(NAV_SESSION_KEY);if(!raw)return null;var st=JSON.parse(raw);return st&&navSessionAllowed(st.view)?st:null;}catch(_){return null;}
+}
+function restoreNavSession(){
+  var st=loadNavSession();if(!st)return false;
+  if(st.view==='project'&&(!st.pid||!proj(st.pid))){st.view='projects';st.pid=null;}
+  ['boqProjectPid','docProjectPid','exportPid','guaranteeProjectPid'].forEach(function(k){if(st[k]&&!proj(st[k]))st[k]='';});
+  if(['quote','bill','receipt'].indexOf(st.docListKind)<0)st.docListKind='';
+  if(['quote','bill','receipt'].indexOf(st.docKind)<0)st.docKind='';
+  if(st.view==='quoteprint'){var docs=docCollection(st.docKind||'quote')||[];if(!st.docId||!docs.some(function(x){return x.id===st.docId;})){st.view='doclist';st.docId='';}}
+  U.view=st.view||'home';U.pid=st.pid||null;U.docListKind=st.docListKind||'';U.docProjectPid=st.docProjectPid||'';U.docKind=st.docKind||'';U.docId=st.docId||'';U.exportPid=st.exportPid||'';U.month=/^\d{4}-\d{2}$/.test(st.month||'')?st.month:today().slice(0,7);U.boqProjectPid=st.boqProjectPid||'';U.guaranteeProjectPid=st.guaranteeProjectPid||'';U.guaranteeFilter=st.guaranteeFilter||'all';if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);
+  return true;
+}
+function applyNavState(st){if(!st)st={view:'home'};U.view=st.view||'home';U.pid=st.pid||null;if(st.docListKind!==undefined)U.docListKind=st.docListKind||'';if(st.docProjectPid!==undefined)U.docProjectPid=st.docProjectPid||'';if(st.docKind!==undefined)U.docKind=st.docKind||'';if(st.docId!==undefined)U.docId=st.docId||'';if(st.exportPid!==undefined)U.exportPid=st.exportPid||'';if(st.month!==undefined&&/^\d{4}-\d{2}$/.test(st.month||''))U.month=st.month;if(st.boqProjectPid!==undefined)U.boqProjectPid=st.boqProjectPid||'';if(st.guaranteeProjectPid!==undefined)U.guaranteeProjectPid=st.guaranteeProjectPid||'';if(st.guaranteeFilter!==undefined)U.guaranteeFilter=st.guaranteeFilter||'all';if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);U.sheet=null;U.confirm=null;U.appMenu=false;U.anim=1;saveNavSession();render();window.scrollTo(0,0);}
 function go(v,extra,opts){
-  opts=opts||{};var cur=navState(),next={view:v||'home',pid:cur.pid,docListKind:cur.docListKind,docProjectPid:cur.docProjectPid};
+  opts=opts||{};var cur=navState(),next=Object.assign({},cur,{view:v||'home'});
   if(extra)for(var k in extra)next[k]=extra[k];
   if(!opts.replace&&cur.view!==next.view){U.navStack=U.navStack||[];U.navStack.push(cur);if(U.navStack.length>40)U.navStack.shift();}
   applyNavState(next);
-  if(!opts.browser){try{history.pushState({areaLedger:true,view:next.view},'',location.href);}catch(e){}}
+  if(!opts.browser){try{history.pushState({areaLedger:true,view:next.view,pid:next.pid||null},'',location.href);}catch(e){}}
 }
 function navBack(){
   if(U.view==='add'&&draftDirty()&&!U.sheet){return leaveAddTo(function(){navBack();});}
@@ -4050,7 +4071,7 @@ function render(){
   document.body.classList.toggle('force-desktop',!!(S.ui&&S.ui.viewMode==='desktop'));
   document.body.classList.toggle('force-mobile',!S.ui||S.ui.viewMode!=='desktop');
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);
+  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();
 }
 
 /* ---------- Mobile/iOS direct navigation ---------- */
@@ -4509,8 +4530,10 @@ function boot(){
     }
     if(!U.homePid)U.homePid='__all';
     if(U.homePid!=='__all'&&dashPids().indexOf(U.homePid)<0){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
+    restoreNavSession();
     if(S.role==='foreman'&&U.view!=='home')U.view='list';
     U.storageBad=!storageOK();
+    try{history.replaceState({areaLedger:true,view:U.view||'home',pid:U.pid||null},'',location.href);}catch(e){}
     render();
     if(best&&best===o&&o!==ls)persist({recovery:true});
     try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
@@ -4526,7 +4549,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=346',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=347',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();

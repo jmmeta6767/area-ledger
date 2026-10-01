@@ -1,9 +1,17 @@
-# AREA Ledger V2 — Master v346
+# AREA Ledger V2 — Master v347
 
-Clean BOQ list / mobile information architecture, based on GitHub `main` v345
-(`0cbabfe549468ff93a4fc0405c4901a48abe57cf`).
+Refresh route persistence / iPhone navigation continuity, based on GitHub `main` v346
+(`1d8a3747c6caee8852b928e881777b9587815d4c`).
 
 Standalone/PWA accounting and construction project control.
+
+## v347 Refresh stays on current page
+
+- Stable navigation is persisted per browser tab with `sessionStorage` only; refreshing no longer sends the user back to the dashboard.
+- Restores the active screen and relevant UI context: project, selected BOQ project, document list/document preview, report month, guarantee filter/project and list filter.
+- Project/document references are validated after accounting data loads. If a referenced project or document was deleted, navigation falls back safely instead of rendering a broken screen.
+- Transient edit/add sheets are not written into accounting storage; the accounting data contract remains unchanged.
+- Release advanced to v347 / stable; service-worker cache `site-ledger-v347-refresh-route`; registration `sw.js?v=347`.
 
 ## v346 Clean BOQ
 
