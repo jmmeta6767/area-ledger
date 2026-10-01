@@ -2560,7 +2560,7 @@ async function reliabilitySelfCheck(){var probe='reliability-'+Date.now()+'-'+Ma
 function reliabilityEvidence(){var x=S.ops&&S.ops.reliability||null,age=x&&x.at?Date.now()-x.at:Infinity;return {ok:!!(x&&x.ok&&age>=0&&age<=24*60*60*1000),fresh:age>=0&&age<=24*60*60*1000,evidence:x,ageMs:age};}
 function disasterRecoveryStaticCheck(){
   var raw=backupJson(),roundtrip=false,tamperRejected=false,schemaKeys=KEY==='site-ledger-v1'&&IDB_NAME==='site-ledger-db'&&BACKUP_KEY===KEY+'-recovery',guards=String(persist).indexOf('storageConflict')>=0&&typeof pwaCanReload==='function';
-  try{var p=restoreParse(raw);roundtrip=!!(p.ok&&migrationBusinessDigest(p.state)===migrationBusinessDigest(S));var e=JSON.parse(raw);e.state.dataRevision=(+e.state.dataRevision||0)+1;var bad=restoreParse(JSON.stringify(e));tamperRejected=!bad.ok&&bad.error==='BACKUP_CHECKSUM';}catch(_){}
+  try{var p=restoreParse(raw),canonical=migrate(S);roundtrip=!!(p.ok&&migrationBusinessDigest(p.state)===migrationBusinessDigest(canonical));var e=JSON.parse(raw);e.state.dataRevision=(+e.state.dataRevision||0)+1;var bad=restoreParse(JSON.stringify(e));tamperRejected=!bad.ok&&bad.error==='BACKUP_CHECKSUM';}catch(_){}
   return {roundtrip:roundtrip,tamperRejected:tamperRejected,schemaKeys:schemaKeys,guards:guards,ok:roundtrip&&tamperRejected&&schemaKeys&&guards};
 }
 async function disasterRecoverySelfCheck(){var st=disasterRecoveryStaticCheck(),rel=await reliabilitySelfCheck();return {at:Date.now(),ok:st.ok&&rel.ok,backupRoundtrip:st.roundtrip,tamperRejected:st.tamperRejected,schemaKeys:st.schemaKeys,guards:st.guards,localStorage:rel.localStorage,indexedDB:rel.indexedDB,serviceWorker:rel.serviceWorker,pwaGuard:rel.pwaGuard,conflictGuard:rel.conflictGuard};}
