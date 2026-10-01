@@ -2255,7 +2255,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',pwaUpdatePending:false};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
 
 function defaultChartAccounts(){return[
 {id:'1000',code:'1000',name:'เงินสด',type:'asset',normal:'debit'},
@@ -2281,10 +2281,11 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=481,APP_CHANNEL='stable';
+var APP_RELEASE=490,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
+var CLOUD_KEY_NAME='area-ledger-cloud-key-v1',CLOUD_ENABLED_NAME='area-ledger-cloud-sync-enabled-v1',CLOUD_META_NAME='area-ledger-cloud-meta-v1',cloudSyncTimer=0;
 function storageSchemaContract(){return {ok:KEY==='site-ledger-v1'&&BACKUP_KEY==='site-ledger-v1-recovery'&&IDB_NAME==='site-ledger-db',localStorageKey:KEY,recoveryKey:BACKUP_KEY,indexedDB:IDB_NAME,indexedDBVersion:1,objectStore:'kv'};}
 function idbOpen(){return new Promise(function(res,rej){var settled=false,timer=setTimeout(function(){settled=true;U.storageReadBlocked=true;rej(new Error('IndexedDB timeout'));},1500);function fail(e){clearTimeout(timer);settled=true;U.storageReadBlocked=true;rej(e);}try{var r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=function(){if(!r.result.objectStoreNames.contains('kv'))r.result.createObjectStore('kv');};r.onsuccess=function(){clearTimeout(timer);if(settled){r.result.close();return;}settled=true;res(r.result);};r.onerror=function(){fail(r.error);};r.onblocked=function(){fail(new Error('IndexedDB blocked'));};}catch(e){fail(e);}});}
 function idbPut(k,v){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=function(){db.close();res(true);};t.onerror=function(){db.close();res(false);};t.onabort=function(){db.close();res(false);};});}).catch(function(){return false;});}
@@ -2292,6 +2293,103 @@ function idbRead(k){return idbOpen().then(function(db){return new Promise(functi
 function idbSet(v){return idbPut('state',v);}
 function idbGet(){return idbRead('state');}
 function idbDelete(k){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=function(){db.close();res(true);};t.onerror=function(){db.close();res(false);};t.onabort=function(){db.close();res(false);};});}).catch(function(){return false;});}
+function cloudLedgerKey(create){
+  try{
+    var k=String(localStorage.getItem(CLOUD_KEY_NAME)||'').trim();
+    if(/^[A-Za-z0-9_-]{32,128}$/.test(k))return k;
+    if(!create)return '';
+    var a=new Uint8Array(32);crypto.getRandomValues(a);k=Array.prototype.map.call(a,function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+    localStorage.setItem(CLOUD_KEY_NAME,k);return k;
+  }catch(_){return '';}
+}
+function cloudSyncEnabled(){try{return localStorage.getItem(CLOUD_ENABLED_NAME)==='1'&&!!cloudLedgerKey(false);}catch(_){return false;}}
+function cloudSetEnabled(on){try{if(on)localStorage.setItem(CLOUD_ENABLED_NAME,'1');else localStorage.removeItem(CLOUD_ENABLED_NAME);}catch(_){}U.cloudStatus=on?'ready':'off';}
+function cloudMeta(){
+  try{var x=JSON.parse(localStorage.getItem(CLOUD_META_NAME)||'null');if(x&&typeof x==='object')return {hit:!!x.hit,revision:Math.max(0,+x.revision||0),checksum:String(x.checksum||''),updatedAt:Math.max(0,+x.updatedAt||0),savedAt:String(x.savedAt||'')};}catch(_){}
+  return {hit:false,revision:0,checksum:'',updatedAt:0,savedAt:''};
+}
+function cloudSetMeta(m){
+  m=m||{};var x={hit:!!m.hit,revision:Math.max(0,+m.revision||0),checksum:String(m.checksum||''),updatedAt:Math.max(0,+m.updatedAt||0),savedAt:String(m.savedAt||'')};
+  try{localStorage.setItem(CLOUD_META_NAME,JSON.stringify(x));}catch(_){}return x;
+}
+function cloudResetMeta(){try{localStorage.removeItem(CLOUD_META_NAME);}catch(_){}U.cloudConflict=false;U.cloudRemote=null;}
+function cloudHeaders(){
+  var key=cloudLedgerKey(false);if(!key)return null;
+  return {'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Ledger-Key':key,'X-AREA-Request-ID':'ledger-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)};
+}
+async function cloudGateway(method,path,body){
+  var headers=cloudHeaders();if(!headers)return {ok:false,status:401,data:{error:'LEDGER_KEY_MISSING'}};
+  var opt={method:method,headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'};
+  if(body!==undefined)opt.body=JSON.stringify(body);
+  try{var r=await fetch(path,opt),d=null;try{d=await r.json();}catch(_){d={error:'LEDGER_RESPONSE_INVALID'};}return {ok:r.ok,status:r.status,data:d||{}};}catch(e){return {ok:false,status:0,data:{error:'LEDGER_NETWORK'}};}
+}
+function cloudSyncInfo(){
+  var m=cloudMeta(),enabled=cloudSyncEnabled(),label='ปิด';
+  if(enabled){label=U.cloudSyncBusy?'กำลังซิงก์':U.cloudConflict?'ต้องตรวจข้อมูล':(U.cloudStatus==='error'?'เชื่อมต่อไม่ได้':m.hit?'ซิงก์แล้ว':'พร้อมเริ่ม');}
+  return {enabled:enabled,label:label,meta:m,key:cloudLedgerKey(false)};
+}
+function cloudCacheExact(next,meta){
+  var json='',prev='';try{
+    next=migrate(next);json=JSON.stringify(next);prev=localStorage.getItem(KEY)||committedState||'';
+    if(prev&&prev!==json){try{var po=JSON.parse(prev);if(Array.isArray(po.projects)&&Array.isArray(po.tx))localStorage.setItem(BACKUP_KEY,prev);}catch(_){}}
+    localStorage.setItem(KEY,json);if(localStorage.getItem(KEY)!==json)throw new Error('cache verify');
+  }catch(_){return false;}
+  S=next;committedState=json;U.storageConflict=false;U.storageReadBlocked=false;
+  mirrorQueue=mirrorQueue.catch(function(){}).then(async function(){if(prev&&prev!==json)await idbPut('state-backup',prev);var ok=await idbSet(json);U.storageMirrorBad=!ok;});
+  if(meta)cloudSetMeta(Object.assign({hit:true},meta));return true;
+}
+function cloudSyncSchedule(delay){
+  if(!cloudSyncEnabled()||U.cloudConflict)return false;U.cloudSyncPending=true;
+  clearTimeout(cloudSyncTimer);cloudSyncTimer=setTimeout(function(){cloudSyncPush(true,false);},Math.max(80,+delay||350));return true;
+}
+async function cloudSyncPush(silent,allowConflict){
+  if(!cloudSyncEnabled())return false;if(U.cloudConflict&&!allowConflict)return false;
+  if(U.cloudSyncBusy){U.cloudSyncPending=true;return false;}
+  U.cloudSyncBusy=true;U.cloudSyncPending=false;U.cloudStatus='syncing';
+  var snap=JSON.parse(JSON.stringify(S)),m=cloudMeta(),body={state:snap,expectedRevision:m.hit?m.revision:0,expectedChecksum:m.hit?m.checksum:''};
+  try{
+    var r=await cloudGateway('PUT','/v1/ledger/state',body);
+    if(r.status===409){U.cloudConflict=true;U.cloudRemote=r.data&&r.data.current||null;U.cloudStatus='conflict';if(!silent)toast('Cloudflare มีข้อมูลใหม่กว่า · ยังไม่เขียนทับ กรุณาเลือกดึงหรือยืนยันส่งข้อมูลเครื่องนี้');return false;}
+    if(!r.ok||!r.data||!r.data.meta){U.cloudStatus='error';if(!silent)toast('ซิงก์ Cloudflare ไม่สำเร็จ · ข้อมูลในเครื่องยังอยู่');return false;}
+    cloudSetMeta(Object.assign({hit:true},r.data.meta));U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';
+    if(!silent)toast('ซิงก์ข้อมูลขึ้น Cloudflare แล้ว · revision '+(+snap.dataRevision||0));
+    if((+S.dataRevision||0)>(+snap.dataRevision||0))cloudSyncSchedule(120);
+    return true;
+  }finally{U.cloudSyncBusy=false;}
+}
+async function cloudSyncPull(apply){
+  if(!cloudLedgerKey(false))return {ok:false,error:'KEY'};
+  U.cloudSyncBusy=true;U.cloudStatus='syncing';
+  try{
+    var r=await cloudGateway('GET','/v1/ledger/state');
+    if(!r.ok){U.cloudStatus='error';return {ok:false,error:r.data&&r.data.error||'NETWORK'};}
+    if(!r.data||!r.data.hit||!r.data.state){U.cloudStatus='ready';return {ok:false,error:'EMPTY'};}
+    var next=null;try{next=migrate(r.data.state);}catch(_){return {ok:false,error:'INVALID'};}
+    var h=stateHealth(next);if(!h.ok)return {ok:false,error:'HEALTH',issues:h.issues};
+    U.cloudRemote={state:next,meta:r.data.meta};
+    if(!apply)return {ok:true,state:next,meta:r.data.meta};
+    if(!cloudCacheExact(next,r.data.meta))return {ok:false,error:'CACHE'};
+    U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {ok:true,state:next,meta:r.data.meta};
+  }finally{U.cloudSyncBusy=false;}
+}
+async function cloudSyncEnableCurrent(){
+  var h=stateHealth(S);if(!h.ok){toast('ยังเปิด Cloud Sync ไม่ได้ · Data Health พบ '+h.totalIssues+' จุด');return false;}
+  if(!cloudLedgerKey(true)){toast('สร้างรหัส Cloud Sync ไม่สำเร็จ');return false;}
+  U.cloudSyncBusy=true;U.cloudStatus='checking';
+  try{
+    var st=await cloudGateway('GET','/v1/ledger/status');
+    if(!st.ok){U.cloudStatus='error';toast('ยังเชื่อม Cloudflare Cloud Ledger ไม่ได้');return false;}
+    cloudSetEnabled(true);
+    if(st.data&&st.data.hit&&st.data.meta){
+      cloudSetMeta(Object.assign({hit:true},st.data.meta));
+      var rr=await cloudSyncPull(false);
+      if(rr.ok&&JSON.stringify(rr.state)===JSON.stringify(S)){U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';toast('Cloud Sync พร้อมใช้งาน · ข้อมูลตรงกัน');return true;}
+      U.cloudConflict=true;U.cloudStatus='conflict';toast('พบข้อมูล Cloudflare อยู่แล้ว · ระบบยังไม่เขียนทับ เลือก “ดึงจาก Cloudflare” หรือ “ส่งชุดนี้ขึ้น Cloudflare”');return false;
+    }
+    cloudSetMeta({hit:false,revision:0,checksum:'',updatedAt:0,savedAt:''});U.cloudConflict=false;U.cloudStatus='ready';
+  }finally{U.cloudSyncBusy=false;}
+  return cloudSyncPush(false,false);
+}
 function loadRecovery(){try{var raw=localStorage.getItem(BACKUP_KEY);if(raw){var o=JSON.parse(raw);if(o&&Array.isArray(o.tx)&&Array.isArray(o.projects))return migrate(o);U.storageReadBlocked=true;}}catch(e){U.storageReadBlocked=true;}return null;}
 function stateHealth(o){
   o=o||S;var issues=[],maps={},keys=['projects','boq','tx','guarantees','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals'];
@@ -2522,6 +2620,7 @@ function persist(opts){
     var mirrored=await idbSet(json);U.storageMirrorBad=!mirrored;
     if(!mirrored)toast('บันทึกในเครื่องแล้ว แต่สำเนา IndexedDB ไม่สำเร็จ กรุณาสำรองข้อมูล');
   });
+  if(!opts.skipCloud&&cloudSyncEnabled())cloudSyncSchedule(350);
   return true;
 }
 function proj(id){return S.projects.find(function(p){return p.id===id;});}
@@ -4557,7 +4656,16 @@ function sheetHtml(){
   }else if(sh.kind==='resetConfirm'){
     b='<h3 style="color:var(--out)">ยืนยันรีเซ็ตข้อมูล?</h3><p class="muted" style="margin:8px 0 4px">การรีเซ็ตจะลบโครงการและรายการบัญชีทั้งหมดในเครื่องนี้ และไม่สามารถย้อนกลับได้หากยังไม่ได้สำรองข้อมูล</p><div class="stack"><button class="btn dng sure" data-act="resetDo">ยืนยันรีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='backup'){
-    b='<h3>สำรองข้อมูล / ย้ายเครื่องหรือย้ายเว็บ</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">ก่อนเปลี่ยนโดเมนหรือเครื่อง ให้บันทึกไฟล์ .json จากเว็บเดิม แล้วเปิดเว็บใหม่และเลือก "กู้คืนจากไฟล์ .json" · ต้นทาง '+esc(location.origin)+'</p><textarea class="csv" id="bkbox" readonly>'+esc(backupJson())+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์ย้ายข้อมูล .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
+    var csi=cloudSyncInfo(),csm=csi.meta;
+    b='<h3>สำรองข้อมูล / Cloudflare Sync</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">ข้อมูลในเครื่องยังเป็นสำเนาใช้งานออฟไลน์ ส่วน Cloud Sync จะเปิดเมื่อยืนยันเท่านั้น เพื่อไม่ให้ชุดกู้คืนบางส่วนเขียนทับฐาน Cloudflare โดยอัตโนมัติ</p>'+
+      '<div class="sec"><div class="kv"><span>Cloudflare Cloud Ledger</span><b class="'+(U.cloudConflict?'out':csi.enabled?'in':'')+'">'+esc(csi.label)+'</b></div>'+
+      (csi.enabled&&csm.hit?'<div class="kv"><span>Cloud revision</span><span>'+csm.revision+'</span></div>':'')+
+      (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(csm.savedAt)+'</small></div>':'')+
+      '<div class="stack">'+
+      (!csi.enabled?'<button class="btn pri" data-act="cloudEnable">เปิด Cloud Sync บน Cloudflare</button>':'<button class="btn pri'+(U.confirm==='cloudPushForce'?' dng sure':'')+'" data-act="cloudPush">'+(U.confirm==='cloudPushForce'?'ยืนยันส่งชุดนี้ทับ Cloudflare':'ซิงก์ขึ้น Cloudflare ตอนนี้')+'</button><button class="btn'+(U.confirm==='cloudPull'?' dng sure':'')+'" data-act="cloudPull">'+(U.confirm==='cloudPull'?'ยืนยันดึงและแทนข้อมูลในเครื่อง':'ดึงข้อมูลจาก Cloudflare')+'</button><button class="btn" data-act="cloudCopyKey">คัดลอกรหัสกู้คืน Cloud</button><button class="btn" data-act="cloudDisable">ปิด Auto Sync</button>')+
+      '<div class="field"><label>รหัสกู้คืน Cloud (สำหรับเครื่องใหม่)</label><input id="cloudKeyImport" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางรหัสจากเครื่องเดิม"><small class="muted">รหัสนี้ใช้เปิดฐาน Cloud เดิม ห้ามส่งให้ผู้อื่น</small></div><button class="btn" data-act="cloudUseKey">ใช้รหัสกู้คืน Cloud</button>'+
+      '<input id="cloudKeyBox" value="'+esc(csi.key||'')+'" readonly style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true"></div></div>'+
+      '<p class="muted" style="margin:10px 0 6px;font-size:.86rem">ไฟล์ JSON ยังเป็นสำเนากู้คืนแบบพกพา</p><textarea class="csv" id="bkbox" readonly>'+esc(backupJson())+'</textarea><div class="stack"><button class="btn pri" data-act="backupFile">บันทึกไฟล์ย้ายข้อมูล .json</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='restore'){
     b='<h3>กู้คืน / ย้ายข้อมูลเข้าเว็บนี้</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">เลือกไฟล์ AREA-Ledger-backup-*.json จาก Files/iCloud หรือวาง JSON ทั้งก้อน · ปลายทาง '+esc(location.origin)+'</p><label class="btn pri" for="restoreFile">เลือกไฟล์สำรอง .json</label><input id="restoreFile" type="file" accept=".json,application/json"><div class="muted" style="margin-top:8px">'+esc(U.restoreInfo||'ยังไม่ได้เลือกไฟล์')+'</div><textarea class="csv" id="rsbox" placeholder="หรือวางข้อมูลสำรองที่นี่">'+esc(U.rsText||'')+'</textarea><div class="stack"><button class="btn" data-act="migrationDrillCheck">ตรวจ Migration Drill</button><button class="btn" data-act="migrationCertificateOpen">Migration Acceptance Certificate</button><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'ตรวจและกู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='migrationCertificate'){
@@ -4864,6 +4972,24 @@ document.addEventListener('click',function(e){
   }
   else if(a==='install'){U.sheet={kind:'install'};render();}
   else if(a==='backup'){U.sheet={kind:'backup'};render();}
+  else if(a==='cloudEnable'){U.confirm=null;cloudSyncEnableCurrent().then(function(){render();});}
+  else if(a==='cloudDisable'){cloudSetEnabled(false);U.cloudConflict=false;U.cloudRemote=null;U.confirm=null;render();toast('ปิด Auto Sync แล้ว · ข้อมูล Cloudflare ไม่ถูกลบ');}
+  else if(a==='cloudCopyKey'){if(!cloudLedgerKey(false)){toast('ยังไม่มีรหัส Cloud Sync');return true;}doCopy('cloudKeyBox',function(){toast('คัดลอกรหัสกู้คืน Cloud แล้ว · เก็บไว้เป็นความลับ');});}
+  else if(a==='cloudUseKey'){
+    var ck=String((document.getElementById('cloudKeyImport')||{}).value||'').trim();
+    if(!/^[A-Za-z0-9_-]{32,128}$/.test(ck)){toast('รหัสกู้คืน Cloud ไม่ถูกต้อง');return true;}
+    var oldKey=cloudLedgerKey(false);if(oldKey&&oldKey!==ck&&U.confirm!=='cloudUseKey'){U.confirm='cloudUseKey';toast('แตะ “ใช้รหัสกู้คืน Cloud” อีกครั้งเพื่อเปลี่ยนฐาน Cloud');render();return true;}
+    try{localStorage.setItem(CLOUD_KEY_NAME,ck);}catch(_){toast('บันทึกรหัส Cloud ไม่สำเร็จ');return true;}
+    cloudSetEnabled(false);cloudResetMeta();U.confirm=null;render();toast('รับรหัส Cloud แล้ว · กดเปิด Cloud Sync เพื่อตรวจฐานเดิมก่อน');
+  }
+  else if(a==='cloudPush'){
+    if(U.cloudConflict&&U.confirm!=='cloudPushForce'){U.confirm='cloudPushForce';toast('Cloudflare มีข้อมูลต่างจากเครื่องนี้ · แตะยืนยันอีกครั้งเฉพาะเมื่อต้องการใช้ข้อมูลเครื่องนี้เป็นชุดหลัก');render();return true;}
+    U.confirm=null;cloudSyncPush(false,true).then(function(){render();});
+  }
+  else if(a==='cloudPull'){
+    if((S.projects.length||S.tx.length||S.boq.length)&&U.confirm!=='cloudPull'){U.confirm='cloudPull';toast('การดึงจะเก็บชุดปัจจุบันไว้เป็น recovery แล้วแทนด้วยข้อมูล Cloudflare · แตะอีกครั้งเพื่อยืนยัน');render();return true;}
+    U.confirm=null;cloudSyncPull(true).then(function(r){if(r.ok){render();toast('ดึงข้อมูลจาก Cloudflare แล้ว');}else toast(r.error==='EMPTY'?'Cloudflare ยังไม่มีข้อมูล':'ดึงข้อมูล Cloudflare ไม่สำเร็จ · ข้อมูลในเครื่องยังอยู่');});
+  }
   else if(a==='backupFile'){var backupRev=+S.dataRevision||0,payload=backupJson(),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'})).then(function(ok){if(!ok)return;S.lastBackup=Date.now();S.lastBackupRevision=backupRev;if(!persist({metaOnly:true}))return;render();toast('สำรอง revision '+backupRev+' แล้ว · พร้อมตรวจย้าย host');});}
   else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.restoreInfo='';U.confirm=null;render();}
   else if(a==='copyBk'){var copyRev=+S.dataRevision||0;doCopy('bkbox',function(){S.lastBackup=Date.now();S.lastBackupRevision=copyRev;if(!persist({metaOnly:true}))return;render();toast('คัดลอกข้อมูลสำรอง revision '+copyRev+' แล้ว');});}
@@ -5178,7 +5304,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=481',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=490',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
