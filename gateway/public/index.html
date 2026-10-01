@@ -2017,6 +2017,39 @@ input,select,textarea{max-width:100%;min-width:0}
 @media(max-width:430px){.report-cash-command{gap:4px}.report-cash-command>div{padding:8px 6px}.report-cash-command small{font-size:.53rem}.report-cash-command b{font-size:.69rem}.report-cash-command span{font-size:.52rem}.report-booked-summary{padding:7px 4px}.report-booked-summary small{font-size:.51rem}.report-booked-summary b{font-size:.62rem}.report-focus-fold>summary{padding:10px}.report-fold-body select{font-size:16px!important}}
 @media(prefers-color-scheme:dark){.report-cash-command>div,.report-focus-fold{background:#1a232d;color:#eef1f3}.report-booked-summary,.report-fold-body select{background:#0f151c}.report-attention{background:#3a321e;border-color:#6d5a28}.report-attention-head,.report-attention>div:not(.report-attention-head){border-color:#5d4d27}.report-attention small{color:#d7c58d}}
 </style>
+<style>
+/* v442-v450: Cloudflare Project Form Mobile Focus */
+.project-sheet{padding:12px 14px calc(8px + env(safe-area-inset-bottom,0px));max-height:92vh;overscroll-behavior:contain}
+.project-sheet>.master-sheet-handle{margin-bottom:7px}
+.project-form-head{position:sticky;top:-12px;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 -2px 8px;padding:7px 2px 8px;background:var(--bg)}
+.project-form-head small{display:block;color:var(--muted);font-size:.56rem;font-weight:800;letter-spacing:.08em}
+.project-form-head h3{margin:1px 0 0;font-size:1.05rem}
+.project-form-head>button{width:36px;height:36px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:1.25rem;line-height:1}
+.project-form-section{display:grid;grid-template-columns:1fr 1fr;gap:9px 10px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.project-form-main{margin-bottom:9px}
+.pf-field{min-width:0}.pf-field.span-2{grid-column:1/-1}
+.pf-field>label{display:block;margin:0 0 4px;color:var(--muted);font-size:.69rem;font-weight:700}
+.pf-field input,.pf-field select{min-height:42px;height:42px;padding:7px 9px;border-width:1px;border-radius:9px;background:var(--bg);font-size:16px}
+.pf-field>small{display:block;margin-top:4px;color:var(--muted);font-size:.59rem;line-height:1.3}
+.pf-money{display:flex;align-items:center;gap:5px;min-height:42px;padding:0 8px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+.pf-money>span{color:var(--muted);font-weight:800}
+.pf-money input{min-width:0;border:0!important;background:transparent!important;padding-left:2px!important;padding-right:2px!important}
+.pf-money:focus-within{outline:2px solid var(--amber);outline-offset:1px}
+.project-form-fold,.project-danger-fold{margin:8px 0;border:1px solid var(--line);border-radius:13px;background:var(--surface);overflow:hidden}
+.project-form-fold>summary,.project-danger-fold>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:8px 10px;cursor:pointer}
+.project-form-fold>summary::-webkit-details-marker,.project-danger-fold>summary::-webkit-details-marker{display:none}
+.project-form-fold>summary span{min-width:0}.project-form-fold>summary b,.project-form-fold>summary small{display:block}.project-form-fold>summary b{font-size:.75rem}.project-form-fold>summary small{margin-top:1px;color:var(--muted);font-size:.58rem}
+.project-form-fold>summary:after,.project-danger-fold>summary:after{content:'›';font-size:1.1rem;color:var(--muted);transition:transform .15s}.project-form-fold[open]>summary:after,.project-danger-fold[open]>summary:after{transform:rotate(90deg)}
+.project-form-fold>.project-form-section{margin:0 8px 8px;padding:8px;border-radius:10px;background:var(--bg)}
+.project-danger-fold>summary{color:var(--muted);font-size:.7rem;font-weight:700}
+.project-danger-fold>div{padding:0 9px 9px}.project-danger-fold p{margin:0 0 7px;color:var(--muted);font-size:.62rem;line-height:1.35}
+.project-delete-btn{width:100%;min-height:40px;border:1px solid var(--out);border-radius:9px;background:transparent;color:var(--out);font-weight:800;font-size:.72rem}.project-delete-btn.sure{background:var(--out);color:#fff}
+.project-form-savebar{position:sticky;bottom:calc(-8px - env(safe-area-inset-bottom,0px));z-index:7;display:grid;grid-template-columns:.72fr 1.28fr;gap:8px;margin:10px -14px 0;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.project-form-savebar button{min-height:44px;border:1px solid var(--ink);border-radius:10px;background:var(--surface);font-weight:800;font-size:.8rem}.project-form-savebar button.primary{border-color:var(--amber);background:var(--amber);color:var(--amber-ink)}
+@media(max-width:390px){.project-form-section{gap:8px;padding:8px}.pf-field>label{font-size:.65rem}.project-sheet{padding-left:10px;padding-right:10px}.project-form-savebar{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}}
+@media(max-width:340px){.project-form-section{grid-template-columns:1fr}.pf-field.span-2{grid-column:auto}}
+@media(prefers-color-scheme:dark){.project-form-head{background:var(--bg)}.project-form-section,.project-form-fold,.project-danger-fold,.project-form-head>button,.project-form-savebar button{background:#1a232d}.pf-field input,.pf-field select,.pf-money,.project-form-fold>.project-form-section{background:#0f151c}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2164,7 +2197,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=441,APP_CHANNEL='stable';
+var APP_RELEASE=450,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -4200,25 +4233,30 @@ function sheetHtml(){
       '<div class="field"><label for="bqnote">หมายเหตุ</label><textarea id="bqnote" rows="2">'+esc(bx?bx.note:'')+'</textarea></div>'+
       '<div class="stack"><button class="btn pri" data-act="saveBoq" data-id="'+(bx?bx.id:'')+'" data-pid="'+esc(bpid||'')+'">บันทึก BOQ</button>'+(bx?'<button class="btn dng" data-act="deleteBoq" data-id="'+bx.id+'">ลบรายการ BOQ</button>':'')+'<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='proj'){
-    var p=sh.id?proj(sh.id):null;
-    b='<h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3>'+
-     '<div class="field"><label for="pn">ชื่อโครงการ</label><input id="pn" type="text" value="'+esc(p?p.name:'')+'" placeholder="เช่น บ้านคุณสมชาย"></div>'+
-     '<div class="field"><label for="pc">ลูกค้า / เจ้าของงาน</label><input id="pc" type="text" value="'+esc(p?p.client:'')+'"></div>'+
-     '<div class="field"><label for="ploc">สถานที่ / พื้นที่โครงการ</label><input id="ploc" type="text" value="'+esc(p&&p.location?p.location:'')+'" placeholder="เช่น หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม"></div>'+
-     '<div class="field"><label for="pstatus">สถานะโครงการ</label><select id="pstatus"><option value="active"'+(!p||!p.status||p.status==="active"?" selected":"")+'>กำลังดำเนินการ</option><option value="waiting"'+(p&&p.status==="waiting"?" selected":"")+'>รอเริ่มงาน</option><option value="delivered"'+(p&&p.status==="delivered"?" selected":"")+'>ส่งมอบแล้ว</option><option value="closed"'+(p&&p.status==="closed"?" selected":"")+'>ปิดโครงการ</option></select></div>'+
-     '<div class="field"><label for="pno">สัญญาเลขที่</label><input id="pno" type="text" value="'+esc(p?p.contractNo:'')+'" placeholder="เช่น 001/2569"></div>'+
-     '<div class="field"><label for="pcd">ลงวันที่</label><input id="pcd" type="date" value="'+(p&&p.contractDate?p.contractDate:'')+'"></div>'+
-     '<div class="field"><label for="psd">วันเริ่มต้นสัญญา</label><input id="psd" type="date" value="'+(p&&p.startDate?p.startDate:'')+'"></div>'+
-     '<div class="field"><label for="ped">วันสิ้นสุดสัญญา</label><input id="ped" type="date" value="'+(p&&p.endDate?p.endDate:'')+'"></div>'+
-     '<div class="field"><label for="pv">มูลค่าสัญญา (ก่อน VAT)</label><input id="pv" type="number" inputmode="decimal" value="'+(p?p.contract:'')+'" placeholder="0"></div>'+
-     '<div class="field"><label for="pb">งบต้นทุน (ก่อน VAT)</label><input id="pb" type="number" inputmode="decimal" value="'+(p?p.budget:'')+'" placeholder="0"></div>'+
-     '<div class="field"><label for="pr">เงินประกันสัญญาที่จ่ายออก (บาท)</label><input id="pr" type="number" inputmode="decimal" value="'+(p&&p.retAmt?p.retAmt:'')+'" placeholder="0 ถ้าไม่มี"></div>'+
-     '<div class="field"><label for="prpd">วันที่จ่ายเงินประกัน</label><input id="prpd" type="date" value="'+(p&&p.retPaidDate?p.retPaidDate:'')+'"><small class="muted">ยอดนี้จะถูกสร้าง/อัปเดตเป็นรายจ่ายที่ชำระแล้วอัตโนมัติ</small></div>'+
-     '<div class="field"><label for="pdel">วันที่ส่งมอบงาน</label><input id="pdel" type="date" value="'+(p&&p.deliveryDate?p.deliveryDate:'')+'"><small class="muted">ระบบจะกำหนดวันรับคืนเงินประกัน = วันส่งมอบ + 2 ปี</small></div>'+
-     '<div class="field"><label for="prd">ครบกำหนดรับคืนเงินประกัน</label><input id="prd" type="date" value="'+(p&&p.retDue?p.retDue:'')+'" readonly></div>'+
-     '<div class="stack"><button class="btn pri" data-act="saveProj" data-id="'+(p?p.id:'')+'">บันทึกโครงการ</button>'+
-     (p?'<button class="btn dng'+(U.confirm==='p'+p.id?' sure':'')+'" data-act="delProj" data-id="'+p.id+'">'+(U.confirm==='p'+p.id?'แตะอีกครั้งเพื่อลบโครงการและรายการทั้งหมด':'ลบโครงการ')+'</button>':'')+
-     '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+    var p=sh.id?proj(sh.id):null,hasContract=!!(p&&(p.contractNo||p.contractDate||p.startDate||p.endDate)),hasGuarantee=!!(p&&(p.retAmt||p.retPaidDate||p.deliveryDate||p.retDue));
+    b='<div class="project-form-head"><div><small>PROJECT</small><h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3></div><button type="button" data-act="closeSheet" aria-label="ปิด">×</button></div>'+
+     '<div class="project-form-section project-form-main">'+
+       '<div class="pf-field span-2"><label for="pn">ชื่อโครงการ</label><input id="pn" type="text" value="'+esc(p?p.name:'')+'" placeholder="ชื่อโครงการ"></div>'+
+       '<div class="pf-field"><label for="pstatus">สถานะ</label><select id="pstatus"><option value="active"'+(!p||!p.status||p.status==="active"?" selected":"")+'>กำลังดำเนินการ</option><option value="waiting"'+(p&&p.status==="waiting"?" selected":"")+'>รอเริ่มงาน</option><option value="delivered"'+(p&&p.status==="delivered"?" selected":"")+'>ส่งมอบแล้ว</option><option value="closed"'+(p&&p.status==="closed"?" selected":"")+'>ปิดโครงการ</option></select></div>'+
+       '<div class="pf-field"><label for="pc">ลูกค้า / เจ้าของงาน</label><input id="pc" type="text" value="'+esc(p?p.client:'')+'" placeholder="ชื่อหน่วยงาน / ลูกค้า"></div>'+
+       '<div class="pf-field span-2"><label for="ploc">สถานที่ / พื้นที่โครงการ</label><input id="ploc" type="text" value="'+esc(p&&p.location?p.location:'')+'" placeholder="หมู่ / บ้าน / ตำบล / อำเภอ"></div>'+
+       '<div class="pf-field"><label for="pv">มูลค่าสัญญา</label><div class="pf-money"><span>฿</span><input id="pv" type="number" inputmode="decimal" value="'+(p?p.contract:'')+'" placeholder="0"></div></div>'+
+       '<div class="pf-field"><label for="pb">งบต้นทุน</label><div class="pf-money"><span>฿</span><input id="pb" type="number" inputmode="decimal" value="'+(p?p.budget:'')+'" placeholder="0"></div></div>'+
+     '</div>'+
+     '<details class="project-form-fold"'+(hasContract?' open':'')+'><summary><span><b>ข้อมูลสัญญา</b><small>เลขที่สัญญา · วันที่ · ระยะเวลา</small></span></summary><div class="project-form-section">'+
+       '<div class="pf-field"><label for="pno">สัญญาเลขที่</label><input id="pno" type="text" value="'+esc(p?p.contractNo:'')+'" placeholder="001/2569"></div>'+
+       '<div class="pf-field"><label for="pcd">ลงวันที่</label><input id="pcd" type="date" value="'+(p&&p.contractDate?p.contractDate:'')+'"></div>'+
+       '<div class="pf-field"><label for="psd">เริ่มต้นสัญญา</label><input id="psd" type="date" value="'+(p&&p.startDate?p.startDate:'')+'"></div>'+
+       '<div class="pf-field"><label for="ped">สิ้นสุดสัญญา</label><input id="ped" type="date" value="'+(p&&p.endDate?p.endDate:'')+'"></div>'+
+     '</div></details>'+
+     '<details class="project-form-fold"'+(hasGuarantee?' open':'')+'><summary><span><b>เงินประกัน / ส่งมอบ</b><small>เปิดเมื่อมีข้อมูลหลักประกัน</small></span></summary><div class="project-form-section">'+
+       '<div class="pf-field"><label for="pr">เงินประกันสัญญา</label><div class="pf-money"><span>฿</span><input id="pr" type="number" inputmode="decimal" value="'+(p&&p.retAmt?p.retAmt:'')+'" placeholder="0"></div></div>'+
+       '<div class="pf-field"><label for="prpd">วันที่จ่ายเงินประกัน</label><input id="prpd" type="date" value="'+(p&&p.retPaidDate?p.retPaidDate:'')+'"></div>'+
+       '<div class="pf-field"><label for="pdel">วันที่ส่งมอบงาน</label><input id="pdel" type="date" value="'+(p&&p.deliveryDate?p.deliveryDate:'')+'"><small>รับคืน = ส่งมอบ + 2 ปี</small></div>'+
+       '<div class="pf-field"><label for="prd">ครบกำหนดรับคืน</label><input id="prd" type="date" value="'+(p&&p.retDue?p.retDue:'')+'" readonly></div>'+
+     '</div></details>'+
+     (p?'<details class="project-danger-fold"><summary>จัดการโครงการ</summary><div><p>การลบจะลบโครงการและรายการที่เกี่ยวข้อง ใช้เฉพาะเมื่อแน่ใจ</p><button class="project-delete-btn'+(U.confirm==='p'+p.id?' sure':'')+'" data-act="delProj" data-id="'+p.id+'">'+(U.confirm==='p'+p.id?'ยืนยันลบโครงการและข้อมูลที่เกี่ยวข้อง':'ลบโครงการ')+'</button></div></details>':'')+
+     '<div class="project-form-savebar"><button type="button" data-act="closeSheet">ยกเลิก</button><button class="primary" data-act="saveProj" data-id="'+(p?p.id:'')+'">บันทึก</button></div>';
   }else if(sh.kind==='dashManager'){
     var pins=dashPids(),tracked=pins.map(proj).filter(Boolean),available=S.projects.filter(function(p){return pins.indexOf(p.id)<0;});
     function dst(p){return ({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ';}
@@ -4375,7 +4413,7 @@ function sheetHtml(){
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
-  return '<div class="scrim master-scrim" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
+  return '<div class="scrim master-scrim" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='proj'?' project-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
 }
 function csvText(){
   var rows=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
@@ -4982,7 +5020,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=441',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=450',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
