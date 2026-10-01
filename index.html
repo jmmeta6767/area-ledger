@@ -1916,6 +1916,11 @@ input,select,textarea{max-width:100%;min-width:0}
 .cc-grid>div,.cc-head>div,.expense-batch-row>div{min-width:0;overflow-wrap:anywhere}
 @media(max-height:500px){.master-sheet .stack{position:static}.master-sheet{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))!important}}
 </style>
+<style>
+/* v371-v380: AR/AP mobile focus */
+.due-focus{gap:10px}.due-command{background:#18232f;color:#fff;border-radius:22px;padding:16px;margin:4px 0 2px}.due-command-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.due-command-head small{display:block;color:#aeb9c3;font-size:.72rem}.due-command-head h2{margin:2px 0 0;font:700 1.08rem Prompt}.due-command-alert,.due-command-ok{padding:6px 9px;border-radius:999px;font-size:.72rem;white-space:nowrap}.due-command-alert{background:#7d3428;color:#ffe0d9}.due-command-ok{background:#244c36;color:#c8ecd2}.due-command-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:14px}.due-command-grid>div{background:#24323f;border-radius:13px;padding:10px;min-width:0}.due-command-grid small,.due-command-grid span,.due-command-grid b{display:block}.due-command-grid small{color:#aeb9c3;font-size:.68rem}.due-command-grid b{font-size:.92rem;margin-top:3px;overflow-wrap:anywhere}.due-command-grid span{color:#bfc8d0;font-size:.7rem;margin-top:3px}.due-project-filter{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;margin-top:12px}.due-project-filter span{font-size:.76rem;color:#bfc8d0}.due-project-filter select{width:100%;min-width:0;background:#fff;color:#18232f;border:0;border-radius:10px;padding:9px 10px}.due-no-date{margin-top:10px;padding:9px 10px;background:#5b471d;color:#ffe7aa;border-radius:11px;font-size:.74rem}.due-urgent{background:#fff8e7;border:1px solid #ecd28e;border-radius:18px;padding:12px 14px}.due-urgent-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:5px}.due-urgent-head small,.due-urgent-head b{display:block}.due-urgent-head small{font-size:.68rem;color:#8b6a1a}.due-urgent-head b{font-size:.92rem}.due-urgent-head>span{font-size:.72rem;color:#8b6a1a}.due-urgent-row{width:100%;border:0;border-top:1px solid #eadba9;background:transparent;padding:10px 0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;text-align:left;color:inherit}.due-urgent-row span b,.due-urgent-row span small{display:block}.due-urgent-row span small{color:var(--muted);font-size:.74rem;margin-top:2px}.due-urgent-row strong{white-space:nowrap;align-self:center}.due-fold{overflow:hidden}.due-fold>summary{list-style:none;cursor:pointer}.due-fold>summary::-webkit-details-marker{display:none}.due-fold .due-group-head{border-bottom:0}.due-fold[open] .due-group-head{border-bottom:1px solid var(--m-line,#e2e5e5)}.due-group-head>div{min-width:0}.due-group-head em{display:block;font-style:normal;color:var(--m-mut,#69737d);font-size:.72rem;margin-top:3px}.due-fold>summary:after{content:'›';color:var(--m-mut,#69737d);font:700 1.2rem Prompt;margin-left:2px;transition:transform .16s}.due-fold[open]>summary:after{transform:rotate(90deg)}.due-fold .due-group-head>b{margin-left:auto}.due-list .tag{white-space:nowrap}.due-list .tx-modern .r{max-width:46%}@media(max-width:430px){.due-command{padding:14px}.due-command-grid{gap:5px}.due-command-grid>div{padding:9px 8px}.due-command-grid b{font-size:.84rem}.due-urgent{padding:11px 12px}.due-list .tx-modern .r{max-width:42%}}
+@media(prefers-color-scheme:dark){.due-command{background:#0e1821}.due-command-grid>div{background:#1b2a36}.due-urgent{background:#352d18;border-color:#5d4d24}.due-urgent-row{border-top-color:#5d4d24}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -2063,7 +2068,7 @@ function defaultChartAccounts(){return[
 
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:15000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
-var APP_RELEASE=370,APP_CHANNEL='stable';
+var APP_RELEASE=380,APP_CHANNEL='stable';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
 var IDB_NAME='site-ledger-db';
 var BACKUP_KEY=KEY+'-recovery';
@@ -2353,7 +2358,7 @@ function cashSplit(){
   return {bank:b,cash:c};
 }
 function cashBalance(){var x=cashSplit();return x.bank+x.cash;}
-function pending(type){return S.tx.filter(function(t){return t.type===type&&(type==='out'?txOutstandingNet(t)>.01:!t.paid);});}
+function pending(type,pid){return S.tx.filter(function(t){return t.type===type&&(!pid||t.pid===pid)&&txOutstandingNet(t)>.01;});}
 function sumNet(list){return list.reduce(function(a,t){return a+net(t);},0);}
 function periodKey(date){return String(date||'').slice(0,7);}
 function isPeriodClosed(date){var k=periodKey(date);return !!k&&(S.accountingPeriods||[]).some(function(x){return x.period===k&&x.status==='closed';});}
@@ -2621,7 +2626,7 @@ function boqSummary(pid){var rows=boqRows(pid),budget=rows.reduce(function(a,x){
 function budgetPct(p){var s=stats(p.id),b=(+p.budget||0);return b>0?s.outB/b:0;}
 function barCls(x){return x>=1?'over':x>=.85?'warn':'';}
 function dueInfo(t){
-  if(t.paid||!t.due)return null;
+  if(txOutstandingNet(t)<=.01||!t.due)return null;
   var d=Math.round((new Date(t.due+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);
   return {days:d,late:d<0};
 }
@@ -2657,7 +2662,7 @@ function leaveAddTo(target){
   if(!draftDirty()){U.draft=null;target();return true;}
   U.sheet={kind:'leaveAdd',target:target};render();return false;
 }
-function navState(){return {view:U.view||'home',pid:U.pid||null,docListKind:U.docListKind||'',docProjectPid:U.docProjectPid||'',docKind:U.docKind||'',docId:U.docId||'',exportPid:U.exportPid||'',month:U.month||today().slice(0,7),boqProjectPid:U.boqProjectPid||'',boqQuery:U.boqQuery||'',boqCollapsed:U.boqCollapsed&&typeof U.boqCollapsed==='object'?Object.assign({},U.boqCollapsed):{},boqAnchorId:U.boqAnchorId||'',boqScroll:Math.max(0,+U.boqScroll||0),guaranteeProjectPid:U.guaranteeProjectPid||'',guaranteeFilter:U.guaranteeFilter||'all',filter:U.filter?Object.assign({},U.filter):null};}
+function navState(){return {view:U.view||'home',pid:U.pid||null,docListKind:U.docListKind||'',docProjectPid:U.docProjectPid||'',docKind:U.docKind||'',docId:U.docId||'',exportPid:U.exportPid||'',month:U.month||today().slice(0,7),boqProjectPid:U.boqProjectPid||'',boqQuery:U.boqQuery||'',boqCollapsed:U.boqCollapsed&&typeof U.boqCollapsed==='object'?Object.assign({},U.boqCollapsed):{},boqAnchorId:U.boqAnchorId||'',boqScroll:Math.max(0,+U.boqScroll||0),dueProjectPid:U.dueProjectPid||'',dueOpen:U.dueOpen&&typeof U.dueOpen==='object'?Object.assign({},U.dueOpen):{},guaranteeProjectPid:U.guaranteeProjectPid||'',guaranteeFilter:U.guaranteeFilter||'all',filter:U.filter?Object.assign({},U.filter):null};}
 function navSessionAllowed(v){return ['home','list','projects','project','boq','due','guarantees','report','print','docs','procurement','doclist','quoteprint'].indexOf(v)>=0;}
 function saveNavSession(st){
   try{
@@ -2671,14 +2676,14 @@ function loadNavSession(){
 function restoreNavSession(){
   var st=loadNavSession();if(!st)return false;
   if(st.view==='project'&&(!st.pid||!proj(st.pid))){st.view='projects';st.pid=null;}
-  ['boqProjectPid','docProjectPid','exportPid','guaranteeProjectPid'].forEach(function(k){if(st[k]&&!proj(st[k]))st[k]='';});
+  ['boqProjectPid','dueProjectPid','docProjectPid','exportPid','guaranteeProjectPid'].forEach(function(k){if(st[k]&&!proj(st[k]))st[k]='';});
   if(['quote','bill','receipt'].indexOf(st.docListKind)<0)st.docListKind='';
   if(['quote','bill','receipt'].indexOf(st.docKind)<0)st.docKind='';
   if(st.view==='quoteprint'){var docs=docCollection(st.docKind||'quote')||[];if(!st.docId||!docs.some(function(x){return x.id===st.docId;})){st.view='doclist';st.docId='';}}
-  U.view=st.view||'home';U.pid=st.pid||null;U.docListKind=st.docListKind||'';U.docProjectPid=st.docProjectPid||'';U.docKind=st.docKind||'';U.docId=st.docId||'';U.exportPid=st.exportPid||'';U.month=/^\d{4}-\d{2}$/.test(st.month||'')?st.month:today().slice(0,7);U.boqProjectPid=st.boqProjectPid||'';U.boqQuery=String(st.boqQuery||'').slice(0,120);U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);U.boqScroll=Math.max(0,+st.boqScroll||0);U.guaranteeProjectPid=st.guaranteeProjectPid||'';U.guaranteeFilter=st.guaranteeFilter||'all';if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);
+  U.view=st.view||'home';U.pid=st.pid||null;U.docListKind=st.docListKind||'';U.docProjectPid=st.docProjectPid||'';U.docKind=st.docKind||'';U.docId=st.docId||'';U.exportPid=st.exportPid||'';U.month=/^\d{4}-\d{2}$/.test(st.month||'')?st.month:today().slice(0,7);U.boqProjectPid=st.boqProjectPid||'';U.boqQuery=String(st.boqQuery||'').slice(0,120);U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);U.boqScroll=Math.max(0,+st.boqScroll||0);U.dueProjectPid=st.dueProjectPid||'';U.dueOpen=st.dueOpen&&typeof st.dueOpen==='object'?Object.assign({},st.dueOpen):{};U.guaranteeProjectPid=st.guaranteeProjectPid||'';U.guaranteeFilter=st.guaranteeFilter||'all';if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);
   return true;
 }
-function applyNavState(st){if(!st)st={view:'home'};U.view=st.view||'home';U.pid=st.pid||null;if(st.docListKind!==undefined)U.docListKind=st.docListKind||'';if(st.docProjectPid!==undefined)U.docProjectPid=st.docProjectPid||'';if(st.docKind!==undefined)U.docKind=st.docKind||'';if(st.docId!==undefined)U.docId=st.docId||'';if(st.exportPid!==undefined)U.exportPid=st.exportPid||'';if(st.month!==undefined&&/^\d{4}-\d{2}$/.test(st.month||''))U.month=st.month;if(st.boqProjectPid!==undefined)U.boqProjectPid=st.boqProjectPid||'';if(st.boqQuery!==undefined)U.boqQuery=String(st.boqQuery||'').slice(0,120);if(st.boqCollapsed!==undefined)U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};if(st.boqAnchorId!==undefined)U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);if(st.boqScroll!==undefined)U.boqScroll=Math.max(0,+st.boqScroll||0);if(st.guaranteeProjectPid!==undefined)U.guaranteeProjectPid=st.guaranteeProjectPid||'';if(st.guaranteeFilter!==undefined)U.guaranteeFilter=st.guaranteeFilter||'all';if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);U.sheet=null;U.confirm=null;U.appMenu=false;U.anim=1;saveNavSession();render();window.scrollTo(0,0);}
+function applyNavState(st){if(!st)st={view:'home'};U.view=st.view||'home';U.pid=st.pid||null;if(st.docListKind!==undefined)U.docListKind=st.docListKind||'';if(st.docProjectPid!==undefined)U.docProjectPid=st.docProjectPid||'';if(st.docKind!==undefined)U.docKind=st.docKind||'';if(st.docId!==undefined)U.docId=st.docId||'';if(st.exportPid!==undefined)U.exportPid=st.exportPid||'';if(st.month!==undefined&&/^\d{4}-\d{2}$/.test(st.month||''))U.month=st.month;if(st.boqProjectPid!==undefined)U.boqProjectPid=st.boqProjectPid||'';if(st.boqQuery!==undefined)U.boqQuery=String(st.boqQuery||'').slice(0,120);if(st.boqCollapsed!==undefined)U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};if(st.boqAnchorId!==undefined)U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);if(st.boqScroll!==undefined)U.boqScroll=Math.max(0,+st.boqScroll||0);if(st.dueProjectPid!==undefined)U.dueProjectPid=st.dueProjectPid||'';if(st.dueOpen!==undefined)U.dueOpen=st.dueOpen&&typeof st.dueOpen==='object'?Object.assign({},st.dueOpen):{};if(st.guaranteeProjectPid!==undefined)U.guaranteeProjectPid=st.guaranteeProjectPid||'';if(st.guaranteeFilter!==undefined)U.guaranteeFilter=st.guaranteeFilter||'all';if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);U.sheet=null;U.confirm=null;U.appMenu=false;U.anim=1;saveNavSession();render();window.scrollTo(0,0);}
 function go(v,extra,opts){
   opts=opts||{};var cur=navState(),next=Object.assign({},cur,{view:v||'home'});
   if(extra)for(var k in extra)next[k]=extra[k];
@@ -2768,12 +2773,13 @@ function txIcon(t){
   return '<svg viewBox="0 0 24 24"><path d="M5 5h14v14H5Z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>';
 }
 function rowTx(t,showProj,opts){
-  opts=opts||{};var d=dueInfo(t),tags='',label=t.sub||t.partner||t.cat;
+  opts=opts||{};var d=dueInfo(t),tags='',label=t.sub||t.partner||t.cat,pst=txPaymentState(t),outstanding=pst.remain>.01;
   if(t.vat)tags+='<span class="tag">VAT</span>';
   if(t.wht)tags+='<span class="tag">หัก 3%</span>';
   if(t.paid&&t.pay==='cash')tags+='<span class="tag">เงินสด</span>';
-  if(!t.paid){if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';}
-  var shown=opts.outstanding?txOutstandingNet(t):t.amount,sign=opts.outstanding?'':(t.type==='in'?'+':'−');
+  if(opts.outstanding&&pst.partial)tags+='<span class="tag">'+(t.type==='in'?'รับบางส่วน':'จ่ายบางส่วน')+'</span>';
+  if(outstanding){if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';}
+  var shown=opts.outstanding?pst.remain:t.amount,sign=opts.outstanding?'':(t.type==='in'?'+':'−');
   return '<button class="row tx-modern" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+(t.partner?'<small>'+esc(t.partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+sign+fmt(shown).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
 }
 function timelineRows(list){
@@ -3376,27 +3382,57 @@ function vGuarantees(){
   return h+'</div><p class="muted guarantee-note">รองรับหลายหลักประกันต่อโครงการ · เงินสด/โอนเชื่อมรายการบัญชีอัตโนมัติ ส่วนหนังสือค้ำประกันธนาคาร/เช็คเก็บเป็นทะเบียนโดยไม่สร้างกระแสเงินสด</p></section>';
 }
 
+function dueGroupIsOpen(key,fallback){
+  var m=U.dueOpen&&typeof U.dueOpen==='object'?U.dueOpen:null;
+  return m&&Object.prototype.hasOwnProperty.call(m,key)?m[key]===true:!!fallback;
+}
+function dueGuaranteeScope(pid){
+  return (S.guarantees||[]).filter(function(g){return !g.returned&&(!pid||g.pid===pid);}).sort(function(a,b){return (a.dueDate||'9')<(b.dueDate||'9')?-1:1;});
+}
+function dueLegacyRetentionScope(pid,registered){
+  return retOpen().filter(function(p){return (!pid||p.id===pid)&&!registered.some(function(g){return g.pid===p.id;});});
+}
+function dueTxUrgent(t){
+  var d=dueInfo(t);return !!(d&&d.days<=7);
+}
+function dueCommandSummary(pid){
+  var ar=pending('in',pid),ap=pending('out',pid),gs=dueGuaranteeScope(pid),legacy=dueLegacyRetentionScope(pid,gs),arTotal=ar.reduce(function(n,x){return n+txOutstandingNet(x);},0),apTotal=ap.reduce(function(n,x){return n+txOutstandingNet(x);},0),gTotal=gs.reduce(function(n,x){return n+(+x.amount||0);},0)+legacy.reduce(function(n,x){return n+(+x.retAmt||0);},0),urgentTx=ar.concat(ap).filter(dueTxUrgent),urgentGuarantee=gs.filter(function(g){return g.dueDate&&dd(today(),g.dueDate)<=30;}),urgentLegacy=legacy.filter(function(p){var d=retDays(p);return d!==null&&d<=30;}),noDue=ar.concat(ap).filter(function(t){return !t.due;}).length+gs.filter(function(g){return !g.dueDate;}).length+legacy.filter(function(p){return !p.retDue;}).length;
+  return {pid:pid,ar:ar,ap:ap,guarantees:gs,legacy:legacy,arTotal:arTotal,apTotal:apTotal,guaranteeTotal:gTotal,urgentTx:urgentTx,urgentGuarantee:urgentGuarantee,urgentLegacy:urgentLegacy,urgentCount:urgentTx.length+urgentGuarantee.length+urgentLegacy.length,noDue:noDue};
+}
+function dueUrgentItems(sum){
+  var out=[];
+  sum.urgentTx.forEach(function(t){var d=dueInfo(t),label=t.sub||t.partner||t.cat||'',kind=t.type==='in'?'ค้างรับ':'ค้างจ่าย';out.push({score:d.days<0?1000+Math.min(99,-d.days):900-d.days,title:d.days<0?kind+'เลยกำหนด '+(-d.days)+' วัน':d.days===0?kind+'ครบกำหนดวันนี้':kind+'ครบกำหนดใน '+d.days+' วัน',detail:label+' · '+pname(t.pid),amount:txOutstandingNet(t),kind:'tx',id:t.id});});
+  sum.urgentGuarantee.forEach(function(g){var d=dd(today(),g.dueDate),p=proj(g.pid);out.push({score:d<=0?880:800-d,title:d<=0?'หลักประกันครบกำหนดรับคืน':'หลักประกันรับคืนใน '+d+' วัน',detail:(p?p.name:'ไม่พบโครงการ')+' · '+(g.type||'งานประกัน'),amount:+g.amount||0,kind:'guarantee',id:g.id});});
+  sum.urgentLegacy.forEach(function(p){var d=retDays(p);out.push({score:d<=0?870:790-d,title:d<=0?'เงินประกันครบกำหนดรับคืน':'เงินประกันรับคืนใน '+d+' วัน',detail:p.name,amount:+p.retAmt||0,kind:'project',id:p.id});});
+  return out.sort(function(a,b){return b.score-a.score;});
+}
 function vDue(){
-  function block(type,title,sub){
-    var list=pending(type).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:1;}),total=list.reduce(function(n,x){return n+txOutstandingNet(x);},0);
-    var h='<section class="due-group '+(type==='in'?'due-in':'due-out')+'"><div class="due-group-head"><div><small>'+sub+'</small><h2>'+title+'</h2></div><b class="num '+(type==='in'?'in':'out')+'">'+fmt(total)+'</b></div>';
-    if(!list.length)h+='<div class="due-empty">ไม่มีรายการค้าง</div>';
-    else h+='<div class="due-list">'+list.map(function(t){return rowTx(t,true,{outstanding:true});}).join('')+'</div>';
-    return h+'</section>';
+  var pid=U.dueProjectPid||'';if(pid&&!proj(pid)){U.dueProjectPid='';pid='';}
+  var sum=dueCommandSummary(pid),urgent=dueUrgentItems(sum),projects=S.projects.slice(),h='<div class="due-page due-focus">';
+  h+='<section class="due-command"><div class="due-command-head"><div><small>AR / AP CONTROL</small><h2>ค้างรับ / ค้างจ่าย</h2></div>'+(sum.urgentCount?'<b class="due-command-alert">'+sum.urgentCount+' เร่งด่วน</b>':'<b class="due-command-ok">ปกติ</b>')+'</div>';
+  if(projects.length>1)h+='<label class="due-project-filter"><span>โครงการ</span><select id="dueProjectFilter"><option value="">ทุกโครงการ</option>'+projects.map(function(p){return '<option value="'+p.id+'"'+(pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></label>';
+  else if(pid)h+='<div class="muted">'+esc(pname(pid))+'</div>';
+  h+='<div class="due-command-grid"><div><small>ลูกหนี้</small><b class="in">'+fmt(sum.arTotal)+'</b><span>'+sum.ar.length+' รายการ</span></div><div><small>เจ้าหนี้</small><b class="out">'+fmt(sum.apTotal)+'</b><span>'+sum.ap.length+' รายการ</span></div><div><small>หลักประกัน</small><b>'+fmt(sum.guaranteeTotal)+'</b><span>'+(sum.guarantees.length+sum.legacy.length)+' รายการ</span></div></div>'+(sum.noDue?'<div class="due-no-date">ยังไม่มีวันครบกำหนด '+sum.noDue+' รายการ · ควรกำหนดวันเพื่อติดตาม</div>':'')+'</section>';
+  if(urgent.length){
+    h+='<section class="due-urgent"><div class="due-urgent-head"><div><small>ACTION FIRST</small><b>เรื่องที่ควรจัดการก่อน</b></div><span>'+urgent.length+' รายการ</span></div>'+urgent.slice(0,5).map(function(x){var a=x.kind==='guarantee'?'editGuarantee':x.kind==='project'?'openProj':'openTx';return '<button class="due-urgent-row" data-act="'+a+'" data-id="'+x.id+'"><span><b>'+esc(x.title)+'</b><small>'+esc(x.detail)+'</small></span><strong>'+fmt(x.amount)+'</strong></button>';}).join('')+(urgent.length>5?'<div class="muted" style="padding:8px 2px 0">ยังมีอีก '+(urgent.length-5)+' รายการในกลุ่มด้านล่าง</div>':'')+'</section>';
+  }
+  function txBlock(type,title,sub,key){
+    var list=type==='in'?sum.ar:sum.ap,total=type==='in'?sum.arTotal:sum.apTotal,urgentCount=list.filter(dueTxUrgent).length,noDue=list.filter(function(t){return !t.due;}).length,open=dueGroupIsOpen(key,urgentCount>0||list.length<=3);
+    var x='<details class="due-fold due-group '+(type==='in'?'due-in':'due-out')+'" data-due-key="'+key+'"'+(open?' open':'')+'><summary class="due-group-head"><div><small>'+sub+'</small><h2>'+title+'</h2><em>'+list.length+' รายการ'+(urgentCount?' · เร่งด่วน '+urgentCount:'')+(noDue?' · ไม่มีวัน '+noDue:'')+'</em></div><b class="num '+(type==='in'?'in':'out')+'">'+fmt(total)+'</b></summary>';
+    if(!list.length)x+='<div class="due-empty">ไม่มีรายการค้าง</div>';else x+='<div class="due-list">'+list.map(function(t){return rowTx(t,true,{outstanding:true});}).join('')+'</div>';
+    return x+'</details>';
   }
   function retBlock(){
-    var list=(S.guarantees||[]).filter(function(g){return !g.returned;}).sort(function(a,b){return (a.dueDate||'9')<(b.dueDate||'9')?-1:1;});
-    var legacy=retOpen().filter(function(p){return !list.some(function(g){return g.pid===p.id;});});
-    var total=list.reduce(function(a,g){return a+(+g.amount||0);},0)+legacy.reduce(function(a,p){return a+(+p.retAmt||0);},0);
-    var h='<section class="due-group due-guarantee"><div class="due-group-head"><div><small>เงินที่ต้องติดตามรับคืน</small><h2>หลักประกัน</h2></div><b class="num">'+fmt(total)+'</b></div>';
-    if(!list.length&&!legacy.length)h+='<div class="due-empty">ไม่มีหลักประกันที่รอคืน</div>';
-    else h+='<div class="due-list">';
-    list.forEach(function(g){var p=proj(g.pid),st=guaranteeRecordStatus(g);h+='<button class="row" data-act="editGuarantee" data-id="'+g.id+'"><div class="l"><b>'+esc(g.type||'งานประกัน')+'</b><small>'+esc(p?p.name:'ไม่พบโครงการ')+' · '+(g.dueDate?'รับคืนได้ '+dstr(g.dueDate):'ยังไม่ระบุวันรับคืน')+'</small></div><div class="r"><span class="num">'+fmt(+g.amount||0)+'</span><span>'+esc(st.label)+'</span></div></button>';});
-    legacy.forEach(function(p){h+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>ข้อมูลเดิม · '+(p.retDue?'รับคืนได้ '+dstr(p.retDue):'รอวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});
-    return h+'</div></section>';
+    var list=sum.guarantees,legacy=sum.legacy,total=sum.guaranteeTotal,urgentCount=sum.urgentGuarantee.length+sum.urgentLegacy.length,noDue=list.filter(function(g){return !g.dueDate;}).length+legacy.filter(function(p){return !p.retDue;}).length,open=dueGroupIsOpen('guarantee',urgentCount>0||(list.length+legacy.length)<=2);
+    var x='<details class="due-fold due-group due-guarantee" data-due-key="guarantee"'+(open?' open':'')+'><summary class="due-group-head"><div><small>เงินที่ต้องติดตามรับคืน</small><h2>หลักประกัน</h2><em>'+(list.length+legacy.length)+' รายการ'+(urgentCount?' · เร่งด่วน '+urgentCount:'')+(noDue?' · ไม่มีวัน '+noDue:'')+'</em></div><b class="num">'+fmt(total)+'</b></summary>';
+    if(!list.length&&!legacy.length)x+='<div class="due-empty">ไม่มีหลักประกันที่รอคืน</div>';else{x+='<div class="due-list">';list.forEach(function(g){var p=proj(g.pid),st=guaranteeRecordStatus(g);x+='<button class="row" data-act="editGuarantee" data-id="'+g.id+'"><div class="l"><b>'+esc(g.type||'งานประกัน')+'</b><small>'+esc(p?p.name:'ไม่พบโครงการ')+' · '+(g.dueDate?'รับคืนได้ '+dstr(g.dueDate):'ยังไม่ระบุวันรับคืน')+'</small></div><div class="r"><span class="num">'+fmt(+g.amount||0)+'</span><span>'+esc(st.label)+'</span></div></button>';});legacy.forEach(function(p){x+='<button class="row" data-act="openProj" data-id="'+p.id+'"><div class="l"><b>'+esc(p.name)+'</b><small>ข้อมูลเดิม · '+(p.retDue?'รับคืนได้ '+dstr(p.retDue):'รอวันส่งมอบ')+'</small></div><div class="r"><span class="num">'+fmt(p.retAmt)+'</span><span>'+retTag(p)+'</span></div></button>';});x+='</div>';}
+    return x+'</details>';
   }
-  return '<div class="due-page">'+block('in','ลูกหนี้','เงินค้างรับจากเจ้าของงาน')+block('out','เจ้าหนี้','ค้างจ่ายร้านวัสดุและช่าง')+retBlock()+'<div class="due-note">หลักประกันเงินสด/โอนจะเชื่อมบัญชีเมื่อวางและเมื่อรับคืนจริง ส่วนหนังสือค้ำประกัน/เช็คเก็บในทะเบียนโดยไม่สร้างกระแสเงินสด</div></div>';
+  h+=txBlock('in','ลูกหนี้','เงินค้างรับจากเจ้าของงาน','ar')+txBlock('out','เจ้าหนี้','ค้างจ่ายร้านวัสดุและช่าง','ap')+retBlock();
+  h+='<div class="due-note">แตะกลุ่มเพื่อพับ/ขยาย · แตะรายการเพื่อรับ/จ่ายเงินหรือแก้วันครบกำหนด · หลักประกันเงินสด/โอนเชื่อมบัญชีเมื่อมีเงินเคลื่อนไหวจริง</div></div>';
+  return h;
 }
+
 
 function vReport(){
   var mk=U.month,i=0,o=0,vi=0,vo=0,wi=0,wo=0,cat={},csub={};
@@ -4076,11 +4112,12 @@ function downloadBusinessDocPdf(kind,id){
 
 /* ---------- วาดหน้า ---------- */
 function urgentCount(){
-  var n=0;
-  S.tx.forEach(function(t){if(!t.paid&&t.due){var d=dd(today(),t.due);if(d<=7)n++;}});
+  var n=0,registered={};
+  S.tx.forEach(function(t){if(txOutstandingNet(t)>.01&&t.due){var d=dd(today(),t.due);if(d<=7)n++;}});
+  (S.guarantees||[]).forEach(function(g){if(g.returned)return;registered[g.pid]=1;if(g.dueDate&&dd(today(),g.dueDate)<=7)n++;});
   S.projects.forEach(function(p){
     if((p.status||'active')==='active'&&p.endDate&&dd(today(),p.endDate)<=7)n++;
-    var rd=retDays(p);if(p.retAmt>0&&!p.retRecv&&rd!==null&&rd<=7)n++;
+    var rd=retDays(p);if(!registered[p.id]&&p.retAmt>0&&!p.retRecv&&rd!==null&&rd<=7)n++;
   });
   return n;
 }
@@ -4520,7 +4557,12 @@ document.addEventListener('input',function(e){
 });
 ['dragenter','dragover'].forEach(function(ev){document.addEventListener(ev,function(e){var z=e.target&&e.target.closest?e.target.closest('#boqDropZone'):null;if(!z)return;e.preventDefault();e.stopPropagation();z.style.opacity='.72';});});
 ['dragleave','drop'].forEach(function(ev){document.addEventListener(ev,function(e){var z=e.target&&e.target.closest?e.target.closest('#boqDropZone'):null;if(!z)return;e.preventDefault();e.stopPropagation();z.style.opacity='1';if(ev==='drop'&&e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])boqHandleFile(e.dataTransfer.files[0],U.sheet&&U.sheet.pid);});});
+document.addEventListener('toggle',function(e){
+  var d=e.target;if(U.view!=='due'||!d||!d.classList||!d.classList.contains('due-fold'))return;
+  var key=d.getAttribute('data-due-key');if(!key)return;U.dueOpen=U.dueOpen&&typeof U.dueOpen==='object'?U.dueOpen:{};U.dueOpen[key]=!!d.open;saveNavSession();
+},true);
 document.addEventListener('change',function(e){
+  if(e.target&&e.target.id==='dueProjectFilter'){var dp=e.target.value||'';U.dueProjectPid=dp&&proj(dp)?dp:'';U.dueOpen={};saveNavSession();render();return;}
   if(e.target&&e.target.id==='restoreFile'&&e.target.files&&e.target.files[0]){
     var rf=e.target.files[0];if(rf.size>20*1024*1024){toast('ไฟล์สำรองใหญ่เกิน 20 MB');return;}
     var rr=new FileReader();rr.onerror=function(){toast('อ่านไฟล์สำรองไม่ได้');};rr.onload=function(){var raw=String(rr.result||''),parsed=restoreParse(raw);if(!parsed.ok){U.restoreInfo='ไฟล์ไม่ผ่าน validation';U.rsText='';U.confirm=null;render();toast('ไฟล์สำรองไม่ถูกต้อง');return;}U.rsText=raw;U.confirm=null;U.restoreInfo='พร้อมกู้คืน · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ · '+parsed.summary.boq+' BOQ'+(parsed.meta.sourceOrigin&&parsed.meta.sourceOrigin!==location.origin?' · ต้นทาง '+parsed.meta.sourceOrigin:'');render();toast('อ่านไฟล์สำรองแล้ว · ตรวจยอดก่อนยืนยัน');};rr.readAsText(rf);return;
@@ -4621,7 +4663,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=370',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=380',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
