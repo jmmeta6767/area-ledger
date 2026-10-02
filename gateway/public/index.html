@@ -3847,24 +3847,56 @@ function boqMergeOcrRows(primary,secondary){
 function boqBestCellPair(qty,prices,amounts){
   var best=null;(prices||[]).forEach(function(p){(amounts||[]).forEach(function(a){if(!(p.value>=0)||!(a.value>0))return;var calc=qty*p.value,err=Math.abs(calc-a.value)/Math.max(1,a.value);if(err<=.08&&(!best||err<best.error||(Math.abs(err-best.error)<.0001&&p.x>best.x)))best={price:p.value,amount:a.value,error:err,x:p.x};});});return best;
 }
+function boqNormHeader(s){return String(s||'').toLowerCase().replace(/[\s._:()\[\]{}\-–—]/g,'');}
+function boqHeaderBands(words,width){
+  var W=Math.max(1,+width||1),top=words.filter(function(w){return ((w.bbox.y0+w.bbox.y1)/2)<Math.max(260,W*.22);});
+  function pick(rx,from,to){
+    var found=[];top.forEach(function(w){var t=boqNormHeader(w.text),x=((w.bbox.x0+w.bbox.x1)/2)/W;if(x>=from&&x<=to&&rx.test(t))found.push({x:x,text:t});});
+    if(!found.length)return null;found.sort(function(a,b){return a.x-b.x;});return found[0].x;
+  }
+  var d={desc:.205,qty:.415,unit:.487,mat:.565,labor:.715,total:.865,note:.955};
+  var got={
+    desc:pick(/^รายการ$/,.08,.38),
+    qty:pick(/^จำนวน$/,.30,.50),
+    unit:pick(/^หน่วย$/,.38,.58),
+    mat:pick(/ค่าวัสดุ|วัสดุ/,.48,.69),
+    labor:pick(/ค่าแรงงาน|แรงงาน|ค่าแรง/,.60,.82),
+    total:pick(/^รวม$|ค่าวัสดุและแรงงาน/,.75,.93),
+    note:pick(/หมายเหตุ/,.86,.995)
+  };
+  Object.keys(got).forEach(function(k){if(got[k]!==null)d[k]=got[k];});
+  var ordered=[d.desc,d.qty,d.unit,d.mat,d.labor,d.total,d.note];
+  for(var i=1;i<ordered.length;i++)if(!(ordered[i]>ordered[i-1]+.025))return {desc:[.045,.375],qty:[.375,.455],unit:[.455,.525],mp:[.525,.595],ma:[.595,.665],lp:[.665,.735],la:[.735,.815],total:[.815,.915],note:[.915,.995],dynamic:false};
+  var b1=(d.desc+d.qty)/2,b2=(d.qty+d.unit)/2,b3=(d.unit+d.mat)/2,b4=(d.mat+d.labor)/2,b5=(d.labor+d.total)/2,b6=(d.total+d.note)/2;
+  var ms=(b3+b4)/2,ls=(b4+b5)/2;
+  return {desc:[Math.max(.02,d.desc-(b1-d.desc)*1.6),b1],qty:[b1,b2],unit:[b2,b3],mp:[b3,ms],ma:[ms,b4],lp:[b4,ls],la:[ls,b5],total:[b5,b6],note:[b6,.995],dynamic:true};
+}
 function boqPositionalRows(data,width){
   var words=boqOcrWords(data),W=Math.max(1,+width||0),out=[];if(!words.length||!W)return out;
-  var hs=words.map(function(w){return Math.max(1,w.bbox.y1-w.bbox.y0);}).sort(function(a,b){return a-b;}),med=hs[Math.floor(hs.length/2)]||18,tol=Math.max(7,med*.62),lines=[];
-  words.slice().sort(function(a,b){var ay=(a.bbox.y0+a.bbox.y1)/2,by=(b.bbox.y0+b.bbox.y1)/2;return Math.abs(ay-by)>tol?ay-by:a.bbox.x0-b.bbox.x0;}).forEach(function(w){var cy=(w.bbox.y0+w.bbox.y1)/2,line=null,best=1e9;lines.forEach(function(l){var d=Math.abs(l.y-cy);if(d<best&&d<=tol){best=d;line=l;}});if(!line){line={y:cy,words:[]};lines.push(line);}line.words.push(w);line.y=(line.y*(line.words.length-1)+cy)/line.words.length;});
-  function band(line,a,b){return line.words.filter(function(w){var x=((w.bbox.x0+w.bbox.x1)/2)/W;return x>=a&&x<b;});}
-  function nums(ws){return ws.map(function(w){var v=boqWordNumber(w);return v===null?null:{value:v,x:(w.bbox.x0+w.bbox.x1)/2,text:String(w.text||'')};}).filter(Boolean);}
-  function text(ws){return ws.slice().sort(function(a,b){return a.bbox.x0-b.bbox.x0;}).map(function(w){return String(w.text||'').trim();}).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();}
-  lines.sort(function(a,b){return a.y-b.y;}).forEach(function(line){
-    var desc=text(band(line,.045,.375)),qtys=nums(band(line,.375,.455)),unit=text(band(line,.455,.525)),mp=nums(band(line,.525,.605)),ma=nums(band(line,.605,.675)),lp=nums(band(line,.675,.755)),la=nums(band(line,.755,.825));
-    if(!desc||boqGenericNoise(desc)||/^(?:ยอดยกมา|รวมยอดยกไป|รวมราคาค่างานต้นทุน)/i.test(desc))return;
-    var qty=qtys.length?qtys[qtys.length-1].value:0;if(!(qty>0)||qty>1000000)return;
-    desc=desc.replace(/^\s*\d+(?:\.\d+){0,4}\s*/,'').replace(/^[-–—\s]+/,'').replace(/\s+/g,' ').trim();if(desc.length<2)return;
-    if(!unit){var whole=text(line.words),u=thaiGovUnit(whole);unit=u||'';}
+  var bands=boqHeaderBands(words,W),hs=words.map(function(w){return Math.max(1,w.bbox.y1-w.bbox.y0);}).sort(function(a,b){return a-b;}),med=hs[Math.floor(hs.length/2)]||18,tol=Math.max(8,med*.85);
+  function cx(w){return ((w.bbox.x0+w.bbox.x1)/2)/W;} function cy(w){return (w.bbox.y0+w.bbox.y1)/2;}
+  function inBand(w,b){var x=cx(w);return x>=b[0]&&x<b[1];}
+  function nums(ws){return ws.map(function(w){var v=boqWordNumber(w);return v===null?null:{value:v,x:(w.bbox.x0+w.bbox.x1)/2,text:String(w.text||''),w:w};}).filter(Boolean);}
+  function txt(ws){return ws.slice().sort(function(a,b){return a.bbox.x0-b.bbox.x0;}).map(function(w){return String(w.text||'').trim();}).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();}
+  var qtyAnchors=words.filter(function(w){var v=boqWordNumber(w);return inBand(w,bands.qty)&&v!==null&&v>0&&v<=1000000;}).sort(function(a,b){return cy(a)-cy(b);});
+  qtyAnchors.forEach(function(qw){
+    var y=cy(qw),qty=boqWordNumber(qw);if(!(qty>0))return;
+    var rowWords=words.filter(function(w){return Math.abs(cy(w)-y)<=tol*1.35;});
+    var descWords=rowWords.filter(function(w){return inBand(w,bands.desc);}),unitWords=rowWords.filter(function(w){return inBand(w,bands.unit);});
+    if(!descWords.length){
+      var prev=words.filter(function(w){var dy=y-cy(w);return dy>0&&dy<=tol*2.2&&inBand(w,bands.desc);});if(prev.length)descWords=prev;
+    }
+    var desc=txt(descWords).replace(/^\s*\d+(?:\.\d+){0,4}\s*/,'').replace(/^[-–—\s]+/,'').replace(/\s+/g,' ').trim();
+    if(!desc||desc.length<2||boqGenericNoise(desc)||/^(?:ยอดยกมา|รวมยอดยกไป|รวมราคาค่างานต้นทุน)/i.test(desc))return;
+    var unit=txt(unitWords);if(!unit){var u=thaiGovUnit(txt(rowWords));unit=u||'';}
+    var mp=nums(rowWords.filter(function(w){return inBand(w,bands.mp);})),ma=nums(rowWords.filter(function(w){return inBand(w,bands.ma);})),lp=nums(rowWords.filter(function(w){return inBand(w,bands.lp);})),la=nums(rowWords.filter(function(w){return inBand(w,bands.la);})),tot=nums(rowWords.filter(function(w){return inBand(w,bands.total);}));
     var mat=boqBestCellPair(qty,mp,ma),labor=boqBestCellPair(qty,lp,la);
-    if(mat)out.push({name:desc+' — ค่าวัสดุ',category:'ค่าของ',qty:qty,unit:unit,unitPrice:mat.price,note:'OCR ตารางตามตำแหน่ง · ตรวจจำนวน×ราคากับจำนวนเงินแล้ว · ข้ามเลขวงกลม/ลายมือในช่องราคา',ocrConfidence:Math.max(.9,1-mat.error),ocrNeedsReview:mat.error>.015});
-    if(labor)out.push({name:desc+' — ค่าแรง',category:'ค่าแรง',qty:qty,unit:unit,unitPrice:labor.price,note:'OCR ตารางตามตำแหน่ง · ตรวจจำนวน×ราคากับจำนวนเงินแล้ว · ข้ามเลขวงกลม/ลายมือในช่องราคา',ocrConfidence:Math.max(.9,1-labor.error),ocrNeedsReview:labor.error>.015});
+    if(!mat&&mp.length&&tot.length&&!lp.length){mat=boqBestCellPair(qty,mp,tot);}
+    if(!labor&&lp.length&&tot.length&&!mp.length){labor=boqBestCellPair(qty,lp,tot);}
+    if(mat)out.push({name:desc+' — ค่าวัสดุ',category:'ค่าของ',qty:qty,unit:unit,unitPrice:mat.price,note:'OCR ตารางไดนามิก · ตรวจจำนวน×ราคากับจำนวนเงินแล้ว · ข้ามเลขวงกลม/ลายมือ',ocrConfidence:Math.max(.9,1-mat.error),ocrNeedsReview:mat.error>.015,ocrDynamicColumns:bands.dynamic});
+    if(labor)out.push({name:desc+' — ค่าแรง',category:'ค่าแรง',qty:qty,unit:unit,unitPrice:labor.price,note:'OCR ตารางไดนามิก · ตรวจจำนวน×ราคากับจำนวนเงินแล้ว · ข้ามเลขวงกลม/ลายมือ',ocrConfidence:Math.max(.9,1-labor.error),ocrNeedsReview:labor.error>.015,ocrDynamicColumns:bands.dynamic});
   });
-  var clean=[],seen={};out.forEach(function(x){var k=boqImportKey(x);if(!seen[k]){seen[k]=1;clean.push(x);}});return clean;
+  var clean=[],seen={};out.forEach(function(x){var k=boqImportKey(x);if(!seen[k]){seen[k]=1;clean.push(x);}});clean.dynamicColumns=bands.dynamic;clean.anchors=qtyAnchors.length;return clean;
 }
 function boqTableSignal(data,text){var words=boqOcrWords(data),score=boqOcrScore(text),ys={};words.forEach(function(w){var b=w.bbox,y=Math.round(((b.y0+b.y1)/2)/24);ys[y]=(ys[y]||0)+1;});var dense=Object.keys(ys).filter(function(k){return ys[k]>=5;}).length;return score+dense*2+Math.min(12,Math.floor(words.length/18));}
 function boqLayoutText(data,fallback){var words=boqOcrWords(data);if(!words.length)return String(fallback||'');var hs=words.map(function(w){return Math.max(1,w.bbox.y1-w.bbox.y0);}).sort(function(a,b){return a-b;}),med=hs[Math.floor(hs.length/2)]||18,tol=Math.max(8,med*.65),lines=[];words.sort(function(a,b){var ay=(a.bbox.y0+a.bbox.y1)/2,by=(b.bbox.y0+b.bbox.y1)/2;return Math.abs(ay-by)>tol?ay-by:a.bbox.x0-b.bbox.x0;}).forEach(function(w){var cy=(w.bbox.y0+w.bbox.y1)/2,line=null,best=1e9;lines.forEach(function(l){var d=Math.abs(l.y-cy);if(d<best&&d<=tol){best=d;line=l;}});if(!line){line={y:cy,words:[]};lines.push(line);}line.words.push(w);line.y=(line.y*(line.words.length-1)+cy)/line.words.length;});lines.sort(function(a,b){return a.y-b.y;});return lines.map(function(l){return l.words.sort(function(a,b){return a.bbox.x0-b.bbox.x0;}).map(function(w){return String(w.text||'').trim();}).filter(Boolean).join(' ');}).join('\n');}
