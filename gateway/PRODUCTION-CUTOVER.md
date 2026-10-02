@@ -81,6 +81,22 @@ v800 separates automated staging evidence from the user's real production eviden
 10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.
 
 
+## v811 final business acceptance
+
+Infrastructure cutover is complete. Final Stable 1.0 is intentionally split into machine-verifiable and human-verifiable evidence.
+
+Machine-verifiable checks:
+1. Production runtime.
+2. Cloud / D1 / R2 reconciliation.
+3. Backup / Disaster Recovery certification.
+4. Real-data migration certificate after the production ledger is reconciled.
+
+Human-verifiable checks:
+1. iPhone field acceptance: refresh continuity, offline → online, receipt → R2, OCR, edit/reopen round trip, Wi-Fi/5G switch.
+2. Accounting Freeze policy 1.0 after the current accounting baseline has no blockers.
+
+The in-app **Final Check** may refresh machine evidence, but it must never auto-mark the two human-verifiable gates.
+
 ## v810 production cutover completion
 
 Production cutover completed successfully for source `5693ba1ae3ae5c7bbb8756ebfc5fb9c9addcd1c2`.
