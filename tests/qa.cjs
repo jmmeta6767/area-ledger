@@ -15,6 +15,29 @@ function action(a,id='p',fields={}){for(const [k,v] of Object.entries(fields))el
 (async()=>{
 test('JS syntax',()=>assert(scripts.length));
 test('storage keys remain unchanged',()=>{assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db')});
+reset();test('v815 Safari first save accepts exact raw localStorage baseline after migration',()=>{
+  const raw=JSON.stringify({projects:[],tx:[],role:'owner',opening:0});
+  storage.set(c.KEY,raw);
+  const ls=c.loadLS();
+  assert(ls);
+  assert.notEqual(JSON.stringify(ls),raw,'migration should canonicalize the legacy/fresh snapshot');
+  c.S=ls;c.committedState=c.storageCommitBaseline(ls,ls);
+  assert.equal(c.committedState,raw,'baseline must preserve exact bytes that were read from Safari');
+  c.S.brand='AREA TEST';
+  assert.equal(c.persist({skipCloud:true}),true);
+  assert.equal(c.U.storageConflict,false);
+  assert.notEqual(storage.get(c.KEY),raw);
+});
+reset();test('v815 Safari baseline still blocks a real external-tab write',()=>{
+  const raw=JSON.stringify(c.emptyState());
+  storage.set(c.KEY,raw);
+  const ls=c.loadLS();c.S=ls;c.committedState=c.storageCommitBaseline(ls,ls);
+  const other=c.emptyState();other.brand='OTHER TAB';other.updatedAt=Date.now()+1;
+  storage.set(c.KEY,JSON.stringify(other));
+  c.S.brand='THIS TAB';
+  assert.equal(c.persist({skipCloud:true}),false);
+  assert.equal(c.U.storageConflict,true);
+});
 test('v500 Cloudflare recovery keeps history and explicit previous restore controls',()=>{assert(code.includes('function cloudSyncHistory'));assert(code.includes('function cloudSyncRestorePrevious'));assert(html.includes('data-act="cloudHistory"'));assert(html.includes('data-act="cloudRestorePrevious"'));assert(code.includes("'/v1/ledger/restore-previous'"));});
 test('v263 portable backup and guarded PWA update hooks exist',()=>{assert(html.includes("data-act=\"backupFile\""));assert(code.includes('function pwaCanReload()'));assert(code.includes("serviceWorker.addEventListener('controllerchange'"));assert(code.includes("sw.js?v=800"));});
 test('v264 gateway is secret-free and local OCR remains default',()=>{assert.equal(c.aiGatewayConfig().mode,'local');assert.equal(c.aiGatewayEndpoint('v1/ocr/expense'),'');assert(!/api[_-]?key|authorization\s*:/i.test(c.aiGatewayRequest.toString()));});

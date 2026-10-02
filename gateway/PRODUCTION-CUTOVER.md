@@ -81,6 +81,17 @@ v800 separates automated staging evidence from the user's real production eviden
 10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.
 
 
+## v815 Safari first-save storage guard
+
+Observed on the production iPhone acceptance path: after a Fresh Start, Cloud Full Acceptance could pass but creating the first project still failed with the generic local-save rollback message.
+
+Root cause: `loadLS()` returns a migrated copy. The boot code used `JSON.stringify(migratedState)` as the optimistic-concurrency baseline even though Safari still held the pre-migration raw JSON. The next `persist()` therefore interpreted the canonicalization difference as a write from another tab.
+
+Fix:
+1. when localStorage wins boot selection, retain the exact raw localStorage bytes as `committedState`;
+2. allow the legitimate first save to canonicalize and replace the raw snapshot;
+3. preserve fail-closed behavior for genuine external-tab writes.
+
 ## v813 fresh-start D1 reconcile repair
 
 For a new Cloud Ledger, revision 0 can exist in Durable Object storage before a matching row-set has been mirrored into D1. In that state the previous UI correctly reported D1 mismatch but offered no recovery path.

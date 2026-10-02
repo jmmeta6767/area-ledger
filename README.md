@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v815 Safari Canonical Storage Baseline
+
+- Fixes a real iPhone/Safari first-save failure where `loadLS()` migrates a copy of the stored ledger, but optimistic concurrency compared that migrated JSON against the original raw localStorage bytes.
+- When localStorage is the winning boot source, the app now keeps the exact raw bytes as the concurrency baseline; the first legitimate save after refresh no longer looks like an external-tab edit.
+- Real external-tab edits are still fail-closed and continue to set the storage-conflict guard.
+- No storage key, IndexedDB name, Cloud Ledger key, accounting policy, or production binding changes.
+
 ## v814 D1 Repair Production Gate Closed
 
 - v813 passed Release QA, Staging deploy/live acceptance, and Production deploy/live acceptance for exact source `a0c200074680d9649b23bbe7aaaf394cc732d956`.
