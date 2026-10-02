@@ -16,6 +16,20 @@ async function req(path,opt={}){
   if(!r.ok){const e=new Error(path+' HTTP '+r.status+' '+JSON.stringify(data));e.status=r.status;e.data=data;throw e;}
   return {r,data};
 }
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function waitForGateway(){
+  let last=null;
+  for(let attempt=1;attempt<=5;attempt++){
+    try{return {health:await req('/health',{method:'GET'}),attempt};}
+    catch(e){
+      last=e;
+      const retryable=!e?.status||[429,500,502,503,504].includes(e.status);
+      if(!retryable||attempt===5)throw e;
+      await sleep(1000*attempt);
+    }
+  }
+  throw last||new Error('gateway readiness failed');
+}
 const evidence={base,target,sourceSha:sourceSha||null,workflowRun:workflowRun||null,at:new Date().toISOString(),checks:{}};
 try{
   assert(['staging','production'].includes(target),'acceptance target must be staging or production');
@@ -24,7 +38,7 @@ try{
   if(sourceSha)assert.match(sourceSha,/^[0-9a-f]{40}$/i);
   if(workflowRun)assert.match(workflowRun,/^[0-9]+$/);
   evidence.checks.provenance=true;
-  const health=await req('/health',{method:'GET'}); assert.equal(health.data.productionReady,true);evidence.checks.health=true;
+  const warmup=await waitForGateway(); const health=warmup.health; assert.equal(health.data.productionReady,true);evidence.checks.health=true;evidence.checks.healthAttempts=warmup.attempt;
   const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ok,true);evidence.checks.ready=true;
   const platform=await req('/v1/platform/status',{method:'GET'});assert.equal(platform.data.productionReady,true);evidence.checks.platform=true;
   const now=Date.now(),state1={projects:[{id:'acceptance-p1',name:'Live Acceptance'}],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:[],quotes:[],bills:[],receipts:[],dataRevision:1,updatedAt:now,acceptanceMarker:'synthetic-no-user-data'};
