@@ -107,17 +107,59 @@ async function durableCall(binding,path,body){if(!binding)return null;const id=b
 async function rateAllowed(r,env){const limit=Math.max(1,Math.min(120,Number(env.RATE_LIMIT_PER_MINUTE)||20)),key=clientKey(r);if(String(env.REQUIRE_DURABLE_STATE||'').toLowerCase()==='true'&&!env.GATEWAY_STATE)return null;const durable=await durableCall(env.GATEWAY_STATE,'rate',{key,limit,windowMs:WINDOW_MS});if(durable)return durable.allowed===true;const now=Date.now(),old=buckets.get(key);if(!old||now-old.start>=WINDOW_MS){buckets.set(key,{start:now,count:1});return true;}old.count++;return old.count<=limit;}
 async function ledgerRateAllowed(r,env){const limit=Math.max(5,Math.min(240,Number(env.LEDGER_RATE_LIMIT_PER_MINUTE)||60)),key='ledger:'+clientKey(r);if(!env.GATEWAY_STATE)return null;const durable=await durableCall(env.GATEWAY_STATE,'rate',{key,limit,windowMs:WINDOW_MS});return durable?durable.allowed===true:null;}
 async function readJson(r){const len=Number(r.headers.get('Content-Length')||0);if(len&&len>MAX_BODY_BYTES)throw Error('PAYLOAD_TOO_LARGE');const text=await r.text();if(text.length>MAX_BODY_BYTES)throw Error('PAYLOAD_TOO_LARGE');return JSON.parse(text);}
-function validateExpense(b){const image=b&&b.image;if(typeof image!=='string'||!/^data:image\/(jpeg|png|webp);base64,/i.test(image))throw Error('INVALID_IMAGE');return {image,lang:'tha+eng'};}
+function validateOcrImage(b,kind){
+  const image=b&&b.image;
+  if(typeof image!=='string'||!/^data:image\/(jpeg|png|webp);base64,/i.test(image))throw Error('INVALID_IMAGE');
+  return {image,lang:'tha+eng',kind:kind==='boq'?'boq':'expense'};
+}
 function safeProviderUrl(raw){raw=String(raw||'').trim();if(!raw)return '';try{const u=new URL(raw);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error();return u.href;}catch(_){throw Error('PROVIDER_URL_INVALID');}}
 function providerConfig(env){const kind=String(env.OCR_PROVIDER||'generic').toLowerCase();if(!['generic','gemini'].includes(kind))throw Error('PROVIDER_UNSUPPORTED');const model=String(env.GEMINI_MODEL||'gemini-2.5-flash').trim();return {kind,model,url:kind==='gemini'?'https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent':safeProviderUrl(env.OCR_UPSTREAM_URL),key:String(env.OCR_API_KEY||''),timeout:Math.max(3000,Math.min(20000,Number(env.PROVIDER_TIMEOUT_MS)||10000)),retries:Math.max(0,Math.min(1,Number(env.PROVIDER_RETRIES)||1))};}
 function providerReady(env){try{const p=providerConfig(env);return !!p.key&&(p.kind==='gemini'||!!p.url);}catch(_){return false;}}
-function providerRequest(p,payload,rid){if(p.kind==='gemini'){const m=String(payload.image||'').match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/i);if(!m)throw Error('INVALID_IMAGE');const prompt='คุณเป็นระบบอ่านหลักฐานค่าใช้จ่ายสำหรับบัญชีก่อสร้าง อ่านภาพโดยใช้ vision โดยตรง ไม่ใช่ OCR ตัวพิมพ์อย่างเดียว ต้องรองรับบิลเงินสดร้านเล็กภาษาไทย บิลสำเร็จรูป บิลคาร์บอนจาง และลายมือไทย ให้ดูตำแหน่งช่อง ตาราง เส้น และหัวข้อบนแบบฟอร์มประกอบกัน งานสำคัญที่สุดคือยอดเงิน: มองหาช่อง รวมเงิน/TOTAL ด้านล่างก่อน แล้วตรวจเทียบคอลัมน์ จำนวนเงิน/AMOUNT; ถ้า TOTAL อ่านได้ชัด ให้ใช้ค่านั้น แม้ข้อความลายมืออื่นอ่านไม่ได้ ตัวเลขใน BOOK NO, BILL NO, เบอร์โทร, วันที่ และ UNIT PRICE ห้ามนำมาเป็น amount. ถ้ามีเลขเดียวกันใน AMOUNT และ TOTAL ให้ความมั่นใจสูงขึ้น. อ่านรายการจากช่อง DESCRIPTION และชื่อร้าน/ผู้ขายจากหัวบิลหรือตราประทับ; ชื่อลูกค้าในช่อง NAME ไม่ใช่ partner. วันที่ไทยเช่น 2-10-69 ให้คืน date เป็น 2026-10-02 เมื่อตีความได้ชัดเจน (พ.ศ. 2569/เลขปี 69 = ค.ศ. 2026) แต่ห้ามเดา. ตัวอย่างรูปแบบที่ระบบต้องรองรับ: หัว บิลเงินสด/CASH SALE, ตาราง จำนวน | รายการ | หน่วยละ | จำนวนเงิน และกล่อง รวมเงิน/TOTAL ด้านล่าง. ตอบ JSON เท่านั้น {"text":"ข้อความที่มองเห็นทั้งหมด","amount":ยอดรวมเป็นตัวเลขไม่มี comma หรือ 0,"cat":"ค่าของ|ค่าแรง|ค่าประกัน/ค่างาน|ค่างานเอกสาร|ค่าเช่าอื่นๆ","sub":"รายการสินค้า/บริการสั้นๆ","partner":"ชื่อร้าน/ผู้ขายถ้าอ่านได้","date":"YYYY-MM-DD หรือค่าว่าง","confidence":0.0} ห้ามสร้างข้อมูลที่มองไม่เห็น';return {url:p.url,headers:{'Content-Type':'application/json','x-goog-api-key':p.key,'X-AREA-Request-ID':rid},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:m[1].toLowerCase(),data:m[2]}}]}],generationConfig:{responseMimeType:'application/json',temperature:0}})};}return {url:p.url,headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key,'X-AREA-Request-ID':rid},body:JSON.stringify(payload)};}
-function cleanExpense(data){if(!data||typeof data!=='object'||Array.isArray(data))throw Error('PROVIDER_INVALID_RESPONSE');const amount=Number(data.amount)||0;if(!isFinite(amount)||amount<0)throw Error('PROVIDER_INVALID_RESPONSE');return {text:String(data.text||'').slice(0,20000),amount,cat:String(data.cat||'ค่าของ').slice(0,80),sub:String(data.sub||'').slice(0,160),partner:String(data.partner||'').slice(0,160),date:String(data.date||'').slice(0,10),confidence:Math.max(0,Math.min(1,Number(data.confidence)||0))};}
-function geminiExpense(data){const parts=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts,text=Array.isArray(parts)?parts.map(x=>x&&x.text||'').join('').trim():'';if(!text)throw Error('PROVIDER_INVALID_RESPONSE');try{return cleanExpense(JSON.parse(text.replace(/^\`\`\`(?:json)?\s*/i,'').replace(/\s*\`\`\`$/,'')));}catch(e){if(String(e&&e.message)==='PROVIDER_INVALID_RESPONSE')throw e;throw Error('PROVIDER_INVALID_RESPONSE');}}
+function providerRequest(p,payload,rid){
+  if(p.kind==='gemini'){
+    const m=String(payload.image||'').match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/i);if(!m)throw Error('INVALID_IMAGE');
+    const expensePrompt='คุณเป็นระบบอ่านหลักฐานค่าใช้จ่ายสำหรับบัญชีก่อสร้าง อ่านภาพโดยใช้ vision โดยตรง ไม่ใช่ OCR ตัวพิมพ์อย่างเดียว ต้องรองรับบิลเงินสดร้านเล็กภาษาไทย บิลสำเร็จรูป บิลคาร์บอนจาง และลายมือไทย ให้ดูตำแหน่งช่อง ตาราง เส้น และหัวข้อบนแบบฟอร์มประกอบกัน งานสำคัญที่สุดคือยอดเงิน: มองหาช่อง รวมเงิน/TOTAL ด้านล่างก่อน แล้วตรวจเทียบคอลัมน์ จำนวนเงิน/AMOUNT; ถ้า TOTAL อ่านได้ชัด ให้ใช้ค่านั้น แม้ข้อความลายมืออื่นอ่านไม่ได้ ตัวเลขใน BOOK NO, BILL NO, เบอร์โทร, วันที่ และ UNIT PRICE ห้ามนำมาเป็น amount. ถ้ามีเลขเดียวกันใน AMOUNT และ TOTAL ให้ความมั่นใจสูงขึ้น. อ่านรายการจากช่อง DESCRIPTION และชื่อร้าน/ผู้ขายจากหัวบิลหรือตราประทับ; ชื่อลูกค้าในช่อง NAME ไม่ใช่ partner. วันที่ไทยเช่น 2-10-69 ให้คืน date เป็น 2026-10-02 เมื่อตีความได้ชัดเจน (พ.ศ. 2569/เลขปี 69 = ค.ศ. 2026) แต่ห้ามเดา. ตัวอย่างรูปแบบที่ระบบต้องรองรับ: หัว บิลเงินสด/CASH SALE, ตาราง จำนวน | รายการ | หน่วยละ | จำนวนเงิน และกล่อง รวมเงิน/TOTAL ด้านล่าง. ตอบ JSON เท่านั้น {"text":"ข้อความที่มองเห็นทั้งหมด","amount":ยอดรวมเป็นตัวเลขไม่มี comma หรือ 0,"cat":"ค่าของ|ค่าแรง|ค่าประกัน/ค่างาน|ค่างานเอกสาร|ค่าเช่าอื่นๆ","sub":"รายการสินค้า/บริการสั้นๆ","partner":"ชื่อร้าน/ผู้ขายถ้าอ่านได้","date":"YYYY-MM-DD หรือค่าว่าง","confidence":0.0} ห้ามสร้างข้อมูลที่มองไม่เห็น';
+    const boqPrompt='คุณเป็นระบบอ่าน BOQ งานก่อสร้างภาษาไทยจากภาพ ใช้ vision อ่านโครงสร้างตาราง เส้นแบ่งคอลัมน์ หัวตาราง และตำแหน่งตัวเลข ไม่ใช่อาศัย OCR ข้อความอย่างเดียว. อ่านเฉพาะรายการที่มองเห็นจริง ห้ามเดาชื่อ ปริมาณ หน่วย หรือราคา. คืนแต่ละรายการเป็น name, qty, unit, unitPrice, category และ confidence. category ใช้เฉพาะ "ค่าของ" หรือ "ค่าแรง". ถ้าหนึ่งรายการมีค่าวัสดุและค่าแรงแยกคอลัมน์ ให้แตกเป็น 2 แถวโดยเติมท้ายชื่อว่า "— ค่าวัสดุ" และ "— ค่าแรง". ถ้าเห็นยอดเงินแต่ไม่เห็นราคาต่อหน่วยชัด ห้ามคำนวณย้อนเพื่อเดาราคา. ถ้าอ่านปริมาณหรือราคาต่อหน่วยไม่ชัด ให้ตัดแถวนั้นออก. หน่วยอาจเป็น ตร.ม., ลบ.ม., เมตร, ม., กก., ตัน, ชุด, อัน, ตัว, แผ่น, เส้น, ท่อน, ถุง, ลูก, เที่ยว, งาน, หลัง, จุด, บ่อ, ต้น, เครื่อง, วัน, เดือน, ชั่วโมง. declaredTotal ให้คืนเฉพาะเมื่อเห็นยอดรวมเอกสารชัด. ตอบ JSON เท่านั้น {"text":"ข้อความที่มองเห็น","rows":[{"name":"ชื่อรายการ","qty":1,"unit":"หน่วย","unitPrice":0,"category":"ค่าของ","confidence":0.0}],"declaredTotal":0,"confidence":0.0}. จำกัดไม่เกิน 300 แถวต่อภาพ และห้ามสร้างข้อมูลที่มองไม่เห็น';
+    const prompt=payload.kind==='boq'?boqPrompt:expensePrompt;
+    return {url:p.url,headers:{'Content-Type':'application/json','x-goog-api-key':p.key,'X-AREA-Request-ID':rid},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt},{inline_data:{mime_type:m[1].toLowerCase(),data:m[2]}}]}],generationConfig:{responseMimeType:'application/json',temperature:0}})};
+  }
+  return {url:p.url,headers:{'Content-Type':'application/json','Authorization':'Bearer '+p.key,'X-AREA-Request-ID':rid},body:JSON.stringify(payload)};
+}
+function cleanExpense(data){
+  if(!data||typeof data!=='object'||Array.isArray(data))throw Error('PROVIDER_INVALID_RESPONSE');
+  const amount=Number(data.amount)||0;if(!isFinite(amount)||amount<0)throw Error('PROVIDER_INVALID_RESPONSE');
+  return {text:String(data.text||'').slice(0,20000),amount,cat:String(data.cat||'ค่าของ').slice(0,80),sub:String(data.sub||'').slice(0,160),partner:String(data.partner||'').slice(0,160),date:String(data.date||'').slice(0,10),confidence:Math.max(0,Math.min(1,Number(data.confidence)||0))};
+}
+function cleanBoq(data){
+  if(!data||typeof data!=='object'||Array.isArray(data))throw Error('PROVIDER_INVALID_RESPONSE');
+  const rows=Array.isArray(data.rows)?data.rows.slice(0,300):[],clean=[];
+  for(const row of rows){
+    if(!row||typeof row!=='object')continue;
+    const name=String(row.name||'').replace(/\s+/g,' ').trim().slice(0,180),qty=Number(row.qty),unit=String(row.unit||'').replace(/\s+/g,' ').trim().slice(0,40),unitPrice=Number(row.unitPrice),category=String(row.category||'ค่าของ')==='ค่าแรง'?'ค่าแรง':'ค่าของ',confidence=Math.max(0,Math.min(1,Number(row.confidence)||0));
+    if(name.length<2||!(qty>0)||!isFinite(qty)||qty>1000000||!(unitPrice>=0)||!isFinite(unitPrice)||unitPrice>1000000000)continue;
+    clean.push({name,qty,unit,unitPrice,category,confidence});
+  }
+  const declaredTotal=Number(data.declaredTotal)||0;
+  return {text:String(data.text||'').slice(0,30000),rows:clean,declaredTotal:isFinite(declaredTotal)&&declaredTotal>0?declaredTotal:0,confidence:Math.max(0,Math.min(1,Number(data.confidence)||0))};
+}
+function geminiJson(data){
+  const parts=data&&data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts,text=Array.isArray(parts)?parts.map(x=>x&&x.text||'').join('').trim():'';
+  if(!text)throw Error('PROVIDER_INVALID_RESPONSE');
+  try{return JSON.parse(text.replace(/^\`\`\`(?:json)?\s*/i,'').replace(/\s*\`\`\`$/,''));}catch(_){throw Error('PROVIDER_INVALID_RESPONSE');}
+}
+function geminiExpense(data){return cleanExpense(geminiJson(data));}
+function geminiBoq(data){return cleanBoq(geminiJson(data));}
 function retryableStatus(s){return s===408||s===429||s>=500;}
 async function providerFetch(p,payload,rid){let last;for(let attempt=0;attempt<=p.retries;attempt++){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),p.timeout);try{const rq=providerRequest(p,payload,rid),res=await fetch(rq.url,{method:'POST',headers:rq.headers,body:rq.body,signal:ctrl.signal});if(res.ok)return res;if(!retryableStatus(res.status)||attempt>=p.retries)throw Error('PROVIDER_HTTP_'+res.status);last=Error('PROVIDER_HTTP_'+res.status);}catch(e){last=e;if(attempt>=p.retries||String(e&&e.message||'').startsWith('PROVIDER_HTTP_')&&!retryableStatus(Number(String(e.message).split('_').pop())))throw e;}finally{clearTimeout(timer);}}throw last||Error('PROVIDER_FAILED');}
 async function readProviderJson(res){const len=Number(res.headers.get('Content-Length')||0);if(len&&len>MAX_PROVIDER_BYTES)throw Error('PROVIDER_RESPONSE_TOO_LARGE');const text=await res.text();if(new TextEncoder().encode(text).byteLength>MAX_PROVIDER_BYTES)throw Error('PROVIDER_RESPONSE_TOO_LARGE');try{return JSON.parse(text);}catch(_){throw Error('PROVIDER_INVALID_RESPONSE');}}
-async function expenseOcr(payload,env,rid){const p=providerConfig(env);if(!p.key||(p.kind==='generic'&&!p.url))throw Error('PROVIDER_NOT_CONFIGURED');const res=await providerFetch(p,payload,rid),data=await readProviderJson(res);return p.kind==='gemini'?geminiExpense(data):cleanExpense(data);}
+async function expenseOcr(payload,env,rid){
+  const p=providerConfig(env);if(!p.key||(p.kind==='generic'&&!p.url))throw Error('PROVIDER_NOT_CONFIGURED');
+  const res=await providerFetch(p,payload,rid),data=await readProviderJson(res);return p.kind==='gemini'?geminiExpense(data):cleanExpense(data);
+}
+async function boqOcr(payload,env,rid){
+  const p=providerConfig(env);if(!p.key||(p.kind==='generic'&&!p.url))throw Error('PROVIDER_NOT_CONFIGURED');
+  const res=await providerFetch(p,payload,rid),data=await readProviderJson(res);return p.kind==='gemini'?geminiBoq(data):cleanBoq(data);
+}
 async function idemGet(env,key){const d=await durableCall(env.GATEWAY_STATE,'idem-get',{key,windowMs:WINDOW_MS});if(d)return d.hit?d.value:null;const x=idempotency.get(key);if(!x)return null;if(Date.now()-x.at>WINDOW_MS){idempotency.delete(key);return null;}return x.value;}
 async function idemSet(env,key,value){const d=await durableCall(env.GATEWAY_STATE,'idem-set',{key,windowMs:WINDOW_MS,value});if(d)return;idempotency.set(key,{at:Date.now(),value});if(idempotency.size>500)idempotency.delete(idempotency.keys().next().value);}
 function auditMeta(rid,origin,status,started,provider){return {requestId:rid,origin,status,provider,durationMs:Date.now()-started,at:new Date().toISOString()};}
@@ -266,13 +308,16 @@ export default{async fetch(request,env){
       return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
     }catch(e){const code=String(e&&e.message||'LEDGER_ERROR'),status=code==='LEDGER_PAYLOAD_TOO_LARGE'?413:code==='LEDGER_JSON_INVALID'||code==='LEDGER_STATE_INVALID'?400:500;return json({error:code},status,origin,rid);}
   }
-  if(url.pathname!=='/v1/ocr/expense'||request.method!=='POST')return json({error:'NOT_FOUND'},404,'',rid);
+  if(!['/v1/ocr/expense','/v1/ocr/boq'].includes(url.pathname)||request.method!=='POST')return json({error:'NOT_FOUND'},404,'',rid);
   if(!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
   if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
   const rate=await rateAllowed(request,env);if(rate===null)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);if(!rate)return json({error:'RATE_LIMITED'},429,origin,rid);
   const key=origin+'|'+rid,cached=await idemGet(env,key);if(cached)return json(cached,200,origin,rid);
   let status=200;
-  try{const payload=validateExpense(await readJson(request)),result=await expenseOcr(payload,env,rid);await idemSet(env,key,result);return json(result,200,origin,rid);}
+  try{
+    const kind=url.pathname.endsWith('/boq')?'boq':'expense',payload=validateOcrImage(await readJson(request),kind),result=kind==='boq'?await boqOcr(payload,env,rid):await expenseOcr(payload,env,rid);
+    await idemSet(env,key,result);return json(result,200,origin,rid);
+  }
   catch(e){const code=e&&e.name==='AbortError'?'PROVIDER_TIMEOUT':String(e&&e.message||'GATEWAY_ERROR');status=code==='PAYLOAD_TOO_LARGE'?413:code==='INVALID_IMAGE'?400:code==='PROVIDER_NOT_CONFIGURED'||code==='DURABLE_STATE_REQUIRED'?503:code==='PROVIDER_UNSUPPORTED'?501:code==='PROVIDER_TIMEOUT'?504:502;return json({error:code},status,origin,rid);}
   finally{await audit(env,auditMeta(rid,origin,status,started,String(env.OCR_PROVIDER||'generic')));}
 }};
