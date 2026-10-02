@@ -3835,7 +3835,10 @@ function boqCreateOcrWorker(){
   }});
 }
 function boqWordNumber(w){
-  var t=String(w&&w.text||'').trim().replace(/[Oo]/g,'0').replace(/[^0-9,.-]/g,'');
+  var raw=String(w&&w.text||'').trim();if(!raw)return null;
+  raw=raw.replace(/[๐-๙]/g,function(ch){return String('๐๑๒๓๔๕๖๗๘๙'.indexOf(ch));});
+  if(!/^[\s()\[\]{}+\-0-9Oo.,]+$/.test(raw))return null;
+  var t=raw.replace(/[Oo]/g,'0').replace(/[()\[\]{}+\s]/g,'').replace(/[^0-9,.-]/g,'');
   if(!t||t==='-'||t==='.'||t===',')return null;
   var v=thaiBoqNum(t);return isFinite(v)?v:null;
 }
