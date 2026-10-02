@@ -33,4 +33,8 @@ assert(stableBlock.includes('fa=fieldAcceptanceEvidence()'));
 assert(stableBlock.includes('s1=stable1Readiness()'));
 assert(stableBlock.indexOf('fa=fieldAcceptanceEvidence()')<stableBlock.indexOf('phase=['),'Business Stable field evidence must be initialized before phase evaluation');
 assert(stableBlock.indexOf('s1=stable1Readiness()')<stableBlock.indexOf('phase=['),'Business Stable Stable 1.0 evidence must be initialized before phase evaluation');
+for(const k of ['AREA_LEDGER_ACCEPTANCE_TARGET','AREA_LEDGER_ACCEPTANCE_SHA','AREA_LEDGER_ACCEPTANCE_RUN'])assert(live.includes(k));
+assert(live.includes('sourceSha:sourceSha||null'));
+assert(live.includes('workflowRun:workflowRun||null'));
+assert(live.includes('evidence.checks.provenance=true'));
 console.log('PASS v800 Business Stable 1.0 source contract');

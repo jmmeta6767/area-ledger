@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v804 Live Acceptance Provenance
+
+- Binds each automated live acceptance artifact to the declared target environment, exact GitHub source SHA, and workflow run ID.
+- Staging and production workflows now inject explicit provenance into `live-acceptance.json`; a target/base mismatch fails closed before platform checks continue.
+- Provenance is privacy-safe metadata only and does not add ledger values, OCR text, attachment contents, secrets, or recovery keys to artifacts.
+- `APP_RELEASE=800`, the v800 PWA cache, frozen storage identifiers, accounting policy 1.0, and current Cloudflare resource bindings remain unchanged.
+
 ## v803 Business Stable Control Center Hotfix
 
 - Fixes the Business Stable v800 sheet evaluating iPhone field evidence and Stable 1.0 status before those evidence objects were initialized.
