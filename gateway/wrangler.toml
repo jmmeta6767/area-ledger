@@ -17,7 +17,7 @@ GEMINI_MODEL = "gemini-2.5-flash"
 PROVIDER_TIMEOUT_MS = "10000"
 PROVIDER_RETRIES = "1"
 REQUIRE_DURABLE_STATE = "true"
-# Set ALLOWED_ORIGINS at deploy time to exact production/preview origins.
+ALLOWED_ORIGINS = "https://area-ledger-ai-gateway.areamaibab.workers.dev"
 # Set OCR_UPSTREAM_URL as a non-secret environment variable.
 # Store OCR_API_KEY with the platform secret store; never commit it.
 
@@ -34,13 +34,16 @@ class_name = "GatewayState"
 type = "durable-object"
 storage = "sqlite"
 
-# Production bindings remain auto-provisionable. Staging D1 is explicitly pinned to the already-created database to make deploys idempotent.
+# Production resources provisioned by the first intentional cutover and now pinned for deterministic redeploys.
 [[d1_databases]]
 binding = "LEDGER_DB"
+database_name = "area-ledger-ai-gateway-ledger-db"
+database_id = "72fc4f7e-63ec-42ca-8a2e-7b1dc61bf72d"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
 binding = "LEDGER_FILES"
+bucket_name = "area-ledger-ai-gateway-ledger-files"
 
 # Staging preflight: configure exact ALLOWED_ORIGINS and provider secrets before deploy.
 # R2 audit binding remains optional and should be enabled only with a retention policy.
