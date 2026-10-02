@@ -55,7 +55,11 @@ jobs:
         run: node tests/v700-business-stable.cjs
       - name: v800 business stable 1.0 QA
         run: node tests/v800-business-stable.cjs
+      - name: v805 production cutover contract QA
+        run: node tests/production-cutover-v805.cjs
       - name: Live acceptance script syntax
         run: node --check tests/live-cloudflare-acceptance.mjs
+      - name: Production binding capture syntax
+        run: node --check tests/capture-production-bindings.mjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs
