@@ -79,3 +79,17 @@ v800 separates automated staging evidence from the user's real production eviden
 8. Production deploy must pass its own platform checks before real data is considered cut over.
 9. Operational alerts remain non-mutating and are not a substitute for month-end/accounting review.
 10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.
+
+
+## v805 automated first production cutover
+
+The first production deployment is authorized by the one-time file `.github/production-cutover-v805` containing exactly `DEPLOY_PRODUCTION`.
+
+- The dedicated workflow waits for **AREA Ledger Staging Auto Deploy** to finish successfully on `main`.
+- It checks out the exact staging-tested SHA; a newer untested `main` commit is never substituted.
+- A lightweight authorization job runs without the production Environment. Only an authorized SHA may enter the `production` Environment and access production deployment secrets.
+- The first Wrangler deploy may auto-provision isolated production D1/R2 resources. The workflow captures the real production database name/UUID and R2 bucket name from Wrangler's updated runner config and fails closed if either is absent or points at staging.
+- After binding capture, the workflow installs the production OCR secret, applies D1 migrations, redeploys, runs synthetic live acceptance, and uploads privacy-safe evidence.
+- Remove the authorization marker immediately after a successful cutover. The workflow may remain as a dormant audit-safe guard; without the marker it skips production.
+- Pin the captured real production D1/R2 resource identifiers in `gateway/wrangler.toml` in the next source hardening commit.
+- Real accounting data migration remains a separate explicit device-side step after a fresh portable backup.
