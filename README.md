@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v816 Safari Storage Production Gate Closed
+
+- v815 passed Release QA, Staging deploy/live acceptance, and Production deploy/live acceptance for exact source `05d52fc51b5e104a8a5ef31087a0241ece202a3b`.
+- The Safari first-save baseline fix is now live in Production.
+- The one-time production authorization marker is removed again immediately after successful acceptance.
+- Next real-device validation is to refresh the production page and create the first project; a legitimate first save must succeed while genuine cross-tab writes remain blocked.
+
 ## v815 Safari Canonical Storage Baseline
 
 - Fixes a real iPhone/Safari first-save failure where `loadLS()` migrates a copy of the stored ledger, but optimistic concurrency compared that migrated JSON against the original raw localStorage bytes.
