@@ -81,6 +81,16 @@ v800 separates automated staging evidence from the user's real production eviden
 10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.
 
 
+## v809 production resource pin / resume
+
+The first authorized production deploy successfully created the isolated production Worker bindings before the workflow stopped at binding capture:
+
+- D1 database name: `area-ledger-ai-gateway-ledger-db`
+- D1 database UUID: `72fc4f7e-63ec-42ca-8a2e-7b1dc61bf72d`
+- R2 bucket: `area-ledger-ai-gateway-ledger-files`
+
+These identifiers are now pinned in `gateway/wrangler.toml`. The next cutover run must reuse these exact production resources, install the OCR secret, apply D1 migrations, redeploy, and pass live production acceptance. Staging identifiers remain separate.
+
 ## v806 credential-gate pause / safe resume
 
 The first v805 production cutover attempt reached the production Environment but stopped before deployment because all three production Environment secrets were absent. No production Worker mutation, D1/R2 provisioning, migration, or live acceptance occurred.
