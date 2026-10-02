@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v814 D1 Repair Production Gate Closed
+
+- v813 passed Release QA, Staging deploy/live acceptance, and Production deploy/live acceptance for exact source `a0c200074680d9649b23bbe7aaaf394cc732d956`.
+- Production now contains the Fresh Start D1 reconcile auto-repair path.
+- The one-time production authorization marker is removed again so future main pushes cannot redeploy production automatically.
+- The user can refresh the production app and re-run **ตรวจ Cloudflare เต็มระบบ**; the first unmatched D1 mirror will be repaired from the authoritative Durable Cloud Ledger and must checksum-match before acceptance proceeds.
+
 ## v813 D1 Reconcile Auto-Repair
 
 - Fixes the Fresh Start / first Cloud Sync path where Durable Cloud Ledger can be valid while its D1 mirror has not been materialized yet.
