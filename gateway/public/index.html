@@ -2337,7 +2337,11 @@ async function cloudFullAcceptance(){
   var platform=await cloudGateway('GET','/v1/platform/status');
   if(!platform.ok||!platform.data||platform.data.productionReady!==true)return {ok:false,error:'PLATFORM_NOT_READY',platform:platform.data||null};
   var reconcile=await cloudGateway('GET','/v1/ledger/reconcile');
-  if(!reconcile.ok||!reconcile.data||reconcile.data.matched!==true)return {ok:false,error:'D1_NOT_MATCHED',platform:platform.data,reconcile:reconcile.data||null};
+  if(!reconcile.ok||!reconcile.data||reconcile.data.matched!==true){
+    var repaired=await cloudGateway('POST','/v1/ledger/reconcile',{});
+    if(repaired.ok&&repaired.data&&repaired.data.matched===true)reconcile=repaired;
+    else return {ok:false,error:'D1_NOT_MATCHED',platform:platform.data,reconcile:(repaired&&repaired.data)||reconcile.data||null};
+  }
   var probe=await cloudGateway('POST','/v1/files/probe',{});
   if(!probe.ok||!probe.data||probe.data.ok!==true)return {ok:false,error:'R2_PROBE_FAILED',platform:platform.data,reconcile:reconcile.data,probe:probe.data||null};
   var history=await cloudGateway('GET','/v1/ledger/history');
