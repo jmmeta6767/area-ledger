@@ -5,6 +5,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v809 Production Resource Pin
+
+- Pins the real production D1 database created by the first intentional production deployment: `area-ledger-ai-gateway-ledger-db` / `72fc4f7e-63ec-42ca-8a2e-7b1dc61bf72d`.
+- Pins the real production R2 bucket `area-ledger-ai-gateway-ledger-files` so subsequent production deploys cannot auto-provision another bucket.
+- Pins production `ALLOWED_ORIGINS` to the exact production Workers.dev origin.
+- Keeps production and staging D1/R2 resources isolated; no staging identifier is reused in production.
+- The first production deployment created resources successfully but stopped before OCR secret installation/migrations/live acceptance because the earlier capture step expected Wrangler to rewrite the checked-in config. This pin commit converts the discovered live resource identifiers into deterministic source configuration before resuming cutover.
+
 ## v807 Production Cutover Re-Arm
 
 - Re-arms the one-time production cutover only after the `production` GitHub Environment has all three required secrets configured: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `OCR_API_KEY`.
