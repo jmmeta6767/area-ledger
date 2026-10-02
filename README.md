@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v807 Production Cutover Re-Arm
+
+- Re-arms the one-time production cutover only after the `production` GitHub Environment has all three required secrets configured: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `OCR_API_KEY`.
+- The exact re-armed SHA must pass Release QA and Staging Auto Deploy + live acceptance before the production workflow is allowed to proceed.
+- Production remains fail-closed: missing credentials, failed QA, failed staging acceptance, failed D1/R2 capture, migration failure, or live acceptance failure stops the cutover.
+- The authorization marker is temporary and must be removed after a successful production cutover.
+
 ## v806 Production Cutover Dormant Guard
 
 - Records a privacy-safe production secret preflight artifact containing only present/missing booleans plus source/run provenance; secret values are never written.
