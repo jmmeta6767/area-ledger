@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v811 Final Stable 1.0 Control Center
+
+- Adds a single **FINAL · Stable 1.0** summary inside the Business Stable control center, separating automated infrastructure checks from evidence that must come from real business use.
+- Final Check re-runs Cloud/D1/R2 reconciliation and Disaster Recovery certification, but it deliberately cannot mark iPhone Field Acceptance or Accounting Freeze on the user's behalf.
+- Final readiness remains fail-closed until production runtime, real-data migration evidence, Cloud/D1/R2 acceptance, recovery, six real-device field checks, and Accounting Freeze all pass.
+- Keeps `APP_RELEASE=800`, frozen storage identifiers, accounting policy `1.0`, and pinned production/staging resources unchanged.
+
 ## v810 Production Cutover Closed
 
 - Production cutover completed successfully for source `5693ba1ae3ae5c7bbb8756ebfc5fb9c9addcd1c2` after exact-SHA Release QA and Staging live acceptance.
