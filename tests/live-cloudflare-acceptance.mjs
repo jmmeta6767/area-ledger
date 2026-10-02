@@ -3,6 +3,10 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 
 const base=(process.env.AREA_LEDGER_LIVE_BASE||'https://area-ledger-ai-gateway-staging.areamaibab.workers.dev').replace(/\/$/,'');
+const declaredTarget=String(process.env.AREA_LEDGER_ACCEPTANCE_TARGET||'').trim().toLowerCase();
+const target=declaredTarget||(base.includes('-staging.')?'staging':'production');
+const sourceSha=String(process.env.AREA_LEDGER_ACCEPTANCE_SHA||'').trim();
+const workflowRun=String(process.env.AREA_LEDGER_ACCEPTANCE_RUN||'').trim();
 const key=crypto.randomBytes(32).toString('base64url');
 const common={'X-AREA-Gateway-Version':'1','X-AREA-Ledger-Key':key,'Content-Type':'application/json'};
 async function req(path,opt={}){
@@ -12,8 +16,14 @@ async function req(path,opt={}){
   if(!r.ok){const e=new Error(path+' HTTP '+r.status+' '+JSON.stringify(data));e.status=r.status;e.data=data;throw e;}
   return {r,data};
 }
-const evidence={base,at:new Date().toISOString(),checks:{}};
+const evidence={base,target,sourceSha:sourceSha||null,workflowRun:workflowRun||null,at:new Date().toISOString(),checks:{}};
 try{
+  assert(['staging','production'].includes(target),'acceptance target must be staging or production');
+  if(declaredTarget==='staging')assert.equal(base,'https://area-ledger-ai-gateway-staging.areamaibab.workers.dev');
+  if(declaredTarget==='production')assert.equal(base,'https://area-ledger-ai-gateway.areamaibab.workers.dev');
+  if(sourceSha)assert.match(sourceSha,/^[0-9a-f]{40}$/i);
+  if(workflowRun)assert.match(workflowRun,/^[0-9]+$/);
+  evidence.checks.provenance=true;
   const health=await req('/health',{method:'GET'}); assert.equal(health.data.productionReady,true);evidence.checks.health=true;
   const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ok,true);evidence.checks.ready=true;
   const platform=await req('/v1/platform/status',{method:'GET'});assert.equal(platform.data.productionReady,true);evidence.checks.platform=true;
