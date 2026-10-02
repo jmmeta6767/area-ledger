@@ -423,5 +423,7 @@ reset();test('v824 positional BOQ parser handles labor-only row beside handwritt
   var rows=c.boqPositionalRows(data,1000);assert.equal(rows.length,1);assert.equal(rows[0].category,'ค่าแรง');assert.equal(rows[0].unitPrice,72);assert.equal(rows[0].qty,18);
 });
 
+reset();test('v825 BOQ OCR words can recover positions from TSV when blocks are absent',()=>{var t='level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext\n5\t1\t1\t1\t1\t1\t100\t200\t50\t20\t95\t375.00';var w=c.boqOcrWords({tsv:t});assert.equal(w.length,1);assert.equal(w[0].text,'375.00');assert.equal(w[0].bbox.x0,100);assert.equal(w[0].bbox.x1,150);});
+reset();test('v825 BOQ image reader uses reusable Tesseract worker with blocks and TSV output',()=>{var a=c.boqCreateOcrWorker.toString(),b=c.boqReadImage.toString(),d=c.boqImportImages.toString();assert(a.includes("createWorker(['tha','eng']"));assert(b.includes('{text:true,blocks:true,tsv:true}'));assert(b.includes('worker.recognize'));assert(d.includes('boqCreateOcrWorker'));assert(d.includes('worker.terminate'));assert(d.includes('wordCount'));});
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
