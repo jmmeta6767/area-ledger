@@ -46,3 +46,7 @@ assert(y.includes('confirm_production'));
 assert(y.includes('DEPLOY_PRODUCTION'));
 assert(y.includes('Live production acceptance'));
 assert(y.includes('https://area-ledger-ai-gateway.areamaibab.workers.dev'));
+for(const k of ['AREA_LEDGER_ACCEPTANCE_TARGET','AREA_LEDGER_ACCEPTANCE_SHA','AREA_LEDGER_ACCEPTANCE_RUN']){assert(y.includes(k));assert(auto.includes(k));}
+assert(y.includes('AREA_LEDGER_ACCEPTANCE_TARGET: staging'));
+assert(y.includes('AREA_LEDGER_ACCEPTANCE_TARGET: production'));
+assert(auto.includes('AREA_LEDGER_ACCEPTANCE_TARGET: staging'));
