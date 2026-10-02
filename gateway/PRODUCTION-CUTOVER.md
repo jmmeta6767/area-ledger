@@ -81,6 +81,17 @@ v800 separates automated staging evidence from the user's real production eviden
 10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.
 
 
+## v813 fresh-start D1 reconcile repair
+
+For a new Cloud Ledger, revision 0 can exist in Durable Object storage before a matching row-set has been mirrored into D1. In that state the previous UI correctly reported D1 mismatch but offered no recovery path.
+
+The in-app Cloud Full Acceptance flow now:
+1. verifies with `GET /v1/ledger/reconcile`;
+2. if unmatched, calls `POST /v1/ledger/reconcile` to mirror the authoritative Durable state into D1;
+3. proceeds only when the returned semantic checksum is matched.
+
+The operation is safe for Fresh Start because Durable Cloud Ledger stays authoritative. Human-only Final Stable evidence remains unchanged.
+
 ## v811 final business acceptance
 
 Infrastructure cutover is complete. Final Stable 1.0 is intentionally split into machine-verifiable and human-verifiable evidence.
