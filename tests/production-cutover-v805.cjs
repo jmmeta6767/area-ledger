@@ -1,4 +1,4 @@
-// Production cutover fresh success-event trigger for v822; functional assertions below remain unchanged.
+// v823 BOQ production cutover trigger; functional assertions below remain unchanged.
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const y=fs.readFileSync('.github/workflows/production-cutover-v805.yml','utf8');
 const authPath='.github/production-cutover-v805';
