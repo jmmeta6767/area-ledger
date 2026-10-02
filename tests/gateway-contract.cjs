@@ -9,7 +9,7 @@ assert(worker.includes("url.pathname.endsWith('/boq')"));
 assert(worker.includes('validateOcrImage'));
 assert(worker.includes('cleanBoq'));
 assert(worker.includes('geminiBoq'));
-assert(worker.includes('boqPrompt'));
+assert(worker.includes('boqPrompt'));\nassert(worker.includes('เลขวงกลมเขียนมือ'));\nassert(worker.includes('รวมยอดยกไป'));\nassert(worker.includes('qty × unitPrice'));
 assert(/allowedOrigins\(env\)\.includes\([A-Za-z_$][\w$]*\)/.test(worker));
 assert(worker.includes("new URL(r.url).origin"));
 assert(worker.includes("sameOriginAllowed:true"));
