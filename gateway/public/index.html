@@ -5457,7 +5457,17 @@ function boot(){
     if(done)return;done=true;
     var ls=loadLS(),best=ls;
     if(o&&(!ls||(o.updatedAt||0)>(ls.updatedAt||0)))best=o;
-    if(best){S=best;committedState=JSON.stringify(best);}
+    if(best){
+      S=best;
+      var rawCurrent='';
+      try{rawCurrent=localStorage.getItem(KEY)||'';}catch(_){}
+      /* When the winning snapshot came from localStorage, keep the exact raw
+         bytes as the optimistic-concurrency baseline. loadLS() migrates a copy,
+         so comparing migrated JSON against the pre-migration raw JSON would
+         otherwise create a false "another tab changed data" conflict on the
+         first save after refresh. */
+      committedState=(best===ls&&rawCurrent)?rawCurrent:JSON.stringify(best);
+    }
     if(!best&&U.storageReadBlocked){render();toast('อ่านข้อมูลเดิมไม่สำเร็จ · หยุดการบันทึกเพื่อรักษาข้อมูล กรุณาเปิดแอปใหม่หรือใช้ข้อมูลสำรอง');return;}
     /* v441 Cloudflare-only: never synthesize a partial accounting database on a fresh origin.
        Migration/recovery must be explicit so a known-work fallback cannot be mistaken for the full ledger. */
