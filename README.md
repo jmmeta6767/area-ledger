@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v806 Production Cutover Dormant Guard
+
+- Records a privacy-safe production secret preflight artifact containing only present/missing booleans plus source/run provenance; secret values are never written.
+- Production cutover now emits explicit missing-secret names before failing, so a blocked Environment can be repaired without weakening staging/production isolation.
+- The one-time production authorization marker is intentionally removed after the credential-gate failure. Subsequent main pushes remain staging-only until production credentials are configured and cutover is explicitly re-armed.
+- No production D1/R2 resource was created by the failed v805 attempt, and no real ledger migration occurred.
+
 ## v805 Staging-Gated Production Cutover
 
 - Adds a one-time production authorization marker plus a dedicated cutover workflow that can run only after the **AREA Ledger Staging Auto Deploy** workflow succeeds for a `main` push.

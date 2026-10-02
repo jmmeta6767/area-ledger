@@ -81,6 +81,22 @@ v800 separates automated staging evidence from the user's real production eviden
 10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.
 
 
+## v806 credential-gate pause / safe resume
+
+The first v805 production cutover attempt reached the production Environment but stopped before deployment because all three production Environment secrets were absent. No production Worker mutation, D1/R2 provisioning, migration, or live acceptance occurred.
+
+The repository is intentionally returned to a dormant production state:
+
+1. Keep `.github/production-cutover-v805` absent while production credentials are incomplete.
+2. Configure the GitHub Environment named `production` with `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `OCR_API_KEY`.
+3. Re-arm production only with a fresh one-time marker commit after the production Environment is ready.
+4. Let staging auto-deploy and live acceptance pass for that exact re-armed SHA.
+5. The cutover workflow then enters production, writes `production-preflight.json` with present/missing booleans only, runs full QA, deploys, captures isolated production D1/R2 bindings, applies migrations, redeploys, and runs live acceptance.
+6. Remove the authorization marker again immediately after successful cutover, then pin the captured production resource identifiers in source.
+7. Real ledger migration remains a separate device-side action after a fresh portable backup.
+
+Never copy staging D1/R2 bindings into production, and never weaken the production Environment gate to work around missing secrets.
+
 ## v805 automated first production cutover
 
 The first production deployment is authorized by the one-time file `.github/production-cutover-v805` containing exactly `DEPLOY_PRODUCTION`.
