@@ -5,6 +5,12 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v803 Business Stable Control Center Hotfix
+
+- Fixes the Business Stable v800 sheet evaluating iPhone field evidence and Stable 1.0 status before those evidence objects were initialized.
+- Adds a regression guard that requires field/stable evidence initialization to happen before the phase matrix is evaluated.
+- This is a UI/runtime hotfix only: `APP_RELEASE=800`, the v800 service-worker cache, frozen storage identifiers, accounting policy 1.0, and Cloudflare resource bindings remain unchanged.
+
 ## v802 Staging Resource Pin + Production Guard
 
 - Pins the already-provisioned staging R2 bucket `area-ledger-ai-gateway-staging-ledger-files` so repeated deploys are deterministic rather than relying on inherited auto-provision state.
