@@ -402,5 +402,26 @@ reset();test('v820 receipt OCR prefills form but requires human save',()=>{var s
 reset();test('v822 handwritten cash slip keeps Gemini confidence/date and multizone retry',()=>{var norm=c.expenseOcrNormalizeRemote({text:'บิลเงินสด รวมเงิน 2000',amount:2000,cat:'ค่าของ',sub:'ค่าเช่า',partner:'ร้านทดสอบ',date:'2026-10-02',confidence:.91});assert(norm.amount===2000);assert(norm.date==='2026-10-02');assert(norm.confidence===.91);var qa=c.expenseOcrAssessment(norm);assert(qa.accepted===true);assert(qa.score>=.91);assert(c.expenseOcrRecognize.toString().includes('bandY'));assert(c.expenseScanImage.toString().includes('draft.date=res.date'));});
 reset();test('v823 generic BOQ OCR fallback keeps readable rows for human preview',()=>{var rows=c.boqGenericRows('1 งานคอนกรีต 10 ตร.ม. 120.00 1200.00');assert(rows.length>=1);assert(rows[0].name.includes('งานคอนกรีต'));assert.equal(rows[0].qty,10);assert.equal(rows[0].unitPrice,120);assert.equal(rows[0].ocrNeedsReview,true);});
 reset();test('v823 BOQ import escalates strict to AI vision then local fallback without auto-save',()=>{var src=c.boqImportImages.toString();assert(src.includes("aiGatewayEndpoint('v1/ocr/boq')"));assert(src.includes('boqAiReadFile'));assert(src.includes('boqGenericRows'));assert(src.includes('รูปที่เลือกยังคงอยู่'));assert(c.boqAiReadFile.toString().includes("aiGatewayRequest('v1/ocr/boq'"));assert(c.aiGatewayValidatePayload('v1/ocr/boq',{image:'data:image/jpeg;base64,AA'}).image);assert.throws(()=>c.aiGatewayValidatePayload('v1/ocr/unknown',{image:'data:image/jpeg;base64,AA'}));});
+reset();test('v824 positional BOQ parser ignores handwritten circle numbers using equation validation',()=>{
+  function w(t,x0,x1,y){return {text:t,bbox:{x0:x0,x1:x1,y0:y,y1:y+18}}}
+  var data={words:[
+    w('ทรายหยาบรองพื้น',70,300,100),w('21.62',390,430,100),w('ลบ.ม.',470,505,100),
+    w('1',535,545,100),w('375.00',555,595,100),w('8,107.50',615,665,100),
+    w('21',690,705,100),w('112.00',715,750,100),w('2,421.44',770,815,100),w('10,528.94',840,900,100)
+  ]};
+  var rows=c.boqPositionalRows(data,1000);assert.equal(rows.length,2);
+  var mat=rows.find(x=>x.category==='ค่าของ'),lab=rows.find(x=>x.category==='ค่าแรง');
+  assert(mat&&lab);assert.equal(mat.qty,21.62);assert.equal(mat.unitPrice,375);assert.equal(lab.unitPrice,112);
+  assert(mat.note.includes('ข้ามเลขวงกลม'));assert(lab.note.includes('ข้ามเลขวงกลม'));
+});
+reset();test('v824 positional BOQ parser handles labor-only row beside handwritten index',()=>{
+  function w(t,x0,x1,y){return {text:t,bbox:{x0:x0,x1:x1,y0:y,y1:y+18}}}
+  var data={blocks:[{paragraphs:[{lines:[{words:[
+    w('งานสกัดพื้นคอนกรีตเดิม',70,310,120),w('18.00',395,430,120),w('ตร.ม.',470,505,120),
+    w('19',690,705,120),w('72.00',715,750,120),w('1,296.00',770,815,120),w('1,296.00',840,900,120)
+  ]}]}]}]};
+  var rows=c.boqPositionalRows(data,1000);assert.equal(rows.length,1);assert.equal(rows[0].category,'ค่าแรง');assert.equal(rows[0].unitPrice,72);assert.equal(rows[0].qty,18);
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
