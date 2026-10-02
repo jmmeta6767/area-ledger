@@ -109,6 +109,9 @@ jobs:
         if: ${{ inputs.target == 'staging' }}
         env:
           AREA_LEDGER_LIVE_BASE: https://area-ledger-ai-gateway-staging.areamaibab.workers.dev
+          AREA_LEDGER_ACCEPTANCE_TARGET: staging
+          AREA_LEDGER_ACCEPTANCE_SHA: ${{ github.sha }}
+          AREA_LEDGER_ACCEPTANCE_RUN: ${{ github.run_id }}
         run: node tests/live-cloudflare-acceptance.mjs
 
       - name: Deploy production and auto-provision bindings
@@ -148,6 +151,9 @@ jobs:
         if: ${{ inputs.target == 'production' }}
         env:
           AREA_LEDGER_LIVE_BASE: https://area-ledger-ai-gateway.areamaibab.workers.dev
+          AREA_LEDGER_ACCEPTANCE_TARGET: production
+          AREA_LEDGER_ACCEPTANCE_SHA: ${{ github.sha }}
+          AREA_LEDGER_ACCEPTANCE_RUN: ${{ github.run_id }}
         run: node tests/live-cloudflare-acceptance.mjs
 
       - name: Upload production acceptance evidence
