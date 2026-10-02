@@ -3849,26 +3849,28 @@ function boqBestCellPair(qty,prices,amounts){
 }
 function boqNormHeader(s){return String(s||'').toLowerCase().replace(/[\s._:()\[\]{}\-–—]/g,'');}
 function boqHeaderBands(words,width){
-  var W=Math.max(1,+width||1),top=words.filter(function(w){return ((w.bbox.y0+w.bbox.y1)/2)<Math.max(260,W*.22);});
+  var W=Math.max(1,+width||1),fallback={desc:[.045,.375],qty:[.375,.455],unit:[.455,.525],mp:[.525,.595],ma:[.595,.665],lp:[.665,.735],la:[.735,.815],total:[.815,.915],note:[.915,.995],dynamic:false};
+  var hs=words.map(function(w){return Math.max(1,w.bbox.y1-w.bbox.y0);}).sort(function(a,b){return a-b;}),medH=hs[Math.floor(hs.length/2)]||18,minY=words.reduce(function(m,w){return Math.min(m,w.bbox.y0);},Infinity),topLimit=(isFinite(minY)?minY:0)+Math.max(110,medH*7);
+  var top=words.filter(function(w){return ((w.bbox.y0+w.bbox.y1)/2)<=topLimit;});
   function pick(rx,from,to){
     var found=[];top.forEach(function(w){var t=boqNormHeader(w.text),x=((w.bbox.x0+w.bbox.x1)/2)/W;if(x>=from&&x<=to&&rx.test(t))found.push({x:x,text:t});});
     if(!found.length)return null;found.sort(function(a,b){return a.x-b.x;});return found[0].x;
   }
-  var d={desc:.205,qty:.415,unit:.487,mat:.565,labor:.715,total:.865,note:.955};
   var got={
     desc:pick(/^รายการ$/,.08,.38),
     qty:pick(/^จำนวน$/,.30,.50),
     unit:pick(/^หน่วย$/,.38,.58),
-    mat:pick(/ค่าวัสดุ|วัสดุ/,.48,.69),
-    labor:pick(/ค่าแรงงาน|แรงงาน|ค่าแรง/,.60,.82),
+    mat:pick(/ค่าวัสดุ|^วัสดุ$/,.48,.69),
+    labor:pick(/ค่าแรงงาน|^แรงงาน$|^ค่าแรง$/,.60,.82),
     total:pick(/^รวม$|ค่าวัสดุและแรงงาน/,.75,.93),
     note:pick(/หมายเหตุ/,.86,.995)
   };
-  Object.keys(got).forEach(function(k){if(got[k]!==null)d[k]=got[k];});
+  var count=Object.keys(got).filter(function(k){return got[k]!==null;}).length;
+  if(count<4||got.qty===null||got.unit===null||got.mat===null||got.labor===null)return fallback;
+  var d={desc:got.desc===null?.205:got.desc,qty:got.qty,unit:got.unit,mat:got.mat,labor:got.labor,total:got.total===null?.865:got.total,note:got.note===null?.955:got.note};
   var ordered=[d.desc,d.qty,d.unit,d.mat,d.labor,d.total,d.note];
-  for(var i=1;i<ordered.length;i++)if(!(ordered[i]>ordered[i-1]+.025))return {desc:[.045,.375],qty:[.375,.455],unit:[.455,.525],mp:[.525,.595],ma:[.595,.665],lp:[.665,.735],la:[.735,.815],total:[.815,.915],note:[.915,.995],dynamic:false};
-  var b1=(d.desc+d.qty)/2,b2=(d.qty+d.unit)/2,b3=(d.unit+d.mat)/2,b4=(d.mat+d.labor)/2,b5=(d.labor+d.total)/2,b6=(d.total+d.note)/2;
-  var ms=(b3+b4)/2,ls=(b4+b5)/2;
+  for(var i=1;i<ordered.length;i++)if(!(ordered[i]>ordered[i-1]+.025))return fallback;
+  var b1=(d.desc+d.qty)/2,b2=(d.qty+d.unit)/2,b3=(d.unit+d.mat)/2,b4=(d.mat+d.labor)/2,b5=(d.labor+d.total)/2,b6=(d.total+d.note)/2,ms=(b3+b4)/2,ls=(b4+b5)/2;
   return {desc:[Math.max(.02,d.desc-(b1-d.desc)*1.6),b1],qty:[b1,b2],unit:[b2,b3],mp:[b3,ms],ma:[ms,b4],lp:[b4,ls],la:[ls,b5],total:[b5,b6],note:[b6,.995],dynamic:true};
 }
 function boqPositionalRows(data,width){
