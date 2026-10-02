@@ -5,6 +5,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v802 Staging Resource Pin + Production Guard
+
+- Pins the already-provisioned staging R2 bucket `area-ledger-ai-gateway-staging-ledger-files` so repeated deploys are deterministic rather than relying on inherited auto-provision state.
+- Pins staging `ALLOWED_ORIGINS` to the exact Workers.dev staging origin while retaining same-origin access.
+- Production deploy now requires an explicit `DEPLOY_PRODUCTION` confirmation input before any production mutation.
+- Production deploy performs the same synthetic live Durable/D1/R2/recovery acceptance drill after migration/redeploy and uploads privacy-safe evidence.
+- Production D1/R2 remain intentionally unpinned until real production resources are created by an intentional production deploy.
+
 ## v800 Business Stable 1.0 Source Candidate
 
 v800 executes the 1–10 stabilization plan while keeping real-user migration and production cutover fail-closed.
