@@ -3896,7 +3896,7 @@ function boqImportImages(files,pid){
     }
     if(!rows.length){boqProgressSet(98,'ตรวจรายการสำรอง');rows=boqGenericRows(all);if(rows.length)mode='Local OCR fallback';}
     var rejected=rows.rejected||0,rec=boqOcrReconcile(rows,declared);U.boqImportBusy=false;U.boqOcrProgressCtx=null;
-    if(!rows.length){boqProgressSet(100,'อ่านเสร็จ · ยังจับแถว BOQ ไม่ได้');toast(wordCount?'อ่านคำได้ '+wordCount+' จุด แต่ยังจับ BOQ ไม่ได้':'อ่านภาพเสร็จ แต่ยังจับ BOQ ไม่ได้');return;}
+    if(!rows.length){boqProgressSet(100,'อ่านเสร็จ · ยังจับแถว BOQ ไม่ได้ · รูปที่เลือกยังคงอยู่');toast(wordCount?'อ่านคำได้ '+wordCount+' จุด แต่ยังจับ BOQ ไม่ได้ · รูปที่เลือกยังคงอยู่':'อ่านภาพเสร็จ แต่ยังจับ BOQ ไม่ได้ · รูปที่เลือกยังคงอยู่');return;}
     boqProgressSet(100,'อ่านเสร็จ · พบ '+rows.length+' รายการ');U.boqImageQueue=[];
     boqImportPreview(pid,rows,(names[0]||'รูป BOQ')+(clean.length>1?' +'+(clean.length-1)+' รูป':''),{image:true,multiImage:true,imageCount:clean.length,failedImages:failed,aiFailedImages:aiFailed,before:clean.reduce(function(a,x){return a+x.size;},0),after:clean.reduce(function(a,x){return a+x.size;},0),optimized:false,ocr:true,ocrMode:mode+' · '+clean.length+' รูป · แนวตรง 0°',pages:clean.length,rotations:rotations,reconcile:rec,rejected:rejected,positionalRows:posRows.length,wordCount:wordCount});
   });
