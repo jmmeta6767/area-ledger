@@ -4704,7 +4704,7 @@ function sheetHtml(){
       '<div class="sec"><b>Action Queue · '+oo.total+' รายการ</b><div class="acct-table">'+(oo.queue.length?oo.queue.slice(0,30).map(function(x){var attrs='data-act="settings"',label='ตรวจ';if(x.kind==='ar'||x.kind==='ap'){attrs='data-act="go" data-v="due"';label='เปิดค้างรับ/จ่าย';}else if(x.kind==='guarantee'){attrs='data-act="go" data-v="guarantees"';label='เปิดงานประกัน';}else if(x.kind==='project'){attrs='data-act="openProj" data-id="'+x.pid+'"';label='เปิดโครงการ';}else if(x.kind==='bank'||x.kind==='accounting'){attrs='data-act="accountingOpen"';label='เปิดบัญชี';}return '<div class="kv"><span><b>'+esc(x.title)+'</b><small>'+esc(x.detail)+(x.amount?' · '+fmt(x.amount):'')+'</small></span><button class="btn" '+attrs+'>'+label+'</button></div>';}).join(''):'<div class="empty">ไม่มีงานเร่งด่วนจากข้อมูลปัจจุบัน</div>')+'</div></div>'+
       '<div class="stack"><button class="btn" data-act="productionStableCheck">Production Stable Gate</button><button class="btn pri" data-act="businessStableOpen">Business Stable v700</button><button class="btn" data-act="settings">กลับตั้งค่า</button></div>';
   }else if(sh.kind==='businessStable'){
-    var bs=businessStableReadiness(),ba=bs.actions||[],phase=[
+    var bs=businessStableReadiness(),ba=bs.actions||[],fa=fieldAcceptanceEvidence(),af=accountingFreezeEvidence(),s1=stable1Readiness(),phase=[
       ['1','Staging / Cloudflare Runtime',bs.cloud.ok],
       ['2','Real Data / D1 Reconcile',bs.cloud.ok],
       ['3','Accounting Integrity',bs.accounting.ok],
@@ -4716,7 +4716,6 @@ function sheetHtml(){
       ['9','Automation Action Queue',typeof businessAutomationQueue==='function'],
       ['10','Stable Business 1.0 Gate',s1.ok]
     ];
-    var fa=fieldAcceptanceEvidence(),af=accountingFreezeEvidence(),s1=stable1Readiness();
     b='<h3>AREA Ledger · Business Stable v800</h3><p class="muted">Stable 1.0 Control Center · แยก source readiness ออกจากหลักฐานใช้งานจริง</p>'+
       '<div class="card">'+phase.map(function(x){return '<div class="kv"><span>'+x[0]+' · '+esc(x[1])+'</span><b class="'+(x[2]?'in':'out')+'">'+(x[2]?'PASS':'CHECK')+'</b></div>';}).join('')+'</div>'+
       (bs.issues.length?'<div class="sec"><b>Blockers</b>'+bs.issues.map(function(x){return '<div class="kv"><span>'+esc(x)+'</span><b class="out">CHECK</b></div>';}).join('')+'</div>':'<div class="role" style="color:var(--in)">Business Stable Gate: PASS</div>')+
