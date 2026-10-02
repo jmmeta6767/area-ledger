@@ -3870,8 +3870,8 @@ function boqHeaderBands(words,width){
   var d={desc:got.desc===null?.205:got.desc,qty:got.qty,unit:got.unit,mat:got.mat,labor:got.labor,total:got.total===null?.865:got.total,note:got.note===null?.955:got.note};
   var ordered=[d.desc,d.qty,d.unit,d.mat,d.labor,d.total,d.note];
   for(var i=1;i<ordered.length;i++)if(!(ordered[i]>ordered[i-1]+.025))return fallback;
-  var b1=(d.desc+d.qty)/2,b2=(d.qty+d.unit)/2,b3=(d.unit+d.mat)/2,b4=(d.mat+d.labor)/2,b5=(d.labor+d.total)/2,b6=(d.total+d.note)/2,ms=(b3+b4)/2,ls=(b4+b5)/2;
-  return {desc:[Math.max(.02,d.desc-(b1-d.desc)*1.6),b1],qty:[b1,b2],unit:[b2,b3],mp:[b3,ms],ma:[ms,b4],lp:[b4,ls],la:[ls,b5],total:[b5,b6],note:[b6,.995],dynamic:true};
+  var b1=(d.desc+d.qty)/2,b2=(d.qty+d.unit)/2,b3=(d.unit+d.mat)/2,b4=(d.mat+d.labor)/2,b5=(d.labor+d.total)/2,b6=(d.total+d.note)/2;
+  return {desc:[Math.max(.02,d.desc-(b1-d.desc)*1.6),b1],qty:[b1,b2],unit:[b2,b3],mp:[b3,d.mat],ma:[d.mat,b4],lp:[b4,d.labor],la:[d.labor,b5],total:[b5,b6],note:[b6,.995],dynamic:true};
 }
 function boqPositionalRows(data,width){
   var words=boqOcrWords(data),W=Math.max(1,+width||0),out=[];if(!words.length||!W)return out;
