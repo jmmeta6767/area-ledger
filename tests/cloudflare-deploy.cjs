@@ -9,7 +9,8 @@ assert((w.match(/\[\[env\.staging\.r2_buckets\]\]/g)||[]).length===1);
 assert(w.includes('database_name = "area-ledger-ai-gateway-staging-ledger-db"'));
 assert(w.includes('database_id = "9fed2450-55f1-4ec3-ba5f-1e12293bb10a"'));
 const prodBlock=w.split('[[d1_databases]]')[1].split('[[r2_buckets]]')[0];assert(!/database_id\s*=/.test(prodBlock),'production D1 remains auto-provisionable until real production resource exists');
-assert(!/bucket_name\s*=/.test(w),'draft R2 binding must not commit a bucket name');
+assert(w.includes('bucket_name = "area-ledger-ai-gateway-staging-ledger-files"'));
+const prodR2=w.split('[[r2_buckets]]')[1].split('[env.staging]')[0];assert(!/bucket_name\s*=/.test(prodR2),'production R2 remains auto-provisionable until real production resource exists');
 assert(w.includes('binding = "LEDGER_DB"'));
 assert(w.includes('binding = "LEDGER_FILES"'));
 assert(y.includes('workflow_dispatch:'));
@@ -39,3 +40,9 @@ assert(auto.includes('node tests/live-cloudflare-acceptance.mjs'));
 
 assert(y.includes('node tests/v800-business-stable.cjs'));
 assert(y.includes('node --check tests/live-cloudflare-acceptance.mjs'));
+
+assert(w.includes('ALLOWED_ORIGINS = "https://area-ledger-ai-gateway-staging.areamaibab.workers.dev"'));
+assert(y.includes('confirm_production'));
+assert(y.includes('DEPLOY_PRODUCTION'));
+assert(y.includes('Live production acceptance'));
+assert(y.includes('https://area-ledger-ai-gateway.areamaibab.workers.dev'));
