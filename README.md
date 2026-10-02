@@ -5,6 +5,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v813 D1 Reconcile Auto-Repair
+
+- Fixes the Fresh Start / first Cloud Sync path where Durable Cloud Ledger can be valid while its D1 mirror has not been materialized yet.
+- Cloud Full Acceptance now verifies D1 with `GET /v1/ledger/reconcile`; only when unmatched, it requests the server-side repair path with `POST /v1/ledger/reconcile`.
+- The repair is one-way from the authoritative Durable Cloud Ledger to the D1 mirror; it does not replace browser state or mark any human acceptance gate.
+- Acceptance remains fail-closed unless the repaired D1 semantic checksum matches the Durable state exactly.
+- This directly addresses the user-visible `D1 ยังไม่ตรงกับ Cloud Ledger` result after a valid revision-0 Fresh Start.
+
 ## v812 Final Production Gate Closed
 
 - v811 Final Stable 1.0 Control Center passed Release QA, Staging deploy/live acceptance, and Production deploy/live acceptance for exact source `6b3923889c2a57175e53ebeb64a0103ce1210ad3`.
