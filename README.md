@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v812 Final Production Gate Closed
+
+- v811 Final Stable 1.0 Control Center passed Release QA, Staging deploy/live acceptance, and Production deploy/live acceptance for exact source `6b3923889c2a57175e53ebeb64a0103ce1210ad3`.
+- The one-time production authorization marker is removed again immediately after the successful production cutover.
+- Future source work remains staging-first and cannot redeploy production unless a fresh explicit authorization is committed.
+- All machine-verifiable infrastructure gates are complete; the application intentionally leaves real iPhone field evidence and Accounting Freeze as explicit user/business acceptance.
+
 ## v811 Final Stable 1.0 Control Center
 
 - Adds a single **FINAL · Stable 1.0** summary inside the Business Stable control center, separating automated infrastructure checks from evidence that must come from real business use.
