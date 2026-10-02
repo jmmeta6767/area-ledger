@@ -67,15 +67,38 @@ jobs:
           test -f .github/production-cutover-v805
           test "$(tr -d '\r\n' < .github/production-cutover-v805)" = "DEPLOY_PRODUCTION"
 
-      - name: Validate production Cloudflare secrets
+      - name: Production secret preflight
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           OCR_API_KEY: ${{ secrets.OCR_API_KEY }}
+        shell: bash
         run: |
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$CLOUDFLARE_ACCOUNT_ID"
-          test -n "$OCR_API_KEY"
+          TOKEN_OK=false
+          ACCOUNT_OK=false
+          OCR_OK=false
+          [ -n "$CLOUDFLARE_API_TOKEN" ] && TOKEN_OK=true
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && ACCOUNT_OK=true
+          [ -n "$OCR_API_KEY" ] && OCR_OK=true
+          OK=false
+          if [ "$TOKEN_OK" = true ] && [ "$ACCOUNT_OK" = true ] && [ "$OCR_OK" = true ]; then OK=true; fi
+          cat > production-preflight.json <<EOF
+          {
+            "sourceSha": "${{ needs.authorize.outputs.source_sha }}",
+            "workflowRun": "${{ github.run_id }}",
+            "stagingRun": "${{ needs.authorize.outputs.staging_run_id }}",
+            "checks": {
+              "cloudflareApiToken": $TOKEN_OK,
+              "cloudflareAccountId": $ACCOUNT_OK,
+              "ocrApiKey": $OCR_OK
+            },
+            "ok": $OK
+          }
+          EOF
+          [ "$TOKEN_OK" = true ] || echo "::error::Missing production Environment secret: CLOUDFLARE_API_TOKEN"
+          [ "$ACCOUNT_OK" = true ] || echo "::error::Missing production Environment secret: CLOUDFLARE_ACCOUNT_ID"
+          [ "$OCR_OK" = true ] || echo "::error::Missing production Environment secret: OCR_API_KEY"
+          test "$OK" = true
 
       - name: Full release QA
         run: |
@@ -151,4 +174,5 @@ jobs:
           path: |
             live-acceptance.json
             production-bindings.json
+            production-preflight.json
           if-no-files-found: ignore
