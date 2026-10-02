@@ -24,6 +24,11 @@ const finalAction=html.slice(html.indexOf("if(a==='finalAcceptanceRun'){"),html.
 assert(finalAction.includes('cloudFullAcceptance()'));
 assert(finalAction.includes('disasterRecoverySelfCheck()'));
 assert(finalAction.includes('finalAcceptanceSnapshot()'));
+const cloudAcceptance=html.slice(html.indexOf('async function cloudFullAcceptance(){'),html.indexOf('function cloudFullAcceptanceEvidence(){'));
+assert(cloudAcceptance.includes("cloudGateway('GET','/v1/ledger/reconcile')"));
+assert(cloudAcceptance.includes("cloudGateway('POST','/v1/ledger/reconcile',{})"));
+assert(cloudAcceptance.indexOf("cloudGateway('GET','/v1/ledger/reconcile')")<cloudAcceptance.indexOf("cloudGateway('POST','/v1/ledger/reconcile',{})"),'Cloud acceptance must verify before repair');
+assert(cloudAcceptance.includes("repaired.data.matched===true"),'D1 repair must remain fail-closed');
 assert(!finalAction.includes('fieldAcceptance='),'Final Check must not auto-mark iPhone field evidence');
 assert(!finalAction.includes('accountingFreeze='),'Final Check must not auto-stamp accounting freeze');
 assert(worker.includes('async function d1ReconcileDiff'));
