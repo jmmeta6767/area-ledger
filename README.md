@@ -5,6 +5,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v810 Production Cutover Closed
+
+- Production cutover completed successfully for source `5693ba1ae3ae5c7bbb8756ebfc5fb9c9addcd1c2` after exact-SHA Release QA and Staging live acceptance.
+- Production secret preflight, pinned D1/R2 binding capture, OCR secret installation, D1 migrations, production redeploy, and live production acceptance all passed.
+- Production resources remain pinned to the isolated production D1/R2 bindings introduced in v809.
+- The one-time production authorization marker is removed again so future main pushes cannot redeploy production automatically.
+- This confirms infrastructure/runtime cutover only; migration of the user's real accounting dataset, real-device iPhone field acceptance, and Accounting Freeze remain separate explicit acceptance steps.
+
 ## v809 Production Resource Pin
 
 - Pins the real production D1 database created by the first intentional production deployment: `area-ledger-ai-gateway-ledger-db` / `72fc4f7e-63ec-42ca-8a2e-7b1dc61bf72d`.

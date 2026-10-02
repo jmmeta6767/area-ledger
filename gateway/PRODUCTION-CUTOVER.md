@@ -81,6 +81,24 @@ v800 separates automated staging evidence from the user's real production eviden
 10. `stable1Readiness()` must return PASS on production. It is intentionally impossible for staging to claim Stable 1.0.
 
 
+## v810 production cutover completion
+
+Production cutover completed successfully for source `5693ba1ae3ae5c7bbb8756ebfc5fb9c9addcd1c2`.
+
+Verified in the production workflow:
+
+1. Production Environment secret preflight passed.
+2. Full release QA passed.
+3. Pinned production D1/R2 deployment passed.
+4. Production binding capture passed.
+5. OCR secret installation passed.
+6. D1 migrations passed.
+7. Production redeploy passed.
+8. Live production acceptance passed and evidence was uploaded.
+9. The one-time production authorization marker is removed immediately after completion.
+
+Infrastructure/runtime cutover is complete. Real accounting data migration, iPhone field acceptance, Accounting Freeze, and final Stable 1.0 evidence remain separate business acceptance tasks.
+
 ## v809 production resource pin / resume
 
 The first authorized production deploy successfully created the isolated production Worker bindings before the workflow stopped at binding capture:
