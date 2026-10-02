@@ -5,6 +5,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v805 Staging-Gated Production Cutover
+
+- Adds a one-time production authorization marker plus a dedicated cutover workflow that can run only after the **AREA Ledger Staging Auto Deploy** workflow succeeds for a `main` push.
+- The production job checks out the exact staging-tested SHA, re-runs release QA, deploys production, captures auto-provisioned D1/R2 bindings, installs the OCR secret, applies D1 migrations, redeploys, and runs the live production acceptance drill.
+- Production deployment is isolated behind the GitHub `production` Environment and does not run directly from an arbitrary push.
+- The authorization marker is designed to be removed immediately after a successful cutover; future staging runs then leave production skipped.
+- This cutover does not claim the user's real ledger migration, iPhone field acceptance, Accounting Freeze, or Stable 1.0 completion.
+
 ## v804 Live Acceptance Provenance
 
 - Binds each automated live acceptance artifact to the declared target environment, exact GitHub source SHA, and workflow run ID.
