@@ -3889,11 +3889,9 @@ function boqEquationRows(data,width){
       var q=nums[i];if(!(q.value>0)||q.value>1000000||q.x/W<.26||q.x/W>.56)continue;
       for(var j=i+1;j<nums.length-1;j++){
         var p=nums[j];if(!(p.value>0)||p.value>1000000000)continue;
-        for(var k=j+1;k<nums.length;k++){
-          var a=nums[k];if(!(a.value>0))continue;
-          var calc=q.value*p.value,err=Math.abs(calc-a.value)/Math.max(1,a.value);
-          if(err<=.05)matches.push({q:q,p:p,a:a,error:err});
-        }
+        var k=j+1,a=nums[k];if(!(a&&a.value>0))continue;
+        var calc=q.value*p.value,err=Math.abs(calc-a.value)/Math.max(1,a.value);
+        if(err<=.05)matches.push({q:q,p:p,a:a,error:err,adjacent:true});
       }
     }
     if(!matches.length)return;
