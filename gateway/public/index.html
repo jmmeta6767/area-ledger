@@ -4330,7 +4330,7 @@ function boqReadImage(file,index,total,worker,token){return new Promise(function
     if(token&&!boqOcrActive(token)){finish({ok:false,cancelled:true,text:'',file:file,positionalRows:[],equationRows:[],wordCount:0});return;}
     try{
       if(!worker||typeof worker.recognize!=='function')throw new Error('OCR worker missing');
-      U.boqOcrProgressCtx={index:index,total:total};cv=boqImageCanvas(im,0,2300);
+      U.boqOcrProgressCtx={index:index,total:total};cv=boqImageCanvas(im,0,2600);
       boqProgressSet(Math.max(+U.boqOcrProgressValue||1,82+Math.round((index-1)/Math.max(1,total)*13)),'OCR ในเครื่องรูป '+index+'/'+total);
       ocrTimer=setTimeout(function(){try{worker.terminate();}catch(_){}finish({ok:false,text:'',file:file,positionalRows:[],equationRows:[],wordCount:0,error:'LOCAL_OCR_TIMEOUT',timeout:true});},40000);
       var r=await worker.recognize(cv,{}, {text:true,blocks:true,tsv:true});if(done)return;if(ocrTimer){clearTimeout(ocrTimer);ocrTimer=null;}
@@ -4391,7 +4391,7 @@ function boqImportImages(files,pid){
     if(!ok){U.boqImportBusy=false;U.boqOcrAbort=null;U.boqOcrToken='';boqProgressSet(100,'โหลด OCR ในเครื่องไม่สำเร็จ');toast('โหลด OCR ไม่สำเร็จ · รูปที่เลือกยังอยู่');return;}
     var all='',failed=0,posRows=[],eqRows=[],wordCount=0,worker=null,localTimedOut=false;
     try{
-      boqProgressSet(Math.max(82,+U.boqOcrProgressValue||0),'เตรียม OCR ไทย+อังกฤษ');worker=await boqCreateOcrWorker();U.boqOcrWorker=worker;if(!boqOcrActive(token)){try{await worker.terminate();}catch(_){}return;}
+      boqProgressSet(Math.max(82,+U.boqOcrProgressValue||0),'เตรียม OCR ไทย+อังกฤษ · เริ่มอ่านภาพแนวตรง');worker=await boqCreateOcrWorker();U.boqOcrWorker=worker;if(!boqOcrActive(token)){try{await worker.terminate();}catch(_){}return;}
       for(var i=0;i<clean.length;i++){
         if(!boqOcrActive(token))return;
         var rr=await boqReadImage(clean[i],i+1,clean.length,worker,token);if(!boqOcrActive(token))return;
