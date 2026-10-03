@@ -2324,6 +2324,226 @@ input,select,textarea{max-width:100%;min-width:0}
   .boq-check-main{grid-template-columns:26px minmax(0,1fr) auto!important}.boq-title{font-size:.8rem!important}.boq-meta{font-size:.67rem!important}.boq-row-amount strong{font-size:.82rem}
 }
 </style>
+<style>
+/* v1030 UX/UI normalization · presentation only · iPhone-first */
+:root{
+  --ux-touch:48px;
+  --ux-radius:16px;
+  --ux-radius-lg:22px;
+  --ux-nav-height:70px;
+  --ux-shadow:0 7px 24px rgba(17,24,39,.055);
+  --ux-shadow-soft:0 3px 12px rgba(17,24,39,.045);
+  --ux-focus:#b77900;
+}
+html{-webkit-text-size-adjust:100%;scrollbar-gutter:stable}
+body{font-variant-numeric:tabular-nums}
+button,.btn,[role="button"]{-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{min-width:0}
+:focus-visible{outline:3px solid var(--ux-focus)!important;outline-offset:2px!important}
+#app:not(.nonav) main{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))!important}
+
+/* Bottom navigation: five stable destinations, readable thumb targets */
+.nav{
+  background:rgba(255,255,255,.96)!important;
+  border-top:1px solid rgba(23,32,43,.10)!important;
+  box-shadow:0 -8px 28px rgba(23,32,43,.07)!important;
+  backdrop-filter:blur(18px)!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+  padding-bottom:max(env(safe-area-inset-bottom,0px),4px)!important;
+}
+.nav-in{min-height:var(--ux-nav-height)!important;height:auto!important;padding:6px 8px 8px!important;gap:2px!important}
+.nav button{
+  min-width:0!important;min-height:54px!important;
+  padding:5px 4px!important;border-radius:14px!important;
+  gap:3px!important;font-weight:700!important;
+  transition:background .16s ease,color .16s ease,transform .12s ease!important;
+}
+.nav button svg{width:21px!important;height:21px!important}
+.nav button span{font-size:10px!important;line-height:1.08!important;white-space:nowrap}
+.nav button:not(.add).on{
+  background:#fff3c7!important;color:#755100!important;
+  box-shadow:inset 0 0 0 1px rgba(210,156,18,.16)!important;
+}
+.nav button:not(.add):active{background:#f5f1e7!important}
+.nav .add{
+  width:58px!important;height:58px!important;min-height:58px!important;
+  margin-top:-16px!important;transform:none!important;
+  border:4px solid var(--m-bg,var(--bg))!important;
+  background:#ffbd00!important;color:#17202b!important;
+  box-shadow:0 8px 22px rgba(196,132,0,.24)!important;
+}
+.nav .add svg{width:25px!important;height:25px!important}
+.nav .add span{font-size:8.5px!important;font-weight:800!important}
+.nav-alert-badge{top:1px!important;right:14%!important}
+
+/* Stable visual hierarchy across dashboard / lists / controls */
+.mdash-balance,.mdash-stats button,.mgroup,.ledger-feed,.project-hub-card,
+.master-list-chips,.list-status-filter,.home-guarantee-receivable,
+.profile-hero,.profile-post-card,.boq-hero,.acct-bank-card,.acct-mobile-fold{
+  border-radius:var(--ux-radius)!important;
+}
+.mgroup,.ledger-feed,.project-hub-card,.profile-hero,.profile-post-card,
+.master-list-chips,.list-status-filter,.acct-bank-card,.acct-mobile-fold{
+  box-shadow:var(--ux-shadow-soft)!important;
+}
+.master-ref-project,.mdash-balance,.boq-hero,.profile-hero{box-shadow:var(--ux-shadow)!important}
+
+/* Rows and actions: clearer tap boundaries without increasing clutter */
+.row,.mitem,.boq-check-main,.project-hub-main{
+  min-height:58px!important;
+  -webkit-tap-highlight-color:transparent;
+}
+.row:active,.mitem:active,.project-hub-main:active,.boq-check-main:active{background:rgba(232,169,30,.075)!important}
+.btn,.action-card,.master-page-actions button,.project-hub-actions button,
+.profile-post-actions button,.profile-edit-btn,.boq-action{
+  min-height:var(--ux-touch)!important;
+}
+.mamt,.expense-status-copy b,.boq-row-amount strong,.grid4 b,.cash .big{
+  text-overflow:clip!important;overflow:visible!important;white-space:normal!important;overflow-wrap:anywhere;
+}
+
+/* Forms: 48px controls + iOS no-zoom + stronger label/validation rhythm */
+.field{margin-top:13px}
+.field>label{display:block;margin-bottom:6px;font-weight:700;line-height:1.25}
+.field input:not([type="checkbox"]):not([type="radio"]),
+.field select,.field textarea,
+.master-form-page input:not([type="checkbox"]):not([type="radio"]),
+.master-form-page select,.master-form-page textarea{
+  min-height:var(--ux-touch)!important;
+  border-radius:13px!important;
+  padding:11px 12px!important;
+}
+.field textarea,.master-form-page textarea{min-height:104px!important;resize:vertical}
+.savebar{gap:9px!important;padding-top:10px!important}
+.savebar .btn{min-height:52px!important}
+
+/* Sheets: easier reach, safer scrolling around keyboard / Dynamic Island */
+.scrim{overscroll-behavior:contain}
+.sheet,.master-sheet{
+  max-height:min(92dvh,920px)!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  border-radius:24px 24px 0 0!important;
+  box-shadow:0 -18px 46px rgba(11,18,24,.18)!important;
+}
+.sheet:before,.master-sheet:before{
+  content:"";display:block;width:42px;height:4px;margin:-5px auto 12px;
+  border-radius:99px;background:rgba(108,117,125,.34);
+}
+.sheet h3,.master-sheet h3{line-height:1.25}
+
+/* Horizontal data stays intentionally scrollable rather than crushing columns */
+.wrapx,.quote-paper,.rd-paper{overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
+.wrapx:focus-visible{outline-offset:4px!important}
+
+/* Company profile/feed: consistent with Ledger surfaces and dark mode */
+.company-profile{padding-bottom:18px}
+.profile-hero{border-color:rgba(23,32,43,.08)!important}
+.profile-edit-btn{min-height:44px!important}
+.profile-contact span{line-height:1.35}
+.profile-social-chip{min-height:44px;display:grid;align-content:center}
+.profile-filter button{min-height:42px!important}
+.profile-post-actions button{min-height:46px!important}
+.profile-post-more{min-width:44px;min-height:44px;border-radius:12px!important}
+.profile-compose>button{min-height:72px}
+.profile-post-text{overflow-wrap:anywhere}
+.profile-post-photos button{touch-action:manipulation}
+
+@media(max-width:600px){
+  input,select,textarea{font-size:16px!important}
+}
+@media(max-width:430px){
+  main{padding-left:10px!important;padding-right:10px!important}
+  .nav-in{padding-left:5px!important;padding-right:5px!important}
+  .nav button{min-height:55px!important}
+  .nav button span{font-size:9.5px!important}
+  .nav .add{width:56px!important;height:56px!important;min-height:56px!important}
+  .company-profile{padding-left:0;padding-right:0}
+  .profile-main{
+    grid-template-columns:68px minmax(0,1fr)!important;
+    gap:10px!important;align-items:start!important;
+    padding:0 13px 12px!important;margin-top:-30px!important;
+  }
+  .profile-main>img{width:68px!important;height:68px!important;border-radius:19px!important}
+  .profile-title{padding-top:31px!important}
+  .profile-title h2{font-size:19px!important}
+  .profile-title p{font-size:11px!important}
+  .profile-edit-btn{
+    grid-column:1/-1!important;width:100%!important;margin:0!important;
+    justify-self:stretch!important;text-align:center!important;
+  }
+  .profile-bio,.profile-contact{padding-left:13px!important;padding-right:13px!important}
+  .profile-socials{padding-left:13px!important;padding-right:13px!important}
+  .profile-post-head{padding-left:12px!important;padding-right:10px!important}
+  .profile-post-text{padding-left:12px!important;padding-right:12px!important}
+  .profile-post-photos button{min-height:132px!important}
+  .expense-status-card{min-height:108px!important}
+}
+@media(max-width:360px){
+  .nav button span{font-size:9px!important}
+  .nav .add{width:53px!important;height:53px!important;min-height:53px!important}
+  .profile-title h2{font-size:17px!important}
+}
+@media(pointer:coarse){
+  button,.btn,[data-act]{touch-action:manipulation}
+}
+@media(prefers-reduced-motion:reduce){
+  .nav button{transition:none!important}
+}
+
+/* Profile/manual dark theme parity */
+:root[data-theme="dark"] .nav,
+@media(prefers-color-scheme:dark){.nav{
+  background:rgba(26,35,45,.97)!important;border-top-color:#2a3541!important;
+}}
+:root[data-theme="dark"] .profile-hero,
+:root[data-theme="dark"] .profile-post-card,
+:root[data-theme="dark"] .profile-social-chip,
+:root[data-theme="dark"] .profile-edit-btn,
+:root[data-theme="dark"] .profile-filter button,
+:root[data-theme="dark"] .profile-post-actions button{
+  background:#1a232d!important;color:#eef1f3!important;border-color:#2f3a45!important;
+}
+:root[data-theme="dark"] .profile-title h2,
+:root[data-theme="dark"] .profile-post-text,
+:root[data-theme="dark"] .profile-social-chip b{color:#eef1f3!important}
+:root[data-theme="dark"] .profile-title p,
+:root[data-theme="dark"] .profile-bio,
+:root[data-theme="dark"] .profile-post-head small,
+:root[data-theme="dark"] .profile-feed-head>span,
+:root[data-theme="dark"] .profile-social-chip span{color:#aeb8c1!important}
+:root[data-theme="dark"] .profile-contact span{background:#26313c!important;color:#c5ced5!important}
+:root[data-theme="dark"] .profile-stats,
+:root[data-theme="dark"] .profile-post-actions{border-color:#2f3a45!important}
+:root[data-theme="dark"] .profile-stats>div+div,
+:root[data-theme="dark"] .profile-post-actions button+button{border-color:#2f3a45!important}
+:root[data-theme="dark"] .profile-filter button.on{background:#f0b51d!important;color:#17202b!important;border-color:#f0b51d!important}
+
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .profile-hero,
+  :root:not([data-theme="light"]) .profile-post-card,
+  :root:not([data-theme="light"]) .profile-social-chip,
+  :root:not([data-theme="light"]) .profile-edit-btn,
+  :root:not([data-theme="light"]) .profile-filter button,
+  :root:not([data-theme="light"]) .profile-post-actions button{
+    background:#1a232d!important;color:#eef1f3!important;border-color:#2f3a45!important;
+  }
+  :root:not([data-theme="light"]) .profile-title h2,
+  :root:not([data-theme="light"]) .profile-post-text,
+  :root:not([data-theme="light"]) .profile-social-chip b{color:#eef1f3!important}
+  :root:not([data-theme="light"]) .profile-title p,
+  :root:not([data-theme="light"]) .profile-bio,
+  :root:not([data-theme="light"]) .profile-post-head small,
+  :root:not([data-theme="light"]) .profile-feed-head>span,
+  :root:not([data-theme="light"]) .profile-social-chip span{color:#aeb8c1!important}
+  :root:not([data-theme="light"]) .profile-contact span{background:#26313c!important;color:#c5ced5!important}
+  :root:not([data-theme="light"]) .profile-stats,
+  :root:not([data-theme="light"]) .profile-post-actions,
+  :root:not([data-theme="light"]) .profile-stats>div+div,
+  :root:not([data-theme="light"]) .profile-post-actions button+button{border-color:#2f3a45!important}
+  :root:not([data-theme="light"]) .profile-filter button.on{background:#f0b51d!important;color:#17202b!important;border-color:#f0b51d!important}
+}
+</style>
 </head>
 <body>
 <div id="app"></div>

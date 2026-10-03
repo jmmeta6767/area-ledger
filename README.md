@@ -6,6 +6,16 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1030 UX/UI normalization
+
+- Adds a presentation-only UX normalization layer over the current production-candidate UI without changing accounting, BOQ, OCR, storage, Cloud Sync or profile data contracts.
+- Bottom navigation keeps the five primary destinations in the current order (Overview, BOQ, Add, Projects, Profile) with clearer active state, safe-area spacing and larger thumb targets.
+- iPhone form controls use 48px-class touch targets and 16px mobile input text to avoid Safari focus zoom; bottom sheets use dynamic viewport limits and contained scrolling.
+- Dashboard/list numeric values are no longer visually ellipsized by the normalization layer, while rows and primary actions get consistent tap feedback and spacing.
+- Company Profile and worksite feed gain mobile layout cleanup plus manual/system dark-mode parity.
+- Adds static UX regression coverage to Release QA. Physical iPhone/Safari remains the final device-level visual gate.
+
+
 ## v1024 Company Profile + Worksite Feed
 
 - Adds a first-class Company Profile view for business identity, contact details, service bio, LINE, website, Facebook, Instagram and TikTok references.

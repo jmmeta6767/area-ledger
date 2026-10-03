@@ -47,6 +47,8 @@ jobs:
         run: node tests/r2-pwa.cjs
       - name: Public client portfolio privacy QA
         run: node tests/public-profile.cjs
+      - name: v1030 UX/UI regression
+        run: node tests/ux-ui-v1030.cjs
       - name: Cloudflare production contract QA
         run: node tests/cloudflare-production.cjs
       - name: Cloudflare deploy pipeline QA
