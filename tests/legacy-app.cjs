@@ -1,0 +1,17 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const cfg=fs.readFileSync('legacy-app/wrangler.toml','utf8');
+const worker=fs.readFileSync('legacy-app/src/worker.js','utf8');
+const html=fs.readFileSync('gateway/public/index.html','utf8');
+assert(cfg.includes('name = "g"'));
+assert(cfg.includes('directory = "../gateway/public"'));
+assert(cfg.includes('binding = "ASSETS"'));
+assert(cfg.includes('run_worker_first = ["/legacy-health", "/health", "/ready", "/v1/*"]'));
+assert(!/OCR_API_KEY|GEMINI|LEDGER_DB|LEDGER_FILES|durable_objects|r2_buckets|d1_databases/.test(cfg));
+assert(worker.includes("const CANONICAL_GATEWAY='https://area-ledger-ai-gateway.areamaibab.workers.dev'"));
+assert(worker.includes("pathname==='/health'"));
+assert(worker.includes("pathname==='/ready'"));
+assert(worker.includes("pathname.startsWith('/v1/')"));
+assert(worker.includes('return env.ASSETS.fetch(request)'));
+assert(!/api[_-]?key|secret put|GEMINI_API_KEY/i.test(worker));
+assert(html.includes('<meta name="area-ledger-client-contract" content="v1005-canonical-gateway">'));
+console.log('PASS legacy g app shell contract');
