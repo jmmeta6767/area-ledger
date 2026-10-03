@@ -2158,7 +2158,7 @@ input,select,textarea{max-width:100%;min-width:0}
 .boq-summary-grid small,.boq-summary-grid b{display:block}.boq-summary-grid small{color:#7c858c;font-size:.66rem}.boq-summary-grid b{margin-top:3px;color:#25313b;font:800 .82rem/1.18 Prompt;overflow-wrap:anywhere}
 .boq-hero-actions{position:relative;display:grid;grid-template-columns:1.18fr 1fr;gap:8px;margin-top:12px}
 .boq-action{min-height:48px!important;border-radius:14px;border:1px solid #222c35;display:flex;align-items:center;justify-content:center;gap:7px;font:800 .86rem Prompt}
-.boq-action svg{width:18px;height:18px}.boq-action.primary{border-color:#edae0a;background:#f5b514;color:#18232f;box-shadow:0 6px 15px rgba(232,166,0,.16)}.boq-action.secondary{background:#fff;color:#18232f}
+.boq-action.google{grid-column:1/-1;background:#f7fbf7;border-color:#cfdad0;color:#244a2b}.boq-action.google:before{content:'G';display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:#fff;border:1px solid #d9e1da;font:800 .72rem Arial;color:#4285f4}.boq-action svg{width:18px;height:18px}.boq-action.primary{border-color:#edae0a;background:#f5b514;color:#18232f;box-shadow:0 6px 15px rgba(232,166,0,.16)}.boq-action.secondary{background:#fff;color:#18232f}
 .boq-find-shell{position:sticky;top:76px;z-index:24;margin:12px 0 14px;padding:9px;border:1px solid rgba(24,35,47,.08);border-radius:17px;background:rgba(247,248,247,.94);box-shadow:0 6px 18px rgba(24,35,47,.06);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .boq-find-shell .boq-search{display:flex;gap:7px}.boq-find-shell input{width:100%;margin:0!important;min-height:46px!important;padding:10px 14px!important;border:1px solid #d9dede!important;border-radius:13px!important;background:#fff!important;font-size:.88rem!important}
 .boq-clear-btn{min-height:46px!important;padding:0 13px;border:1px solid #d9dede;border-radius:12px;background:#fff;color:#56626c;font:700 .75rem Prompt}.boq-find-count{padding:6px 4px 0;color:#7a858e;font-size:.72rem}.boq-find-count b{color:#18232f}
@@ -2431,6 +2431,29 @@ async function cloudOffloadAllTxPhotos(){
   return {ok:true,total:rows.length,moved:moved};
 }
 
+function googleWorkspaceState(){if(!U.googleWorkspace||typeof U.googleWorkspace!=='object')U.googleWorkspace={loading:false,status:null,error:''};return U.googleWorkspace;}
+async function googleWorkspaceRefresh(pid){
+  cloudLedgerKey(true);var st=googleWorkspaceState();st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
+  var r=await cloudGateway('GET','/v1/google/status?pid='+encodeURIComponent(pid||''));st.loading=false;if(r.ok){st.status=r.data||{};st.error='';}else{st.status=r.data||{};st.error=String(r.data&&r.data.error||'GOOGLE_STATUS_FAILED');}
+  if(U.sheet&&U.sheet.kind==='googleWorkspace')render();return st;
+}
+async function googleWorkspaceConnect(pid){
+  cloudLedgerKey(true);var returnUrl=location.origin+location.pathname,st=googleWorkspaceState();st.loading=true;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
+  var r=await cloudGateway('POST','/v1/google/oauth/start',{returnUrl:returnUrl});st.loading=false;
+  if(!r.ok||!r.data||!r.data.authorizationUrl){st.error=String(r.data&&r.data.error||'GOOGLE_CONNECT_FAILED');render();toast(st.error==='GOOGLE_NOT_CONFIGURED'?'Google OAuth ยังไม่ได้ตั้งค่าบน Server':'เริ่มเชื่อม Google ไม่สำเร็จ');return false;}
+  location.href=r.data.authorizationUrl;return true;
+}
+async function googleWorkspaceSync(pid){
+  var p=proj(pid);if(!p){toast('ไม่พบโครงการ');return false;}var st=googleWorkspaceState();st.loading=true;st.error='';render();
+  var rows=boqRows(pid).map(function(x){return {id:x.id,sectionCode:x.sectionCode||'',sectionName:x.sectionName||'',name:x.name||'',category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,note:x.note||''};});
+  var r=await cloudGateway('POST','/v1/google/sync',{project:{id:p.id,name:p.name},rows:rows});st.loading=false;
+  if(!r.ok){st.error=String(r.data&&r.data.error||'GOOGLE_SYNC_FAILED');render();toast(st.error==='GOOGLE_NOT_CONNECTED'?'กรุณาเชื่อม Google ก่อน':'ซิงก์ Google Sheets ไม่สำเร็จ');return false;}
+  st.status=Object.assign({},st.status||{},{configured:true,connected:true,project:{projectId:pid,projectName:p.name,driveFolderId:r.data.folderId,spreadsheetId:r.data.spreadsheetId,driveUrl:r.data.driveUrl,sheetUrl:r.data.sheetUrl,lastSyncAt:r.data.lastSyncAt}});
+  render();toast('ซิงก์ BOQ ไป Google Sheets แล้ว');return true;
+}
+async function googleWorkspaceDisconnect(){
+  var st=googleWorkspaceState();st.loading=true;render();var r=await cloudGateway('POST','/v1/google/disconnect',{});st.loading=false;if(r.ok){st.status={configured:true,connected:false,project:null};st.error='';render();toast('ยกเลิกการเชื่อม Google แล้ว');return true;}st.error='GOOGLE_DISCONNECT_FAILED';render();return false;
+}
 function cloudSyncInfo(){
   var m=cloudMeta(),enabled=cloudSyncEnabled(),label='ปิด';
   if(enabled){label=U.cloudSyncBusy?'กำลังซิงก์':U.cloudConflict?'ต้องตรวจข้อมูล':(U.cloudStatus==='error'?'เชื่อมต่อไม่ได้':m.hit?'ซิงก์แล้ว':'พร้อมเริ่ม');}
@@ -4146,7 +4169,7 @@ function vBoq(){
       '<div><small>ค่าวัสดุ</small><b>'+fmt(materialTotal)+'</b></div>'+
       '<div><small>ค่าแรง</small><b>'+fmt(laborTotal)+'</b></div>'+
     '</div>'+
-    '<div class="boq-hero-actions"><button class="boq-action primary" data-act="newBoq" data-id="'+pid+'">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button class="boq-action secondary" data-act="boqImport" data-id="'+pid+'">'+ic('documents')+'<span>นำเข้าไฟล์</span></button></div>'+
+    '<div class="boq-hero-actions"><button class="boq-action primary" data-act="newBoq" data-id="'+pid+'">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button class="boq-action secondary" data-act="boqImport" data-id="'+pid+'">'+ic('documents')+'<span>นำเข้าไฟล์</span></button><button class="boq-action google" data-act="googleWorkspaceOpen" data-id="'+pid+'">'+ic('box')+'<span>Google Drive / Sheets</span></button></div>'+
   '</section>';
 
   if(!rows.length)return h+'<div class="empty boq-empty">ยังไม่มีรายการ BOQ ในโครงการนี้</div>';
@@ -5133,6 +5156,21 @@ function sheetHtml(){
     b='<h3>กู้คืน / ย้ายข้อมูลเข้าเว็บนี้</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">เลือกไฟล์ AREA-Ledger-backup-*.json จาก Files/iCloud หรือวาง JSON ทั้งก้อน · ปลายทาง '+esc(location.origin)+'</p><label class="btn pri" for="restoreFile">เลือกไฟล์สำรอง .json</label><input id="restoreFile" type="file" accept=".json,application/json"><div class="muted" style="margin-top:8px">'+esc(U.restoreInfo||'ยังไม่ได้เลือกไฟล์')+'</div><textarea class="csv" id="rsbox" placeholder="หรือวางข้อมูลสำรองที่นี่">'+esc(U.rsText||'')+'</textarea><div class="stack"><button class="btn" data-act="migrationDrillCheck">ตรวจ Migration Drill</button><button class="btn" data-act="migrationCertificateOpen">Migration Acceptance Certificate</button><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'ตรวจและกู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='migrationCertificate'){
     var mc=migrationAcceptanceCertificate();b='<h3>Migration Acceptance Certificate</h3><p class="muted">หลักฐานตรวจการย้ายข้อมูลจาก backup → origin ปัจจุบัน</p><div class="acct-grid"><div><small>สถานะ</small><b class="'+(mc.ok?'in':'out')+'">'+(mc.ok?'PASS':'CHECK')+'</b></div><div><small>Source revision</small><b>'+mc.sourceRevision+'</b></div><div><small>Target revision</small><b>'+mc.dataRevision+'</b></div><div><small>Digest</small><b>'+(mc.ok?'MATCH':'CHECK')+'</b></div></div><div class="sec"><div class="kv"><span>Source</span><small>'+esc(mc.sourceOrigin||'-')+'</small></div><div class="kv"><span>Target</span><small>'+esc(mc.targetOrigin||'-')+'</small></div><div class="kv"><span>Projects / Tx / BOQ</span><span>'+mc.counts.projects+' / '+mc.counts.tx+' / '+mc.counts.boq+'</span></div><div class="kv"><span>Quote / Bill / Receipt</span><span>'+mc.counts.quotes+' / '+mc.counts.bills+' / '+mc.counts.receipts+'</span></div><div class="kv"><span>Guarantees / Journals / Periods</span><span>'+mc.counts.guarantees+' / '+mc.counts.journals+' / '+mc.counts.periods+'</span></div></div><button class="btn" data-act="restoreOpen">กลับหน้ากู้คืน</button>';
+  }else if(sh.kind==='googleWorkspace'){
+    var gp=proj(sh.pid||U.boqProjectPid||''),gs=googleWorkspaceState(),gst=gs.status||{},gl=gst.project||null;
+    b='<h3>Google Workspace</h3><p class="muted">เชื่อม BOQ โครงการกับ Google Drive และ Google Sheets · AREA Ledger ยังเป็นข้อมูลหลัก</p>'+
+      '<div class="card"><div class="kv"><span>สถานะระบบ</span><b>'+(gs.loading?'กำลังตรวจ…':gst.configured===false?'ยังไม่ได้ตั้งค่า Google OAuth':gst.connected?'เชื่อมแล้ว':'ยังไม่เชื่อม')+'</b></div>'+
+      (gst.email?'<div class="kv"><span>บัญชี Google</span><span>'+esc(gst.email)+'</span></div>':'')+
+      '<div class="kv"><span>โครงการ</span><span>'+esc(gp&&gp.name||'-')+'</span></div>'+
+      (gl&&gl.lastSyncAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><span>'+esc(String(gl.lastSyncAt).replace('T',' ').slice(0,16))+'</span></div>':'')+
+      (gs.error?'<div class="out" style="margin-top:8px">'+esc(gs.error)+'</div>':'')+'</div>'+
+      '<div class="stack" style="margin-top:12px">'+
+      (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'">ซิงก์ BOQ ไป Google Sheets</button>')+
+      (gl&&gl.sheetUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.sheetUrl)+'">เปิด Google Sheet</button>':'')+
+      (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
+      (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect">ยกเลิกการเชื่อม Google</button>':'')+
+      '<button class="btn" data-act="closeSheet">ปิด</button></div>'+
+      '<p class="muted" style="margin-top:10px">v832 ซิงก์ทางเดียว Ledger → Google Sheets ก่อน · การดึงกลับจาก Sheet จะเพิ่มเป็น Diff Preview ในขั้นถัดไป</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -5245,6 +5283,11 @@ function directAction(el){
   if(!el)return false;
   var a=el.getAttribute('data-act'),v=el.getAttribute('data-v'),id=el.getAttribute('data-id');
   if(a==='bottomBoq'){var bp=bottomBoqProject();U.appMenu=false;U.sheet=null;if(bp){if(U.boqProjectPid!==bp){U.boqQuery='';U.boqAnchorId='';U.boqScroll=0;}U.boqProjectPid=bp;U.pid=bp;go('boq',{pid:bp,boqProjectPid:bp,boqQuery:U.boqQuery||'',boqAnchorId:U.boqAnchorId||'',boqScroll:U.boqScroll||0});}else{U.boqProjectPid='';U.boqQuery='';U.boqAnchorId='';U.boqScroll=0;go('boq',{boqProjectPid:'',boqQuery:'',boqAnchorId:'',boqScroll:0});}return true;}
+  if(a==='googleWorkspaceOpen'){U.sheet={kind:'googleWorkspace',pid:id||U.boqProjectPid||''};googleWorkspaceState();render();googleWorkspaceRefresh(U.sheet.pid);return true;}
+  if(a==='googleWorkspaceConnect'){googleWorkspaceConnect(id||U.boqProjectPid||'');return true;}
+  if(a==='googleWorkspaceSync'){googleWorkspaceSync(id||U.boqProjectPid||'');return true;}
+  if(a==='googleWorkspaceOpenUrl'){var gu=el.getAttribute('data-url')||'';if(/^https:\/\/(?:docs|drive)\.google\.com\//.test(gu))window.open(gu,'_blank','noopener');return true;}
+  if(a==='googleWorkspaceDisconnect'){googleWorkspaceDisconnect();return true;}
   if(a==='boqQuickClear'){U.boqQuery='';var qi=document.getElementById('boqQuickFind');if(qi)qi.value='';boqApplyQuickFind('');if(qi)qi.focus();return true;}
   if(a==='projectHubStatus'){U.projectHubStatus=['current','delivered','closed','all'].indexOf(v)>=0?v:'current';saveNavSession();render();return true;}
   if(a==='projectHubClear'){U.projectHubQuery='';var pi=document.getElementById('projectHubSearch');if(pi)pi.value='';projectHubApplyFilters('',projectHubStatusValue());if(pi)pi.focus();return true;}
@@ -5781,6 +5824,7 @@ window.addEventListener('storage',function(e){if(e&&e.key===KEY&&committedState&
 window.addEventListener('error',function(e){try{console.error('AREA Ledger runtime error',e.error||e.message);}catch(x){}});
 window.addEventListener('unhandledrejection',function(e){try{console.error('AREA Ledger promise rejection',e.reason);}catch(x){}});
 function boot(){
+  try{var gq=new URLSearchParams(location.search);if(gq.get('google')==='connected'){U.googleOauthReturned=true;var cleanUrl=location.origin+location.pathname+location.hash;history.replaceState(history.state||{},'',cleanUrl);setTimeout(function(){toast('เชื่อม Google Workspace แล้ว');},900);}}catch(_){}
   try{var hp=localStorage.getItem('area-ledger-home-pid');if(hp)U.homePid=hp;}catch(err){}
   var done=false;
   function start(o){
