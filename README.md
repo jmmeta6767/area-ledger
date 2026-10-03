@@ -5,6 +5,12 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1042 Receipt Flow Guard
+
+- The “ออกใบเสร็จ” shortcut now opens unpaid billing notes so users record the payment amount and method before a receipt is issued.
+- Block standalone receipt creation and conversion without payment confirmation; existing receipts remain editable.
+- Prevents a receipt from implying cash was collected when no payment was entered. Existing reconciliation, tax calculation, document numbering, storage and sync contracts remain unchanged.
+
 ## v1041 Portrait Preview Correction
 
 - The mobile document surface now clamps both the page and paper to the phone viewport, including narrow portrait screens.
