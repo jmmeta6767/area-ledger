@@ -2451,6 +2451,21 @@ async function googleWorkspaceSync(pid){
   st.status=Object.assign({},st.status||{},{configured:true,connected:true,project:{projectId:pid,projectName:p.name,driveFolderId:r.data.folderId,spreadsheetId:r.data.spreadsheetId,driveUrl:r.data.driveUrl,sheetUrl:r.data.sheetUrl,lastSyncAt:r.data.lastSyncAt}});
   render();toast('ซิงก์ BOQ ไป Google Sheets แล้ว');return true;
 }
+function googleFileDataUrl(file){return new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(String(r.result||''));};r.onerror=reject;r.readAsDataURL(file);});}
+async function googleWorkspaceUploadFiles(files,pid){
+  var p=proj(pid),list=Array.from(files||[]).slice(0,12);if(!p||!list.length)return false;
+  var st=googleWorkspaceState();st.loading=true;st.error='';st.uploadProgress='เตรียมไฟล์ 0/'+list.length;render();var ok=0,fail=0;
+  for(var i=0;i<list.length;i++){
+    var file=list[i],name=String(file.name||'BOQ-source').slice(0,180);st.uploadProgress='กำลังเก็บไฟล์ '+(i+1)+'/'+list.length+' · '+name;render();
+    if(file.size>8*1024*1024){fail++;continue;}
+    try{
+      var dataUrl=await googleFileDataUrl(file),r=await cloudGateway('POST','/v1/google/file-upload',{project:{id:p.id,name:p.name},name:name,dataUrl:dataUrl});
+      if(r.ok&&r.data&&r.data.file)ok++;else{fail++;st.error=String(r.data&&r.data.error||'GOOGLE_FILE_UPLOAD_FAILED');}
+    }catch(_){fail++;}
+  }
+  st.loading=false;st.uploadProgress='';await googleWorkspaceRefresh(pid);toast('เก็บไฟล์ใน Google Drive แล้ว '+ok+' ไฟล์'+(fail?' · ไม่สำเร็จ '+fail+' ไฟล์':''));
+  return fail===0;
+}
 async function googleWorkspaceDisconnect(){
   var st=googleWorkspaceState();st.loading=true;render();var r=await cloudGateway('POST','/v1/google/disconnect',{});st.loading=false;if(r.ok){st.status={configured:true,connected:false,project:null};st.error='';render();toast('ยกเลิกการเชื่อม Google แล้ว');return true;}st.error='GOOGLE_DISCONNECT_FAILED';render();return false;
 }
@@ -5157,7 +5172,7 @@ function sheetHtml(){
   }else if(sh.kind==='migrationCertificate'){
     var mc=migrationAcceptanceCertificate();b='<h3>Migration Acceptance Certificate</h3><p class="muted">หลักฐานตรวจการย้ายข้อมูลจาก backup → origin ปัจจุบัน</p><div class="acct-grid"><div><small>สถานะ</small><b class="'+(mc.ok?'in':'out')+'">'+(mc.ok?'PASS':'CHECK')+'</b></div><div><small>Source revision</small><b>'+mc.sourceRevision+'</b></div><div><small>Target revision</small><b>'+mc.dataRevision+'</b></div><div><small>Digest</small><b>'+(mc.ok?'MATCH':'CHECK')+'</b></div></div><div class="sec"><div class="kv"><span>Source</span><small>'+esc(mc.sourceOrigin||'-')+'</small></div><div class="kv"><span>Target</span><small>'+esc(mc.targetOrigin||'-')+'</small></div><div class="kv"><span>Projects / Tx / BOQ</span><span>'+mc.counts.projects+' / '+mc.counts.tx+' / '+mc.counts.boq+'</span></div><div class="kv"><span>Quote / Bill / Receipt</span><span>'+mc.counts.quotes+' / '+mc.counts.bills+' / '+mc.counts.receipts+'</span></div><div class="kv"><span>Guarantees / Journals / Periods</span><span>'+mc.counts.guarantees+' / '+mc.counts.journals+' / '+mc.counts.periods+'</span></div></div><button class="btn" data-act="restoreOpen">กลับหน้ากู้คืน</button>';
   }else if(sh.kind==='googleWorkspace'){
-    var gp=proj(sh.pid||U.boqProjectPid||''),gs=googleWorkspaceState(),gst=gs.status||{},gl=gst.project||null;
+    var gp=proj(sh.pid||U.boqProjectPid||''),gs=googleWorkspaceState(),gst=gs.status||{},gl=gst.project||null,gfiles=Array.isArray(gst.files)?gst.files:[];
     b='<h3>Google Workspace</h3><p class="muted">เชื่อม BOQ โครงการกับ Google Drive และ Google Sheets · AREA Ledger ยังเป็นข้อมูลหลัก</p>'+
       '<div class="card"><div class="kv"><span>สถานะระบบ</span><b>'+(gs.loading?'กำลังตรวจ…':gst.configured===false?'ยังไม่ได้ตั้งค่า Google OAuth':gst.connected?'เชื่อมแล้ว':'ยังไม่เชื่อม')+'</b></div>'+
       (gst.email?'<div class="kv"><span>บัญชี Google</span><span>'+esc(gst.email)+'</span></div>':'')+
@@ -5166,11 +5181,14 @@ function sheetHtml(){
       (gs.error?'<div class="out" style="margin-top:8px">'+esc(gs.error)+'</div>':'')+'</div>'+
       '<div class="stack" style="margin-top:12px">'+
       (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'">ซิงก์ BOQ ไป Google Sheets</button>')+
+      (gst.connected?'<label class="btn" for="googleDriveFiles">เก็บไฟล์ต้นฉบับใน Google Drive</label><input id="googleDriveFiles" type="file" multiple accept=".pdf,.xlsx,.xls,.csv,image/jpeg,image/png,image/webp,image/heic,image/heif" style="display:none">':'')+
+      (gs.uploadProgress?'<div class="muted">'+esc(gs.uploadProgress)+'</div>':'')+
+      (gfiles.length?'<div class="card"><div class="kv"><span>ไฟล์ใน Drive</span><b>'+gfiles.length+' ไฟล์</b></div>'+gfiles.slice(0,4).map(function(x){return '<div class="kv"><span>'+esc(x.name||'ไฟล์')+'</span><small>'+esc(String(x.createdAt||'').replace('T',' ').slice(0,16))+'</small></div>';}).join('')+'</div>':'')+
       (gl&&gl.sheetUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.sheetUrl)+'">เปิด Google Sheet</button>':'')+
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
       (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect">ยกเลิกการเชื่อม Google</button>':'')+
       '<button class="btn" data-act="closeSheet">ปิด</button></div>'+
-      '<p class="muted" style="margin-top:10px">v832 ซิงก์ทางเดียว Ledger → Google Sheets ก่อน · การดึงกลับจาก Sheet จะเพิ่มเป็น Diff Preview ในขั้นถัดไป</p>';
+      '<p class="muted" style="margin-top:10px">v833 รองรับ Ledger → Google Sheets + เก็บไฟล์ต้นฉบับใน Drive · การดึงกลับจาก Sheet จะเพิ่มเป็น Diff Preview ในขั้นถัดไป</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -5763,6 +5781,7 @@ document.addEventListener('change',function(e){
   if(e.target&&e.target.id==='docProjectFilter'){var dpp=e.target.value||'';U.docProjectPid=dpp&&proj(dpp)?dpp:'';U.docQuery='';saveNavSession();render();return;}
   if(e.target&&e.target.id==='guaranteeProjectFilter'){var gp=e.target.value||'';U.guaranteeProjectPid=gp&&proj(gp)?gp:'';U.guaranteeQuery='';saveNavSession();render();return;}
   if(e.target&&e.target.id==='dueProjectFilter'){var dp=e.target.value||'';U.dueProjectPid=dp&&proj(dp)?dp:'';U.dueOpen={};saveNavSession();render();return;}
+  if(e.target&&e.target.id==='googleDriveFiles'&&e.target.files&&e.target.files[0]){googleWorkspaceUploadFiles(e.target.files,U.sheet&&U.sheet.pid||U.boqProjectPid||'');return;}
   if(e.target&&e.target.id==='restoreFile'&&e.target.files&&e.target.files[0]){
     var rf=e.target.files[0];if(rf.size>20*1024*1024){toast('ไฟล์สำรองใหญ่เกิน 20 MB');return;}
     var rr=new FileReader();rr.onerror=function(){toast('อ่านไฟล์สำรองไม่ได้');};rr.onload=function(){var raw=String(rr.result||''),parsed=restoreParse(raw);if(!parsed.ok){U.restoreInfo='ไฟล์ไม่ผ่าน validation';U.rsText='';U.confirm=null;render();toast('ไฟล์สำรองไม่ถูกต้อง');return;}U.rsText=raw;U.confirm=null;U.restoreInfo='พร้อมกู้คืน · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ · '+parsed.summary.boq+' BOQ'+(parsed.meta.sourceOrigin&&parsed.meta.sourceOrigin!==location.origin?' · ต้นทาง '+parsed.meta.sourceOrigin:'');render();toast('อ่านไฟล์สำรองแล้ว · ตรวจยอดก่อนยืนยัน');};rr.readAsText(rf);return;
