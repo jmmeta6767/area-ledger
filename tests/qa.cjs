@@ -539,7 +539,7 @@ reset();test('v1017 BOQ migration backfills only missing work section and preser
 reset();test('v1017 BOQ current screenshot-like rows render multiple work sections instead of one unspecified bucket',()=>{c.S.projects=[{id:'p',name:'ศรีเมืองชุม'}];c.U.boqProjectPid='p';c.S.boq=[['สกัด','งานสกัดพื้นคอนกรีตเดิม','ค่าแรง',18,'ตร.ม.',72],['ขุด','งานขุดดิน','ค่าแรง',28.8,'ลบ.ม.',153],['ทราย1','ทรายหยาบรองพื้น','ค่าของ',21.62,'ลบ.ม.',375],['ทราย2','ทรายหยาบรองพื้น','ค่าแรง',21.62,'ลบ.ม.',112],['คอน1','คอนกรีตโครงสร้าง รูปลูกบาศก์ 180 กก./ตร.ซม.','ค่าของ',.9,'ลบ.ม.',2364],['คอน2','คอนกรีตโครงสร้าง รูปลูกบาศก์ 180 กก./ตร.ซม.','ค่าแรง',.9,'ลบ.ม.',329],['เหล็ก','เหล็กเสริม RB 9 mm. SR 24','ค่าของ',.17,'ตัน',21632]].map((x,i)=>({id:'v1017-'+i,pid:'p',name:x[1],category:x[2],qty:x[3],unit:x[4],unitPrice:x[5],sectionCode:'',sectionName:''}));const out=c.vBoq();for(const name of ['งานรื้อถอน/เตรียมพื้นที่','งานดินและรองพื้น','งานคอนกรีต','งานเหล็กเสริม'])assert(out.includes(name));assert(!out.includes('ไม่ระบุหมวดงาน'));});
 reset();test('v1017 AI BOQ validator preserves visible source headings and infers only when absent',()=>{const out=c.aiGatewayValidateBoq({rows:[{name:'ฐานราก คอนกรีต',qty:1,unit:'ลบ.ม.',unitPrice:2000,category:'ค่าของ',sectionCode:'1.2',sectionName:'งานฐานราก',confidence:.9},{name:'เหล็กเสริม DB12',qty:10,unit:'กก.',unitPrice:22,category:'ค่าของ',sectionCode:'',sectionName:'',confidence:.8}],declaredTotal:2220,confidence:.8});assert.equal(out.rows[0].sectionCode,'1.2');assert.equal(out.rows[0].sectionName,'งานฐานราก');assert.equal(out.rows[1].sectionName,'งานเหล็กเสริม');});
 reset();test('v1017 AI BOQ image and scanned PDF mappings carry sectionCode and sectionName into import rows',()=>{const a=c.boqAiReadFile.toString(),b=c.boqImportScannedPdf.toString(),p=c.boqImportPreview.toString();for(const src of [a,b]){assert(src.includes("sectionCode:r.sectionCode||''"));assert(src.includes("sectionName:r.sectionName||''"));}assert(p.includes('boqEnsureWorkSection(x)'));});
-reset();test('v1017 worker BOQ schema asks for visible section headings but forbids guessing them',()=>{const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('sectionCode'));assert(w.includes('sectionName'));assert(w.includes('หัวหมวด/กลุ่มงานที่มองเห็นจริง'));assert(w.includes('ห้ามเดาหมวดจากชื่อรายการ'));assert(w.includes('clean.push({name,qty,unit,unitPrice,category,sectionCode,sectionName,confidence})'));});
+reset();test('v1017 worker BOQ schema asks for visible section headings but forbids guessing them',()=>{const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('sectionCode'));assert(w.includes('sectionName'));assert(w.includes('หัวหมวด/กลุ่มงานที่มองเห็นจริง'));assert(w.includes('ห้ามเดาหมวดจากชื่อรายการ'));assert(w.includes('clean.push({name,qty,unit,unitPrice,amount,category,sectionCode,sectionName,confidence,equationError,equationOk})'));});
 
 reset();test('v1018 AI expense contract keeps multi-row table data instead of one aggregate',()=>{const x=c.aiGatewayValidateExpense({text:'ตารางรายจ่าย',amount:236461.8,rows:[{date:'2026-09-15',amount:135513,cat:'ค่าของ',sub:'เหล็ก',confidence:.96},{date:'2026-09-26',amount:5580,cat:'ค่าของ',sub:'สี/ทินเนอร์',confidence:.95}]});assert.equal(x.rows.length,2);assert.equal(x.amount,0);assert.equal(x.rows[0].amount,135513);assert.equal(x.rows[1].date,'2026-09-26');});
 reset();test('v1018 one image can become editable batch rows and defaults valid table rows selected',()=>{const res=c.expenseOcrNormalizeRemote({text:'table',amount:236461.8,rows:[{date:'2026-09-15',amount:135513,cat:'ค่าของ',sub:'เหล็ก',confidence:.9},{date:'2026-09-28',amount:700,cat:'ค่าเช่าอื่นๆ',sub:'เช่าเครื่องตัดถนน',confidence:.9}]});assert.equal(res.amount,0);assert.equal(res.rows.length,2);const items=c.expenseBatchItemsFromResult(res,'data:image/jpeg;base64,AA','cost-table.jpg','p','cash','g1');assert.equal(items.length,2);assert(items.every(x=>x.include===true));assert.equal(items[0].sourceRowCount,2);assert.equal(items[1].sourceRowIndex,2);});
@@ -696,6 +696,32 @@ reset();test('v1033 OCR merge dedupes the same evidence but preserves different 
 reset();test('v1033 seeded Tha Sala BOQ matches the independent real fixture fields and sections',()=>{
   const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8'));c.S.projects=[{id:'thasala-m7',name:'ท่าศาลา'}];c.S.boq=[];delete c.S.thasalaPr4Imported;assert.equal(c.mergeThaSalaPr4Boq(),true);assert.equal(c.S.boq.length,fx.rows.length);
   fx.rows.forEach((ex,i)=>{const got=c.S.boq[i];for(const k of ['name','category','unit','sectionCode','sectionName'])assert.equal(got[k],ex[k],k+' row '+(i+1));assert(Math.abs(got.qty-ex.qty)<.0001);assert(Math.abs(got.unitPrice-ex.unitPrice)<.0001);});
+});
+
+
+reset();test('v1036 browser BOQ validator independently verifies visible row amount equations',()=>{
+  var ok=c.aiGatewayValidateBoq({rows:[{name:'งานฉาบปูน',qty:48,unit:'ตร.ม.',unitPrice:27.25,amount:1308,category:'ค่าของ',confidence:.96}]});
+  assert.equal(ok.rows.length,1);assert.equal(ok.rows[0].amount,1308);assert.equal(ok.rows[0].equationOk,true);assert.equal(ok.rows[0].aiEquationMismatch,false);
+  var bad=c.aiGatewayValidateBoq({rows:[{name:'งานฉาบปูน',qty:48,unit:'ตร.ม.',unitPrice:27.25,amount:5308,category:'ค่าของ',confidence:.96}]});
+  assert.equal(bad.rows[0].equationOk,false);assert.equal(bad.rows[0].aiEquationMismatch,true);
+});
+reset();test('v1036 real Tha Sala fixture passes row-amount verification and one corrupted row forces local cross-check',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8')),payload={rows:fx.rows.map(x=>({name:x.name,qty:x.qty,unit:x.unit,unitPrice:x.unitPrice,amount:x.amount,category:x.category,sectionCode:x.sectionCode,sectionName:x.sectionName,confidence:.96})),declaredTotal:fx.declaredTotal,confidence:.96};
+  var out=c.aiGatewayValidateBoq(payload),good=out.rows.map(r=>c.boqAiImportRow(r,.96,'fixture'));assert.equal(good.length,32);assert(good.every(x=>!x.aiEquationMismatch));
+  var cov=c.boqAiCoverage(good,4,fx.declaredTotal,[8,9,11,4]);assert.equal(cov.need,false);assert.equal(cov.equationChecked,32);assert.equal(cov.equationMismatch,0);
+  var corrupt=JSON.parse(JSON.stringify(payload));corrupt.rows[28].amount=9999;var out2=c.aiGatewayValidateBoq(corrupt),bad=out2.rows.map(r=>c.boqAiImportRow(r,.96,'fixture')),cov2=c.boqAiCoverage(bad,4,fx.declaredTotal,[8,9,11,4]);assert.equal(cov2.need,true);assert.equal(cov2.equationMismatch,1);assert(cov2.reasons.some(x=>x.includes('สมการจำนวน×ราคาไม่ตรง')));
+});
+reset();test('v1036 AI import keeps source amount provenance and canonical construction units',()=>{
+  var r=c.boqAiImportRow({name:'ไม้แบบ',qty:59.14,unit:'ลบ . ฟ .',unitPrice:545.41,amount:32255.55,category:'ค่าของ',confidence:.9},.9,'AI test');
+  assert.equal(r.unit,'ลบ.ฟ.');assert.equal(r.sourceAmount,32255.55);assert.equal(r.ocrEquation,true);assert.equal(r.aiEquationMismatch,false);assert(r.note.includes('สมการจำนวน×ราคา≈จำนวนเงินผ่าน'));
+  assert.equal(c.boqCanonUnit('ตร . ม .'),'ตร.ม.');assert.equal(c.boqCanonUnit('ลบ . ม .'),'ลบ.ม.');assert.equal(c.boqCanonUnit('กก'),'กก.');
+});
+reset();test('v1036 AI coverage rejects a row-equation mismatch even when page coverage and declared total otherwise look valid',()=>{
+  var rows=Array.from({length:8},(_,i)=>c.boqAiImportRow({name:'งาน '+i,qty:1,unit:'งาน',unitPrice:100,amount:i===3?700:100,category:'ค่าของ',confidence:.95},.95,'AI'));
+  var x=c.boqAiCoverage(rows,4,800,[2,2,2,2]);assert.equal(x.need,true);assert.equal(x.equationMismatch,1);assert(x.reasons.some(r=>r.includes('1 รายการ')));
+});
+reset();test('v1036 Gemini BOQ contract returns visible per-category amount and server cleanBoq recomputes equation',()=>{
+  const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('ทุกแถวต้องคืน amount'));assert(w.includes('ห้ามคำนวณย้อนสร้าง amount เอง'));assert(w.includes('"amount":0'));assert(w.includes('equationError=amount>0'));assert(w.includes('equationOk=amount>0?equationError<=.03:null'));assert(w.includes('clean.push({name,qty,unit,unitPrice,amount,category,sectionCode,sectionName,confidence,equationError,equationOk})'));
 });
 
 console.log(`PASS ${checks} QA groups`);
