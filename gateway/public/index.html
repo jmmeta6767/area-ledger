@@ -5446,11 +5446,11 @@ function boqRowsNeedVision(rows,imageCount){
   return {need:good.length<min||good.length/raw<.65,good:good,min:min};
 }
 function boqAiPageTotalCheck(rows,declared,scope,pageCount){
-  rows=Array.isArray(rows)?rows:[];var d=+declared||0,s=String(scope||'').toLowerCase(),declaredScope=s==='page'||s==='document'?s:'',rec=boqOcrReconcile(rows,d),effective=declaredScope;
+  rows=Array.isArray(rows)?rows:[];var d=+declared||0,s=String(scope||'').toLowerCase(),declaredScope=s==='page'||s==='document'?s:'',sourceComplete=rows.length>0&&rows.every(function(x){return +x.sourceAmount>0;}),visibleTotal=rows.reduce(function(a,x){return a+(+x.sourceAmount||0);},0),calculatedTotal=rows.reduce(function(a,x){return a+boqAmount(x);},0),total=sourceComplete?visibleTotal:calculatedTotal,diff=d?Math.abs(total-d):0,tol=d?Math.max(2,d*.001):0,pageOk=!!d&&diff<=tol,effective=declaredScope;
   if(!effective&&d>0&&Math.max(1,+pageCount||1)===1)effective='document';
-  else if(!effective&&d>0&&Math.max(1,+pageCount||1)>1&&rec.ok)effective='page';
+  else if(!effective&&d>0&&Math.max(1,+pageCount||1)>1&&pageOk)effective='page';
   var checked=d>0&&effective==='page';
-  return {declared:d,scope:declaredScope,effectiveScope:effective,checked:checked,ok:checked?rec.ok:true,diff:checked?rec.diff:0,total:rec.sum,rows:rows.length};
+  return {declared:d,scope:declaredScope,effectiveScope:effective,checked:checked,ok:checked?pageOk:true,diff:checked?diff:0,tolerance:checked?tol:0,total:total,sourceComplete:sourceComplete,basis:sourceComplete?'visible-amount':'qty-price',rows:rows.length};
 }
 function boqAiCoverage(rows,pageCount,declared,pageCounts,pageChecks){
   rows=Array.isArray(rows)?rows:[];var pages=Math.max(1,+pageCount||1),q=boqRowsNeedVision(rows,pages),d=+declared||0,rec=boqOcrReconcile(q.good,d),counts=Array.isArray(pageCounts)?pageCounts.slice(0,pages):[],checks=Array.isArray(pageChecks)?pageChecks.slice(0,pages):[],min=pages>1?Math.max(3,pages*2):(d>0?1:2),raw=Math.max(1,rows.length),ratio=q.good.length/raw,pageGap=pages>1&&counts.length===pages&&counts.some(function(n){return !(+n>0);}),totalMismatch=d>0&&!rec.ok,equationChecked=rows.filter(function(x){return +x.sourceAmount>0;}).length,equationMismatch=rows.filter(function(x){return !!x.aiEquationMismatch;}).length,pageTotalMismatch=checks.filter(function(x){return x&&x.checked&&!x.ok;}).length,docTotals=checks.filter(function(x){return x&&x.effectiveScope==='document'&&+x.declared>0;}).map(function(x){return +x.declared;}),documentTotalConflict=false,reasons=[];
