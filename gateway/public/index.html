@@ -5267,9 +5267,11 @@ function boqPreviewRowKey(x){
   return p||f?[base,p,f].join('|'):base;
 }
 function boqLocalDeclaredTotalInfo(text,pageCount){
-  var t=String(text||''),total=thaiGovBoqDeclaredTotal(t),scope='';
-  if(/รวม(?:ยอด|ราคา)?\s*(?:ประจำ)?หน้า(?:นี้|ที่\s*\d+)?/i.test(t))scope='page';
-  else if(/รวมทั้งสิ้น|รวมสุทธิทั้งสิ้น|รวม(?:ค่า)?ก่อสร้างทั้งโครงการ|รวมทั้งโครงการ|รวมเป็นเงินทั้งสิ้น/i.test(t))scope='document';
+  var t=String(text||''),pageRx=/รวม(?:ยอด|ราคา)?\s*(?:ประจำ)?หน้า(?:นี้|ที่\s*\d+)?/i,docRx=/รวมทั้งสิ้น|รวมสุทธิทั้งสิ้น|รวม(?:ค่า)?ก่อสร้างทั้งโครงการ|รวมทั้งโครงการ|รวมเป็นเงินทั้งสิ้น/i,scope=pageRx.test(t)?'page':(docRx.test(t)?'document':''),total=0;
+  if(scope){
+    var rx=scope==='page'?pageRx:docRx,cand=[];t.split(/\n+/).forEach(function(line){if(!rx.test(line))return;var ns=(line.match(/\d[\d,]*(?:\.\d+)?/g)||[]).map(thaiBoqNum).filter(function(n){return isFinite(n)&&n>0;});if(ns.length)cand.push(Math.max.apply(Math,ns));});if(cand.length)total=Math.max.apply(Math,cand);
+  }
+  if(!total)total=thaiGovBoqDeclaredTotal(t);
   return {total:total,scope:scope};
 }
 function boqLocalPageAssemble(text,posRows,eqRows,bandRows,page,file,pageCount){
