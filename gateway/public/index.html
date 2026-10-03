@@ -962,6 +962,22 @@ body.wallpaper-on .mgroup{
 }
 
 
+/* v835: consistent workflow grouping inside feature pages */
+.workflow-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:18px 2px 8px;padding:0 2px}
+.workflow-section-head span{font-size:.8rem;font-weight:900;color:#26333d;letter-spacing:.01em}
+.workflow-section-head small{font-size:.66rem;line-height:1.35;color:#7b858e;text-align:right}
+.workflow-section-head:first-child{margin-top:8px}
+.report-workflow-head{margin-top:16px}
+.project-boq-shortcut+.workflow-section-head{margin-top:20px}
+@media(max-width:430px){
+ .workflow-section-head{align-items:flex-start;margin-top:16px}
+ .workflow-section-head span{font-size:.78rem}
+ .workflow-section-head small{font-size:.62rem;max-width:54%}
+}
+@media(prefers-color-scheme:dark){
+ .workflow-section-head span{color:#e5edf3}.workflow-section-head small{color:#9eabb6}
+}
+
 /* v834: organized navigation and categorized settings */
 .app-drawer{overflow-y:auto;-webkit-overflow-scrolling:touch}
 .app-drawer-menu{padding:8px 0 2px}
@@ -4263,10 +4279,11 @@ function govWorkAdvice(p){if(!p)return null;var end=p.endDate||'',days=validIsoD
 function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
   var s=stats(p.id),x=budgetPct(p),left=p.budget-s.outB,actualCost=s.outB,forecastProfit=approvedContractValue(p.id)-actualCost;
-  var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div>';
+  var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div><div class="workflow-section-head"><span>งานประจำวัน</span><small>BOQ · เพิ่มรายการ · แก้ไขโครงการ</small></div>';
   var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button></div></div>';
 
   var cc=contractControl(p.id),cq=contractActionQueue(p.id);
+  h+='<div class="workflow-section-head"><span>สัญญาและความเสี่ยง</span><small>กำหนดงาน · Variation · หนังสือ · เหตุการณ์</small></div>';
   h+='<div class="contract-center '+cc.risk+'"><div class="cc-head"><div><small>CONTRACT CONTROL CENTER</small><b>'+esc(({normal:'ปกติ',watch:'เฝ้าระวัง',urgent:'เร่งดำเนินการ',critical:'วิกฤต'})[cc.risk])+'</b></div><span>'+(p.status==='delivered'?'ส่งมอบแล้ว':p.status==='closed'?'ปิดโครงการแล้ว':cc.days===null?'ไม่ระบุวันสิ้นสุด':cc.days>=0?'เหลือ '+cc.days+' วัน':'พ้น '+Math.abs(cc.days)+' วัน')+'</span></div><div class="cc-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(+p.contract||0)+'</b></div><div><small>ต้นทุนจริง</small><b>'+fmt(cc.stats.outB)+'</b></div><div><small>Forecast หลัง Variation</small><b>'+fmt(cc.forecast)+'</b></div><div><small>หนังสือค้าง</small><b>'+cc.pendingLetters+' / รอตอบ '+cc.pendingReplies+'</b></div></div>'+(cq.length?'<div class="cc-queue">'+cq.slice(0,5).map(function(q){return '<p class="'+q.level+'">'+esc(q.text)+'</p>';}).join('')+'</div>':'<div class="cc-ok">ไม่พบ Action Queue สำคัญจากข้อมูลที่บันทึก</div>')+'<div class="cc-actions"><button class="btn" data-act="contractChangeNew" data-id="'+p.id+'">+ เพิ่ม/ลดงาน</button><button class="btn" data-act="timeExtensionNew" data-id="'+p.id+'">+ ขอขยายเวลา</button></div></div>';
 
   var contractOpen=cc.risk!=='normal'||cq.length>0;
@@ -4281,6 +4298,7 @@ function vProject(){
   var cv=(S.contractChanges||[]).filter(function(z){return z.pid===p.id;}),te=(S.timeExtensions||[]).filter(function(z){return z.pid===p.id;}),contractAdminOpen=cv.some(function(z){return z.status!=='approved'&&z.status!=='rejected';})||te.some(function(z){return z.status!=='approved'&&z.status!=='rejected';});
   if(cv.length||te.length)h+='<details class="project-fold project-change-fold"'+(contractAdminOpen?' open':'')+'><summary><span>การเปลี่ยนแปลงสัญญา / เวลา<small>Variation '+cv.length+' · ขยายเวลา '+te.length+(contractAdminOpen?' · มีเรื่องรอพิจารณา':'')+'</small></span></summary><div class="project-fold-body"><div class="sec contract-admin">'+cv.map(function(z){return '<div class="contract-admin-row"><b>'+esc(z.title)+'</b><small>Variation · '+fmt(+z.amount||0)+' · '+esc(z.status||'draft')+'</small></div>';}).join('')+te.map(function(z){return '<div class="contract-admin-row"><b>'+esc(z.reason)+'</b><small>ขยายเวลา '+(+z.days||0)+' วัน · '+esc(z.status||'draft')+'</small></div>';}).join('')+'</div></div></details>';
 
+  h+='<div class="workflow-section-head"><span>การเงินและต้นทุน</span><small>งบ · รับจ่าย · กำไร · หลักประกัน</small></div>';
   h+='<div class="sec master-detail-card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span>ใช้งบไปแล้ว</span><b class="num">'+Math.round(x*100)+'%</b></div><div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
     '<div class="muted" style="font-size:.9rem">ต้นทุนจริง '+fmt(actualCost)+' · งบประมาณ '+fmt(p.budget)+(left>=0?' · งบคงเหลือ <b class="num">'+fmt(left)+'</b>':' · เกินงบ <b class="num out">'+fmt(-left)+'</b>')+'</div></div>';
   h+='<div class="grid4 master-detail-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(p.contract)+'</b></div><div><small>รับเงินแล้ว</small><b class="in">'+fmt(s.recd)+'</b></div>'+
@@ -4308,6 +4326,7 @@ function vProject(){
   if(!list.length)h+='<div class="empty">ยังไม่มีรายการ</div>';else list.forEach(function(t){h+=rowTx(t,false);});
   h+='</div></details>';
 
+  h+='<div class="workflow-section-head"><span>รายงานและเครื่องมือ</span><small>ส่งออก · PDF · เอกสารธุรกิจ</small></div>';
   h+='<details class="project-fold project-tools-fold"><summary><span>เครื่องมือโครงการ<small>Excel · PDF · เอกสารธุรกิจ</small></span></summary><div class="project-fold-body"><div class="sec master-detail-card project-export-card"><div class="project-action-grid"><button data-act="exportProjectXlsx" data-id="'+p.id+'"><b>Excel</b><small>ส่งออกรายการ</small></button><button data-act="exportProjectPdf" data-id="'+p.id+'"><b>PDF</b><small>รายงานโครงการ</small></button><button data-act="projectDocList" data-kind="quote" data-id="'+p.id+'"><b>ใบเสนอราคา</b><small>เอกสารโครงการ</small></button><button data-act="projectDocList" data-kind="bill" data-id="'+p.id+'"><b>ใบวางบิล</b><small>เอกสารโครงการ</small></button></div><small class="muted">รายงานและเอกสารจะอ้างอิงเฉพาะโครงการนี้</small></div></div></details>';
   return h;
 }
@@ -4482,15 +4501,18 @@ function vReport(){
   var cs=Object.keys(cat).sort(function(a,b){return cat[b]-cat[a];});
   var monthBills=(S.bills||[]).filter(function(b){return periodKey(b.date)===mk;}),monthOpen=0,monthSettled=0;monthBills.forEach(function(b){var bs=billPaymentSummary(b);monthSettled+=bs.paid;monthOpen+=bs.remain;});
   var ar=billingReconcile(''),vatDue=vi-vo,whtDue=wo,attention=reportAttentionItems(mk,monthOpen,vatDue,whtDue,ar);
-  var h='<section class="report-mobile-focus"><div class="mnav master-month-nav report-month-nav"><button data-act="mprev" aria-label="เดือนก่อนหน้า">‹</button><b>'+mstr(mk)+'</b><button data-act="mnext" aria-label="เดือนถัดไป">›</button></div>';
+  var h='<section class="report-mobile-focus"><div class="mnav master-month-nav report-month-nav"><button data-act="mprev" aria-label="เดือนก่อนหน้า">‹</button><b>'+mstr(mk)+'</b><button data-act="mnext" aria-label="เดือนถัดไป">›</button></div><div class="workflow-section-head report-workflow-head"><span>ภาพรวมเดือน</span><small>เงินจริง · รายการที่บันทึก · เรื่องต้องติดตาม</small></div>';
   h+='<div class="report-cash-command"><div><small>เงินจริงเข้า</small><b class="in">'+fmt(cash.in)+'</b><span>ตามวันที่รับชำระ</span></div><div><small>เงินจริงออก</small><b class="out">'+fmt(cash.out)+'</b><span>ตามวันที่จ่ายจริง</span></div><div><small>กระแสเงินสดสุทธิ</small><b class="'+(cash.net>=0?'in':'out')+'">'+fmt(cash.net)+'</b><span>เข้า − ออก</span></div></div>';
   h+='<div class="report-booked-summary"><span><small>รายรับที่บันทึกก่อน VAT</small><b class="in">'+fmt(i)+'</b></span><span><small>รายจ่ายที่บันทึกก่อน VAT</small><b class="out">'+fmt(o)+'</b></span><span><small>ผลต่างรายการก่อน VAT</small><b class="'+(bookNet>=0?'in':'out')+'">'+fmt(bookNet)+'</b></span></div>';
   if(attention.length)h+='<section class="report-attention"><div class="report-attention-head"><span><small>ACTION FIRST</small><b>เรื่องที่ควรตรวจในเดือนนี้</b></span><strong>'+attention.length+'</strong></div>'+attention.map(function(a){return '<div class="'+a.tone+'"><span><b>'+esc(a.title)+'</b><small>'+esc(a.detail)+'</small></span></div>';}).join('')+'</section>';
+  h+='<div class="workflow-section-head report-workflow-head"><span>วิเคราะห์ประจำเดือน</span><small>กระแสเงินสด · รายจ่าย · ลูกหนี้</small></div>';
   h+='<details class="report-focus-fold" data-report-key="cash"'+(reportFoldOpen('cash',false)?' open':'')+'><summary><span>กราฟเงินจริง 6 เดือน<small>อิงวันที่รับ/จ่ายจริง รวมการชำระบางส่วน</small></span></summary><div class="report-fold-body">'+svg+'<div class="muted report-legend"><span class="in">■</span> เงินเข้า <span class="out">■</span> เงินออก</div></div></details>';
   h+='<details class="report-focus-fold" data-report-key="expense"'+(reportFoldOpen('expense',false)?' open':'')+'><summary><span>รายจ่ายตามหมวด<small>'+cs.length+' หมวด · '+fmt(o)+'</small></span></summary><div class="report-fold-body">'+(cs.length?donut(cat,o,mshort(mk))+catRows(cs,cat,csub,o):'<div class="empty">เดือนนี้ยังไม่มีรายจ่าย</div>')+'</div></details>';
   h+='<details class="report-focus-fold report-billing-fold" data-report-key="billing"'+(reportFoldOpen('billing',ar.issues>0)?' open':'')+'><summary><span>ใบวางบิลและสุขภาพข้อมูล<small>'+monthBills.length+' ฉบับ · ค้างรับ '+fmt(monthOpen)+(ar.issues?' · ต้องตรวจ '+ar.issues+' จุด':' · เชื่อมโยงปกติ')+'</small></span></summary><div class="report-fold-body"><div class="kv"><span>รับเงินจริงแล้ว</span><span class="num in">'+fmt(monthSettled)+'</span></div><div class="kv"><span>ยังค้างรับ</span><span class="num out">'+fmt(monthOpen)+'</span></div><div class="kv"><span>ใบวางบิลไม่มีลูกหนี้เชื่อม</span><span class="num">'+ar.unlinked+'</span></div><div class="kv"><span>ยอดใบวางบิลไม่ตรงลูกหนี้</span><span class="num">'+ar.mismatch+'</span></div><div class="kv"><span>รับเงินจริงแล้วแต่ไม่มีใบเสร็จเชื่อม</span><span class="num">'+ar.missingReceipt+'</span></div><div class="kv"><span>รายการบัญชีอ้างใบวางบิลที่ไม่พบ</span><span class="num">'+ar.orphanTx+'</span></div>'+((ar.unlinked||ar.mismatch)?'<button class="btn" data-act="repairBilling">ซ่อมความเชื่อมโยงที่ปลอดภัย</button>':'')+'</div></details>';
+  h+='<div class="workflow-section-head report-workflow-head"><span>บัญชี ภาษี และโครงการ</span><small>VAT / WHT · ผลรายโครงการ</small></div>';
   h+='<details class="report-focus-fold" data-report-key="tax"'+(reportFoldOpen('tax',false)?' open':'')+'><summary><span>ภาษีประมาณการ<small>VAT นำส่ง '+fmt(vatDue)+' · WHT นำส่ง '+fmt(whtDue)+'</small></span></summary><div class="report-fold-body"><div class="kv"><span>VAT ขาย</span><span class="num">'+fmt(vi)+'</span></div><div class="kv"><span>VAT ซื้อ</span><span class="num">'+fmt(vo)+'</span></div><div class="kv"><span>VAT ที่ต้องนำส่งโดยประมาณ</span><span class="num">'+fmt(vatDue)+'</span></div><div class="kv"><span>ลูกค้าหัก ณ ที่จ่ายเรา (เครดิตภาษี)</span><span class="num">'+fmt(wi)+'</span></div><div class="kv"><span>เราหัก ณ ที่จ่ายผู้อื่น (ต้องนำส่ง)</span><span class="num">'+fmt(wo)+'</span></div></div></details>';
   h+='<details class="report-focus-fold" data-report-key="projects"'+(reportFoldOpen('projects',false)?' open':'')+'><summary><span>ผลรายโครงการ<small>'+S.projects.length+' โครงการ · มูลค่างาน / ต้นทุน / รับจริง</small></span></summary><div class="report-fold-body"><div class="wrapx"><table class="project-results-table"><tr><th>โครงการ</th><th>มูลค่างาน</th><th>ต้นทุนจริง</th><th>กำไรคาดการณ์</th><th>รับจริง</th><th>กำไร/ขาดทุนสุทธิ</th></tr>'+S.projects.map(function(p){var st=stats(p.id),fm=financeMetrics(p.id),v=fm.contract,cost=fm.cost,pf=fm.forecast,np=fm.netProfit;return '<tr><td data-label="โครงการ">'+esc(p.name)+'</td><td data-label="มูลค่างาน" class="num">'+fmt(v)+'</td><td data-label="ต้นทุนจริง" class="num">'+fmt(cost)+'</td><td data-label="กำไรคาดการณ์" class="num '+(pf>=0?'in':'out')+'"><b>'+fmt(pf)+'</b></td><td data-label="รับจริง" class="num">'+fmt(st.recd)+'</td><td data-label="กำไร/ขาดทุนสุทธิ" class="num '+(fm.hasRevenue?(np>=0?'in':'out'):'')+'"><b>'+(fm.hasRevenue?fmt(np):'รอรับรายได้')+'</b></td></tr>';}).join('')+'</table></div></div></details>';
+  h+='<div class="workflow-section-head report-workflow-head"><span>ส่งออกและส่งต่อข้อมูล</span><small>Excel · PDF / พิมพ์ · CSV</small></div>';
   h+='<details class="report-focus-fold" data-report-key="export"'+(reportFoldOpen('export',false)?' open':'')+'><summary><span>ส่งออกรายงาน<small>Excel · PDF / พิมพ์ · CSV</small></span></summary><div class="report-fold-body"><label class="lbl" for="expid">ขอบเขตข้อมูล</label><select id="expid" data-f="exp"><option value="">ทุกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+((U.exportPid||'')===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select><div class="stack"><button class="btn pri" data-act="xlsx">ส่งออก Excel (.xlsx)</button><button class="btn" data-act="pdfView">รายงาน PDF / พิมพ์</button><button class="btn" data-act="csv">คัดลอกเป็น CSV</button></div></div></details>';
   return h+'</section>';
 }
@@ -4707,11 +4729,11 @@ function docListApplySearch(query){
 }
 function vDocs(){
   var counts={quote:(S.quotes||[]).length,bill:(S.bills||[]).length,receipt:(S.receipts||[]).length},bs=docHubBillState(),recent=docRecentRows(6),attention=bs.overdue.concat(bs.dueSoon.filter(function(x){return bs.overdue.indexOf(x)<0;})).slice(0,4);
-  var h='<section class="docs-mobile-focus"><div class="docs-command-head"><div><small>BUSINESS DOCUMENTS</small><h2>เอกสารธุรกิจ</h2></div></div>';
+  var h='<section class="docs-mobile-focus"><div class="docs-command-head"><div><small>BUSINESS DOCUMENTS</small><h2>เอกสารธุรกิจ</h2></div></div><div class="workflow-section-head"><span>สร้างและจัดการเอกสาร</span><small>เสนอราคา · วางบิล · รับเงิน</small></div>';
   h+='<div class="docs-command-summary"><div><small>ค้างรับตามใบวางบิล</small><b class="out">'+fmt(bs.openAmount)+'</b><span>'+bs.open.length+' ฉบับ</span></div><div class="'+(bs.overdue.length?'attention':'')+'"><small>เลยกำหนด</small><b class="out">'+fmt(bs.overdueAmount)+'</b><span>'+bs.overdue.length+' ฉบับ</span></div><div><small>รับแล้วจากใบวางบิล</small><b class="in">'+fmt(bs.paid)+'</b><span>เงินจริงที่เชื่อมเอกสาร</span></div></div>';
   h+='<div class="docs-quick-create"><button data-act="newQuote"><span>'+ic('quote')+'</span><b>ใบเสนอราคา</b><small>สร้างใหม่</small></button><button data-act="newBill"><span>'+ic('bill')+'</span><b>ใบวางบิล</b><small>สร้างใหม่</small></button><button data-act="newReceipt"><span>'+ic('receipt')+'</span><b>ใบเสร็จ</b><small>สร้างใหม่</small></button></div>';
   if(attention.length){
-    h+='<section class="docs-action-first"><div class="docs-action-head"><span><small>ACTION FIRST</small><b>ใบวางบิลที่ควรติดตาม</b></span><strong>'+attention.length+'</strong></div>';
+    h+='<div class="workflow-section-head"><span>ติดตามการรับเงิน</span><small>ใบวางบิลที่ใกล้หรือเลยกำหนด</small></div><section class="docs-action-first"><div class="docs-action-head"><span><small>ACTION FIRST</small><b>ใบวางบิลที่ควรติดตาม</b></span><strong>'+attention.length+'</strong></div>';
     attention.forEach(function(b){var sm=billPaymentSummary(b),st=billStatus(b);h+='<div class="docs-action-row"><button data-act="docView" data-kind="bill" data-id="'+b.id+'"><span><b>'+esc(b.no||'-')+'</b><small>'+esc(b.customer||'-')+' · '+esc(st.text)+'</small></span><strong>'+fmt(sm.remain)+'</strong></button><button class="receive" data-act="billPay" data-id="'+b.id+'">รับเงิน</button></div>';});
     h+='</section>';
   }
@@ -4720,7 +4742,7 @@ function vDocs(){
     '<button data-act="docSection" data-kind="bill"><span class="doc-type-icon">'+ic('bill')+'</span><span><b>ใบวางบิล</b><small>'+counts.bill+' ฉบับ · ค้าง '+bs.open.length+'</small></span><strong>›</strong></button>'+
     '<button data-act="docSection" data-kind="receipt"><span class="doc-type-icon">'+ic('receipt')+'</span><span><b>ใบเสร็จรับเงิน</b><small>'+counts.receipt+' ฉบับ</small></span><strong>›</strong></button>'+
   '</div>';
-  if(recent.length)h+='<section class="docs-recent"><div class="docs-recent-head"><b>เอกสารล่าสุด</b><small>'+recent.length+' รายการล่าสุด</small></div>'+recent.map(function(x){var d=x.doc,c=docCalc(d),st=x.kind==='bill'?billStatus(d):null;return '<button data-act="docView" data-kind="'+x.kind+'" data-id="'+d.id+'"><span class="docs-recent-kind">'+esc(docKindLabel(x.kind))+'</span><span class="docs-recent-main"><b>'+esc(d.no||'-')+'</b><small>'+esc(d.customer||'-')+(d.project?' · '+esc(d.project):'')+'</small></span><span class="docs-recent-side"><strong>'+fmt(c.total)+'</strong><small>'+(st?esc(st.text):dstr(d.date))+'</small></span></button>';}).join('')+'</section>';
+  if(recent.length)h+='<div class="workflow-section-head"><span>ประวัติเอกสาร</span><small>รายการล่าสุดจากทุกประเภท</small></div><section class="docs-recent"><div class="docs-recent-head"><b>เอกสารล่าสุด</b><small>'+recent.length+' รายการล่าสุด</small></div>'+recent.map(function(x){var d=x.doc,c=docCalc(d),st=x.kind==='bill'?billStatus(d):null;return '<button data-act="docView" data-kind="'+x.kind+'" data-id="'+d.id+'"><span class="docs-recent-kind">'+esc(docKindLabel(x.kind))+'</span><span class="docs-recent-main"><b>'+esc(d.no||'-')+'</b><small>'+esc(d.customer||'-')+(d.project?' · '+esc(d.project):'')+'</small></span><span class="docs-recent-side"><strong>'+fmt(c.total)+'</strong><small>'+(st?esc(st.text):dstr(d.date))+'</small></span></button>';}).join('')+'</section>';
   return h+'</section>';
 }
 function vProcurement(){
