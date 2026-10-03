@@ -3744,7 +3744,9 @@ function expenseBatchScan(files){
       U.expenseBatchProgress=Math.max(+U.expenseBatchProgress||1,Math.min(95,5+Math.round(i/fs.length*90)));render();
       try{
         data=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var M=1100,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);resolve({canvas:c,photo:c.toDataURL('image/jpeg',.65)});};im.onerror=reject;im.src=r.result;};r.onerror=reject;r.readAsDataURL(file);});
-        var res=await expenseOcrRecognize(data.canvas),items=expenseBatchItemsFromResult(res,data.photo,file.name,pid,defaultPay,groupId);
+        var res=await expenseOcrRecognize(data.canvas),qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res),items;
+        if(Array.isArray(res.rows)&&res.rows.length>1)items=expenseBatchItemsFromResult(res,data.photo,file.name,pid,defaultPay,groupId);
+        else items=[{id:uid(),file:file.name,photo:data.photo,amount:+res.amount||0,cat:res.cat||'ค่าของ',sub:res.sub||'',partner:res.partner||'',date:validIsoDate(String(res.date||''))?String(res.date):'',pid:pid,pay:defaultPay,include:false,ocrConfidence:qa.score,ocrSource:res.source||'local',ocrUncertainFields:review.uncertainFields.slice(),sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'}];
         if(U.expenseBatch!==batchToken||!U.sheet||U.sheet.kind!=='expenseBatch')break;
         Array.prototype.push.apply(U.expenseBatch,items);
       }catch(e){
