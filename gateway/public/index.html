@@ -5166,7 +5166,7 @@ function sheetHtml(){
         '<div class="settings-inline-actions"><button class="btn" data-act="aiCheckReady">ตรวจ OCR</button><button class="btn" data-act="systemAdvanced">Diagnostics</button></div>'+
       '</div></details>'+
       '<details class="settings-group"><summary><span><b>ข้อมูล สำรอง และระบบ</b><small>สุขภาพข้อมูล · Backup · Restore · เครื่องมือขั้นสูง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
-        '<div class="settings-system-grid"><button class="btn pri" data-act="ownerOps">Owner Operations</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button><button class="btn" data-act="systemAdvanced">Advanced Diagnostics</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button></div>'+
+        '<div class="settings-system-grid"><button class="btn pri" data-act="ownerOps">Owner Operations 1.1</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button><button class="btn" data-act="systemAdvanced">Advanced / System Diagnostics</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button></div>'+
       '</div></details>'+
       '<div class="stack settings-save-stack"><button class="btn pri" data-act="saveOpen">บันทึกข้อมูลกิจการและบัญชี</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
       '<p class="muted settings-footnote">ข้อมูลใช้งานออฟไลน์ในเครื่องและ Cloud Sync เป็นคนละชั้น · '+(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล')+'</p>'
@@ -5297,12 +5297,12 @@ function appMenuHtml(){
   var groups=[
     {label:'งานประจำวัน',hint:'ใช้บ่อย',items:[
       ['home','home','ภาพรวม','ยอดเงินและสถานะวันนี้',0],
-      ['list','list','รายการทั้งหมด','รายรับและรายจ่าย',0],
+      ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
       ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'กำหนดรับเงินและจ่ายเงิน',due]
     ]},
     {label:'โครงการและต้นทุน',hint:'งานก่อสร้าง',items:[
       ['projects','build','โครงการ','ข้อมูลโครงการ · สัญญา · ต้นทุน',0],
-      ['boq','list','BOQ','รายการ BOQ · นำเข้า · แก้ไข',0],
+      ['boq','list','BOQ','รายการ BOQ · นำเข้า · แก้ไข'],
       ['guarantees','shield','เงินประกันผลงาน',gDue?gDue+' รายการใกล้/ครบกำหนด':'ติดตามยอดและวันรับคืน',gDue]
     ]},
     {label:'เอกสารและงานราชการ',hint:'สำนักงาน',items:[
