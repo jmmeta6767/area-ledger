@@ -63,7 +63,7 @@ try{
   evidence.checks.provenance=true;
   const warmup=await waitForGateway(); const health=warmup.health; assert.equal(health.data.productionReady,true);evidence.checks.health=true;evidence.checks.healthAttempts=warmup.attempt;
   const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ok,true);evidence.checks.ready=true;
-  if(target==='staging')await visionProviderAcceptance('');
+  if(target==='staging')await visionProviderAcceptance(base);
   if(target==='production'){
     const browserReady=await fetch(base+'/ready',{method:'GET',headers:{Origin:appBase},cache:'no-store'});
     assert.equal(browserReady.ok,true);assert.equal(browserReady.headers.get('access-control-allow-origin'),appBase);
