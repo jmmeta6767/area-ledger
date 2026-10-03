@@ -436,7 +436,7 @@ reset();test('v828 equation parser handles labor-only BOQ row',()=>{function w(t
 reset();test('v828 equation parser tolerates rounded BOQ multiplication',()=>{function w(t,x,y,ww=60){return {text:t,bbox:{x0:x-ww/2,x1:x+ww/2,y0:y-10,y1:y+10}}}var data={words:[w('เหล็กเสริม DB 12 mm. SD.40',260,220,280),w('0.030',700,220),w('ตัน',820,220),w('21,049.08',1000,220,95),w('631.47',1110,220),w('3,900.00',1280,220,90),w('117.00',1390,220),w('748.47',1510,220)]};var rows=c.boqEquationRows(data,1800);assert(rows.length>=2);assert(rows.some(x=>Math.abs(x.unitPrice-21049.08)<.01));assert(rows.some(x=>Math.abs(x.unitPrice-3900)<.01));});
 reset();test('v829 rejects garbage 1x1 BOQ false positives before preview',()=>{var bad={name:'EET EE Erin aay. he, aR — ค่าแรง',category:'ค่าแรง',qty:1,unit:'',unitPrice:1};assert(c.boqRowQuality(bad)<4);assert.equal(c.boqQualityRows([bad]).length,0);var gate=c.boqRowsNeedVision([bad],4);assert.equal(gate.need,true);assert.equal(gate.good.length,0);});
 reset();test('v829 multi-image BOQ quality gate escalates sparse local extraction',()=>{var sparse=[{name:'งานขุดดิน — ค่าแรง',category:'ค่าแรง',qty:28.8,unit:'ลบ.ม.',unitPrice:153}];var g=c.boqRowsNeedVision(sparse,4);assert.equal(g.need,true);assert.equal(g.good.length,1);var good=[];for(var i=0;i<8;i++)good.push({name:'งานก่อสร้าง '+i,category:i%2?'ค่าแรง':'ค่าของ',qty:10+i,unit:'ตร.ม.',unitPrice:100+i});assert.equal(c.boqRowsNeedVision(good,4).need,false);});
-reset();test('v829 BOQ import escalates weak local rows to AI Vision before preview',()=>{var s=c.boqImportImages.toString();assert(s.includes('boqRowsNeedVision'));assert(s.includes('localQuality.need'));assert(s.includes("aiGatewayEndpoint('v1/ocr/boq')"));assert(s.includes('AI Vision + Verified Local'));assert(s.includes('boqQualityRows(aiRows)'));});
+reset();test('v829 BOQ import escalates weak local rows to AI Vision before preview',()=>{var s=c.boqImportImages.toString();assert(s.includes('boqRowsNeedVision'));assert(s.includes('localQuality.need'));assert(s.includes("aiGatewayEndpoint('v1/ocr/boq')"));assert(s.includes('AI Vision + Verified Local'));assert(s.includes('boqAiCoverage(aiRows,clean.length,aiDeclared,aiPageCounts)'));});
 reset();test('v830 BOQ run prompts AI Vision consent before local-only path when gateway is unavailable',()=>{var s=c.directAction.toString();assert(s.includes("a==='boqRunImages'"));assert(s.includes("kind:'boqAiConsent'"));assert(s.includes("a==='boqAiConsentRun'"));assert(s.includes("a==='boqRunLocalOnly'"));assert(s.includes('aiGatewayProductionBase()'));});
 reset();test('v830 BOQ AI consent sheet keeps selected images and explains remote processing',()=>{c.U.boqImageQueue=[{name:'a.jpg'},{name:'b.jpg'}];c.U.sheet={kind:'boqAiConsent',pid:'p1'};var html=c.sheetHtml();assert(html.includes('เปิด AI Vision สำหรับ BOQ'));assert(html.includes('Production Gateway'));assert(html.includes('Preview'));assert(html.includes('เลือกแล้ว 2 รูป'));assert(html.includes('เปิด AI Vision และอ่านต่อ'));assert(html.includes('ใช้ OCR ในเครื่องเท่านั้น'));});
 reset();test('v831 BOQ page renders refreshed hero summary search sections and rows',()=>{var s=c.vBoq.toString();assert(s.includes('boq-hero'));assert(s.includes('boq-total-block'));assert(s.includes('boq-summary-grid'));assert(s.includes('boq-find-shell'));assert(s.includes('boq-section-main'));assert(s.includes('boq-row-amount'));assert(s.includes("data-act=\"newBoq\""));assert(s.includes("data-act=\"boqImport\""));assert(s.includes("data-act=\"editBoq\""));});
@@ -512,10 +512,10 @@ reset();test('v1010 staging acceptance exercises the real Vision provider before
 
 reset();test('v1011 browser OCR diagnostics preserve gateway/provider error codes',()=>{const src=c.aiGatewayRequest.toString();assert(src.includes("raw&&raw.error?String(raw.error):('HTTP_'+res.status)"));assert(src.includes('err.gatewayCode=code'));assert(src.includes("String(e&&e.gatewayCode||e&&e.message||'OCR_ERROR')"));assert(!src.includes("throw new Error('AI gateway HTTP '+res.status)"));});
 
-reset();test('v1012 scanned PDF BOQ uses AI Vision first with bounded mobile page budget and local fallback',()=>{const src=c.boqImportScannedPdf.toString();assert(src.includes("pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq')"));assert(src.includes("aiGatewayRequest('v1/ocr/boq'"));assert(src.includes('AI Vision PDF สแกน'));assert(src.includes('boqQualityRows(aiRows)'));assert(src.includes('loadTesseract'));assert(src.includes('boqCreateOcrWorker'));assert(src.includes("boqProgressSet(100"));assert(src.includes('ocrNeedsReview:true'));});
+reset();test('v1012 scanned PDF BOQ uses AI Vision first with bounded mobile page budget and local fallback',()=>{const src=c.boqImportScannedPdf.toString();assert(src.includes("pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq')"));assert(src.includes("aiGatewayRequest('v1/ocr/boq'"));assert(src.includes('AI Vision PDF สแกน'));assert(src.includes('boqAiCoverage(aiRows,pages,aiDeclared,aiPageCounts)'));assert(src.includes('loadTesseract'));assert(src.includes('boqCreateOcrWorker'));assert(src.includes("boqProgressSet(100"));assert(src.includes('ocrNeedsReview:true'));});
 
 reset();test('v1013 BOQ image progress repaints live instead of visually freezing at 1 percent',()=>{const src=fs.readFileSync('gateway/public/index.html','utf8');assert(src.includes('id="boqProgressBar"'));assert(src.includes('id="boqProgressPct"'));const p=c.boqProgressSet.toString();assert(p.includes("bar.style.width=p+'%'"));assert(p.includes("pct.textContent=p+'%'"));});
-reset();test('v1013 BOQ multi-image path is AI-first and skips local OCR when enough verified rows exist',()=>{const src=c.boqImportImages.toString();const ai=src.indexOf("aiGatewayEndpoint('v1/ocr/boq')"),local=src.indexOf('loadTesseract');assert(ai>=0&&local>ai);assert(src.includes("ocrMode:'AI Vision First"));assert(src.includes('aiGood.length>=aiMin'));});
+reset();test('v1013 BOQ multi-image path is AI-first and skips local OCR when enough verified rows exist',()=>{const src=c.boqImportImages.toString();const ai=src.indexOf("aiGatewayEndpoint('v1/ocr/boq')"),local=src.indexOf('loadTesseract');assert(ai>=0&&local>ai);assert(src.includes("ocrMode:'AI Vision Verified Coverage"));assert(src.includes('!aiCoverage.need'));});
 reset();test('v1013 BOQ AI image read has decode timeout request timeout and elapsed status',()=>{const src=c.boqAiReadFile.toString();assert(src.includes('IMAGE_DECODE_TIMEOUT'));assert(src.includes('timeoutMs:28000'));assert(src.includes('รอผล'));assert(src.includes('boqOcrActive(token)'));});
 reset();test('v1013 BOQ local fallback is bounded and cancellation terminates worker',()=>{const read=c.boqReadImage.toString(),cancel=c.boqCancelImport.toString();assert(read.includes('LOCAL_OCR_TIMEOUT'));assert(read.includes('40000'));assert(cancel.includes('U.boqOcrAbort.abort()'));assert(cancel.includes('worker.terminate()'));assert(code.includes("a==='boqCancelImport'"));});
 reset();test('v1013 AI gateway supports per-request timeout without changing default callers',()=>{const src=c.aiGatewayRequest.toString();assert(src.includes('opt=opt||{}'));assert(src.includes('+opt.timeoutMs||cfg.timeoutMs'));assert(src.includes("external.addEventListener('abort'"));});
@@ -637,6 +637,35 @@ reset();test('v1030 BOQ final import syncs edits before reconciliation and persi
 reset();test('v1030 scanned PDF BOQ shares bounded cancel-safe OCR controls with image imports',()=>{
   const src=c.boqImportScannedPdf.toString();assert(src.includes('boqOcrToken=token'));assert(src.includes('boqOcrActive(token)'));assert(src.includes('timeoutMs:28000'));assert(src.includes('PDF_PAGE_TIMEOUT'));assert(src.includes('PDF_RENDER_TIMEOUT'));assert(src.includes('LOCAL_OCR_TIMEOUT'));assert(src.includes('boqOcrRelease(token)'));
   const cancel=c.boqCancelImport.toString();assert(cancel.includes('U.boqOcrAbort.abort()'));assert(cancel.includes('worker.terminate()'));
+});
+
+
+reset();test('v1031 BOQ AI coverage rejects sparse multi-page extraction',()=>{
+  var rows=Array.from({length:4},(_,i)=>({name:'งานคอนกรีต '+i,qty:1,unit:'ลบ.ม.',unitPrice:100,category:'ค่าของ',ocrConfidence:.95}));
+  var x=c.boqAiCoverage(rows,4,0,[1,1,1,1]);assert.equal(x.need,true);assert(x.reasons.some(r=>r.includes('ขั้นต่ำ 8')));
+});
+reset();test('v1031 BOQ AI coverage accepts complete multi-page extraction with reconciled total',()=>{
+  var rows=Array.from({length:8},(_,i)=>({name:'งานเหล็ก '+i,qty:1,unit:'กก.',unitPrice:100,category:i%2?'ค่าแรง':'ค่าของ',ocrConfidence:.95}));
+  var x=c.boqAiCoverage(rows,4,800,[2,2,2,2]);assert.equal(x.need,false);assert.equal(x.good.length,8);assert.equal(x.reconcile.ok,true);
+});
+reset();test('v1031 BOQ AI coverage rejects page gaps and declared-total mismatch',()=>{
+  var rows=Array.from({length:8},(_,i)=>({name:'งานแบบหล่อ '+i,qty:1,unit:'ตร.ม.',unitPrice:100,category:'ค่าของ',ocrConfidence:.95}));
+  var gap=c.boqAiCoverage(rows,4,800,[2,2,0,4]);assert.equal(gap.need,true);assert.equal(gap.pageGap,true);
+  var bad=c.boqAiCoverage(rows,4,1200,[2,2,2,2]);assert.equal(bad.need,true);assert(bad.reasons.includes('ยอดรวม AI ไม่ตรงเอกสาร'));
+});
+reset();test('v1031 one-page AI requires either multiple rows or a reconciled declared total',()=>{
+  var row=[{name:'งานคอนกรีต',qty:1,unit:'ลบ.ม.',unitPrice:100,category:'ค่าของ',ocrConfidence:.95}];
+  assert.equal(c.boqAiCoverage(row,1,0,[1]).need,true);
+  assert.equal(c.boqAiCoverage(row,1,100,[1]).need,false);
+});
+reset();test('v1031 image and scanned-PDF pipelines use coverage gate before AI-only preview',()=>{
+  var a=c.boqImportImages.toString(),b=c.boqImportScannedPdf.toString();
+  assert(a.includes('boqAiCoverage(aiRows,clean.length,aiDeclared,aiPageCounts)'));assert(a.includes('AI Vision Verified Coverage'));
+  assert(b.includes('boqAiCoverage(aiRows,pages,aiDeclared,aiPageCounts)'));assert(b.includes('AI Vision PDF Verified Coverage'));
+  assert(a.includes('aiPageCounts[a]=0'));assert(b.includes('aiPageCounts[ap-1]=0'));
+});
+reset();test('v1031 text-layer PDF falls back to full-page OCR when table coverage is weak',()=>{
+  var src=c.boqImportPdf.toString();assert(src.includes('textCoverage=boqRowsNeedVision(rows,pdf.numPages)'));assert(src.includes('textLayerFallback:true'));assert(src.includes('Text Layer แต่ตารางไม่ครบ'));
 });
 
 console.log(`PASS ${checks} QA groups`);
