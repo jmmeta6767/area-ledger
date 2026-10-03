@@ -639,5 +639,34 @@ reset();test('v1030 scanned PDF BOQ shares bounded cancel-safe OCR controls with
   const cancel=c.boqCancelImport.toString();assert(cancel.includes('U.boqOcrAbort.abort()'));assert(cancel.includes('worker.terminate()'));
 });
 
+
+reset();test('v1031 BOQ AI coverage rejects sparse multi-page extraction',()=>{
+  var rows=Array.from({length:4},(_,i)=>({name:'งานคอนกรีต '+i,qty:1,unit:'ลบ.ม.',unitPrice:100,category:'ค่าของ',ocrConfidence:.95}));
+  var x=c.boqAiCoverage(rows,4,0,[1,1,1,1]);assert.equal(x.need,true);assert(x.reasons.some(r=>r.includes('ขั้นต่ำ 8')));
+});
+reset();test('v1031 BOQ AI coverage accepts complete multi-page extraction with reconciled total',()=>{
+  var rows=Array.from({length:8},(_,i)=>({name:'งานเหล็ก '+i,qty:1,unit:'กก.',unitPrice:100,category:i%2?'ค่าแรง':'ค่าของ',ocrConfidence:.95}));
+  var x=c.boqAiCoverage(rows,4,800,[2,2,2,2]);assert.equal(x.need,false);assert.equal(x.good.length,8);assert.equal(x.reconcile.ok,true);
+});
+reset();test('v1031 BOQ AI coverage rejects page gaps and declared-total mismatch',()=>{
+  var rows=Array.from({length:8},(_,i)=>({name:'งานแบบหล่อ '+i,qty:1,unit:'ตร.ม.',unitPrice:100,category:'ค่าของ',ocrConfidence:.95}));
+  var gap=c.boqAiCoverage(rows,4,800,[2,2,0,4]);assert.equal(gap.need,true);assert.equal(gap.pageGap,true);
+  var bad=c.boqAiCoverage(rows,4,1200,[2,2,2,2]);assert.equal(bad.need,true);assert(bad.reasons.includes('ยอดรวม AI ไม่ตรงเอกสาร'));
+});
+reset();test('v1031 one-page AI requires either multiple rows or a reconciled declared total',()=>{
+  var row=[{name:'งานคอนกรีต',qty:1,unit:'ลบ.ม.',unitPrice:100,category:'ค่าของ',ocrConfidence:.95}];
+  assert.equal(c.boqAiCoverage(row,1,0,[1]).need,true);
+  assert.equal(c.boqAiCoverage(row,1,100,[1]).need,false);
+});
+reset();test('v1031 image and scanned-PDF pipelines use coverage gate before AI-only preview',()=>{
+  var a=c.boqImportImages.toString(),b=c.boqImportScannedPdf.toString();
+  assert(a.includes('boqAiCoverage(aiRows,clean.length,aiDeclared,aiPageCounts)'));assert(a.includes('AI Vision Verified Coverage'));
+  assert(b.includes('boqAiCoverage(aiRows,pages,aiDeclared,aiPageCounts)'));assert(b.includes('AI Vision PDF Verified Coverage'));
+  assert(a.includes('aiPageCounts[a]=0'));assert(b.includes('aiPageCounts[ap-1]=0'));
+});
+reset();test('v1031 text-layer PDF falls back to full-page OCR when table coverage is weak',()=>{
+  var src=c.boqImportPdf.toString();assert(src.includes('textCoverage=boqRowsNeedVision(rows,pdf.numPages)'));assert(src.includes('textLayerFallback:true'));assert(src.includes('Text Layer แต่ตารางไม่ครบ'));
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
