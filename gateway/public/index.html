@@ -3727,7 +3727,7 @@ function expenseScanImage(file){
           if(!(amt>0)||!isFinite(amt)){done('อ่านยอดไม่ได้ · ไม่บันทึกอัตโนมัติ กรุณากรอกและตรวจเอง','ต้องตรวจเอง');return;}
           if(!qa.accepted){done('OCR confidence '+Math.round(qa.score*100)+'% · ยังไม่เติมยอดอัตโนมัติ กรุณาตรวจและกรอกเอง','ความมั่นใจต่ำ');return;}
           expenseScanProgressSet(96,'กรอกข้อมูลให้ตรวจ');
-          draft.cat=res.cat||'ค่าของ';if(res.sub)draft.sub=res.sub;draft.amount=String(amt);if(res.partner)draft.partner=res.partner;if(validIsoDate(String(res.date||'')))draft.date=String(res.date);draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
+          draft.cat=res.cat||'ค่าของ';if(res.sub)draft.sub=res.sub;draft.amount=String(amt);if(res.partner)draft.partner=res.partner;if(validIsoDate(String(res.date||'')))draft.date=res.date;draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
           done((res.source==='ai'?'AI อ่านบิลและกรอกข้อมูลแล้ว':'OCR ในเครื่องกรอกข้อมูลแล้ว')+' · '+(review.uncertainFields.length?'ควรตรวจเพิ่ม: '+review.uncertainFields.join(', ')+' · ':'')+'กรุณาตรวจรูปกับยอด ร้านค้า รายการ หมวด วันที่ และโครงการ แล้วกดบันทึก','เสร็จแล้ว');
         }).catch(function(){done('OCR ใช้งานไม่ได้ · แนบรูปไว้แล้ว กรุณากรอกเอง','OCR ไม่สำเร็จ');});
       }catch(e){done('เตรียมรูปไม่สำเร็จ กรุณาเลือกรูปใหม่','เตรียมรูปไม่สำเร็จ');}
