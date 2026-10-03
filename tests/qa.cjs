@@ -817,5 +817,17 @@ test('BOQ warning acknowledgement expires when destination changes',()=>{
   action('boqImportConfirm','p',{boqImportPid:'q'});action('boqImportConfirm','p',{boqImportPid:'q'});assert.equal(c.S.boq[0].pid,'q');
 });
 
+reset();test('v1040 business document portrait preview fits phone width and keeps actions reachable',()=>{
+  c.S.quotes=[{id:'q1040',no:'QT-TEST',date:'2026-10-03',customer:'ลูกค้าทดสอบ',items:[{description:'รายการวัสดุทดสอบ',qty:2,unit:'ชุด',unitPrice:50}]}];
+  c.S.business={legalName:'AREA MAIBAB',vatRegistered:false};c.U.docKind='quote';c.U.docId='q1040';
+  const out=c.vBusinessDoc(),src=fs.readFileSync('gateway/public/index.html','utf8'),paper=out.indexOf('class="quote-paper rd-paper"'),bar=out.indexOf('class="doc-actions-bar no-print"');
+  assert(paper>=0&&bar>paper);assert(out.slice(paper,bar).includes('</div>'),'A4 paper must close before action controls');
+  for(const label of ['รายละเอียด','จำนวน','หน่วย','ราคาต่อหน่วย','ส่วนลด','มูลค่า'])assert(out.includes('data-label="'+label+'"'));
+  for(const a of ['convertDoc','doPrint','downloadDocPdf','editDoc'])assert(out.includes('data-act="'+a+'"'));
+  assert(src.includes('body[data-view="quoteprint"] .quote-paper.rd-paper:not(.pdf-export)'));assert(src.includes('width:100%!important;min-width:0!important;max-width:none!important'));
+  assert(src.includes('body[data-view="quoteprint"] .rd-table tbody{display:grid!important'));assert(src.includes('body[data-view="quoteprint"] .doc-actions-bar{width:100%;margin:8px 0 24px'));
+  assert(src.includes('body[data-view="quoteprint"] .rd-paper.pdf-export .rd-table{display:table!important'));
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
