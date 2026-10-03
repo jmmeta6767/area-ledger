@@ -5,6 +5,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1033 BOQ Real Accuracy
+
+- Adds an independent 32-row real PR4 fixture from the Tha Sala M.7 multipurpose-building BOQ, including four page totals and the reconciled 412,812.83 grand total.
+- Expands local Thai PR4 unit recognition for real construction units including cubic foot (ลบ.ฟ.), box, block, sack, roll, can, tank, door/panel, piece, pair, litre and related site units.
+- Local OCR regression now covers labor-only rows, material+labor pairs, cubic-foot formwork, roofing screws sold by box, and circled handwritten price-reference numbers.
+- OCR-result merging no longer collapses rows merely because description/category/quantity/unit match; materially different unit prices or different source sections remain separate, while near-identical duplicate parser evidence is still deduplicated.
+- The seeded Tha Sala 32-row BOQ is cross-checked against the independent fixture so quantities, units, prices and source sections cannot silently drift.
+
+
 ## v1033 documents, due control, settings and accessibility
 
 - Adds view-scoped document and AR/AP presentation classes without changing document, payment or accounting data contracts.
