@@ -5,6 +5,18 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1032 mobile command hierarchy
+
+- Adds view-scoped presentation classes for Add and Project pages so mobile UX overrides do not leak across modules.
+- Promotes “Open BOQ” as the primary Project Detail command while keeping daily project actions in a consistent two-column touch grid.
+- Improves Project Detail workflow headings, contract KPI wrapping and fold touch targets on narrow iPhones.
+- Reworks Add/Edit transaction visual hierarchy: amount entry is visually dominant, quick chips remain horizontally reachable instead of being clipped, and photo-expense upload becomes a full-width mobile action.
+- Moves the transaction Save bar above the fixed Bottom Navigation on portrait iPhone, while falling back to normal document flow in short landscape viewports.
+- Adds sheet scroll padding/focus feedback so focused fields and action buttons remain usable around the iOS keyboard.
+- Normalizes four dashboard finance KPIs to a readable 2×2 mobile grid, collapsing to one-row-per-KPI on extra-narrow screens.
+- Presentation-only: no accounting, BOQ/OCR, storage, Cloud Sync, D1/R2, document or profile-publishing contract changes.
+
+
 ## v1031 iPhone task-flow refinements
 
 - Reflows transaction-list summary cards on narrow iPhones so item count gets a full row while received/paid totals retain readable digits.

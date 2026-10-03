@@ -51,6 +51,8 @@ jobs:
         run: node tests/ux-ui-v1030.cjs
       - name: v1031 iPhone UX regression
         run: node tests/ux-ui-v1031.cjs
+      - name: v1032 mobile command UX regression
+        run: node tests/ux-ui-v1032.cjs
       - name: Cloudflare production contract QA
         run: node tests/cloudflare-production.cjs
       - name: Cloudflare deploy pipeline QA
