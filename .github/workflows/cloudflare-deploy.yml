@@ -69,6 +69,7 @@ jobs:
           node tests/v600-stable.cjs
           node tests/v700-business-stable.cjs
           node tests/v800-business-stable.cjs
+          node tests/v900-business-stable.cjs
           node tests/production-cutover-v805.cjs
           node --check tests/live-cloudflare-acceptance.mjs
           node --check tests/capture-production-bindings.mjs
