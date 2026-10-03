@@ -6,6 +6,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1020 Expense Status Dashboard UX
+
+- Removes the รับเงินแล้ว and ค้างรับ dashboard cards from the primary project finance view.
+- Replaces the old three-card expense block with two large, direct status cards: 1. จ่ายแล้ว and 2. ค้างจ่าย.
+- จ่ายแล้ว opens the expense list filtered to paid outgoing transactions; ค้างจ่าย opens outgoing transactions with an outstanding balance.
+- Adds a compact สถานะรายจ่าย header with paid + outstanding total, clearer icons, larger figures, status-specific surfaces, and mobile-first spacing.
+- Income data is not deleted or changed; only the primary dashboard presentation is simplified. Existing accounting, transaction, AR/AP, and project data remain intact.
+
 ## v1019 Transaction Recheck View
 
 - รายการทั้งหมดแสดง ว/ด/ป แบบตัวเลข พ.ศ. บนทุกบรรทัด เช่น `25/9/2569` เพื่อเทียบกับชีตหน้างานได้ตรงบรรทัด.
