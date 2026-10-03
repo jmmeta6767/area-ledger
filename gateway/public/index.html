@@ -4925,7 +4925,7 @@ function thaiGovBoqDeclaredTotal(text){
 function boqOcrReconcile(rows,declared){
   var calc=(rows||[]).reduce(function(a,x){return a+boqAmount(x);},0),d=+declared||0;if(d&&calc&&d<calc*.1)d=0;var diff=d?Math.abs(calc-d):0,tol=d?Math.max(5,d*.005):0;return {declared:d,calculated:calc,diff:diff,tolerance:tol,ok:!!d&&diff<=tol};
 }
-function thaiGovUnit(line){var m=String(line||'').match(/(?:^|\s)(ตร\.ม\.|ตรม\.?|ม\.2|ม2|ลบ\.ม\.|ลบม\.?|ม\.3|ม3|ม\.|เมตร|กก\.|กิโลกรัม|ตัน|ชุด|อัน|ตัว|แผ่น|เส้น|ท่อน|ถุง|ลูก|เที่ยว|งาน|หลัง|จุด|บ่อ|ต้น|เครื่อง|วัน|เดือน|ชั่วโมง|แห่ง)(?:\s|$)/i);return m?m[1]:'';}
+function thaiGovUnit(line){var m=String(line||'').match(/(?:^|\s)(ตร\.ม\.|ตรม\.?|ม\.2|ม2|ลบ\.ม\.|ลบม\.?|ม\.3|ม3|ลบ\.ฟ\.|ลบฟ\.?|ฟุต\.?|ม\.|เมตร|กก\.|กิโลกรัม|ตัน|ชุด|อัน|ตัว|แผ่น|เส้น|ท่อน|ถุง|กระสอบ|ลูก|ก้อน|กล่อง|ม้วน|กระป๋อง|ถัง|บาน|ใบ|คู่|แพ็ค|ลัง|ขวด|ลิตร|คิว|เที่ยว|งาน|หลัง|จุด|บ่อ|ต้น|เครื่อง|วัน|เดือน|ชั่วโมง|แห่ง)(?:\s|$)/i);return m?m[1]:'';}
 function thaiGovNoise(line){return /(?:ดอกเบี้ย|เงินกู้|factor\s*f|ภาษี|vat|รวม|หมายเหตุ|ประมาณราคา|แบบ\s*ปร\.|ราคากลาง|ค่าใช้จ่ายพิเศษ|สรุป|ผู้ประมาณ|คณะกรรมการ|รายการ|จำนวนเงิน|ราคาต่อหน่วย|กลุ่มงาน|งานโครงสร้างวิศวกรรม|หมวดงาน|ส่วนราชการ|โครงการ)/i.test(line);}
 function thaiGovBoqRows(text){
   var ls=String(text||'').split(/\n+/).map(function(x){return x.replace(/\s+/g,' ').trim();}).filter(Boolean),out=[],rejected=0;
@@ -5141,8 +5141,18 @@ function boqWordNumber(w){
   var v=thaiBoqNum(t);return isFinite(v)?v:null;
 }
 function boqBaseImportName(name){return String(name||'').replace(/\s*[—-]\s*(?:ค่าวัสดุ|ค่าแรง)\s*$/,'').replace(/\s+/g,' ').trim().toLowerCase();}
+function boqMergeOcrSame(a,b){
+  if(!a||!b)return false;
+  if(boqBaseImportName(a.name)!==boqBaseImportName(b.name))return false;
+  if(String(a.category||'')!==String(b.category||''))return false;
+  var aq=+a.qty||0,bq=+b.qty||0,qt=Math.max(.001,Math.max(Math.abs(aq),Math.abs(bq))*.001);if(Math.abs(aq-bq)>qt)return false;
+  if(String(a.unit||'').trim().toLowerCase()!==String(b.unit||'').trim().toLowerCase())return false;
+  var ap=+a.unitPrice||0,bp=+b.unitPrice||0,pt=Math.max(.01,Math.max(Math.abs(ap),Math.abs(bp))*.002);if(Math.abs(ap-bp)>pt)return false;
+  var as=[String(a.sectionCode||'').trim().toLowerCase(),String(a.sectionName||'').trim().toLowerCase()].filter(Boolean).join('|'),bs=[String(b.sectionCode||'').trim().toLowerCase(),String(b.sectionName||'').trim().toLowerCase()].filter(Boolean).join('|');if(as&&bs&&as!==bs)return false;
+  return true;
+}
 function boqMergeOcrRows(primary,secondary){
-  var out=[],seen={};function add(x){if(!x)return;var k=[boqBaseImportName(x.name),x.category||'',(+x.qty||0).toFixed(3),String(x.unit||'').trim().toLowerCase()].join('|');if(seen[k])return;seen[k]=1;out.push(x);}
+  var out=[];function add(x){if(!x)return;if(out.some(function(y){return boqMergeOcrSame(y,x);})){return;}out.push(x);}
   (primary||[]).forEach(add);(secondary||[]).forEach(add);return out;
 }
 function boqBestCellPair(qty,prices,amounts){
