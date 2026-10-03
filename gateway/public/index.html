@@ -3227,8 +3227,38 @@ function runtimeReleaseCloudPhoto(){
   if(U&&U.sheet&&U.sheet.kind==='cloudPhoto'&&U.sheet.url){runtimeReleaseObjectUrl(U.sheet.url);U.sheet.url='';}
 }
 
+/* v1037 Safari long-session hardening · ephemeral runtime guards */
+function runtimeDiag(){
+  if(!U.runtimeDiag||typeof U.runtimeDiag!=='object')U.runtimeDiag={startedAt:Date.now(),renders:0,actions:0,blockedActions:0,lastRenderMs:0,maxRenderMs:0,hiddenAt:0,lastWakeAt:0,bfcacheRestores:0};
+  return U.runtimeDiag;
+}
+function runtimeNow(){try{return performance&&typeof performance.now==='function'?performance.now():Date.now();}catch(_){return Date.now();}}
+function runtimeScheduleRender(){
+  if(U.runtimeRenderRaf)return;
+  var cb=function(){U.runtimeRenderRaf=0;render();};
+  U.runtimeRenderRaf=typeof requestAnimationFrame==='function'?requestAnimationFrame(cb):setTimeout(cb,16);
+}
+function runtimeActionDuplicate(el){
+  var a=el&&el.getAttribute?el.getAttribute('data-act'):'',groups={save:'tx-save',saveMore:'tx-save',saveBillPayment:'bill-payment',apPaySave:'ap-payment',saveBizDoc:'bizdoc-save',saveQuote:'quote-save',manualJournalSave:'journal-save',bankReconcile:'bank-reconcile',periodClose:'period-close'},g=groups[a];
+  var d=runtimeDiag();d.actions++;
+  if(!g)return false;
+  var id=el.getAttribute('data-id')||'',key=g+'|'+id,now=Date.now(),last=+U.runtimeActionStamps[key]||0;U.runtimeActionStamps[key]=now;
+  if(now-last<750){d.blockedActions++;return true;}
+  return false;
+}
+function runtimeDiagnosticsSnapshot(){
+  var d=runtimeDiag(),age=Math.max(0,Date.now()-(+d.startedAt||Date.now()));
+  return {sessionMinutes:Math.floor(age/60000),renders:+d.renders||0,actions:+d.actions||0,blockedActions:+d.blockedActions||0,lastRenderMs:+d.lastRenderMs||0,maxRenderMs:+d.maxRenderMs||0,bfcacheRestores:+d.bfcacheRestores||0,lastWakeAt:+d.lastWakeAt||0};
+}
+function runtimePageRelease(){
+  if(U.boqOcrAbort){try{U.boqOcrAbort.abort();}catch(_){}}
+  var worker=U.boqOcrWorker,pdf=U.boqOcrPdf;U.boqOcrAbort=null;U.boqOcrWorker=null;U.boqOcrPdf=null;
+  if(worker&&typeof worker.terminate==='function'){try{worker.terminate();}catch(_){}}
+  runtimeReleasePdf(pdf);runtimeReleaseCloudPhoto();
+}
+
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',profilePostSaving:false,profilePhotoBusy:false,profileIdentityBusy:'',profilePublicBusy:false,profileFilter:'all',profileProjectPid:'',boqOcrPdf:null,pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',profilePostSaving:false,profilePhotoBusy:false,profileIdentityBusy:'',profilePublicBusy:false,profileFilter:'all',profileProjectPid:'',boqOcrPdf:null,runtimeDiag:{startedAt:Date.now(),renders:0,actions:0,blockedActions:0,lastRenderMs:0,maxRenderMs:0,hiddenAt:0,lastWakeAt:0,bfcacheRestores:0},runtimeActionStamps:Object.create(null),runtimeRenderRaf:0,pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
 
 function defaultChartAccounts(){return[
 {id:'1000',code:'1000',name:'เงินสด',type:'asset',normal:'debit'},
@@ -4239,6 +4269,13 @@ function bottomBoqProject(){
 }
 try{history.replaceState({areaLedger:true,view:'home'},'',location.href);}catch(e){}
 window.addEventListener('popstate',function(){if(U.sheet){U.sheet=null;render();return;}navBack();});
+document.addEventListener('visibilitychange',function(){
+  var d=runtimeDiag();
+  if(document.visibilityState==='hidden'){d.hiddenAt=Date.now();try{saveNavSession();}catch(_){}}
+  else{d.lastWakeAt=Date.now();d.hiddenAt=0;}
+});
+window.addEventListener('pageshow',function(e){if(e&&e.persisted){var d=runtimeDiag();d.bfcacheRestores=(+d.bfcacheRestores||0)+1;d.lastWakeAt=Date.now();}});
+window.addEventListener('pagehide',function(e){try{saveNavSession();}catch(_){}if(!(e&&e.persisted))runtimePageRelease();});
 var boqScrollTimer=null;window.addEventListener('scroll',function(){if(U.view!=='boq'||U.sheet)return;try{U.boqScroll=Math.max(0,Math.round(window.scrollY||window.pageYOffset||0));}catch(_){}if(boqScrollTimer)clearTimeout(boqScrollTimer);boqScrollTimer=setTimeout(function(){boqScrollTimer=null;saveNavSession();},120);},{passive:true});
 function quickEntryProject(){
   if(U.view==='project'&&U.pid&&proj(U.pid))return U.pid;
@@ -4642,9 +4679,9 @@ function expenseBatchScan(files){
       }catch(e){
         U.expenseBatch.push({id:uid(),file:file.name,photo:data&&data.photo||'',amount:0,cat:'ค่าของ',sub:'',partner:'',date:'',pid:pid,pay:defaultPay,include:false,ocrConfidence:0,ocrSource:'failed',ocrUncertainFields:['ยอดเงิน','ร้านค้า/ผู้รับเงิน','รายการ/รายละเอียด','วันที่'],sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'});
       }
-      U.expenseBatchDone=i+1;U.expenseBatchProgress=Math.max(+U.expenseBatchProgress||1,Math.round(U.expenseBatchDone/U.expenseBatchTotal*100));render();
+      U.expenseBatchDone=i+1;U.expenseBatchProgress=Math.max(+U.expenseBatchProgress||1,Math.round(U.expenseBatchDone/U.expenseBatchTotal*100));runtimeScheduleRender();
     }
-    U.expenseBatchBusy=false;if((U.expenseBatchDone||0)>=(U.expenseBatchTotal||0))U.expenseBatchProgress=100;render();
+    U.expenseBatchBusy=false;if((U.expenseBatchDone||0)>=(U.expenseBatchTotal||0))U.expenseBatchProgress=100;runtimeScheduleRender();
   })();
 }
 function syncDraftProjectFromForm(){
@@ -4654,7 +4691,7 @@ function syncDraftProjectFromForm(){
   return U.draft.pid||'';
 }
 function expenseScanProgressSet(p,stage){
-  p=Math.max(1,Math.min(100,Math.round(+p||1)));U.expenseScanProgress=Math.max(+U.expenseScanProgress||0,p);if(stage)U.expenseScanStage=stage;render();
+  p=Math.max(1,Math.min(100,Math.round(+p||1)));U.expenseScanProgress=Math.max(+U.expenseScanProgress||0,p);if(stage)U.expenseScanStage=stage;runtimeScheduleRender();
 }
 function expenseScanImage(file){
   if(!U.draft||U.expenseScanBusy)return;
@@ -6579,9 +6616,10 @@ function sheetHtml(){
       '<div class="sec"><b>FINAL · Stable 1.0</b><p class="muted">ระบบอัตโนมัติจะไม่ยืนยัน iPhone Field Acceptance หรือ Accounting Freeze แทนผู้ใช้</p>'+final.checks.map(function(x){return '<div class="kv"><span>'+esc(x.label)+(x.human?' <small>ต้องยืนยันจากการใช้งานจริง</small>':'')+'</span><b class="'+(x.ok?'in':'out')+'">'+(x.ok?'PASS':'CHECK')+'</b></div>';}).join('')+(final.ok?'<div class="role" style="color:var(--in)">FINAL GATE: PASS · Stable 1.0 พร้อมใช้งานธุรกิจ</div>':'<div class="role">FINAL GATE: เหลือ '+final.issues.length+' blocker</div>')+'</div>'+
       '<div class="stack"><button class="btn pri" data-act="finalAcceptanceRun">รัน Final Check</button><button class="btn" data-act="businessStableRun">รัน Acceptance 1–10</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="ownerOps">Owner Operations 1.1</button><button class="btn" data-act="systemAdvanced">Advanced / System Diagnostics</button></div>';
   }else if(sh.kind==='systemAdvanced'){
-    var mr=hostMigrationReadiness(),cfg=aiGatewayConfig(),pe=productionStableReadiness();
+    var mr=hostMigrationReadiness(),cfg=aiGatewayConfig(),pe=productionStableReadiness(),rt=runtimeDiagnosticsSnapshot();
     b='<h3>Advanced / System Diagnostics</h3><p class="muted">เครื่องมือสำหรับตรวจระบบ ย้าย host และ deployment · ไม่จำเป็นสำหรับการบันทึกบัญชีประจำวัน</p><p class="muted">OCR diagnostic ไม่เก็บรูป/ข้อความ OCR/ยอดเงิน</p>'+
       '<div class="card"><div class="kv"><span>Data Health</span><b class="'+(mr.health.ok?'in':'out')+'">'+(mr.health.ok?'PASS':'CHECK')+'</b></div><div class="kv"><span>Storage</span><b class="'+(mr.storageOk?'in':'out')+'">'+(mr.storageOk?'OK':'CHECK')+'</b></div><div class="kv"><span>Backup</span><b class="'+(mr.backupFresh?'in':'out')+'">'+(mr.backupFresh?'FRESH':'STALE')+'</b></div><div class="kv"><span>Gateway</span><b>'+esc(cfg.gatewayEnvironment||'LOCAL')+'</b></div></div>'+
+      '<div class="card runtime-diagnostics"><div class="kv"><span>Session</span><b>'+rt.sessionMinutes+' นาที</b></div><div class="kv"><span>Renders</span><b>'+rt.renders+'</b></div><div class="kv"><span>Render ล่าสุด / สูงสุด</span><b>'+rt.lastRenderMs.toFixed(1)+' / '+rt.maxRenderMs.toFixed(1)+' ms</b></div><div class="kv"><span>Actions / กันกดซ้ำ</span><b>'+rt.actions+' / '+rt.blockedActions+'</b></div><div class="kv"><span>Safari BFCache restore</span><b>'+rt.bfcacheRestores+'</b></div></div>'+
       '<div class="field"><label>Origin</label><input id="appOrigin" readonly value="'+esc(location.origin)+'"></div>'+
       '<div class="stack"><button class="btn" data-act="migrationCheck">Host Migration Safety</button><button class="btn" data-act="aiUseStaging">ใช้ Staging Gateway</button><button class="btn" data-act="aiUseProduction">ใช้ Production Gateway</button><button class="btn" data-act="aiSmokeTest">Cloudflare /health + /ready</button><button class="btn" data-act="deploymentStatusOpen">Deployment Control Center</button><button class="btn" data-act="copyAppOrigin">คัดลอก Origin</button><button class="btn" data-act="openGatewayHealth">เปิด Gateway /health</button><button class="btn" data-act="reliabilityCheck">Reliability Self-Check</button><button class="btn" data-act="disasterRecoveryCheck">Disaster Recovery Certification</button><button class="btn" data-act="releaseCheck">Release Readiness</button><button class="btn" data-act="cutoverCheck">RC2 Cutover Gate</button><button class="btn" data-act="productionCandidateCheck">RC2 Production Candidate</button><button class="btn" data-act="productionStableCheck">Production Stable Gate</button><button class="btn" data-act="settings">กลับตั้งค่า</button></div>';
   }else if(sh.kind==='settings'){
@@ -6926,6 +6964,7 @@ function appMenuHtml(){
 }
 
 function render(){
+  var runtimeStart=runtimeNow(),runtimeState=runtimeDiag();
   var mode=(S.ui&&S.ui.viewMode==='desktop')?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',mode);
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
@@ -6968,6 +7007,7 @@ function render(){
   document.body.classList.toggle('view-due',v==='due');
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();
+  var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
 
 /* ---------- Mobile/iOS direct navigation ---------- */
@@ -7129,6 +7169,7 @@ document.addEventListener('keydown',function(e){
 document.addEventListener('click',function(e){
   var el=e.target&&e.target.closest?e.target.closest('[data-act]'):null;if(!el)return;
   if(el.disabled||el.getAttribute('aria-disabled')==='true')return;
+  if(runtimeActionDuplicate(el)){e.preventDefault();e.stopImmediatePropagation();return;}
   if(directAction(el)){e.preventDefault();return;}
   var a=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}

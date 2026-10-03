@@ -5,6 +5,16 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1037 Safari long-session hardening
+
+- Adds ephemeral runtime diagnostics for session age, render count/duration, action count, duplicate-action blocks and Safari BFCache restores; diagnostics are visible under Advanced / System Diagnostics and are never persisted to accounting or Cloud storage.
+- Adds a 750 ms duplicate-action shield only for write-heavy actions such as transaction/document/payment/journal/bank-reconciliation/period-close saves, reducing accidental double taps on iPhone without affecting normal navigation, filters or explicit confirmation flows.
+- Coalesces expense OCR progress-only full renders to at most one render per animation frame while keeping state transitions and completed review renders intact.
+- Tracks foreground/background lifecycle through `visibilitychange`, `pageshow` and `pagehide`; navigation state is saved on background/unload and transient OCR/PDF/R2 resources are released only on non-BFCache page exit.
+- Instruments `render()` timing without changing its output, navigation contract or data calculations.
+- Runtime stability only: no accounting formulas, BOQ/OCR extraction or arithmetic-verification rules, storage keys, Cloud Sync/D1/R2 contracts, tax, document values or profile data contracts change.
+
+
 ## v1036 BOQ Image Arithmetic Verification
 
 - AI Vision BOQ rows now return the visible per-category row amount in addition to quantity and unit price; the browser recomputes quantity × unit price against that visible amount instead of trusting provider-side verification.
