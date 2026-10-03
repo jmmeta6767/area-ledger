@@ -1328,3 +1328,12 @@ Registration: `sw.js?v=321`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
+
+
+## v1024 Company Profile / Worksite Feed
+- Added a company profile page for business name, legal name, tagline, company bio, phone, email, address, LINE, website, Facebook, Instagram, and TikTok.
+- Added a mobile-first worksite social feed for progress updates, portfolio posts, deliveries/handovers, and announcements.
+- Worksite posts can link to a project, carry up to 4 photos, be edited/deleted, filtered by post type, and shared through the device share sheet.
+- Project detail now has a direct “โพสต์หน้างาน” action.
+- Photos are resized before persistence for iPhone stability; when Cloud Sync is enabled, originals are offloaded to the existing Cloudflare R2 attachment vault while feed thumbnails remain immediately visible.
+- profilePosts is a first-class durable collection across local state and the D1 mirror. Existing accounting data/storage keys are unchanged.
