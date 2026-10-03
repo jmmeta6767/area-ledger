@@ -512,5 +512,7 @@ reset();test('v1010 staging acceptance exercises the real Vision provider before
 
 reset();test('v1011 browser OCR diagnostics preserve gateway/provider error codes',()=>{const src=c.aiGatewayRequest.toString();assert(src.includes("raw&&raw.error?String(raw.error):('HTTP_'+res.status)"));assert(src.includes('err.gatewayCode=code'));assert(src.includes("String(e&&e.gatewayCode||e&&e.message||'OCR_ERROR')"));assert(!src.includes("throw new Error('AI gateway HTTP '+res.status)"));});
 
+reset();test('v1012 scanned PDF BOQ uses AI Vision first with bounded mobile page budget and local fallback',()=>{const src=c.boqImportScannedPdf.toString();assert(src.includes("pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq')"));assert(src.includes("aiGatewayRequest('v1/ocr/boq'"));assert(src.includes('AI Vision PDF สแกน'));assert(src.includes('boqQualityRows(aiRows)'));assert(src.includes('loadTesseract(function(tok)'));assert(src.includes("boqProgressSet(100"));assert(src.includes('ocrNeedsReview:true'));});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});

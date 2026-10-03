@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1012 Scanned-PDF AI BOQ Path
+
+- Scanned BOQ PDFs up to 8 pages now use the configured Gemini Vision gateway first, page by page, before falling back to the existing Thai/English local OCR path.
+- AI rows remain review-gated and are quality-filtered before preview; no AI result is posted directly into project accounting.
+- The scanned-PDF path now reports determinate BOQ progress through completion and retains upright-only rendering (0°), matching the field workflow.
+- Larger scanned PDFs continue on the local OCR path to avoid long mobile AI request chains; this keeps iPhone memory/latency bounded.
+
 ## v1011 OCR Gateway Diagnostic Fidelity
 
 - Browser OCR requests now parse structured gateway errors before falling back, preserving provider/gateway codes such as `PROVIDER_TIMEOUT`, `PROVIDER_HTTP_*`, `RATE_LIMITED`, or `ORIGIN_DENIED` in the existing OCR diagnostic record.
