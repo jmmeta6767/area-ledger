@@ -5,6 +5,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1013 Dense BOQ Image AI Fallback
+
+- Fixes the observed case where local OCR can read hundreds of words from several BOQ photos but still produce zero structured rows.
+- BOQ AI images are now adaptively compressed below the Gateway request limit instead of sending a large 2400px JPEG at fixed quality.
+- When full-page AI Vision returns no usable rows, the client retries two overlapping vertical segments so dense table rows retain more effective resolution.
+- Segment prompts explicitly support headerless page crops and still require visible table geometry plus quantity × unit-price equation checks.
+- A failed import now states whether AI Vision was attempted, how many images failed, and the first safe diagnostic code; selected images stay queued for retry.
+- No BOQ row is auto-saved. All image/AI imports still open the review preview before confirmation.
+
 ## v1012 Scanned-PDF AI BOQ Path
 
 - Scanned BOQ PDFs up to 8 pages now use the configured Gemini Vision gateway first, page by page, before falling back to the existing Thai/English local OCR path.
