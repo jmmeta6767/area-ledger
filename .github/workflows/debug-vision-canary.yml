@@ -9,38 +9,30 @@ permissions:
   contents: read
 
 jobs:
-  direct-gemini:
+  gateway:
     runs-on: ubuntu-latest
-    environment: production
-    env:
-      GEMINI_API_KEY: ${{ secrets.OCR_API_KEY }}
     steps:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify Gemini 3.5 structured image request
+      - name: Call production Gateway with known-valid PNG
         shell: bash
         run: |
-          cat > /tmp/gemini.mjs <<'NODE'
-          const key=process.env.GEMINI_API_KEY;
-          const body={
-            contents:[{role:'user',parts:[
-              {text:'Return JSON only with keys amount and text. This image has no receipt, so amount must be 0.'},
-              {inline_data:{mime_type:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='}}
-            ]}],
-            generationConfig:{
-              responseMimeType:'application/json',
-              thinkingConfig:{thinkingLevel:'minimal'}
-            }
-          };
-          const ctrl=new AbortController();
+          cat > /tmp/gateway.mjs <<'NODE'
+          import crypto from 'node:crypto';
+          const rid='debug-gateway-'+crypto.randomBytes(8).toString('hex');
           const started=Date.now();
-          const timer=setTimeout(()=>ctrl.abort(),45000);
-          try{
-            const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body),signal:ctrl.signal});
-            const txt=await r.text();
-            console.log('STATUS '+r.status+' DURATION_MS '+(Date.now()-started));
-            console.log(txt.slice(0,2200));
-          }finally{clearTimeout(timer);}
+          const r=await fetch('https://area-ledger-ai-gateway.areamaibab.workers.dev/v1/ocr/expense',{
+            method:'POST',
+            headers:{
+              Origin:'https://g.areamaibab.workers.dev',
+              'Content-Type':'application/json',
+              'X-AREA-Gateway-Version':'1',
+              'X-AREA-Request-ID':rid
+            },
+            body:JSON.stringify({image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',lang:'tha+eng'})
+          });
+          const body=await r.text();
+          console.log(JSON.stringify({status:r.status,ok:r.ok,durationMs:Date.now()-started,protocol:r.headers.get('x-area-gateway-version'),requestId:r.headers.get('x-area-request-id'),allowOrigin:r.headers.get('access-control-allow-origin'),body},null,2));
           NODE
-          node /tmp/gemini.mjs
+          node /tmp/gateway.mjs
