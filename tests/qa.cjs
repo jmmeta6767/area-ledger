@@ -698,5 +698,31 @@ reset();test('v1033 seeded Tha Sala BOQ matches the independent real fixture fie
   fx.rows.forEach((ex,i)=>{const got=c.S.boq[i];for(const k of ['name','category','unit','sectionCode','sectionName'])assert.equal(got[k],ex[k],k+' row '+(i+1));assert(Math.abs(got.qty-ex.qty)<.0001);assert(Math.abs(got.unitPrice-ex.unitPrice)<.0001);});
 });
 
+
+reset();test('v1036 browser BOQ validator independently verifies visible row amount equations',()=>{
+  var ok=c.aiGatewayValidateBoq({rows:[{name:'งานฉาบปูน',qty:48,unit:'ตร.ม.',unitPrice:27.25,amount:1308,category:'ค่าของ',confidence:.96}]});
+  assert.equal(ok.rows.length,1);assert.equal(ok.rows[0].amount,1308);assert.equal(ok.rows[0].equationOk,true);assert.equal(ok.rows[0].aiEquationMismatch,false);
+  var bad=c.aiGatewayValidateBoq({rows:[{name:'งานฉาบปูน',qty:48,unit:'ตร.ม.',unitPrice:27.25,amount:5308,category:'ค่าของ',confidence:.96}]});
+  assert.equal(bad.rows[0].equationOk,false);assert.equal(bad.rows[0].aiEquationMismatch,true);
+});
+reset();test('v1036 real Tha Sala fixture passes row-amount verification and one corrupted row forces local cross-check',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8')),payload={rows:fx.rows.map(x=>({name:x.name,qty:x.qty,unit:x.unit,unitPrice:x.unitPrice,amount:x.amount,category:x.category,sectionCode:x.sectionCode,sectionName:x.sectionName,confidence:.96})),declaredTotal:fx.declaredTotal,confidence:.96};
+  var out=c.aiGatewayValidateBoq(payload),good=out.rows.map(r=>c.boqAiImportRow(r,.96,'fixture'));assert.equal(good.length,32);assert(good.every(x=>!x.aiEquationMismatch));
+  var cov=c.boqAiCoverage(good,4,fx.declaredTotal,[8,9,11,4]);assert.equal(cov.need,false);assert.equal(cov.equationChecked,32);assert.equal(cov.equationMismatch,0);
+  var corrupt=JSON.parse(JSON.stringify(payload));corrupt.rows[28].amount=9999;var out2=c.aiGatewayValidateBoq(corrupt),bad=out2.rows.map(r=>c.boqAiImportRow(r,.96,'fixture')),cov2=c.boqAiCoverage(bad,4,fx.declaredTotal,[8,9,11,4]);assert.equal(cov2.need,true);assert.equal(cov2.equationMismatch,1);assert(cov2.reasons.some(x=>x.includes('สมการจำนวน×ราคาไม่ตรง')));
+});
+reset();test('v1036 AI import keeps source amount provenance and canonical construction units',()=>{
+  var r=c.boqAiImportRow({name:'ไม้แบบ',qty:59.14,unit:'ลบ . ฟ .',unitPrice:545.41,amount:32255.55,category:'ค่าของ',confidence:.9},.9,'AI test');
+  assert.equal(r.unit,'ลบ.ฟ.');assert.equal(r.sourceAmount,32255.55);assert.equal(r.ocrEquation,true);assert.equal(r.aiEquationMismatch,false);assert(r.note.includes('สมการจำนวน×ราคา≈จำนวนเงินผ่าน'));
+  assert.equal(c.boqCanonUnit('ตร . ม .'),'ตร.ม.');assert.equal(c.boqCanonUnit('ลบ . ม .'),'ลบ.ม.');assert.equal(c.boqCanonUnit('กก'),'กก.');
+});
+reset();test('v1036 AI coverage rejects a row-equation mismatch even when page coverage and declared total otherwise look valid',()=>{
+  var rows=Array.from({length:8},(_,i)=>c.boqAiImportRow({name:'งาน '+i,qty:1,unit:'งาน',unitPrice:100,amount:i===3?700:100,category:'ค่าของ',confidence:.95},.95,'AI'));
+  var x=c.boqAiCoverage(rows,4,800,[2,2,2,2]);assert.equal(x.need,true);assert.equal(x.equationMismatch,1);assert(x.reasons.some(r=>r.includes('1 รายการ')));
+});
+reset();test('v1036 Gemini BOQ contract returns visible per-category amount and server cleanBoq recomputes equation',()=>{
+  const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('ทุกแถวต้องคืน amount'));assert(w.includes('ห้ามคำนวณย้อนสร้าง amount เอง'));assert(w.includes('"amount":0'));assert(w.includes('equationError=amount>0'));assert(w.includes('equationOk=amount>0?equationError<=.03:null'));assert(w.includes('clean.push({name,qty,unit,unitPrice,amount,category,sectionCode,sectionName,confidence,equationError,equationOk})'));
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
