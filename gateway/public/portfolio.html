@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172534">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>AREA Portfolio</title>
+<style>
+:root{--ink:#17202b;--muted:#6f7b84;--line:#e1e6e9;--gold:#f3bd2d;--bg:#f3f5f5;--card:#fff;--green:#2a7b54}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Thai",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,a{font:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px 42px}.top{height:58px;display:flex;align-items:center;justify-content:space-between}.brand-mini{font-weight:900;letter-spacing:.08em;font-size:12px}.secure{font-size:10px;color:var(--muted)}
+.hero{border-radius:24px;overflow:hidden;background:var(--card);box-shadow:0 10px 30px rgba(16,25,34,.08);border:1px solid var(--line)}.cover{height:180px;position:relative;background:linear-gradient(135deg,#142434 0%,#263a4f 62%,#e2ad2d 100%);overflow:hidden}.cover img{width:100%;height:100%;object-fit:cover}.cover:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(12,21,29,.55),rgba(12,21,29,.02) 60%)}.cover-label{position:absolute;left:18px;bottom:16px;z-index:2;color:#ffd86c;font-weight:900;letter-spacing:.12em;font-size:11px}
+.identity{display:grid;grid-template-columns:86px 1fr;gap:14px;padding:0 18px 12px;margin-top:-36px;position:relative;z-index:3}.avatar{width:86px;height:86px;border-radius:22px;object-fit:cover;background:#ffd447;border:4px solid var(--card);box-shadow:0 6px 18px rgba(18,27,34,.14)}.who{padding-top:39px}.who small{display:block;color:#9a7313;font-weight:800}.who h1{font-size:23px;line-height:1.2;margin:2px 0}.who p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.bio{padding:4px 18px 12px;white-space:pre-wrap;line-height:1.7;font-size:13px}.contacts{display:flex;gap:7px;overflow:auto;padding:4px 18px 14px}.contacts a{flex:0 0 auto;text-decoration:none;color:var(--ink);background:#f7f8f9;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:10.5px;font-weight:700}.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}.stats>div{text-align:center;padding:13px 5px}.stats>div+div{border-left:1px solid var(--line)}.stats b{display:block;font-size:20px}.stats small{font-size:9.5px;color:var(--muted)}
+.section-head{display:flex;align-items:end;justify-content:space-between;margin:22px 3px 9px}.section-head small{display:block;font-size:9px;color:#8c6911;font-weight:900;letter-spacing:.12em}.section-head h2{font-size:19px;margin:2px 0 0}.section-head span:last-child{font-size:10px;color:var(--muted)}
+.featured{display:grid;grid-template-columns:1fr 1fr;gap:9px}.feature{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}.feature img,.feature .ph{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:linear-gradient(135deg,#172534,#d8a629)}.feature .txt{padding:10px}.feature .txt small,.feature .txt b,.feature .txt em{display:block}.feature .txt small{font-size:9px;color:#8a6814;font-weight:900}.feature .txt b{font-size:11px;line-height:1.45;margin:3px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.feature .txt em{font-style:normal;font-size:9px;color:var(--muted)}
+.filters{display:flex;gap:7px;overflow:auto;padding:2px 0 10px}.filters button{flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 12px;font-weight:800;color:var(--muted)}.filters button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.post{background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;margin:0 0 12px}.post-head{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:13px 14px 8px}.post-head img{width:42px;height:42px;border-radius:13px;object-fit:cover;background:#ffd447}.post-head b,.post-head small{display:block}.post-head small{font-size:10px;color:var(--muted);margin-top:2px}.kind{font-size:9px;font-weight:900;background:#fff1c5;color:#7f5e00;border-radius:999px;padding:5px 7px}.post-text{padding:5px 14px 12px;font-size:13.5px;line-height:1.65;white-space:pre-wrap}.photos{display:grid;gap:2px;background:#eef1f2}.photos.n1{grid-template-columns:1fr}.photos.n2,.photos.n4{grid-template-columns:1fr 1fr}.photos.n3{grid-template-columns:1.4fr 1fr;grid-template-rows:1fr 1fr}.photos.n3 img:first-child{grid-row:1/3}.photos img{width:100%;height:100%;object-fit:cover;min-height:150px;max-height:360px}.photos.n1 img{aspect-ratio:4/3}.photos.n2 img,.photos.n4 img{aspect-ratio:1}.pin{color:#9a7313;font-size:9px;font-weight:900;margin-left:5px}
+.empty,.error{background:var(--card);border:1px dashed var(--line);border-radius:18px;text-align:center;padding:34px 18px;color:var(--muted)}.error b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.footer{text-align:center;color:#879199;font-size:9.5px;padding:24px 5px}.loading{padding:70px 20px;text-align:center;color:var(--muted)}
+@media(max-width:420px){.cover{height:150px}.identity{grid-template-columns:74px 1fr;margin-top:-32px}.avatar{width:74px;height:74px;border-radius:19px}.who{padding-top:34px}.who h1{font-size:19px}.feature:nth-child(n+3){display:none}}
+@media(prefers-color-scheme:dark){:root{--ink:#eef2f5;--muted:#aeb8c0;--line:#33414d;--bg:#111820;--card:#18222d}.contacts a{background:#202b36;color:#eef2f5}.filters button{background:#202b36}.filters button.on{background:#eef2f5;color:#17202b}.kind{background:#443718;color:#f3c75a}.photos{background:#111820}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><div class="brand-mini">AREA · CLIENT PORTFOLIO</div><div class="secure">Public work profile</div></div>
+  <div id="app" class="loading">กำลังโหลด Portfolio…</div>
+  <div class="footer">หน้า Portfolio นี้แสดงเฉพาะข้อมูลที่เจ้าของโปรไฟล์เลือกเผยแพร่ · ไม่มีข้อมูลบัญชีหรือ BOQ ภายในระบบ</div>
+</main>
+<script>
+(function(){
+  var qs=new URLSearchParams(location.search),id=String(qs.get('id')||'').toLowerCase(),app=document.getElementById('app'),filter='all',data=null;
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function media(ref){return ref?'/v1/public/profile-media?id='+encodeURIComponent(id)+'&key='+encodeURIComponent(ref):'';}
+  function kind(v){return ({site:'อัปเดตหน้างาน',portfolio:'ผลงาน',delivery:'จัดส่ง / ส่งมอบ',announce:'ประกาศ'})[v]||'ผลงาน';}
+  function socialUrl(label,v){v=String(v||'').trim();if(!v)return '';if(/^https:\/\//i.test(v))return v;var h=v.replace(/^@/,'');if(label==='เว็บไซต์')return 'https://'+v.replace(/^\/+/, '');if(label==='Facebook')return 'https://www.facebook.com/'+encodeURIComponent(h);if(label==='Instagram')return 'https://www.instagram.com/'+encodeURIComponent(h);if(label==='TikTok')return 'https://www.tiktok.com/@'+encodeURIComponent(h);if(label==='LINE')return 'https://line.me/R/ti/p/~'+encodeURIComponent(h);return '';}
+  function contact(label,v){var u=socialUrl(label,v);return u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>':'';}
+  function date(v){if(!v)return '';try{return new Date(v+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});}catch(_){return v;}}
+  function render(){
+    if(!data)return;
+    var s=data.snapshot||{},posts=(s.posts||[]).slice(),shown=filter==='all'?posts:posts.filter(function(p){return p.type===filter;}),featured=posts.filter(function(p){return p.pinned;}).slice(0,4),avatar=s.avatarRef?media(s.avatarRef):'/area-logo-header.jpg',contacts='';
+    if(s.phone)contacts+='<a href="tel:'+esc(String(s.phone).replace(/[^0-9+]/g,''))+'">โทร</a>';
+    if(s.email)contacts+='<a href="mailto:'+esc(s.email)+'">อีเมล</a>';
+    contacts+=contact('LINE',s.lineId)+contact('เว็บไซต์',s.website)+contact('Facebook',s.facebook)+contact('Instagram',s.instagram)+contact('TikTok',s.tiktok);
+    var h='<section class="hero"><div class="cover">'+(s.coverRef?'<img src="'+esc(media(s.coverRef))+'" alt="รูปปกบริษัท">':'')+'<div class="cover-label">AREA WORK PROFILE</div></div><div class="identity"><img class="avatar" src="'+esc(avatar)+'" alt="รูปโปรไฟล์"><div class="who"><small>'+esc(s.businessType||'บริษัท/ทีมงาน')+'</small><h1>'+esc(s.brand||s.legalName||'AREA MAIBAB')+'</h1><p>'+esc(s.tagline||'Portfolio ผลงานและอัปเดตหน้างาน')+'</p></div></div>'+(s.bio?'<div class="bio">'+esc(s.bio)+'</div>':'')+(contacts?'<div class="contacts">'+contacts+'</div>':'')+'<div class="stats"><div><b>'+Number(s.stats&&s.stats.activeProjects||0)+'</b><small>กำลังทำ</small></div><div><b>'+Number(s.stats&&s.stats.deliveredProjects||0)+'</b><small>ส่งมอบ/ปิดแล้ว</small></div><div><b>'+posts.length+'</b><small>ผลงานที่เผยแพร่</small></div></div></section>';
+    if(featured.length){h+='<div class="section-head"><div><small>FEATURED WORK</small><h2>ผลงานเด่น</h2></div><span>'+featured.length+' รายการ</span></div><div class="featured">'+featured.map(function(p){var ph=(p.photos||[])[0];return '<article class="feature">'+(ph?'<img src="'+esc(media(ph.ref))+'" alt="ผลงาน">':'<div class="ph"></div>')+'<div class="txt"><small>'+esc(kind(p.type))+'</small><b>'+esc(p.text||p.projectName||'ผลงานเด่น')+'</b><em>'+esc(p.projectName||'')+(p.projectName?' · ':'')+esc(date(p.date))+'</em></div></article>';}).join('')+'</div>';}
+    h+='<div class="section-head"><div><small>WORK TIMELINE</small><h2>อัปเดตล่าสุด</h2></div><span>'+shown.length+' โพสต์</span></div><div class="filters">'+[['all','ทั้งหมด'],['site','หน้างาน'],['portfolio','ผลงาน'],['delivery','จัดส่ง'],['announce','ประกาศ']].map(function(x){return '<button data-filter="'+x[0]+'" class="'+(filter===x[0]?'on':'')+'">'+x[1]+'</button>';}).join('')+'</div>';
+    if(!shown.length)h+='<div class="empty">ยังไม่มีผลงานในหมวดนี้</div>';
+    shown.forEach(function(p){var photos=(p.photos||[]).slice(0,4);h+='<article class="post"><div class="post-head"><img src="'+esc(avatar)+'" alt=""><div><b>'+esc(s.brand||s.legalName||'AREA MAIBAB')+(p.pinned?'<span class="pin">★ ผลงานเด่น</span>':'')+'</b><small>'+esc(p.projectName||'')+(p.projectName?' · ':'')+esc(date(p.date))+'</small></div><span class="kind">'+esc(kind(p.type))+'</span></div>'+(p.text?'<div class="post-text">'+esc(p.text)+'</div>':'')+(photos.length?'<div class="photos n'+photos.length+'">'+photos.map(function(ph){return '<img loading="lazy" src="'+esc(media(ph.ref))+'" alt="รูปผลงาน">';}).join('')+'</div>':'')+'</article>';});
+    app.className='';app.innerHTML=h;
+    app.querySelectorAll('[data-filter]').forEach(function(b){b.onclick=function(){filter=b.getAttribute('data-filter')||'all';render();};});
+    document.title=(s.brand||s.legalName||'AREA')+' · Portfolio';
+  }
+  if(!/^[0-9a-f]{32}$/.test(id)){app.className='error';app.innerHTML='<b>ลิงก์ Portfolio ไม่ถูกต้อง</b>กรุณาขอลิงก์ใหม่จากเจ้าของโปรไฟล์';return;}
+  fetch('/v1/public/profile?id='+encodeURIComponent(id),{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'}).then(function(r){if(!r.ok)throw new Error(String(r.status));return r.json();}).then(function(x){if(!x||!x.ok)throw new Error('invalid');data=x;render();}).catch(function(){app.className='error';app.innerHTML='<b>Portfolio นี้ไม่พร้อมใช้งาน</b>ลิงก์อาจถูกปิด หรือเจ้าของโปรไฟล์ยังไม่ได้เผยแพร่';});
+})();
+</script>
+</body>
+</html>
