@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1040 Business Document Portrait Preview
+
+- Business-document previews now fit the available phone width in portrait mode instead of keeping a 210 mm A4 canvas that clips beyond the screen.
+- Item rows become labeled cards on narrow screens, so quantities, units, prices, discounts and amounts remain readable without horizontal scrolling.
+- Document actions sit below the preview in normal page flow, clear of the iPhone browser controls and page content.
+- Print and downloaded PDF output retain the A4 portrait table layout; no document values, tax calculations, accounting or storage contracts change.
+
 ## v1039 Local OCR Page Provenance
 
 - Local OCR now preserves `sourcePage`, `sourceFile`, and `sourceKind` for every BOQ row from multi-image and scanned-PDF imports.
