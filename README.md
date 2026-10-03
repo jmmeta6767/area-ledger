@@ -5,6 +5,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+
+## v1015 BOQ Skew Row-Band Reconstruction
+
+- Adds a quantity-anchored Row-Band parser for scanned Thai government BOQ/ปร.4 tables when OCR words on the same printed row drift vertically because of scan skew, perspective, or table lines.
+- Each quantity anchor owns the vertical band halfway to neighboring quantity rows; price/amount pairs are accepted only when `qty × unitPrice ≈ amount`, so circled handwritten references such as 17/18/31/32 are ignored.
+- Material and labor pairs are separated by detected table columns and the printed combined row total is cross-checked when available.
+- Row-Band evidence participates in the existing v1014 strong-evidence recovery but remains marked for mandatory human review before save.
+- Gemini Vision is given representative 48 ตร.ม. government-row examples matching this common form layout.
+- Failure diagnostics now show AI, RowBand, equation, and OCR-word counts while preserving all selected images.
+
+
 ## v1014 BOQ Field-Image Recovery
 
 - Adds a regression case for the supplied Thai ปร.4/BOQ layout with handwritten circled reference numbers beside printed material/labor prices.
