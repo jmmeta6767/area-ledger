@@ -6,6 +6,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1017 BOQ Work Section Recovery
+
+- Restores BOQ work-section grouping without changing the existing material/labor split.
+- AI Vision now returns and the Gateway preserves `sectionCode` / `sectionName` when a real BOQ section heading is visible; the prompt explicitly forbids inventing a section when the source heading is unclear.
+- Existing or newly imported rows with blank sections receive a deterministic construction-work fallback from the item name, covering demolition/site prep, earth/bedding, concrete, reinforcing steel, formwork, structural steel, masonry/plaster, roofing, finishes, doors/windows, paint, plumbing, electrical and external works.
+- Existing explicit section headings are never overwritten by the fallback.
+- Current BOQ rows such as concrete demolition, excavation, sand bedding, concrete and RB/DB reinforcing steel no longer collapse into one `ไม่ระบุหมวดงาน` bucket.
+- Storage keys, accounting data, BOQ quantities/prices, and review-before-save behavior remain unchanged.
+
+
+
 ## v1016 Gemini Flash-Lite Document Extraction
 
 - Switches receipt and BOQ Vision extraction from `gemini-3.5-flash` to stable `gemini-3.5-flash-lite`.
