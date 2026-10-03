@@ -6,18 +6,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
-## v1002 Production Cutover Closed
+## v1003 Production AI Vision Route + Receipt Totals
 
-- Production cutover passed for exact staging-tested source `f901d35fffbf56b7927720af397584f82bcc2ff8`.
-- Release QA run #403 and Staging Auto Deploy run #127 passed before production authorization was consumed.
-- Production Cutover run #121 passed secret preflight, full release QA, pinned D1/R2 binding capture, OCR secret installation, D1 migrations, redeploy and live production acceptance.
-- Live production acceptance passed provenance, health/platform readiness, Durable CAS, D1 reconciliation, private R2 write/list/read/delete/index, history, previous-revision restore and post-restore reconcile.
-- Production remained on the pinned D1 database `area-ledger-ai-gateway-ledger-db` (`72fc4f7e-63ec-42ca-8a2e-7b1dc61bf72d`) and R2 bucket `area-ledger-ai-gateway-ledger-files`.
-- Google Workspace production secrets were absent, so Google Drive/Sheets integration remains disabled.
-- The one-time production authorization marker is removed in this cleanup commit. Future pushes remain staging-first and cannot deploy production without a fresh explicit re-arm.
-- This machine cutover does not auto-certify the user's real iPhone field acceptance, Accounting Freeze, or real-ledger migration evidence.
-
-
+- Fixes production app alias `g.areamaibab.workers.dev`: AI Vision now targets the canonical production Gateway.
+- Production Gateway CORS explicitly allows the canonical Gateway and `g.areamaibab.workers.dev`; wildcard CORS remains forbidden.
+- Legacy consent bound to the old `g...` endpoint is not silently reused; consent must bind to the canonical Gateway.
+- Gemini receipt rules prioritize final payable/net totals for VAT invoices and handwritten cash-sale totals.
+- Regression examples cover 325 × 4 → 1,300 and 4,240 + VAT 296.80 → 4,536.80 with Thai Buddhist-year date normalization.
+- AI still only fills fields for review; it never auto-saves an expense.
 
 ## v1002 Receipt Review Hardening
 

@@ -17,7 +17,7 @@ GEMINI_MODEL = "gemini-2.5-flash"
 PROVIDER_TIMEOUT_MS = "10000"
 PROVIDER_RETRIES = "1"
 REQUIRE_DURABLE_STATE = "true"
-ALLOWED_ORIGINS = "https://area-ledger-ai-gateway.areamaibab.workers.dev"
+ALLOWED_ORIGINS = "https://area-ledger-ai-gateway.areamaibab.workers.dev,https://g.areamaibab.workers.dev"
 # Set OCR_UPSTREAM_URL as a non-secret environment variable.
 # Store OCR_API_KEY with the platform secret store; never commit it.
 

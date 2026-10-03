@@ -3893,9 +3893,9 @@ function aiGatewayNormalizeBase(raw){
 function aiGatewayEnvironment(base){base=aiGatewayNormalizeBase(base);if(!base)return 'none';try{var h=new URL(base).hostname.toLowerCase();if(h==='localhost')return 'local';if(/-staging\./.test(h))return 'staging';if(/\.workers\.dev$/.test(h))return 'production';return 'external';}catch(_){return 'invalid';}}
 function appDeploymentEnvironment(){try{var h=String(location.hostname||'').toLowerCase();if(h==='localhost')return 'local';if(/-staging\./.test(h))return 'staging';if(/\.workers\.dev$/.test(h))return 'production';return 'external';}catch(_){return 'external';}}
 function aiGatewayStagingBase(){return 'https://area-ledger-ai-gateway-staging.areamaibab.workers.dev';}
-function aiGatewayProductionBase(){try{if(location.protocol==='https:'&&/\.workers\.dev$/.test(String(location.hostname||''))&&!/-staging\./.test(String(location.hostname||'')))return location.origin;}catch(_){}return 'https://area-ledger-ai-gateway.areamaibab.workers.dev';}
+function aiGatewayProductionBase(){return 'https://area-ledger-ai-gateway.areamaibab.workers.dev';}
 function aiGatewayConfig(){
-  var cfg=S&&S.ai&&typeof S.ai==='object'?S.ai:{},mode=cfg.mode==='gateway'?'gateway':'local',endpoint=String(cfg.endpoint||'').trim(),base=aiGatewayNormalizeBase(endpoint),consentBase=aiGatewayNormalizeBase(cfg.remoteOcrConsentBase||''),gatewayEnv=aiGatewayEnvironment(base),appEnv=appDeploymentEnvironment(),environmentOk=!(appEnv==='production'&&gatewayEnv==='staging');
+  var cfg=S&&S.ai&&typeof S.ai==='object'?S.ai:{},mode=cfg.mode==='gateway'?'gateway':'local',endpoint=String(cfg.endpoint||'').trim(),base=aiGatewayNormalizeBase(endpoint),consentBase=aiGatewayNormalizeBase(cfg.remoteOcrConsentBase||''),appEnv=appDeploymentEnvironment(),legacyProdAlias=appEnv==='production'&&base==='https://g.areamaibab.workers.dev';if(legacyProdAlias){endpoint=aiGatewayProductionBase();base=endpoint;}var gatewayEnv=aiGatewayEnvironment(base),environmentOk=!(appEnv==='production'&&gatewayEnv==='staging');
   return {mode:mode,endpoint:endpoint,remoteOcrConsent:mode==='gateway'&&cfg.remoteOcrConsent===true&&!!base&&consentBase===base&&environmentOk,remoteOcrConsentBase:consentBase,timeoutMs:Math.max(3000,Math.min(30000,+cfg.timeoutMs||15000)),gatewayEnvironment:gatewayEnv,appEnvironment:appEnv,environmentOk:environmentOk};
 }
 function aiGatewayBase(){return aiGatewayNormalizeBase(aiGatewayConfig().endpoint);}
@@ -3903,7 +3903,8 @@ function aiGatewayRevokeConsent(){S.ai=S.ai||{};S.ai.remoteOcrConsent=false;S.ai
 function aiGatewaySuggestedBase(){
   try{
     var host=String(location.hostname||'').toLowerCase();
-    if(location.protocol==='https:'&&/\.workers\.dev$/.test(host))return location.origin;
+    if(location.protocol==='https:'&&/-staging\./.test(host))return aiGatewayStagingBase();
+    if(location.protocol==='https:'&&/\.workers\.dev$/.test(host))return aiGatewayProductionBase();
   }catch(_){}
   return aiGatewayStagingBase();
 }

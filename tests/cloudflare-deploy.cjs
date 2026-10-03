@@ -44,7 +44,8 @@ assert(auto.includes('node tests/live-cloudflare-acceptance.mjs'));
 assert(y.includes('node tests/v800-business-stable.cjs'));
 assert(y.includes('node --check tests/live-cloudflare-acceptance.mjs'));
 
-assert(w.includes('ALLOWED_ORIGINS = "https://area-ledger-ai-gateway.areamaibab.workers.dev"'));
+assert(w.includes('ALLOWED_ORIGINS = "https://area-ledger-ai-gateway.areamaibab.workers.dev,https://g.areamaibab.workers.dev"'));
+assert(!w.includes('ALLOWED_ORIGINS = "*"'));
 assert(w.includes('ALLOWED_ORIGINS = "https://area-ledger-ai-gateway-staging.areamaibab.workers.dev"'));
 assert(y.includes('confirm_production'));
 assert(y.includes('DEPLOY_PRODUCTION'));
