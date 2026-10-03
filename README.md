@@ -14,6 +14,7 @@ Standalone/PWA accounting and construction project control.
 - Images are resized on-device for iPhone stability. When Cloud Sync/R2 is available, post images are offloaded to R2 while compact thumbnails remain in the ledger; if R2 is unavailable, the compressed image stays with the post so data is not lost.
 - External social networks are not auto-posted or granted account access. Share uses the device Share sheet/copy workflow so the owner stays in control of publication.
 - Existing accounting, BOQ, guarantee, transaction and storage keys are unchanged.
+- Release-pipeline cleanup removes the stale empty one-time production authorization marker before staging validation.
 
 ## v1023 Complete Expense Amounts on iPhone
 
