@@ -2141,6 +2141,55 @@ input,select,textarea{max-width:100%;min-width:0}
 .mdash-expense-card>small{margin-top:6px!important}
 @media(max-width:390px){.mdash-expense-card .mdash-expense-split{gap:4px}.mdash-expense-card .mdash-expense-split i{padding:4px}.mdash-expense-card .mdash-expense-split b{font-size:13px!important}}
 @media(prefers-color-scheme:dark){.mdash-expense-card .mdash-expense-split i{background:#0f151c}}
+
+/* BOQ VISUAL REFRESH v831 — hierarchy, readability, mobile scan speed */
+.view-boq main{max-width:820px;margin:0 auto;padding-top:14px}
+.boq-hero{position:relative;overflow:hidden;margin:0 0 14px;padding:18px;border:1px solid rgba(24,35,47,.08);border-radius:24px;background:linear-gradient(145deg,#fff 0%,#fffdf8 58%,#fff6dc 100%);box-shadow:0 10px 28px rgba(24,35,47,.08)}
+.boq-hero:before{content:'';position:absolute;right:-44px;top:-58px;width:150px;height:150px;border-radius:50%;background:rgba(240,181,20,.10);pointer-events:none}
+.boq-hero-top{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.boq-hero-copy{min-width:0}.boq-eyebrow{display:block;color:#7b8790;font:700 .72rem Prompt;letter-spacing:.02em}
+.boq-hero-copy h2{margin:4px 0 4px;font:800 1.14rem/1.32 Prompt;color:#18232f;letter-spacing:-.01em}
+.boq-hero-copy p{margin:0;color:#6f7a83;font-size:.78rem}
+.boq-change-btn{flex:none;min-height:40px!important;padding:8px 12px;border:1px solid #d9dddf;border-radius:12px;background:#fff;color:#34414c;font:700 .76rem Prompt}
+.boq-total-block{position:relative;margin-top:16px;padding:14px 15px;border-radius:17px;background:#18232f;color:#fff}
+.boq-total-block span{display:block;color:#bac4cc;font-size:.72rem}.boq-total-block strong{display:block;margin-top:3px;font:800 1.65rem/1.05 Prompt;letter-spacing:-.035em}
+.boq-summary-grid{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.boq-summary-grid>div{min-width:0;padding:10px 9px;border:1px solid #e8e6df;border-radius:14px;background:rgba(255,255,255,.82)}
+.boq-summary-grid small,.boq-summary-grid b{display:block}.boq-summary-grid small{color:#7c858c;font-size:.66rem}.boq-summary-grid b{margin-top:3px;color:#25313b;font:800 .82rem/1.18 Prompt;overflow-wrap:anywhere}
+.boq-hero-actions{position:relative;display:grid;grid-template-columns:1.18fr 1fr;gap:8px;margin-top:12px}
+.boq-action{min-height:48px!important;border-radius:14px;border:1px solid #222c35;display:flex;align-items:center;justify-content:center;gap:7px;font:800 .86rem Prompt}
+.boq-action svg{width:18px;height:18px}.boq-action.primary{border-color:#edae0a;background:#f5b514;color:#18232f;box-shadow:0 6px 15px rgba(232,166,0,.16)}.boq-action.secondary{background:#fff;color:#18232f}
+.boq-find-shell{position:sticky;top:76px;z-index:24;margin:12px 0 14px;padding:9px;border:1px solid rgba(24,35,47,.08);border-radius:17px;background:rgba(247,248,247,.94);box-shadow:0 6px 18px rgba(24,35,47,.06);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.boq-find-shell .boq-search{display:flex;gap:7px}.boq-find-shell input{width:100%;margin:0!important;min-height:46px!important;padding:10px 14px!important;border:1px solid #d9dede!important;border-radius:13px!important;background:#fff!important;font-size:.88rem!important}
+.boq-clear-btn{min-height:46px!important;padding:0 13px;border:1px solid #d9dede;border-radius:12px;background:#fff;color:#56626c;font:700 .75rem Prompt}.boq-find-count{padding:6px 4px 0;color:#7a858e;font-size:.72rem}.boq-find-count b{color:#18232f}
+.boq-section-head{position:relative;margin:18px 0 7px!important;padding:13px 14px!important;border:1px solid #f1df9b!important;border-left:5px solid #e2ab0d!important;border-radius:17px!important;background:linear-gradient(135deg,#fff8db,#fff0b7)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;box-shadow:0 5px 14px rgba(116,90,15,.06)}
+.boq-section-head[data-act]:after{content:'⌄';flex:none;color:#8d6a00;font:800 1rem Prompt;transition:transform .18s}.boq-section-head[data-act].collapsed:after{transform:rotate(-90deg)}
+.boq-section-main{min-width:0!important;display:flex!important;align-items:baseline;gap:8px;font:inherit!important}.boq-section-code{flex:none;padding:3px 7px;border-radius:8px;background:#18232f;color:#fff;font:800 .72rem Prompt;margin:0!important}.boq-section-name{min-width:0;color:#202a33;font:800 .91rem/1.25 Prompt}
+.boq-section-stats{flex:none!important;text-align:right!important;font:inherit!important}.boq-section-stats b,.boq-section-stats strong,.boq-section-stats small{display:block!important}.boq-section-stats b{color:#8a6a08;font-size:.66rem}.boq-section-stats strong{margin-top:1px;color:#18232f;font:800 .84rem Prompt}.boq-section-stats small{margin-top:2px!important;color:#8f815c!important;font-size:.62rem!important}
+.boq-section-head.collapsed{background:#faf7eb!important;border-color:#ebe4ce!important}
+.boq-check-row{margin:0 2px;padding:0!important;border-bottom:1px solid #e7e9e8!important;background:transparent}.boq-check-row:last-of-type{border-bottom:0}
+.boq-check-main{min-height:72px;padding:11px 4px!important;grid-template-columns:30px minmax(0,1fr) auto!important;gap:10px!important;align-items:center!important;border-radius:13px;transition:background .15s,transform .15s}
+.boq-check-main:active{background:#f6f7f6;transform:scale(.995)}
+.boq-no{width:28px!important;height:28px!important;border-radius:10px!important;background:#eef1f2!important;color:#46525c!important;font:800 .72rem Prompt!important}
+.boq-title{color:#202a33;font:800 .9rem/1.35 Prompt!important;letter-spacing:-.005em}
+.boq-meta{display:flex!important;align-items:center;flex-wrap:wrap;gap:5px!important;margin-top:5px!important;color:#6e7981!important;font-size:.72rem!important}
+.boq-kind{padding:3px 7px!important;font-size:.65rem!important}.boq-kind.material{background:#eef6f0!important;color:#39734c!important}.boq-kind.labor{background:#fff0c8!important;color:#8e6100!important}.boq-dot{color:#a3aaaf}
+.boq-row-amount{min-width:84px;text-align:right;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:6px}.boq-row-amount small{grid-column:1;color:#9aa2a8;font-size:.6rem}.boq-row-amount strong{grid-column:1;margin-top:1px;color:#18232f;font:800 .94rem Prompt;white-space:nowrap}.boq-row-amount i{grid-column:2;grid-row:1/3;color:#a8afb4;font-style:normal;font-size:1.1rem}
+.boq-empty{margin-top:14px!important}
+.view-boq .nav{box-shadow:0 -1px 0 rgba(24,35,47,.08),0 -8px 20px rgba(24,35,47,.04)!important}.view-boq .nav .add{width:54px!important;height:54px!important;min-height:54px!important;transform:translateY(-7px)!important;box-shadow:0 4px 12px rgba(232,166,0,.20)!important}.view-boq .nav .add svg{width:23px!important;height:23px!important}
+@media(max-width:520px){
+  .view-boq main{padding-left:12px!important;padding-right:12px!important;padding-top:12px!important}
+  .boq-hero{padding:15px;border-radius:21px}.boq-hero-copy h2{font-size:1rem}.boq-total-block strong{font-size:1.46rem}
+  .boq-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.boq-summary-grid>div{padding:9px 10px}.boq-summary-grid b{font-size:.78rem}
+  .boq-hero-actions{grid-template-columns:1fr 1fr}.boq-action{font-size:.8rem}
+  .boq-find-shell{top:68px;margin-top:10px}.boq-section-head{padding:12px!important}.boq-section-name{font-size:.84rem}.boq-section-stats strong{font-size:.78rem}
+  .boq-check-main{min-height:68px!important;padding:10px 2px!important;grid-template-columns:28px minmax(0,1fr) auto!important;gap:8px!important}
+  .boq-title{font-size:.84rem!important}.boq-row-amount{min-width:76px}.boq-row-amount strong{font-size:.86rem}
+}
+@media(max-width:380px){
+  .boq-change-btn{padding:7px 9px;font-size:.69rem}.boq-summary-grid b{font-size:.73rem}.boq-section-code{font-size:.65rem}.boq-section-name{font-size:.79rem}.boq-section-stats{display:none!important}
+  .boq-check-main{grid-template-columns:26px minmax(0,1fr) auto!important}.boq-title{font-size:.8rem!important}.boq-meta{font-size:.67rem!important}.boq-row-amount strong{font-size:.82rem}
+}
 </style>
 </head>
 <body>
@@ -4081,22 +4130,47 @@ function vBoq(){
     boqProjectChoices().forEach(function(pr){var bs=boqSummary(pr.id);h+='<button class="row" data-act="boqOpenProject" data-id="'+pr.id+'"><div class="l"><b>'+esc(pr.name)+'</b><small>'+bs.rows.length+' รายการ BOQ</small></div><div class="r"><span class="num">'+fmt(bs.budget)+'</span><span>เปิดรายการ ›</span></div></button>';});
     return h;
   }
-  p=proj(pid);var rows=boqRows(pid),total=rows.reduce(function(n,x){return n+boqAmount(x);},0),q=String(U.boqQuery||'').slice(0,120),tokens=boqQueryTokens(q),needle=tokens.join(' '),showFind=rows.length>=12||!!needle,matched=rows.filter(function(x){return boqQuickMatch(x,q);}),sectionMatch={},sectionMeta={};
+  p=proj(pid);
+  var rows=boqRows(pid),total=rows.reduce(function(n,x){return n+boqAmount(x);},0),materialTotal=rows.filter(function(x){return (x.category||'')!=='ค่าแรง';}).reduce(function(n,x){return n+boqAmount(x);},0),laborTotal=rows.filter(function(x){return (x.category||'')==='ค่าแรง';}).reduce(function(n,x){return n+boqAmount(x);},0),q=String(U.boqQuery||'').slice(0,120),tokens=boqQueryTokens(q),needle=tokens.join(' '),showFind=rows.length>=12||!!needle,matched=rows.filter(function(x){return boqQuickMatch(x,q);}),sectionMatch={},sectionMeta={};
   rows.forEach(function(x){var sk=(x.sectionCode||'')+'|'+(x.sectionName||''),m=sectionMeta[sk]||(sectionMeta[sk]={count:0,total:0});m.count++;m.total+=boqAmount(x);});
   matched.forEach(function(x){sectionMatch[(x.sectionCode||'')+'|'+(x.sectionName||'')]=1;});
   var sectionCount=Object.keys(sectionMeta).length,collapsible=rows.length>=12&&sectionCount>=2;
-  h+='<div class="sec master-detail-card boq-compact-head"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div style="min-width:0"><small>BOQ โครงการ</small><h2 style="margin:2px 0 4px;line-height:1.25">'+esc(p.name)+'</h2><span class="muted">'+rows.length+' รายการ · '+fmt(total)+'</span></div><button class="btn" data-act="boqBackProjects">เปลี่ยน</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button class="btn pri" data-act="newBoq" data-id="'+pid+'">+ รายการ</button><button class="btn" data-act="boqImport" data-id="'+pid+'">นำเข้าไฟล์</button></div></div>';
-  if(!rows.length)return h+'<div class="empty">ยังไม่มีรายการ BOQ ในโครงการนี้</div>';
-  if(showFind)h+='<div class="sec boq-quick-find" style="padding:10px 12px"><div class="boq-search"><input id="boqQuickFind" type="search" inputmode="search" autocomplete="off" placeholder="ค้นหา BOQ · พิมพ์ได้หลายคำ" value="'+esc(q)+'" style="width:100%;margin:0">'+(q?'<button class="btn" data-act="boqQuickClear">ล้าง</button>':'')+'</div><small id="boqQuickCount" class="muted" style="display:block;margin-top:6px">'+(tokens.length?'พบ '+matched.length+' / '+rows.length+' รายการ':rows.length+' รายการ')+'</small></div>';
+
+  h+='<section class="boq-hero" aria-label="สรุป BOQ โครงการ">'+
+    '<div class="boq-hero-top"><div class="boq-hero-copy"><span class="boq-eyebrow">BOQ โครงการ</span><h2>'+esc(p.name)+'</h2><p>'+rows.length+' รายการ · '+sectionCount+' หมวดงาน</p></div>'+
+    '<button class="boq-change-btn" data-act="boqBackProjects">เปลี่ยนโครงการ</button></div>'+
+    '<div class="boq-total-block"><span>มูลค่า BOQ รวม</span><strong>'+fmt(total)+'</strong></div>'+
+    '<div class="boq-summary-grid">'+
+      '<div><small>รายการ</small><b>'+rows.length+'</b></div>'+
+      '<div><small>หมวดงาน</small><b>'+sectionCount+'</b></div>'+
+      '<div><small>ค่าวัสดุ</small><b>'+fmt(materialTotal)+'</b></div>'+
+      '<div><small>ค่าแรง</small><b>'+fmt(laborTotal)+'</b></div>'+
+    '</div>'+
+    '<div class="boq-hero-actions"><button class="boq-action primary" data-act="newBoq" data-id="'+pid+'">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button class="boq-action secondary" data-act="boqImport" data-id="'+pid+'">'+ic('documents')+'<span>นำเข้าไฟล์</span></button></div>'+
+  '</section>';
+
+  if(!rows.length)return h+'<div class="empty boq-empty">ยังไม่มีรายการ BOQ ในโครงการนี้</div>';
+
+  if(showFind)h+='<div class="boq-find-shell"><div class="boq-search"><input id="boqQuickFind" type="search" inputmode="search" autocomplete="off" placeholder="ค้นหา BOQ / หมวด / ราคา" value="'+esc(q)+'">'+(q?'<button class="boq-clear-btn" data-act="boqQuickClear">ล้าง</button>':'')+'</div><div id="boqQuickCount" class="boq-find-count">'+(tokens.length?'พบ <b>'+matched.length+'</b> จาก '+rows.length+' รายการ':'ทั้งหมด '+rows.length+' รายการ')+'</div></div>';
+
   var lastSec='',sectionNo=0,sectionId='';
   rows.forEach(function(x,i){
     var sk=(x.sectionCode||'')+'|'+(x.sectionName||'');
     if(sk!==lastSec){
-      lastSec=sk;sectionNo++;sectionId='s'+sectionNo;var meta=sectionMeta[sk],collapsed=collapsible&&!tokens.length&&boqSectionCollapsed(pid,sk),tag=collapsible&&!tokens.length?'button':'div';
-      h+='<'+tag+' class="boq-section-head'+(collapsed?' collapsed':'')+'" data-boq-section="'+sectionId+'" data-boq-key="'+esc(sk)+'"'+(collapsible&&!tokens.length?' data-act="boqSectionToggle" data-pid="'+pid+'"':'')+(tokens.length&&!sectionMatch[sk]?' hidden':'')+'><span><b>'+esc(x.sectionCode||'หมวด')+'</b> '+esc(x.sectionName||'ไม่ระบุหมวดงาน')+(collapsible?'<small>'+meta.count+' รายการ · '+fmt(meta.total)+(tokens.length?'':collapsed?' · แตะเพื่อขยาย':' · แตะเพื่อย่อ')+'</small>':'')+'</span></'+tag+'>';
+      lastSec=sk;sectionNo++;sectionId='s'+sectionNo;
+      var meta=sectionMeta[sk],collapsed=collapsible&&!tokens.length&&boqSectionCollapsed(pid,sk),tag=collapsible&&!tokens.length?'button':'div';
+      h+='<'+tag+' class="boq-section-head'+(collapsed?' collapsed':'')+'" data-boq-section="'+sectionId+'" data-boq-key="'+esc(sk)+'"'+(collapsible&&!tokens.length?' data-act="boqSectionToggle" data-pid="'+pid+'"':'')+(tokens.length&&!sectionMatch[sk]?' hidden':'')+'>'+
+        '<span class="boq-section-main"><b class="boq-section-code">'+esc(x.sectionCode||'หมวด')+'</b><span class="boq-section-name">'+esc(x.sectionName||'ไม่ระบุหมวดงาน')+'</span></span>'+
+        '<span class="boq-section-stats"><b>'+meta.count+' รายการ</b><strong>'+fmt(meta.total)+'</strong>'+(collapsible?'<small>'+(collapsed?'แตะเพื่อขยาย':'แตะเพื่อย่อ')+'</small>':'')+'</span>'+
+      '</'+tag+'>';
     }
     var cat=(x.category||'')==='ค่าแรง'?'แรง':'วัสดุ',ok=boqQuickMatch(x,q),collapsedRow=collapsible&&!tokens.length&&boqSectionCollapsed(pid,sk);
-    h+='<div class="boq-check-row" data-boq-id="'+esc(x.id)+'" data-boq-section="'+sectionId+'" data-boq-key="'+esc(sk)+'" data-boq-search="'+esc(boqQuickText(x))+'"'+(ok&&!collapsedRow?'':' hidden')+'><button class="boq-check-main" data-act="editBoq" data-id="'+x.id+'"><span class="boq-no">'+(i+1)+'</span><span class="boq-info"><span class="boq-title">'+esc(x.name||'ไม่ระบุรายการ')+'</span><span class="boq-meta"><i class="boq-kind '+(cat==='แรง'?'labor':'material')+'">'+cat+'</i> '+(+x.qty||0)+' '+esc(x.unit||'')+' × '+fmt(+x.unitPrice||0)+'</span></span><strong class="num">'+fmt(boqAmount(x))+'</strong></button></div>';
+    h+='<div class="boq-check-row" data-boq-id="'+esc(x.id)+'" data-boq-section="'+sectionId+'" data-boq-key="'+esc(sk)+'" data-boq-search="'+esc(boqQuickText(x))+'"'+(ok&&!collapsedRow?'':' hidden')+'>'+
+      '<button class="boq-check-main" data-act="editBoq" data-id="'+x.id+'">'+
+        '<span class="boq-no">'+(i+1)+'</span>'+
+        '<span class="boq-info"><span class="boq-title">'+esc(x.name||'ไม่ระบุรายการ')+'</span><span class="boq-meta"><i class="boq-kind '+(cat==='แรง'?'labor':'material')+'">'+cat+'</i><span>'+((+x.qty||0).toLocaleString('th-TH',{maximumFractionDigits:3}))+' '+esc(x.unit||'')+'</span><span class="boq-dot">×</span><span>'+fmt(+x.unitPrice||0)+'</span></span></span>'+
+        '<span class="boq-row-amount"><small>รวม</small><strong class="num">'+fmt(boqAmount(x))+'</strong><i>›</i></span>'+
+      '</button></div>';
   });
   if(showFind)h+='<div id="boqQuickEmpty" class="empty"'+(matched.length?' hidden':'')+'>ไม่พบรายการ BOQ ที่ค้นหา</div>';
   return h;
@@ -5161,6 +5235,7 @@ function render(){
   document.body.classList.toggle('wallpaper-on',wall);
   document.body.classList.toggle('force-desktop',!!(S.ui&&S.ui.viewMode==='desktop'));
   document.body.classList.toggle('force-mobile',!S.ui||S.ui.viewMode!=='desktop');
+  document.body.classList.toggle('view-boq',v==='boq');
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();
 }
