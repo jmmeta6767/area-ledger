@@ -794,5 +794,28 @@ reset();test('v1039 local image and PDF fallbacks retain per-page checks instead
   const a=c.boqImportImages.toString(),b=c.boqImportScannedPdf.toString();assert(a.includes('localPageChecks[i]=lp.check'));assert(a.includes('boqLocalPageAssemble(rr.text'));assert(b.includes('pageLocal=boqLocalPageAssemble'));assert(b.includes('localPageChecks[p-1]=pageLocal.check'));assert(b.includes('PDF Local Row-Band / Equation'));
 });
 
+function setupBoqWarning(declared,coverage){
+  reset();c.U.confirm=null;c.U.boqReviewPage=0;c.U.boqReviewChecked={};
+  c.U.boqImport={pid:'p',file:'scan.jpg',rows:[{name:'งานทดสอบ',qty:1,unit:'งาน',unitPrice:100,category:'ค่าของ',sourcePage:1}],pdfOptimize:{ocr:true,reconcile:{declared},localCoverage:coverage||{}}};
+}
+for(const [label,declared,coverage] of [['missing',0,{}],['mismatch',200,{}],['page and missing',0,{pageTotalMismatch:1}],['document conflict',200,{documentTotalConflict:true}]]){
+  test('BOQ warning '+label+' reaches explicit final confirmation and saves once',()=>{
+    setupBoqWarning(declared,coverage);
+    for(let i=0;i<3;i++){action('boqImportConfirm','p',{boqImportPid:'p'});assert.equal(c.S.boq.length,i===2?1:0);}
+    assert.equal(c.U.boqImport,null);action('boqImportConfirm','p',{boqImportPid:'p'});assert.equal(c.S.boq.length,1);
+  });
+}
+test('BOQ warning acknowledgement expires when row values change',()=>{
+  setupBoqWarning(0);action('boqImportConfirm','p',{boqImportPid:'p'});
+  const old=c.U.boqImport.warningAck;c.U.boqImport.rows[0].unitPrice=120;
+  action('boqImportConfirm','p',{boqImportPid:'p'});assert.notEqual(c.U.boqImport.warningAck,old);assert.equal(c.U.confirm,null);assert.equal(c.S.boq.length,0);
+  action('boqImportConfirm','p',{boqImportPid:'p'});action('boqImportConfirm','p',{boqImportPid:'p'});assert.equal(c.S.boq[0].unitPrice,120);
+});
+test('BOQ warning acknowledgement expires when destination changes',()=>{
+  setupBoqWarning(0);action('boqImportConfirm','p',{boqImportPid:'p'});const old=c.U.boqImport.warningAck;
+  action('boqImportConfirm','p',{boqImportPid:'q'});assert.notEqual(c.U.boqImport.warningAck,old);assert.equal(c.U.confirm,null);assert.equal(c.S.boq.length,0);
+  action('boqImportConfirm','p',{boqImportPid:'q'});action('boqImportConfirm','p',{boqImportPid:'q'});assert.equal(c.S.boq[0].pid,'q');
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});

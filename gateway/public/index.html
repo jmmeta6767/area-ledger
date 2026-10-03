@@ -7670,10 +7670,16 @@ document.addEventListener('click',function(e){
     if(!proj(im0.pid)){toast('ไม่พบโครงการปลายทาง');return;}
     var invalidEdit=im0.rows.some(function(x){return !x.name||!(+x.qty>0)||!(+x.unitPrice>=0)||!isFinite(+x.qty)||!isFinite(+x.unitPrice)||CAT_OUT.indexOf(x.category)<0;});if(invalidEdit){toast('กรุณาตรวจรายการ ปริมาณ ราคา และหมวด');return;}
     if(im0.pdfOptimize&&im0.pdfOptimize.ocr){
-      var lc0=im0.pdfOptimize.localCoverage;if(lc0&&(lc0.pageTotalMismatch>0||lc0.documentTotalConflict)){toast(lc0.documentTotalConflict?'ยอดรวมทั้งเอกสารขัดกัน · กรุณาตรวจต้นฉบับ':'ยอดรวมรายหน้าไม่ตรง '+lc0.pageTotalMismatch+' หน้า · กรุณาตรวจต้นฉบับ');if(U.confirm!=='ocr-page-scope-warning'){U.confirm='ocr-page-scope-warning';render();return;}}
+      var warnings0=[],lc0=im0.pdfOptimize.localCoverage;
+      if(lc0&&(lc0.pageTotalMismatch>0||lc0.documentTotalConflict))warnings0.push(lc0.documentTotalConflict?'ยอดรวมทั้งเอกสารขัดกัน · กรุณาตรวจต้นฉบับ':'ยอดรวมรายหน้าไม่ตรง '+lc0.pageTotalMismatch+' หน้า · กรุณาตรวจต้นฉบับ');
       var rc0=im0.pdfOptimize.reconcile,decl0=rc0&&+rc0.declared||0,live0=boqOcrReconcile(im0.rows,decl0);im0.pdfOptimize.reconcile=live0;
-      if(!decl0){toast('OCR อ่านยอดรวมเอกสารไม่ได้ · กรุณาตรวจรายการก่อน');if(U.confirm!=='ocr-unverified'){U.confirm='ocr-unverified';render();return;}}
-      else if(!live0.ok){toast('ยอด OCR ยังไม่ตรงเอกสาร · ต่าง '+fmt(live0.diff));if(U.confirm!=='ocr-mismatch'){U.confirm='ocr-mismatch';render();return;}}
+      if(!decl0)warnings0.push('OCR อ่านยอดรวมเอกสารไม่ได้ · กรุณาตรวจรายการก่อน');
+      else if(!live0.ok)warnings0.push('ยอด OCR ยังไม่ตรงเอกสาร · ต่าง '+fmt(live0.diff));
+      // Acknowledge warnings separately from the final project/count/total confirmation.
+      // Bind acknowledgement to exact reviewed values, source provenance and warnings.
+      var warningSig0=JSON.stringify([im0.pid,im0.file||'',im0.rows.map(function(x){return [x.name,x.category,+x.qty,x.unit,+x.unitPrice,x.sectionCode||'',x.sectionName||'',x.sourcePage||0,x.sourceFile||''];}),decl0,warnings0]);
+      if(warnings0.length&&im0.warningAck!==warningSig0){im0.warningAck=warningSig0;U.confirm=null;toast(warnings0.join(' · ')+' · ตรวจแล้วแตะอีกครั้งเพื่อยืนยันโครงการและยอด');render();return;}
+      if(!warnings0.length)im0.warningAck=null;
     }
     var keys={};if(im0.rows.some(function(x){var k=boqPreviewRowKey(x);if(keys[k])return true;keys[k]=1;return false;})){toast('มีรายการซ้ำหลังแก้ไขในหน้าเดียวกัน กรุณาตรวจอีกครั้ง');return;}
     var existsTarget={};(S.boq||[]).filter(function(x){return x.pid===im0.pid;}).forEach(function(x){existsTarget[boqImportKey(x)]=1;});if(im0.rows.some(function(x){return existsTarget[boqImportKey(x)];})){toast('โครงการนี้มี BOQ บางรายการซ้ำอยู่แล้ว · กรุณาตรวจโครงการหรือรายการ');return;}
