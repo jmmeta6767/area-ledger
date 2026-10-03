@@ -817,5 +817,25 @@ test('BOQ warning acknowledgement expires when destination changes',()=>{
   action('boqImportConfirm','p',{boqImportPid:'q'});action('boqImportConfirm','p',{boqImportPid:'q'});assert.equal(c.S.boq[0].pid,'q');
 });
 
+
+reset();test('v1040 business document actions render outside the A4 print surface',()=>{
+  c.S.quotes=[{id:'q1040',no:'QT-20261004',date:'2026-10-04',customer:'ลูกค้าทดสอบ',description:'รายการทดสอบ',qty:1,unit:'งาน',unitPrice:100,items:[{description:'รายการทดสอบ',qty:1,unit:'งาน',unitPrice:100}]}];
+  c.S.business={legalName:'AREA MAIBAB',vatRegistered:false};c.U.docKind='quote';c.U.docId='q1040';
+  const out=c.vBusinessDoc(),paper=out.indexOf('class="quote-paper rd-paper"'),bar=out.indexOf('class="doc-actions-bar no-print"');
+  assert(paper>=0&&bar>paper);assert(out.indexOf('</div>',paper)<bar);assert(out.includes('role="group" aria-label="การดำเนินการกับเอกสาร"'));
+  for(const a of ['convertDoc','doPrint','downloadDocPdf','editDoc'])assert(out.includes('data-act="'+a+'"'));
+  assert(out.includes('QT-20261004'));assert(out.includes(c.fmt(100)));assert(out.includes('data-label=\"มูลค่า\"'));
+});
+
+reset();test('v1042 receipt creation always starts from an unpaid bill and actual payment',()=>{
+  c.S.receipts=[];c.S.bills=[{id:'b1042',no:'BL-1042',date:'2026-10-04',customer:'ลูกค้า',items:[{description:'งาน',qty:1,unit:'งาน',unitPrice:100}]}];
+  c.U.docListKind='receipt';c.U.docBillFilter='all';c.U.docQuery='old search';action('newReceipt');
+  assert.equal(c.U.docListKind,'bill');assert.equal(c.U.docBillFilter,'open');assert.equal(c.U.docQuery,'');assert.equal(c.U.sheet,null);assert.equal(c.S.receipts.length,0);
+  c.U.docListKind='receipt';const receipts=c.vDocList();assert(receipts.includes('data-act=\"newReceipt\"'));assert(receipts.includes('รับเงิน / ออกใบเสร็จ'));
+  function fire(act,kind,id){const el={dataset:{act:act,kind:kind,id:id},getAttribute(k){return k==='data-act'?act:k==='data-kind'?kind:k==='data-id'?id:null},closest(){return this}};listeners.click.forEach(function(f){f({target:el,preventDefault(){},stopPropagation(){}});});}
+  fire('saveBizDoc','receipt','');assert.equal(c.S.receipts.length,0);assert(toasts.at(-1).includes('รับเงินจริง'));
+  c.U.docKind='bill';fire('convertDoc','receipt','b1042');assert.equal(c.S.receipts.length,0);assert(toasts.at(-1).includes('รับเงินจริง'));
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});

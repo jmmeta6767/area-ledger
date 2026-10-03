@@ -5,6 +5,28 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1042 Receipt Flow Guard
+
+- The “ออกใบเสร็จ” shortcut now opens unpaid billing notes so users record the payment amount and method before a receipt is issued.
+- Block standalone receipt creation and conversion without payment confirmation; existing receipts remain editable.
+- Prevents a receipt from implying cash was collected when no payment was entered. Existing reconciliation, tax calculation, document numbering, storage and sync contracts remain unchanged.
+
+## v1041 Portrait Preview Correction
+
+- The mobile document surface now clamps both the page and paper to the phone viewport, including narrow portrait screens.
+- The action buttons stay in normal page flow below the preview so Safari browser controls cannot cover them.
+- Existing item-card labels remain readable and print/PDF output keeps its A4 portrait table.
+- No document values, tax calculations, accounting, storage or sync contracts change.
+
+## v1040 iPhone Business Document Actions
+
+- Moves Quote, Billing Note and Receipt actions outside the A4 document surface so they remain reachable on narrow iPhone screens.
+- Reflows document detail rows into labeled, readable cards on iPhone while retaining the A4 layout for print and PDF export.
+- Uses a two-column action bar sized to phone screens; the bar is excluded from print/PDF output.
+- Presentation and navigation markup only: accounting amounts, VAT/WHT calculations, document lineage, storage keys, D1/R2 and Cloud Sync contracts are unchanged.
+- Physical iPhone/Safari acceptance remains a device check; automated CSS/source regression does not claim device-level verification.
+
+
 ## v1039 Local OCR Page Provenance
 
 - Local OCR now preserves `sourcePage`, `sourceFile`, and `sourceKind` for every BOQ row from multi-image and scanned-PDF imports.
