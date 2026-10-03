@@ -29,7 +29,7 @@ assert(src.includes("class=\"card runtime-diagnostics\""),'advanced runtime diag
 assert(src.includes('Render ล่าสุด / สูงสุด'),'runtime render diagnostics label missing');
 assert(src.includes('Safari BFCache restore'),'BFCache diagnostics label missing');
 
-assert(src.includes("boqAiCoverage(aiRows,pages,aiDeclared,aiPageCounts)"),'BOQ AI coverage contract changed');
+assert(src.includes("boqAiCoverage(aiRows,pages,aiDeclared,aiPageCounts,aiPageChecks)"),'BOQ AI coverage contract changed');assert(src.includes('boqAiPageTotalCheck'),'BOQ page-total reconciliation contract missing');
 assert(src.includes('aiEquationMismatch'),'BOQ arithmetic verification must remain present');
 assert(src.includes("KEY='site-ledger-v1'")||src.includes("const KEY='site-ledger-v1'"),'storage key contract missing');
 assert(src.includes("'site-ledger-db'"),'IndexedDB contract missing');
