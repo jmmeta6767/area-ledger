@@ -5461,7 +5461,7 @@ function boqAiCoverage(rows,pageCount,declared,pageCounts,pageChecks){
   if(equationMismatch)reasons.push('สมการจำนวน×ราคาไม่ตรงจำนวนเงิน '+equationMismatch+' รายการ');
   if(pageTotalMismatch)reasons.push('ยอดรวมรายหน้าไม่ตรงรายการ '+pageTotalMismatch+' หน้า');
   if(documentTotalConflict)reasons.push('ยอดรวมทั้งเอกสารจากหลายหน้าไม่ตรงกัน');
-  if(totalMismatch)reasons.push('ยอดรวม AI ทั้งเอกสารไม่ตรงรายการ');
+  if(totalMismatch)reasons.push('ยอดรวม AI ไม่ตรงเอกสาร');
   return {need:pageGap||q.good.length<min||ratio<.65||equationMismatch>0||pageTotalMismatch>0||documentTotalConflict||totalMismatch,good:q.good,min:min,raw:rows.length,ratio:ratio,pageGap:pageGap,pageCounts:counts,pageChecks:checks,pageTotalMismatch:pageTotalMismatch,documentTotalConflict:documentTotalConflict,equationChecked:equationChecked,equationMismatch:equationMismatch,reconcile:rec,reasons:reasons};
 }
 function boqAcceptanceSummary(rows,sourceKind){
