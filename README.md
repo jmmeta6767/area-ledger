@@ -5,6 +5,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1030 BOQ Hardening
+
+- Preserves BOQ work-section metadata through final import and tracks whether a section came from the visible source heading, deterministic inference, manual entry, or legacy data.
+- Reconciles OCR totals only after the reviewer edits have been synced, and binds the final confirmation to the complete import fingerprint rather than total/count alone.
+- Replaces the 100-row blind-import behavior with 60-row review pages and requires every page to be reviewed before a multi-page BOQ can be saved.
+- Adds bounded scanned-PDF opening, page rendering and local OCR timeouts plus the same cancel token/AbortController behavior used by multi-image BOQ import.
+- Duplicate import identity now includes section and material/labor category so legitimate rows are not collapsed only because quantity/unit/price match.
+
+
 
 ## v1024 Company Profile + Worksite Feed
 
