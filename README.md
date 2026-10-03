@@ -5,6 +5,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1039 full-app UX/UI audit
+
+- Adds explicit `data-view`, `data-sheet-kind` and `sheet-open` runtime scopes so every primary screen and every bottom sheet can receive deterministic responsive styling without leaking rules into unrelated views.
+- Audits all primary views: Dashboard, Transactions, Add Transaction, Projects, Project Detail, BOQ, AR/AP, Guarantees, Reports, Print, Business Documents, Procurement, Document Register, Business Document output and Company Profile.
+- Normalizes mobile grids, long-number wrapping, card minimum widths, filter/tab horizontal scrolling, touch targets, safe-area padding and document/report overflow behavior across 600 / 430 / 380 px breakpoints.
+- Normalizes all bottom sheets and editors, including Accounting, Project, Profile, OCR/BOQ preview, business documents, bill payment, Settings and manual journal controls.
+- Keeps document/print fidelity by using explicit horizontal scroll containers instead of squeezing A4/report layouts into unreadable columns.
+- Adds a full-app static regression that verifies every renderable view has UX scope, every major page family has responsive coverage and storage/BOQ arithmetic contracts remain unchanged.
+- Presentation only: no accounting formulas, BOQ/OCR extraction or page-total reconciliation, document values, tax, storage, D1/R2, Cloud Sync or profile publishing logic changes.
+
+
 ## v1038 BOQ Per-Page Total Reconciliation
 
 - AI Vision distinguishes a page subtotal from the final document total using `declaredTotalScope` (`page` / `document`) instead of treating the largest visible total as the whole-BOQ total.

@@ -63,6 +63,8 @@ jobs:
         run: node tests/runtime-v1036.cjs
       - name: v1037 Safari long-session stability regression
         run: node tests/runtime-v1037.cjs
+      - name: v1039 full-app UX/UI audit regression
+        run: node tests/ux-ui-v1039.cjs
       - name: Cloudflare production contract QA
         run: node tests/cloudflare-production.cjs
       - name: Cloudflare deploy pipeline QA

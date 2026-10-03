@@ -3043,6 +3043,277 @@ body.view-add .add-mobile-focus{padding-bottom:10px!important}
     contain-intrinsic-size:72px;
   }
 }
+
+/* v1039 full-app UX/UI audit · every view + every bottom sheet */
+:root{
+  --ux-page-max:1180px;
+  --ux-page-pad:14px;
+  --ux-mobile-pad:10px;
+  --ux-card-pad:14px;
+  --ux-gap:10px;
+}
+body[data-view] main{
+  width:min(100%,var(--ux-page-max));
+  margin-inline:auto;
+}
+body[data-view] main *,
+.master-sheet *{box-sizing:border-box}
+body[data-view] :where(h1,h2,h3,h4,b,strong,small,p,span,label){
+  overflow-wrap:anywhere;
+}
+body[data-view] :where(.num,.mamt,.r,.gm-side,.docs-recent-side,.boq-total-block,
+  .project-finance-kpis,.due-command-grid,.guarantee-mobile-summary,.acct-command-summary){
+  font-variant-numeric:tabular-nums;
+}
+body[data-view] :where(.workflow-section-head,.docs-command-head,.home-recent-head,
+  .doc-list-head,.project-list-toolbar,.due-command-head,.guarantee-register-head){
+  min-width:0;
+}
+
+/* consistent horizontal tab behavior instead of compressed labels */
+:where(.project-status-tabs,.list-type-tabs,.list-status-tabs,.list-audit-tabs,
+  .doc-bill-tabs,.guarantee-mobile-tabs,.profile-filter,.profile-project-scroll,
+  .document-lifecycle){
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  overscroll-behavior-inline:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+:where(.project-status-tabs,.list-type-tabs,.list-status-tabs,.list-audit-tabs,
+  .doc-bill-tabs,.guarantee-mobile-tabs,.profile-filter,.profile-project-scroll,
+  .document-lifecycle)::-webkit-scrollbar{display:none}
+:where(.project-status-tabs,.list-type-tabs,.list-status-tabs,.list-audit-tabs,
+  .doc-bill-tabs,.guarantee-mobile-tabs,.profile-filter,.profile-project-scroll,
+  .document-lifecycle)>*{flex:0 0 auto}
+
+/* sheet normalization across accounting, documents, project, profile and OCR */
+.master-sheet{
+  width:min(100%,760px)!important;
+  max-height:min(92dvh,940px)!important;
+  overflow:auto!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:max(22px,env(safe-area-inset-bottom,0px))!important;
+}
+.master-sheet :where(.stack,.settings-inline-actions,.settings-system-grid,
+  .acct-primary-actions,.acct-tool-grid,.project-form-savebar,.doc-output-actions){
+  min-width:0;
+}
+.master-sheet :where(.btn,button,[role="button"]){min-height:48px}
+.master-sheet :where(.kv,.row,.sec,.card){min-width:0}
+.master-sheet .kv{gap:10px}
+.master-sheet .kv>span{min-width:0}
+.master-sheet .kv>b{max-width:58%;text-align:right;white-space:normal;overflow-wrap:anywhere}
+.master-sheet :where(input,select,textarea){max-width:100%}
+.master-sheet :where(.acct-table,.wrapx,.expense-batch-list){
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.master-sheet :where(.manual-journal-lines,.bill-pay-grid,.profile-post-meta-grid,
+  .project-form-section,.acct-grid,.acct-aging-grid,.acct-tool-grid){
+  min-width:0;
+}
+
+/* page-safe content and long-number behavior */
+body[data-view] :where(.project-hub-card,.list-month-group,.boq-check-row,.due-group,
+  .guarantee-mobile-row,.docs-recent>button,.profile-post-card,.mgroup,.card){
+  min-width:0;
+}
+body[data-view] :where(.project-hub-card,.list-row-wrap,.boq-check-row,.due-urgent-row,
+  .guarantee-mobile-row,.docs-recent>button,.profile-post-card){
+  contain:layout style;
+}
+body[data-view] :where(.project-hub-main,.list-row-wrap .row,.boq-info,.due-urgent-row span,
+  .gm-main,.docs-recent-main,.profile-post-text){min-width:0}
+body[data-view] :where(.project-hub-main small,.boq-title,.boq-meta,.gm-main small,
+  .docs-recent-main small,.profile-post-text,.due-urgent-row small){
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+
+/* document/report views retain fidelity but get an explicit scroll container on small screens */
+body[data-view="print"] main,
+body[data-view="quoteprint"] main{overflow-x:auto;-webkit-overflow-scrolling:touch}
+body[data-view="print"] :where(.pv,.sec,.grid4),
+body[data-view="quoteprint"] :where(.quote-paper,.rd-paper){margin-inline:auto}
+
+/* every-page iPhone layout */
+@media(max-width:600px){
+  :root{--ux-page-pad:var(--ux-mobile-pad)}
+  body[data-view] main{
+    padding-left:max(var(--ux-mobile-pad),env(safe-area-inset-left,0px))!important;
+    padding-right:max(var(--ux-mobile-pad),env(safe-area-inset-right,0px))!important;
+  }
+  body[data-view] :where(h1,h2,h3){line-height:1.22}
+  body[data-view] :where(.btn,button,[role="button"]){touch-action:manipulation}
+  body[data-view] :where(.workflow-section-head,.docs-command-head,.due-command-head,
+    .guarantee-action-head,.report-workflow-head,.project-list-toolbar){
+    gap:8px!important;align-items:flex-start!important;
+  }
+
+  /* Dashboard */
+  body[data-view="home"] .project-finance-kpis,
+  body[data-view="home"] .expense-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="home"] :where(.executive-row-wrap,.home-guarantee-receivable){
+    min-width:0!important;
+  }
+  body[data-view="home"] .executive-row-main{min-width:0}
+  body[data-view="home"] .executive-dismiss{min-width:44px;min-height:44px}
+  body[data-view="home"] .master-ref-actions{display:flex;flex-wrap:wrap;gap:7px}
+  body[data-view="home"] .master-ref-actions>*{flex:1 1 120px}
+
+  /* Transaction list */
+  body[data-view="list"] .list-command-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="list"] .list-command-summary>*:first-child{grid-column:1/-1}
+  body[data-view="list"] .master-list-selects{grid-template-columns:1fr!important}
+  body[data-view="list"] .project-export-bar{align-items:stretch!important}
+  body[data-view="list"] .project-export-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important}
+  body[data-view="list"] .list-row-wrap .r{max-width:44%;white-space:normal;text-align:right}
+
+  /* Add transaction */
+  body[data-view="add"] :where(.add-core-card,.add-payment-card,.expense-scan-card){padding:12px!important}
+  body[data-view="add"] .add-amount input{font-size:clamp(1.55rem,8vw,2.2rem)!important}
+  body[data-view="add"] .due-mobile-row{grid-template-columns:1fr!important}
+  body[data-view="add"] .add-pay-method{grid-template-columns:1fr 1fr!important}
+  body[data-view="add"] .chips{gap:7px!important}
+  body[data-view="add"] .chip{min-height:44px}
+
+  /* Projects directory */
+  body[data-view="projects"] .project-hub-top{align-items:flex-start!important;gap:7px!important}
+  body[data-view="projects"] .project-hub-glance{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="projects"] .project-hub-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important}
+  body[data-view="projects"] .project-hub-actions button{width:100%}
+
+  /* Project detail */
+  body[data-view="project"] .project-focus-grid,
+  body[data-view="project"] .project-command-grid,
+  body[data-view="project"] .cc-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="project"] :where(.project-fold>summary,.project-contract-fold>summary,
+    .project-ai-fold>summary,.project-timeline-fold>summary,.project-change-fold>summary){
+    min-height:48px!important;
+  }
+  body[data-view="project"] .cc-head{align-items:flex-start!important;gap:8px!important}
+  body[data-view="project"] .cc-actions{display:flex;flex-wrap:wrap;gap:7px}
+  body[data-view="project"] .cc-actions>*{flex:1 1 130px}
+
+  /* BOQ */
+  body[data-view="boq"] .boq-hero-top{align-items:flex-start!important;gap:10px!important}
+  body[data-view="boq"] .boq-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="boq"] .boq-hero-actions{grid-template-columns:1fr 1fr!important;gap:7px!important}
+  body[data-view="boq"] .boq-total-block{max-width:100%!important;white-space:normal!important}
+  body[data-view="boq"] .boq-section-head{grid-template-columns:minmax(0,1fr) auto!important}
+  body[data-view="boq"] .boq-section-stats{max-width:44%;text-align:right}
+  body[data-view="boq"] .boq-top-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important}
+
+  /* AR/AP */
+  body[data-view="due"] .due-command-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="due"] .due-command-grid>*:last-child{grid-column:1/-1}
+  body[data-view="due"] .due-group-head{align-items:flex-start!important}
+  body[data-view="due"] .due-list .r{max-width:44%;white-space:normal;text-align:right}
+
+  /* Guarantees */
+  body[data-view="guarantees"] .guarantee-mobile-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="guarantees"] .guarantee-action-head{align-items:flex-start!important;gap:8px!important}
+  body[data-view="guarantees"] .guarantee-mobile-row{grid-template-columns:minmax(0,1fr) auto!important;gap:9px!important}
+  body[data-view="guarantees"] .gm-side{max-width:42%;white-space:normal;text-align:right}
+
+  /* Reports */
+  body[data-view="report"] :where(.owner-report-command,.report-cash-command,.report-booked-summary){
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  body[data-view="report"] .report-attention-head{align-items:flex-start!important;gap:8px!important}
+  body[data-view="report"] .wrapx{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  body[data-view="report"] .project-results-table{min-width:720px}
+
+  /* Business document hub */
+  body[data-view="docs"] .docs-command-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="docs"] .docs-command-summary>*:first-child{grid-column:1/-1}
+  body[data-view="docs"] .docs-quick-create,
+  body[data-view="docs"] .docs-kind-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body[data-view="docs"] .docs-action-row{grid-template-columns:minmax(0,1fr) auto!important}
+
+  /* Procurement */
+  body[data-view="procurement"] .proc-head{align-items:flex-start!important;gap:8px!important}
+  body[data-view="procurement"] .proc-grid{grid-template-columns:1fr!important}
+  body[data-view="procurement"] .proc-grid>*{min-height:64px}
+
+  /* Document register */
+  body[data-view="doclist"] .doc-list-head{align-items:flex-start!important;gap:8px!important}
+  body[data-view="doclist"] .doc-project-filter{width:100%}
+  body[data-view="doclist"] .doc-project-filter select{width:100%}
+  body[data-view="doclist"] .doc-mobile-row{grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important}
+  body[data-view="doclist"] .doc-mobile-pay{max-width:42%;white-space:normal!important}
+
+  /* Profile */
+  body[data-view="profile"] .profile-head-actions{display:flex;flex-wrap:wrap;gap:7px!important}
+  body[data-view="profile"] .profile-head-actions>*{flex:1 1 120px}
+  body[data-view="profile"] .profile-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  body[data-view="profile"] .profile-featured-grid{grid-template-columns:1fr!important}
+  body[data-view="profile"] .profile-post-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+
+  /* All sheets/editors */
+  .master-sheet{width:100%!important;padding-left:12px!important;padding-right:12px!important}
+  .master-sheet :where(.bill-pay-grid,.profile-post-meta-grid,.project-form-section,
+    .acct-grid,.acct-aging-grid,.acct-tool-grid,.settings-system-grid,.settings-inline-actions){
+    grid-template-columns:1fr!important;
+  }
+  .master-sheet .manual-journal-lines .mj-line{grid-template-columns:minmax(0,1fr) minmax(78px,.6fr) minmax(78px,.6fr)!important}
+  .master-sheet :where(.doc-editor-meta,.doc-editor-primary){grid-template-columns:1fr!important}
+  .master-sheet :where(.project-form-savebar,.doc-output-actions){display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+  .master-sheet .kv>b{max-width:54%}
+}
+@media(max-width:430px){
+  body[data-view="home"] .project-finance-kpis,
+  body[data-view="home"] .expense-status-grid,
+  body[data-view="list"] .list-command-summary,
+  body[data-view="projects"] .project-hub-glance,
+  body[data-view="project"] .project-focus-grid,
+  body[data-view="project"] .project-command-grid,
+  body[data-view="project"] .cc-grid,
+  body[data-view="boq"] .boq-summary-grid,
+  body[data-view="due"] .due-command-grid,
+  body[data-view="guarantees"] .guarantee-mobile-summary,
+  body[data-view="report"] :where(.owner-report-command,.report-cash-command,.report-booked-summary){
+    grid-template-columns:1fr 1fr!important;
+  }
+  body[data-view="boq"] .boq-hero-actions,
+  body[data-view="boq"] .boq-top-actions,
+  body[data-view="projects"] .project-hub-actions{grid-template-columns:1fr!important}
+  body[data-view="docs"] .docs-quick-create{grid-template-columns:1fr 1fr!important}
+  body[data-view="profile"] .profile-post-actions{grid-template-columns:1fr 1fr 1fr!important}
+}
+@media(max-width:380px){
+  body[data-view="home"] .project-finance-kpis,
+  body[data-view="home"] .expense-status-grid,
+  body[data-view="list"] .list-command-summary,
+  body[data-view="projects"] .project-hub-glance,
+  body[data-view="project"] .project-focus-grid,
+  body[data-view="project"] .project-command-grid,
+  body[data-view="project"] .cc-grid,
+  body[data-view="boq"] .boq-summary-grid,
+  body[data-view="due"] .due-command-grid,
+  body[data-view="guarantees"] .guarantee-mobile-summary,
+  body[data-view="report"] :where(.owner-report-command,.report-cash-command,.report-booked-summary),
+  body[data-view="docs"] .docs-kind-grid,
+  body[data-view="docs"] .docs-quick-create{
+    grid-template-columns:1fr!important;
+  }
+  body[data-view="list"] .project-export-actions{grid-template-columns:1fr!important}
+  body[data-view="guarantees"] .guarantee-mobile-row,
+  body[data-view="doclist"] .doc-mobile-row{grid-template-columns:1fr!important}
+  body[data-view="guarantees"] .gm-side,
+  body[data-view="doclist"] .doc-mobile-pay{max-width:none;text-align:left}
+  body[data-view="profile"] .profile-stats{grid-template-columns:1fr!important}
+  .master-sheet .manual-journal-lines .mj-line{grid-template-columns:1fr!important}
+  .master-sheet .kv{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important}
+  .master-sheet .kv>b{max-width:none}
+}
+@media(prefers-contrast:more){
+  body[data-view] :where(.project-hub-card,.list-month-group,.boq-check-row,.due-group,
+    .guarantee-mobile-row,.docs-recent>button,.profile-post-card,.proc-grid>*),
+  .master-sheet{border-color:CanvasText!important}
+}
 </style>
 </head>
 <body>
@@ -7020,6 +7291,9 @@ function render(){
   document.body.classList.toggle('view-project',v==='project');
   document.body.classList.toggle('view-docs',v==='docs'||v==='doclist'||v==='quoteprint');
   document.body.classList.toggle('view-due',v==='due');
+  document.body.setAttribute('data-view',v);
+  document.body.setAttribute('data-sheet-kind',U.sheet&&U.sheet.kind?String(U.sheet.kind):'');
+  document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
