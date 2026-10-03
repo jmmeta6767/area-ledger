@@ -6,6 +6,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1003 Production AI Vision Route + Receipt Totals
+
+- Fixes production app alias `g.areamaibab.workers.dev`: AI Vision now targets the canonical production Gateway.
+- Production Gateway CORS explicitly allows the canonical Gateway and `g.areamaibab.workers.dev`; wildcard CORS remains forbidden.
+- Legacy consent bound to the old `g...` endpoint is not silently reused; consent must bind to the canonical Gateway.
+- Gemini receipt rules prioritize final payable/net totals for VAT invoices and handwritten cash-sale totals.
+- Regression examples cover 325 × 4 → 1,300 and 4,240 + VAT 296.80 → 4,536.80 with Thai Buddhist-year date normalization.
+- AI still only fills fields for review; it never auto-saves an expense.
+
 ## v1002 Receipt Review Hardening
 
 - Receipt/expense image scanning now shows real monotonic phase progress from 1% to 100% for single images and multi-image batches.
