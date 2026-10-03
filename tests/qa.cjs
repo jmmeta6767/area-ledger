@@ -824,7 +824,7 @@ reset();test('v1040 business document actions render outside the A4 print surfac
   const out=c.vBusinessDoc(),paper=out.indexOf('class="quote-paper rd-paper"'),bar=out.indexOf('class="doc-actions-bar no-print"');
   assert(paper>=0&&bar>paper);assert(out.indexOf('</div>',paper)<bar);assert(out.includes('role="group" aria-label="การดำเนินการกับเอกสาร"'));
   for(const a of ['convertDoc','doPrint','downloadDocPdf','editDoc'])assert(out.includes('data-act="'+a+'"'));
-  assert(out.includes('QT-20261004'));assert(out.includes(c.fmt(100)));
+  assert(out.includes('QT-20261004'));assert(out.includes(c.fmt(100)));assert(out.includes('data-label=\"มูลค่า\"'));
 });
 
 console.log(`PASS ${checks} QA groups`);
