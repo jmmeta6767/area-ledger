@@ -3314,6 +3314,57 @@ body[data-view="quoteprint"] :where(.quote-paper,.rd-paper){margin-inline:auto}
     .guarantee-mobile-row,.docs-recent>button,.profile-post-card,.proc-grid>*),
   .master-sheet{border-color:CanvasText!important}
 }
+/* v1040 business documents: fit the preview to a portrait phone viewport. */
+@media(max-width:700px){
+  body[data-view="quoteprint"] main{
+    box-sizing:border-box!important;width:100%!important;max-width:none!important;
+    margin:0!important;padding:8px 12px 28px!important;overflow-x:hidden!important
+  }
+  body[data-view="quoteprint"] .quote-paper.rd-paper:not(.pdf-export){
+    box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;
+    min-height:0!important;margin:8px 0 14px!important;padding:18px 14px!important;
+    overflow:visible!important;transform:none!important
+  }
+  body[data-view="quoteprint"] .rd-corner{border-left-width:14mm;border-top-width:14mm}
+  body[data-view="quoteprint"] .rd-top{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+  body[data-view="quoteprint"] .rd-dochead h1{font-size:20px}
+  body[data-view="quoteprint"] .rd-docmeta{grid-template-columns:52px minmax(0,1fr);gap:4px 7px}
+  body[data-view="quoteprint"] .rd-customer{margin-top:10px}
+  body[data-view="quoteprint"] .rd-table{display:block!important;width:100%!important;min-width:0!important;table-layout:auto!important;border-collapse:separate;margin-top:10px}
+  body[data-view="quoteprint"] .rd-table thead{display:none!important}
+  body[data-view="quoteprint"] .rd-table tbody{display:grid!important;width:100%!important;gap:8px}
+  body[data-view="quoteprint"] .rd-table tr{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;padding:9px;border:1px solid #dfe2e3;border-radius:12px;background:#fff}
+  body[data-view="quoteprint"] .rd-table td{display:block!important;box-sizing:border-box;min-width:0;padding:4px 2px!important;border:0!important;text-align:left!important;font-size:12px!important;line-height:1.35;overflow-wrap:anywhere}
+  body[data-view="quoteprint"] .rd-table td::before{content:attr(data-label);display:block;margin-bottom:2px;color:#72777b;font-size:9px;font-weight:500}
+  body[data-view="quoteprint"] .rd-table td:nth-child(1){display:none!important}
+  body[data-view="quoteprint"] .rd-table td:nth-child(2){grid-column:1/-1;font-size:13px!important;font-weight:700}
+  body[data-view="quoteprint"] .rd-table td:nth-child(7){font-weight:700;color:#8d6200}
+  body[data-view="quoteprint"] .rd-summary{grid-template-columns:minmax(0,1fr)!important;gap:8px;margin-top:10px}
+  body[data-view="quoteprint"] .rd-words{padding-top:0}
+  body[data-view="quoteprint"] .rd-sign{margin-top:22px!important;gap:14px!important;grid-template-columns:repeat(2,minmax(0,1fr))}
+  body[data-view="quoteprint"] .rd-sign>div{min-width:0;font-size:8px;overflow-wrap:anywhere}
+  body[data-view="quoteprint"] .doc-actions-bar{width:100%;margin:8px 0 24px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  body[data-view="quoteprint"] .doc-actions-bar>.btn{box-sizing:border-box;min-width:0;min-height:48px;padding:9px 7px;white-space:normal;line-height:1.3}
+  body[data-view="quoteprint"] .doc-actions-bar .doc-output-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  body[data-view="quoteprint"] .doc-actions-bar .doc-output-actions>.btn{min-width:0;min-height:46px;padding:8px 6px;white-space:normal}
+  body[data-view="quoteprint"] .doc-actions-bar .doc-paid-complete{grid-column:1/-1;text-align:center}
+  body[data-view="quoteprint"] .rd-paper.pdf-export .rd-table{display:table!important;width:100%!important;min-width:0!important}
+  body[data-view="quoteprint"] .rd-paper.pdf-export .rd-table thead{display:table-header-group!important}
+  body[data-view="quoteprint"] .rd-paper.pdf-export .rd-table tbody{display:table-row-group!important}
+  body[data-view="quoteprint"] .rd-paper.pdf-export .rd-table tr{display:table-row!important;padding:0;border:0;border-radius:0}
+  body[data-view="quoteprint"] .rd-paper.pdf-export .rd-table td{display:table-cell!important;text-align:initial!important}
+  body[data-view="quoteprint"] .rd-paper.pdf-export .rd-table td::before{display:none!important;content:none!important}
+}
+@media print{
+  .doc-actions-bar{display:none!important}
+  body[data-view="quoteprint"] .quote-paper.rd-paper{width:194mm!important;max-width:none!important;min-height:281mm!important;margin:0!important;padding:8mm 9mm!important;overflow:visible!important}
+  body[data-view="quoteprint"] .rd-paper .rd-table{display:table!important;width:100%!important;min-width:0!important}
+  body[data-view="quoteprint"] .rd-paper .rd-table thead{display:table-header-group!important}
+  body[data-view="quoteprint"] .rd-paper .rd-table tbody{display:table-row-group!important}
+  body[data-view="quoteprint"] .rd-paper .rd-table tr{display:table-row!important;padding:0;border:0;border-radius:0}
+  body[data-view="quoteprint"] .rd-paper .rd-table td{display:table-cell!important;text-align:initial!important}
+  body[data-view="quoteprint"] .rd-paper .rd-table td::before{display:none!important;content:none!important}
+}
 </style>
 </head>
 <body>
@@ -6651,16 +6702,16 @@ function vBusinessDoc(){
    '<div class="rd-dochead"><h1>'+tt[0]+'</h1><small>'+tt[1]+'</small><div class="rd-docmeta"><span>เลขที่</span><b>'+esc(q.no||'-')+'</b><span>วันที่</span><b>'+dstr(q.date)+'</b>'+(q.creditDays?'<span>เครดิต</span><b>'+esc(q.creditDays)+' วัน</b>':'')+(q.seller?'<span>ผู้ขาย</span><b>'+esc(q.seller)+'</b>':'')+'</div></div></div>'+
    (isTax?'<div class="rd-tax-flag">ใบกำกับภาษีแบบเต็มรูป</div>':'')+
    '<div class="rd-customer"><b>ลูกค้า</b><h2>'+esc(q.customer||'-')+'</h2>'+(q.customerAddress?'<p>'+esc(q.customerAddress)+'</p>':'')+'<div class="rd-customer-tax">'+customerTax+'</div>'+(q.project?'<p><strong>โครงการ:</strong> '+esc(q.project)+'</p>':'')+(q.warehouse?'<p><strong>สถานที่ส่งมอบ:</strong> '+esc(q.warehouse)+'</p>':'')+'</div>'+
-   '<table class="quote-table rd-table"><thead><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคาต่อหน่วย</th><th>ส่วนลด</th><th>มูลค่า</th></tr></thead><tbody>'+items.map(function(x,i){var gross=(+x.qty||0)*(+x.unitPrice||0),ld=Math.min(gross,Math.max(0,+x.discount||0));return '<tr><td>'+(i+1)+'</td><td class="rd-desc">'+esc(x.description).replace(/\n/g,'<br>')+'</td><td class="num">'+(+x.qty||0)+'</td><td>'+esc(x.unit||'')+'</td><td class="num">'+fmt(+x.unitPrice||0)+'</td><td class="num">'+(ld?fmt(ld):'-')+'</td><td class="num">'+fmt(gross-ld)+'</td></tr>';}).join('')+'</tbody></table>'+
+   '<table class="quote-table rd-table"><thead><tr><th>#</th><th>รายละเอียด</th><th>จำนวน</th><th>หน่วย</th><th>ราคาต่อหน่วย</th><th>ส่วนลด</th><th>มูลค่า</th></tr></thead><tbody>'+items.map(function(x,i){var gross=(+x.qty||0)*(+x.unitPrice||0),ld=Math.min(gross,Math.max(0,+x.discount||0));return '<tr><td data-label="ลำดับ">'+(i+1)+'</td><td data-label="รายละเอียด" class="rd-desc">'+esc(x.description).replace(/\n/g,'<br>')+'</td><td data-label="จำนวน" class="num">'+(+x.qty||0)+'</td><td data-label="หน่วย">'+esc(x.unit||'')+'</td><td data-label="ราคาต่อหน่วย" class="num">'+fmt(+x.unitPrice||0)+'</td><td data-label="ส่วนลด" class="num">'+(ld?fmt(ld):'-')+'</td><td data-label="มูลค่า" class="num">'+fmt(gross-ld)+'</td></tr>';}).join('')+'</tbody></table>'+
    '<div class="rd-summary"><div class="rd-words">('+bahtText(calc.total)+')</div><div class="quote-total"><div><span>รวมเป็นเงิน</span><b class="num">'+fmt(calc.sub)+'</b></div>'+(calc.discount?'<div><span>ส่วนลดรวม</span><b class="num">−'+fmt(calc.discount)+'</b></div>':'')+'<div><span>จำนวนเงินหลังหักส่วนลด</span><b class="num">'+fmt(calc.after)+'</b></div>'+(b.vatRegistered?'<div><span>ภาษีมูลค่าเพิ่ม 7%</span><b class="num">'+fmt(calc.vat)+'</b></div>':'')+(calc.wht?'<div><span>หัก ณ ที่จ่าย '+(+q.whtRate||0)+'%</span><b class="num">−'+fmt(calc.wht)+'</b></div>':'')+'<div class="grand"><span>รวมทั้งสิ้น</span><b class="num">'+fmt(calc.total)+'</b></div>'+(q.dueDate?'<small>ครบกำหนดชำระ '+dstr(q.dueDate)+'</small>':'')+'</div></div>'+
    (legalNote?'<div class="rd-legal-note">'+legalNote+'</div>':'')+
    (q.note?'<div class="quote-note rd-note"><b>หมายเหตุ / เงื่อนไข</b><p>'+esc(q.note)+'</p></div>':'')+
    (q.attachment?'<div class="quote-note"><b>ไฟล์แนบ</b><div class="quote-doc-attachment"><img src="'+q.attachment+'" alt="ไฟล์แนบเอกสาร"></div></div>':'')+
    (q.eSign===false?'':'<div class="quote-sign rd-sign"><div><b>ในนาม '+esc(q.customer||'ลูกค้า')+'</b><br><br><br>____________________<br>'+signLeft+'<br>วันที่ ____ / ____ / ______</div><div><b>ในนาม '+esc(b.legalName||S.brand||'AREA MAIBAB')+'</b><br><br><br>____________________<br>'+signRight+'<br>วันที่ ____ / ____ / ______</div></div>')+
-   '<div class="stack no-print">'+
+   '</div><div class="doc-actions-bar no-print" role="group" aria-label="การดำเนินการกับเอกสาร">'+
    (kind==='quote'?'<button class="btn pri" data-act="convertDoc" data-kind="bill" data-id="'+q.id+'">สร้างใบวางบิลจากใบนี้</button>':'')+
    (kind==='bill'&&billPaymentSummary(q).remain>0?'<button class="btn pri" data-act="billPay" data-id="'+q.id+'">รับเงิน / ออกใบเสร็จ</button>':(kind==='bill'?'<div class="doc-paid-complete">✓ รับเงินครบแล้ว</div>':''))+
-   '<div class="doc-output-actions"><button class="btn pri" data-act="doPrint">สั่งพิมพ์</button><button class="btn" data-act="downloadDocPdf" data-kind="'+kind+'" data-id="'+q.id+'">ดาวน์โหลด PDF</button></div><button class="btn" data-act="editDoc" data-kind="'+kind+'" data-id="'+q.id+'">แก้ไขเอกสาร</button></div></div>';
+   '<div class="doc-output-actions"><button class="btn pri" data-act="doPrint">สั่งพิมพ์</button><button class="btn" data-act="downloadDocPdf" data-kind="'+kind+'" data-id="'+q.id+'">ดาวน์โหลด PDF</button></div><button class="btn" data-act="editDoc" data-kind="'+kind+'" data-id="'+q.id+'">แก้ไขเอกสาร</button></div>';
 }
 function vQuotePrint(){
   var q=(S.quotes||[]).find(function(x){return x.id===U.quoteId;});if(!q)return '<div class="empty">ไม่พบใบเสนอราคา</div>';
