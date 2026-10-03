@@ -5,6 +5,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1034 CSS QA polish
+
+- Repairs a real CSS syntax defect in the manual-journal/accounting block where the `.manual-journal-lines` margin declaration ran into the `.mj-line` selector, which caused that rule group to parse incorrectly.
+- Consolidates the adjacent v1030–v1034 UX override layers into one style block without changing their cascade order, reducing style-fragment overhead while preserving the existing UI behavior.
+- Adds shared finishing tokens for control radius, section spacing, stronger high-contrast borders and muted text.
+- Normalizes selected-state weight, disabled-control behavior, summary text selection, scroll margins and desktop hover feedback across project, documents, AR/AP, profile and settings surfaces.
+- Adds `prefers-contrast: more` support and retains the existing forced-colors/focus-visible accessibility behavior.
+- Adds a static CSS audit that checks style-tag balance, brace balance, known property/selector collision patterns and verifies the consolidated UX layer remains in one style block.
+- Presentation/QA only: no accounting, BOQ/OCR, storage, Cloud Sync, D1/R2, document lifecycle, tax or profile data contract changes.
+
+
 ## v1033 documents, due control, settings and accessibility
 
 - Adds view-scoped document and AR/AP presentation classes without changing document, payment or accounting data contracts.
