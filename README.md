@@ -6,6 +6,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1007 Handwritten Integer Total Recovery
+
+- Fixes the exact small-shop receipt gap where client fallback only recognized numbers with two decimal places; handwritten `1300` and `325` were ignored.
+- Receipt recovery now accepts integer or decimal amounts, Thai digits, TOTAL/net-total labels, and repeated AMOUNT values while excluding slash-formatted dates from number tokens.
+- If Gemini returns `amount: 0` but its recognized text contains `TOTAL 1300`, the client now recovers 1,300 and still requires human review before save.
+- Production live acceptance now includes a synthetic, non-user receipt image with four 325 lines and TOTAL 1300 to verify the live Gemini Vision path can see an integer total.
+- Zero-result UI now distinguishes AI Vision from local OCR and includes the stored diagnostic error code when present.
+
 ## v1006 Legacy g Service Binding Hotfix
 
 - Replaces the legacy `g` Worker compatibility proxy's public network subrequest with a Cloudflare Service Binding to `area-ledger-ai-gateway`.

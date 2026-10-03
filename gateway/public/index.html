@@ -3659,7 +3659,29 @@ function vList(){
 }
 
 function expenseGuess(text){var x=String(text||'').toLowerCase(),cat='ค่าของ',sub='';if(/ค่าแรง|แรงงาน|ช่าง|ค่าแรงงาน|เหมาช่าง/.test(x)){cat='ค่าแรง';sub='เหมาทีมช่าง';}else if(/เช่า|ค่าเช่า|นั่งร้าน|แบคโฮ|รถขุด|เครื่องจักร|เครื่องมือ/.test(x)){cat='ค่าเช่าอื่นๆ';sub=/นั่งร้าน/.test(x)?'นั่งร้าน':/แบคโฮ|รถขุด/.test(x)?'รถ/แบคโฮ':'เครื่องมือ/เครื่องจักร';}else if(/ค่าธรรมเนียม|ใบอนุญาต|วิศวกร|เขียนแบบ|เอกสาร/.test(x)){cat='ค่างานเอกสาร';sub=/วิศวกร/.test(x)?'วิศวกรเซ็น/ที่ปรึกษา':'ค่าธรรมเนียม/ภาษี';}else if(/ประกันสัญญา|หลักประกัน/.test(x)){cat='ค่าประกัน/ค่างาน';sub='ประกันสัญญา';}else if(/เหล็ก|ไวร์เมช|wire mesh/.test(x)){cat='ค่าของ';sub='เหล็ก';}else if(/ปูน|ซีเมนต์|ทราย|หิน|อิฐ/.test(x)){cat='ค่าของ';sub='ปูน/ทราย/หิน/อิฐ';}else if(/สี|กระเบื้อง|พื้น/.test(x)){cat='ค่าของ';sub='สี/กระเบื้อง/พื้น';}else if(/ท่อ|สายไฟ|ไฟฟ้า|สุขภัณฑ์/.test(x)){cat='ค่าของ';sub='ท่อ/ไฟฟ้า/สุขภัณฑ์';}else if(/น้ำมัน|ดีเซล|เบนซิน/.test(x)){cat='ค่าของ';sub='น้ำมัน';}else if(/ขนส่ง|ค่ารถ|ส่งของ/.test(x)){cat='ค่าของ';sub='ค่าขนส่ง';}return{cat:cat,sub:sub};}
-function expenseOcrAmount(text){var nums=(String(text||'').match(/\d[\d,]*(?:\.\d{2})/g)||[]).map(function(v){return parseFloat(v.replace(/,/g,''));}).filter(function(n){return isFinite(n)&&n>0;});var lines=String(text||'').split(/\n+/),best=0;lines.forEach(function(l){if(/รวมสุทธิ|ยอดสุทธิ|grand total|total|รวมทั้งสิ้น|จำนวนเงินรวม/i.test(l)){var ns=(l.match(/\d[\d,]*(?:\.\d{2})/g)||[]).map(function(v){return parseFloat(v.replace(/,/g,''));});if(ns.length)best=Math.max(best,Math.max.apply(Math,ns));}});return best|| (nums.length?Math.max.apply(Math,nums):0);}
+function expenseOcrNumberTokens(text){
+  var thai={'๐':'0','๑':'1','๒':'2','๓':'3','๔':'4','๕':'5','๖':'6','๗':'7','๘':'8','๙':'9'},s=String(text||'').replace(/[๐-๙]/g,function(x){return thai[x]||x;}),out=[],re=/(^|[^\d/])(\d[\d,]*(?:\.\d{1,2})?)(?![\d/])/g,m;
+  while((m=re.exec(s))){var raw=m[2],n=parseFloat(raw.replace(/,/g,''));if(isFinite(n)&&n>0&&n<=1000000000)out.push({value:n,raw:raw,index:m.index+m[1].length});}
+  return out;
+}
+function expenseOcrAmount(text){
+  var s=String(text||''),best=0,labels=/(ยอดเงินสุทธิ|ยอดสุทธิ|รวมสุทธิ|grand\s*total|รวมทั้งสิ้น|รวมเงิน|จำนวนเงินรวม|total)/ig,m;
+  while((m=labels.exec(s))){
+    var after=expenseOcrNumberTokens(s.slice(m.index+m[0].length,m.index+m[0].length+90));
+    if(after.length){best=Math.max(best,after[0].value);continue;}
+    var before=expenseOcrNumberTokens(s.slice(Math.max(0,m.index-45),m.index));
+    if(before.length)best=Math.max(best,before[before.length-1].value);
+  }
+  if(best>0)return best;
+  var nums=expenseOcrNumberTokens(s).map(function(x){return x.value;});
+  if(!nums.length)return 0;
+  var counts={};nums.forEach(function(n){var k=String(n);counts[k]=(counts[k]||0)+1;});
+  if(/บิลเงินสด|cash\s*sale|amount|จำนวนเงิน/i.test(s)){
+    var repeated=Object.keys(counts).map(function(k){return {value:+k,count:counts[k]};}).filter(function(x){return x.count>=2&&x.value>=1;}).sort(function(a,b){return (b.value*b.count)-(a.value*a.count);});
+    if(repeated.length){var sum=repeated[0].value*repeated[0].count;if(sum>Math.max.apply(Math,nums)&&sum<=1000000000)return sum;}
+  }
+  return Math.max.apply(Math,nums);
+}
 function expenseOcrPartner(text){var ls=String(text||'').split(/\n+/).map(function(x){return x.trim();}).filter(function(x){return x.length>2&&!/^\d/.test(x);});return (ls[0]||'').slice(0,80);}
 function expenseOcrAssessment(res){res=res||{};var text=String(res.text||''),score=0,reasons=[],provider=Math.max(0,Math.min(1,+res.confidence||0));if(+res.amount>0){score+=.45;reasons.push('amount');}if(/รวมสุทธิ|ยอดสุทธิ|grand total|total|รวมทั้งสิ้น|จำนวนเงินรวม|รวมเงิน/i.test(text)){score+=.25;reasons.push('total-label');}if(String(res.partner||'').trim()){score+=.15;reasons.push('partner');}if(String(res.sub||'').trim()){score+=.10;reasons.push('category-detail');}if(text.length>=20){score+=.05;reasons.push('text');}if(res.source==='ai'&&+res.amount>0&&provider>=.65){score=Math.max(score,provider);reasons.push('vision-confidence');}score=Math.min(1,Math.round(score*100)/100);return {score:score,accepted:score>=.65,label:score>=.85?'high':score>=.65?'medium':'low',reasons:reasons};}
 function expenseOcrReviewSummary(res){
@@ -3725,7 +3747,7 @@ function expenseScanImage(file){
           if(!current()){done('','ยกเลิกแล้ว');return;}expenseScanProgressSet(88,'ตรวจความมั่นใจ');
           if(JSON.stringify(draft)!==beforeOcr){done('ข้อมูลถูกแก้ไขระหว่าง OCR · คงค่าที่คุณกรอกไว้','คงข้อมูลที่คุณแก้');return;}
           var amt=+res.amount||0,qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res);
-          if(!(amt>0)||!isFinite(amt)){done('อ่านยอดไม่ได้ · ไม่บันทึกอัตโนมัติ กรุณากรอกและตรวจเอง','ต้องตรวจเอง');return;}
+          if(!(amt>0)||!isFinite(amt)){var dg=S.ops&&S.ops.ocrDiagnostic||{};done((res&&res.source==='ai'?'AI Vision ยังไม่พบยอด':'OCR ยังไม่พบยอด')+(dg&&dg.errorCode?' · '+dg.errorCode:'')+' · ไม่บันทึกอัตโนมัติ กรุณากรอกและตรวจเอง','ต้องตรวจเอง');return;}
           if(!qa.accepted){done('OCR confidence '+Math.round(qa.score*100)+'% · ยังไม่เติมยอดอัตโนมัติ กรุณาตรวจและกรอกเอง','ความมั่นใจต่ำ');return;}
           expenseScanProgressSet(96,'กรอกข้อมูลให้ตรวจ');
           draft.cat=res.cat||'ค่าของ';if(res.sub)draft.sub=res.sub;draft.amount=String(amt);if(res.partner)draft.partner=res.partner;if(validIsoDate(String(res.date||'')))draft.date=res.date;draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
