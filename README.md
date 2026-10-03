@@ -5,6 +5,16 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1036 BOQ Image Arithmetic Verification
+
+- AI Vision BOQ rows now return the visible per-category row amount in addition to quantity and unit price; the browser recomputes quantity × unit price against that visible amount instead of trusting provider-side verification.
+- A row-level equation mismatch forces Local OCR / human cross-check even when page coverage and the document grand total otherwise look acceptable.
+- Image Preview carries the visible source amount and shows whether the row equation passed or failed before save.
+- Construction-unit canonicalization now normalizes OCR spacing variants such as `ตร . ม .`, `ลบ . ม .`, `ลบ . ฟ .` and `กก` before parser merging/review.
+- The independent 32-row Tha Sala PR4 fixture is used as an end-to-end arithmetic acceptance set: all 32 visible row amounts must pass, while a deliberately corrupted row must trigger fallback.
+- No auto-save behavior changes: scanned/AI BOQ still requires human Preview and final confirmation.
+
+
 ## v1035 runtime performance polish
 
 - Dashboard transaction aggregation now computes paid income, paid expenses, outstanding AR/AP and transaction type counts in a single pass instead of repeatedly filtering and reducing the same transaction array.
