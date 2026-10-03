@@ -2074,6 +2074,10 @@ input,select,textarea{max-width:100%;min-width:0}
 @media(prefers-color-scheme:dark){.add-core-card,.add-payment-card,.add-advanced{background:#1a232d}.due-quick button{background:#222d38;color:#fff}}
 </style>
 <style>
+/* v1040: distinguish an unset project budget from 0% usage */
+.project-list-card .bar.budget-unset{display:none}
+.project-hub-glance .budget-not-set b{white-space:normal;font-size:.66rem;color:#8a6500}
+
 /* v401-v410: Project List Mobile Focus */
 .project-directory-focus{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .project-list-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 9px;padding:11px 12px;border:1px solid var(--m-line);border-radius:15px;background:var(--m-card,#fff)}
@@ -4461,7 +4465,8 @@ function boqAmount(x){return Math.max(0,+x.qty||0)*Math.max(0,+x.unitPrice||0);}
 function boqActual(id){var matches=S.boq.filter(function(b){return b.id===id;});if(matches.length!==1)return 0;return S.tx.filter(function(t){return t.type==='out'&&t.boqId===id&&t.pid===matches[0].pid;}).reduce(function(a,t){return a+base(t);},0);}
 function boqBatches(pid){var m={};boqRows(pid).forEach(function(x){if(!x.importBatch)return;var k=x.importBatch,g=m[k]||(m[k]={id:k,file:x.importFile||'ไฟล์นำเข้า',at:+x.importedAt||0,rows:[],amount:0,linked:0});g.rows.push(x);g.amount+=boqAmount(x);g.linked+=boqActual(x.id);if((+x.importedAt||0)>g.at)g.at=+x.importedAt||0;});return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.at-a.at;});}
 function boqSummary(pid){var rows=boqRows(pid),budget=rows.reduce(function(a,x){return a+boqAmount(x);},0),linked=0;rows.forEach(function(x){linked+=boqActual(x.id);});var actual=stats(pid).outB;return {rows:rows,budget:budget,linkedActual:linked,actual:actual,unlinkedActual:Math.max(0,actual-linked),variance:budget-actual,pct:budget>0?actual/budget:0};}
-function budgetPct(p){var c=projectCostWithGuarantees(p.id),b=(+p.budget||0);return b>0?c.total/b:0;}
+function projectBudgetControl(p){var a=projectCostAccounting(p.id),b=Math.max(0,+a.bac||0);return {budget:b,pct:b>0?a.budgetUtilization:0};}
+function budgetPct(p){return projectBudgetControl(p).pct;}
 function barCls(x){return x>=1?'over':x>=.85?'warn':'';}
 function dueInfo(t){
   if(txOutstandingNet(t)<=.01||!t.due)return null;
@@ -5133,10 +5138,10 @@ function vProjects(){
   h+='<div class="project-hub-result" id="projectHubResult">'+visible+' / '+S.projects.length+' โครงการ</div>';
   h+='<div class="empty project-hub-empty" id="projectHubEmpty" style="'+(visible?'display:none':'')+'">ไม่พบโครงการในตัวกรองนี้</div>';
   ordered.forEach(function(p){
-    var st=stats(p.id),x=budgetPct(p),statusText=projectHubStatusText(p),key=projectHubStatusKey(p),alerts=projectHubAttention(p,st),show=projectHubMatch(p,query,status);
+    var st=stats(p.id),control=projectBudgetControl(p),budget=control.budget,x=control.pct,statusText=projectHubStatusText(p),key=projectHubStatusKey(p),alerts=projectHubAttention(p,st),show=projectHubMatch(p,query,status);
     h+='<article class="project-hub-card project-list-card" data-project-status="'+key+'" data-project-search="'+esc(projectHubSearchText(p))+'" style="'+(show?'':'display:none')+'"><button class="project-hub-main" data-act="openProj" data-id="'+p.id+'"><div class="project-hub-top"><div><b>'+esc(p.name)+'</b><small>'+esc(p.location||p.client||'ไม่ระบุสถานที่')+'</small></div><span class="mini-status">'+esc(statusText)+'</span></div>'+
-      '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
-      '<div class="project-hub-glance"><span><small>ใช้งบ</small><b>'+Math.round(x*100)+'%</b></span><span><small>รับแล้ว</small><b class="in">'+fmt(st.recd)+'</b></span><span><small>จ่ายแล้ว</small><b class="out">'+fmt(st.paidOut)+'</b></span></div>'+
+      '<div class="bar '+(budget>0?barCls(x):'budget-unset')+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
+      '<div class="project-hub-glance"><span class="'+(budget>0?'':'budget-not-set')+'"><small>ใช้งบ</small><b>'+(budget>0?Math.round(x*100)+'%':'ยังไม่ตั้งงบ')+'</b></span><span><small>รับแล้ว</small><b class="in">'+fmt(st.recd)+'</b></span><span><small>จ่ายแล้ว</small><b class="out">'+fmt(st.paidOut)+'</b></span></div>'+
       (alerts.length?'<div class="project-hub-alerts">'+alerts.map(function(a){return '<span class="'+a.tone+'">'+esc(a.text)+'</span>';}).join('')+'</div>':'')+
       '</button><div class="project-hub-actions project-list-actions"><button class="primary" data-act="boqOpenProject" data-id="'+p.id+'">BOQ</button><button data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button data-act="editProj" data-id="'+p.id+'">แก้ไข</button></div></article>';
   });
