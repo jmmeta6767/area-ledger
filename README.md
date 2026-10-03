@@ -6,6 +6,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1021 Guarantee-Inclusive Project Cost
+
+- ต้นทุนเพื่อบริหารโครงการรวมเงินประกัน/เงินหักที่ยังรอคืน เพื่อสะท้อนเงินทุนที่ยังถูกผูกไว้จนกว่าจะครบกำหนดรับคืน.
+- ป้องกันการนับซ้ำ: ถ้าเงินประกันถูกบันทึกเป็นรายจ่ายบัญชีอยู่แล้ว ระบบแสดงว่าอยู่ในเงินประกันรอคืนแต่จะไม่บวกเข้าต้นทุนซ้ำ.
+- เงินประกันรอคืนที่อยู่ในทะเบียนแต่ยังไม่มีรายจ่ายบัญชีจะถูกเพิ่มเข้าต้นทุนบริหารชั่วคราว.
+- ต้นทุน Dashboard, Project Profit Control, Forecast, Project Cost Accounting และงบคงเหลือใช้ฐานต้นทุนใหม่นี้; รายจ่ายตามหมวดยังคงเป็นยอดบัญชีจริงเพื่อไม่ทำลายสมุดบัญชี/ภาษี.
+- เงินประกันสัญญา/ประกันผลงาน/เงินหัก 10% ที่ยังไม่กำหนดวันรับคืน จะใช้อัตโนมัติเป็น วันส่งมอบ + 2 ปี เมื่อมีวันส่งมอบโครงการ (ยกเว้นหนังสือค้ำประกันธนาคาร).
+
 ## v1020 Expense Status Dashboard UX
 
 - Removes the รับเงินแล้ว and ค้างรับ dashboard cards from the primary project finance view.
