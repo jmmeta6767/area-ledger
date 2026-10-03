@@ -5,6 +5,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1031 iPhone task-flow refinements
+
+- Reflows transaction-list summary cards on narrow iPhones so item count gets a full row while received/paid totals retain readable digits.
+- Transaction rows move amount/status to a second line on small screens instead of compressing description, project and audit chips.
+- Project directory status filters become a 2×2 touch grid; each project card gives budget its own row with received/paid values below, removing ellipsis from financial totals.
+- BOQ rows keep long item descriptions readable by moving the row amount onto a dedicated second line under the description on narrow screens.
+- Company Profile places Share/Edit in a full-width action row, keeps all pinned work reachable with a swipe carousel, and changes four post actions into a 2×2 mobile grid.
+- Adds narrow-landscape nav compaction, horizontal scroll snapping for dashboard/profile filters, and manual dark-theme parity for the new task-flow surfaces.
+- No accounting, storage, OCR, BOQ calculation, Cloud Sync, D1/R2 or profile-publishing data contract changes.
+
+
 ## v1030 BOQ Hardening
 
 - Preserves BOQ work-section metadata through final import and records section provenance.
