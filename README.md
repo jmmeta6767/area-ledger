@@ -5,6 +5,18 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+
+## v1002 Receipt Review Hardening
+
+- Receipt/expense image scanning now shows real monotonic phase progress from 1% to 100% for single images and multi-image batches.
+- Multi-image import preserves a valid date returned by AI Vision instead of silently replacing it with today's date.
+- Batch review exposes editable receipt date, project, and payment method per row before any accounting write.
+- Failed OCR keeps the prepared receipt image when possible so the user can manually complete the row instead of losing the evidence.
+- Batch saves now persist receipt photo fingerprints plus OCR source/confidence and a human-reviewed marker; no expense is auto-saved by AI.
+- `site-ledger-v1`, `site-ledger-db`, `APP_RELEASE=800`, the proven PWA cache contract, Cloudflare production bindings, and accounting policy remain unchanged.
+- Google Drive / Sheets code remains present but is not enabled by this release.
+
+
 ## v816 Safari Storage Production Gate Closed
 
 - v815 passed Release QA, Staging deploy/live acceptance, and Production deploy/live acceptance for exact source `05d52fc51b5e104a8a5ef31087a0241ece202a3b`.
