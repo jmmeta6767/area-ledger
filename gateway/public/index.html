@@ -962,6 +962,11 @@ body.wallpaper-on .mgroup{
 }
 
 
+/* v860: bounded incremental registers for iPhone/Safari */
+.incremental-load{display:grid;gap:7px;justify-items:center;padding:14px 8px 4px}
+.incremental-load small{color:var(--muted);font-size:.72rem}
+.incremental-load .btn{min-width:180px;min-height:42px}
+
 /* v836-v850: workspace consolidation, mobile polish and rendering performance */
 .workspace-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:10px 0 14px}
 .workspace-flow span{min-width:0;border:1px solid #e0e5e8;border-radius:11px;padding:8px 4px;background:#f8fafb;text-align:center}
@@ -3595,7 +3600,7 @@ function vList(){
   if(U.filter.q===undefined)U.filter.q='';
   var F=U.filter,foreman=S.role==='foreman',fs=F.status||(F.paidOnly?'paid':'all');
   var base=S.tx.filter(function(t){return listFilterBaseMatch(t,F,foreman);}).sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:ad>bd?-1:0;});
-  var visible=base.filter(function(t){return listQueryMatch(t,F.q);}),pendingMode=fs==='pending';
+  var visible=base.filter(function(t){return listQueryMatch(t,F.q);}),pendingMode=fs==='pending',renderLimit=Math.max(120,+U.listRenderLimit||120),renderRows=visible.slice(0,renderLimit);
   var i=0,o=0;visible.forEach(function(t){var v=pendingMode?txOutstandingNet(t):(+t.amount||0);if(t.type==='in')i+=v;else o+=v;});
   var activeAdvanced=(F.pid?1:0)+(F.cat?1:0)+(F.sub?1:0),anyFilter=(F.type!=='all'||fs!=='all'||F.pid||F.cat||F.sub||F.q),showSearch=base.length>=8||!!F.q;
   var h='<section class="master-list list-mobile-focus">';
@@ -3610,13 +3615,14 @@ function vList(){
   h+=(anyFilter?'<button class="list-clear-all" data-act="listClearFilters">ล้างตัวกรองทั้งหมด</button>':'')+'</div></details>';
   if(F.pid&&!foreman)h+='<div class="project-export-bar"><div><b>ส่งออกข้อมูลโครงการ</b><small>'+esc(pname(F.pid))+'</small></div><div class="project-export-actions"><button data-act="exportProjectXlsx" data-id="'+F.pid+'">Excel</button><button data-act="exportProjectPdf" data-id="'+F.pid+'">PDF</button></div></div>';
   h+='<div class="empty" id="listEmpty" style="'+(visible.length?'display:none':'')+'">ไม่พบรายการ ลองเปลี่ยนตัวกรองหรือคำค้นหา</div>';
-  var groups={},order=[];base.forEach(function(t){var k=listMonthKey(t);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(t);});
+  var groups={},order=[];renderRows.forEach(function(t){var k=listMonthKey(t);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(t);});
   order.forEach(function(k){
-    var rows=groups[k],shown=rows.filter(function(t){return listQueryMatch(t,F.q);}).length;
-    h+='<section class="list-month-group" data-list-month="'+esc(k)+'" style="'+(shown?'':'display:none')+'"><div class="list-month-head"><b>'+esc(listMonthLabel(k))+'</b><small data-month-count>'+shown+' รายการ</small></div>';
-    rows.forEach(function(t){var shownRow=listQueryMatch(t,F.q),val=pendingMode?txOutstandingNet(t):(+t.amount||0);h+='<div class="list-row-wrap" data-list-type="'+esc(t.type)+'" data-list-value="'+val+'" data-list-search="'+esc(listSearchText(t))+'" style="'+(shownRow?'':'display:none')+'">'+rowTx(t,true,{outstanding:pendingMode})+'</div>';});
+    var rows=groups[k],shown=rows.length;
+    h+='<section class="list-month-group" data-list-month="'+esc(k)+'"><div class="list-month-head"><b>'+esc(listMonthLabel(k))+'</b><small data-month-count>'+shown+' รายการที่แสดง</small></div>';
+    rows.forEach(function(t){var val=pendingMode?txOutstandingNet(t):(+t.amount||0);h+='<div class="list-row-wrap" data-list-type="'+esc(t.type)+'" data-list-value="'+val+'" data-list-search="'+esc(listSearchText(t))+'">'+rowTx(t,true,{outstanding:pendingMode})+'</div>';});
     h+='</section>';
   });
+  if(visible.length>renderRows.length)h+='<div class="incremental-load"><small>แสดง '+renderRows.length+' จาก '+visible.length+' รายการ</small><button class="btn" data-act="listLoadMore">โหลดเพิ่ม '+Math.min(120,visible.length-renderRows.length)+' รายการ</button></div>';
   return h+'</section>';
 }
 
@@ -4255,7 +4261,7 @@ function vBoq(){
   var rows=boqRows(pid),total=rows.reduce(function(n,x){return n+boqAmount(x);},0),materialTotal=rows.filter(function(x){return (x.category||'')!=='ค่าแรง';}).reduce(function(n,x){return n+boqAmount(x);},0),laborTotal=rows.filter(function(x){return (x.category||'')==='ค่าแรง';}).reduce(function(n,x){return n+boqAmount(x);},0),q=String(U.boqQuery||'').slice(0,120),tokens=boqQueryTokens(q),needle=tokens.join(' '),showFind=rows.length>=12||!!needle,matched=rows.filter(function(x){return boqQuickMatch(x,q);}),sectionMatch={},sectionMeta={};
   rows.forEach(function(x){var sk=(x.sectionCode||'')+'|'+(x.sectionName||''),m=sectionMeta[sk]||(sectionMeta[sk]={count:0,total:0});m.count++;m.total+=boqAmount(x);});
   matched.forEach(function(x){sectionMatch[(x.sectionCode||'')+'|'+(x.sectionName||'')]=1;});
-  var sectionCount=Object.keys(sectionMeta).length,collapsible=rows.length>=12&&sectionCount>=2;
+  var sectionCount=Object.keys(sectionMeta).length,collapsible=rows.length>=12&&sectionCount>=2,boqRenderLimit=Math.max(200,+U.boqRenderLimit||200),boqDisplayRows=(tokens.length?matched:rows).slice(0,boqRenderLimit);
 
   h+='<section class="boq-hero" aria-label="สรุป BOQ โครงการ">'+
     '<div class="boq-hero-top"><div class="boq-hero-copy"><span class="boq-eyebrow">BOQ โครงการ</span><h2>'+esc(p.name)+'</h2><p>'+rows.length+' รายการ · '+sectionCount+' หมวดงาน</p></div>'+
@@ -4276,8 +4282,8 @@ function vBoq(){
   if(showFind)h+='<div class="boq-find-shell"><div class="boq-search"><input id="boqQuickFind" type="search" inputmode="search" autocomplete="off" placeholder="ค้นหา BOQ / หมวด / ราคา" value="'+esc(q)+'">'+(q?'<button class="boq-clear-btn" data-act="boqQuickClear">ล้าง</button>':'')+'</div><div id="boqQuickCount" class="boq-find-count">'+(tokens.length?'พบ <b>'+matched.length+'</b> จาก '+rows.length+' รายการ':'ทั้งหมด '+rows.length+' รายการ')+'</div></div>';
 
   var lastSec='',sectionNo=0,sectionId='';
-  rows.forEach(function(x,i){
-    var sk=(x.sectionCode||'')+'|'+(x.sectionName||'');
+  boqDisplayRows.forEach(function(x,di){
+    var i=rows.indexOf(x),sk=(x.sectionCode||'')+'|'+(x.sectionName||'');
     if(sk!==lastSec){
       lastSec=sk;sectionNo++;sectionId='s'+sectionNo;
       var meta=sectionMeta[sk],collapsed=collapsible&&!tokens.length&&boqSectionCollapsed(pid,sk),tag=collapsible&&!tokens.length?'button':'div';
@@ -4295,6 +4301,7 @@ function vBoq(){
       '</button></div>';
   });
   if(showFind)h+='<div id="boqQuickEmpty" class="empty"'+(matched.length?' hidden':'')+'>ไม่พบรายการ BOQ ที่ค้นหา</div>';
+  var boqFullCount=tokens.length?matched.length:rows.length;if(boqFullCount>boqDisplayRows.length)h+='<div class="incremental-load"><small>แสดง '+boqDisplayRows.length+' จาก '+boqFullCount+' รายการ BOQ</small><button class="btn" data-act="boqLoadMore">โหลดเพิ่ม '+Math.min(200,boqFullCount-boqDisplayRows.length)+' รายการ</button></div>';
   return h;
 }
 
@@ -5437,11 +5444,13 @@ function directAction(el){
   if(a==='googleWorkspaceSync'){googleWorkspaceSync(id||U.boqProjectPid||'');return true;}
   if(a==='googleWorkspaceOpenUrl'){var gu=el.getAttribute('data-url')||'';if(/^https:\/\/(?:docs|drive)\.google\.com\//.test(gu))window.open(gu,'_blank','noopener');return true;}
   if(a==='googleWorkspaceDisconnect'){googleWorkspaceDisconnect();return true;}
-  if(a==='boqQuickClear'){U.boqQuery='';var qi=document.getElementById('boqQuickFind');if(qi)qi.value='';boqApplyQuickFind('');if(qi)qi.focus();return true;}
+  if(a==='boqQuickClear'){U.boqQuery='';U.boqRenderLimit=200;var qi=document.getElementById('boqQuickFind');if(qi)qi.value='';boqApplyQuickFind('');if(qi)qi.focus();return true;}
+  if(a==='boqLoadMore'){U.boqRenderLimit=Math.max(200,+U.boqRenderLimit||200)+200;render();return true;}
   if(a==='projectHubStatus'){U.projectHubStatus=['current','delivered','closed','all'].indexOf(v)>=0?v:'current';saveNavSession();render();return true;}
   if(a==='projectHubClear'){U.projectHubQuery='';var pi=document.getElementById('projectHubSearch');if(pi)pi.value='';projectHubApplyFilters('',projectHubStatusValue());if(pi)pi.focus();return true;}
-  if(a==='listQuickClear'){U.filter=U.filter||{};U.filter.q='';var li=document.getElementById('listQuickSearch');if(li)li.value='';listApplyQuickSearch('');if(li)li.focus();return true;}
-  if(a==='listClearFilters'){U.filter={type:'all',pid:'',cat:'',status:'all',sub:'',q:'',paidOnly:false};U.listFilterOpen=false;saveNavSession();render();return true;}
+  if(a==='listQuickClear'){U.filter=U.filter||{};U.filter.q='';U.listRenderLimit=120;var li=document.getElementById('listQuickSearch');if(li)li.value='';listApplyQuickSearch('');if(li)li.focus();return true;}
+  if(a==='listLoadMore'){U.listRenderLimit=Math.max(120,+U.listRenderLimit||120)+120;render();return true;}
+  if(a==='listClearFilters'){U.filter={type:'all',pid:'',cat:'',status:'all',sub:'',q:'',paidOnly:false};U.listFilterOpen=false;U.listRenderLimit=120;saveNavSession();render();return true;}
   if(a==='guaranteeQuickClear'){U.guaranteeQuery='';var gi=document.getElementById('guaranteeQuickSearch');if(gi)gi.value='';guaranteeApplyQuickSearch('');if(gi)gi.focus();return true;}
   if(a==='guaranteeDismiss'){S.ui=S.ui||{};S.ui.guaranteeDismissed=S.ui.guaranteeDismissed||{};S.ui.guaranteeDismissed[id]=today();persist({metaOnly:true});render();toast('ปิดแจ้งเตือนรายการนี้สำหรับวันนี้แล้ว');return true;}
   if(a==='boqSectionToggle'){if(U.boqQuery)return true;var sk=el.getAttribute('data-boq-key')||'',sp=el.getAttribute('data-pid')||U.boqProjectPid||'';if(!sk||!sp)return true;boqCapturePosition();U.boqCollapsed=U.boqCollapsed&&typeof U.boqCollapsed==='object'?U.boqCollapsed:{};var ck=boqSectionKey(sp,sk);if(U.boqCollapsed[ck])delete U.boqCollapsed[ck];else U.boqCollapsed[ck]=true;saveNavSession();render();return true;}
