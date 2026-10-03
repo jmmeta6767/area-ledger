@@ -48,10 +48,71 @@ async function d1ReconcileDiff(durableState,d1State){
   const am=await sha256Hex(JSON.stringify(canonicalValue(a.meta))),bm=await sha256Hex(JSON.stringify(canonicalValue(b.meta))),metaMatched=am===bm;if(!metaMatched)mismatchCount++;
   return {matched:mismatchCount===0,mismatchCount,metaMatched,collections};
 }
+
+function googleConfigured(env){return !!(d1Ready(env)&&String(env.GOOGLE_CLIENT_ID||'').trim()&&String(env.GOOGLE_CLIENT_SECRET||'').trim()&&String(env.GOOGLE_TOKEN_KEY||'').length>=24);}
+function b64urlBytes(bytes){let s='';const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function b64urlDecode(s){s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
+async function googleCryptoKey(env){const raw=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(env.GOOGLE_TOKEN_KEY||'')));return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['encrypt','decrypt']);}
+async function googleEncrypt(env,text){const iv=new Uint8Array(12);crypto.getRandomValues(iv);const key=await googleCryptoKey(env),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(String(text||'')));return b64urlBytes(iv)+'.'+b64urlBytes(ct);}
+async function googleDecrypt(env,value){const p=String(value||'').split('.');if(p.length!==2)throw Error('GOOGLE_TOKEN_INVALID');const key=await googleCryptoKey(env),iv=b64urlDecode(p[0]),ct=b64urlDecode(p[1]),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);return new TextDecoder().decode(plain);}
+function googleReturnUrl(request,value,env){let u;try{u=new URL(String(value||''),request.url);}catch(_){return '';}const self=new URL(request.url).origin;if(u.origin!==self&&!allowedOrigins(env).includes(u.origin))return '';if(!/^https?:$/.test(u.protocol))return '';return u.toString();}
+async function googlePkceChallenge(verifier){const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));return b64urlBytes(h);}
+async function googleConnection(env,ledgerHash){if(!d1Ready(env))return null;try{return await env.LEDGER_DB.prepare('SELECT email,refresh_token_enc AS refreshTokenEnc,scopes,root_drive_folder_id AS rootDriveFolderId,connected_at AS connectedAt,updated_at AS updatedAt FROM google_connections WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first();}catch(_){return null;}}
+async function googleProjectLink(env,ledgerHash,pid){try{return await env.LEDGER_DB.prepare('SELECT project_id AS projectId,project_name AS projectName,drive_folder_id AS driveFolderId,spreadsheet_id AS spreadsheetId,drive_url AS driveUrl,sheet_url AS sheetUrl,last_sync_hash AS lastSyncHash,last_sync_at AS lastSyncAt,updated_at AS updatedAt FROM google_project_links WHERE ledger_hash=? AND project_id=? LIMIT 1').bind(ledgerHash,pid).first();}catch(_){return null;}}
+async function googleAccessToken(env,ledgerHash){
+  const conn=await googleConnection(env,ledgerHash);if(!conn||!conn.refreshTokenEnc)throw Error('GOOGLE_NOT_CONNECTED');
+  const refresh=await googleDecrypt(env,conn.refreshTokenEnc),body=new URLSearchParams({client_id:String(env.GOOGLE_CLIENT_ID),client_secret:String(env.GOOGLE_CLIENT_SECRET),refresh_token:refresh,grant_type:'refresh_token'});
+  const res=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});let data={};try{data=await res.json();}catch(_){}
+  if(!res.ok||!data.access_token)throw Error('GOOGLE_TOKEN_REFRESH_FAILED');return String(data.access_token);
+}
+async function googleJson(url,opt){
+  const r=await fetch(url,opt||{});let d={};try{d=await r.json();}catch(_){}
+  if(!r.ok){const e=new Error('GOOGLE_API_'+r.status);e.data=d;throw e;}return d;
+}
+async function googleCreateFolder(token,name,parents){
+  const body={name:cleanFileMeta(name,120)||'AREA Ledger',mimeType:'application/vnd.google-apps.folder'};if(parents&&parents.length)body.parents=parents;
+  return googleJson('https://www.googleapis.com/drive/v3/files?fields=id%2CwebViewLink',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+}
+async function googleEnsureRootFolder(env,ledgerHash,conn,token){
+  if(conn&&conn.rootDriveFolderId)return conn.rootDriveFolderId;
+  const f=await googleCreateFolder(token,'AREA Ledger',[]),now=new Date().toISOString();
+  await env.LEDGER_DB.prepare('UPDATE google_connections SET root_drive_folder_id=?,updated_at=? WHERE ledger_hash=?').bind(f.id,now,ledgerHash).run();return f.id;
+}
+function googleCleanProject(body){
+  const p=body&&body.project||{},id=cleanFileMeta(p.id,160),name=cleanFileMeta(p.name,180);if(!id||!name)throw Error('GOOGLE_PROJECT_INVALID');
+  const rows=Array.isArray(body&&body.rows)?body.rows.slice(0,1500):[];return {id,name,rows};
+}
+function googleSheetRows(project,rows){
+  const header=['รหัสหมวด','หมวดงาน','รายการ','ประเภท','จำนวน','หน่วย','ราคาต่อหน่วย','รวม','หมายเหตุ','Ledger ID'],all=[header],mat=[header],lab=[header],summaryMap={};
+  for(const x of rows){if(!x||typeof x!=='object')continue;const qty=Number(x.qty)||0,price=Number(x.unitPrice)||0,cat=String(x.category||'')==='ค่าแรง'?'ค่าแรง':'ค่าวัสดุ',amt=Math.round(qty*price*100)/100,row=[String(x.sectionCode||''),String(x.sectionName||''),String(x.name||''),cat,qty,String(x.unit||''),price,amt,String(x.note||''),String(x.id||'')];all.push(row);(cat==='ค่าแรง'?lab:mat).push(row);const k=row[0]+'|'+row[1],m=summaryMap[k]||(summaryMap[k]={code:row[0],name:row[1],count:0,material:0,labor:0});m.count++;if(cat==='ค่าแรง')m.labor+=amt;else m.material+=amt;}
+  const sum=[['รหัสหมวด','หมวดงาน','จำนวนรายการ','ค่าวัสดุ','ค่าแรง','รวม']];Object.values(summaryMap).forEach(m=>sum.push([m.code,m.name,m.count,Math.round(m.material*100)/100,Math.round(m.labor*100)/100,Math.round((m.material+m.labor)*100)/100]));
+  return {boq:all,material:mat,labor:lab,summary:sum};
+}
+async function googleEnsureProjectAssets(env,ledgerHash,project,token){
+  let link=await googleProjectLink(env,ledgerHash,project.id),conn=await googleConnection(env,ledgerHash),root=await googleEnsureRootFolder(env,ledgerHash,conn,token),now=new Date().toISOString(),folderId=link&&link.driveFolderId,spreadsheetId=link&&link.spreadsheetId;
+  if(!folderId){const f=await googleCreateFolder(token,project.name,[root]);folderId=f.id;}
+  if(!spreadsheetId){
+    const created=await googleJson('https://sheets.googleapis.com/v4/spreadsheets',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({properties:{title:'BOQ - '+project.name},sheets:[{properties:{title:'BOQ'}},{properties:{title:'สรุปหมวด'}},{properties:{title:'ค่าวัสดุ'}},{properties:{title:'ค่าแรง'}}]})});spreadsheetId=created.spreadsheetId;
+    let parents=[];try{const d=await googleJson('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(spreadsheetId)+'?fields=parents',{headers:{Authorization:'Bearer '+token}});parents=Array.isArray(d.parents)?d.parents:[];}catch(_){}
+    const qs=new URLSearchParams({addParents:folderId,fields:'id,parents,webViewLink'});if(parents.length)qs.set('removeParents',parents.join(','));
+    try{await googleJson('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(spreadsheetId)+'?'+qs.toString(),{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});}catch(_){}
+  }
+  const driveUrl='https://drive.google.com/drive/folders/'+folderId,sheetUrl='https://docs.google.com/spreadsheets/d/'+spreadsheetId+'/edit';
+  await env.LEDGER_DB.prepare('INSERT INTO google_project_links (ledger_hash,project_id,project_name,drive_folder_id,spreadsheet_id,drive_url,sheet_url,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(ledger_hash,project_id) DO UPDATE SET project_name=excluded.project_name,drive_folder_id=excluded.drive_folder_id,spreadsheet_id=excluded.spreadsheet_id,drive_url=excluded.drive_url,sheet_url=excluded.sheet_url,updated_at=excluded.updated_at').bind(ledgerHash,project.id,project.name,folderId,spreadsheetId,driveUrl,sheetUrl,now,now).run();
+  return {folderId,spreadsheetId,driveUrl,sheetUrl};
+}
+async function googleWriteRange(token,id,range,values){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+':clear',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});return googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+'?valueInputOption=RAW',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values})});}
+async function googleSyncProject(env,ledgerHash,body){
+  const project=googleCleanProject(body),token=await googleAccessToken(env,ledgerHash),asset=await googleEnsureProjectAssets(env,ledgerHash,project,token),data=googleSheetRows(project,project.rows);
+  await googleWriteRange(token,asset.spreadsheetId,'BOQ!A:J',data.boq);await googleWriteRange(token,asset.spreadsheetId,'สรุปหมวด!A:F',data.summary);await googleWriteRange(token,asset.spreadsheetId,'ค่าวัสดุ!A:J',data.material);await googleWriteRange(token,asset.spreadsheetId,'ค่าแรง!A:J',data.labor);
+  try{await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(asset.spreadsheetId)+':batchUpdate',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({requests:[{updateSheetProperties:{properties:{sheetId:0,gridProperties:{frozenRowCount:1}},fields:'gridProperties.frozenRowCount'}},{autoResizeDimensions:{dimensions:{sheetId:0,dimension:'COLUMNS',startIndex:0,endIndex:10}}}]})});}catch(_){}
+  const hash=await sha256Hex(JSON.stringify({id:project.id,name:project.name,rows:project.rows})),now=new Date().toISOString();await env.LEDGER_DB.prepare('UPDATE google_project_links SET last_sync_hash=?,last_sync_at=?,updated_at=? WHERE ledger_hash=? AND project_id=?').bind(hash,now,now,ledgerHash,project.id).run();
+  return {ok:true,projectId:project.id,rows:data.boq.length-1,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
+}
 function r2Ready(env){return !!(env&&env.LEDGER_FILES&&typeof env.LEDGER_FILES.put==='function'&&typeof env.LEDGER_FILES.get==='function'&&typeof env.LEDGER_FILES.delete==='function');}
 function productionComponents(env){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,d1Ledger=d1Ready(env),r2Files=r2Ready(env),exactOrigins=allowedOrigins(env).length;return {providerConfigured,durableState,d1Ledger,r2Files,exactOrigins,ready:providerConfigured&&durableState&&d1Ledger&&r2Files};}
-async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();return true;}catch(_){return false;}}
-async function productionPlatformStatus(env){const c=productionComponents(env);c.d1Schema=await d1SchemaReady(env);c.ready=!!(c.ready&&c.d1Schema);return c;}
+async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT ledger_hash FROM google_connections LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT project_id FROM google_project_links LIMIT 1').all();return true;}catch(_){return false;}}
+async function productionPlatformStatus(env){const c=productionComponents(env);c.d1Schema=await d1SchemaReady(env);c.googleWorkspace=googleConfigured(env);c.ready=!!(c.ready&&c.d1Schema);return c;}
 
 function cleanFileMeta(v,max){return String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max||120);}
 function randomHex(bytes){const a=new Uint8Array(bytes||16);crypto.getRandomValues(a);return Array.from(a).map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -307,6 +368,37 @@ export default{async fetch(request,env){
       if(url.pathname==='/v1/ledger/state'&&request.method==='PUT'){const b=normalizeLedgerStateBody(await readLedgerJson(request)),payload=JSON.stringify(b.state);if(new TextEncoder().encode(payload).byteLength>MAX_LEDGER_BYTES)throw Error('LEDGER_PAYLOAD_TOO_LARGE');const r=await ledgerCall(env,access,'ledger-put',{payload,revision:b.revision,updatedAt:b.updatedAt,expectedRevision:b.expectedRevision,expectedChecksum:b.expectedChecksum});if(!r)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);const x=await r.json();return json(x,r.status,origin,rid);}
       return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
     }catch(e){const code=String(e&&e.message||'LEDGER_ERROR'),status=code==='LEDGER_PAYLOAD_TOO_LARGE'?413:code==='LEDGER_JSON_INVALID'||code==='LEDGER_STATE_INVALID'?400:500;return json({error:code},status,origin,rid);}
+  }
+  if(url.pathname==='/v1/google/oauth/callback'&&request.method==='GET'){
+    if(!googleConfigured(env))return new Response('Google Workspace is not configured',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
+    const state=String(url.searchParams.get('state')||''),code=String(url.searchParams.get('code')||'');if(!state||!code)return new Response('Google OAuth callback invalid',{status:400});
+    const sh=await sha256Hex(state),row=await env.LEDGER_DB.prepare('SELECT ledger_hash AS ledgerHash,code_verifier AS codeVerifier,return_url AS returnUrl,expires_at AS expiresAt FROM google_oauth_states WHERE state_hash=? LIMIT 1').bind(sh).first();await env.LEDGER_DB.prepare('DELETE FROM google_oauth_states WHERE state_hash=?').bind(sh).run();
+    if(!row||+row.expiresAt<Date.now())return new Response('Google OAuth state expired',{status:400});
+    const redirectUri=new URL('/v1/google/oauth/callback',request.url).toString(),form=new URLSearchParams({client_id:String(env.GOOGLE_CLIENT_ID),client_secret:String(env.GOOGLE_CLIENT_SECRET),code,code_verifier:String(row.codeVerifier),grant_type:'authorization_code',redirect_uri:redirectUri});
+    const tr=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:form});let td={};try{td=await tr.json();}catch(_){}
+    if(!tr.ok||!td.refresh_token)return new Response('Google OAuth token exchange failed',{status:502});
+    let email='';try{const ui=await googleJson('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:'Bearer '+td.access_token}});email=cleanFileMeta(ui.email,160);}catch(_){}
+    const enc=await googleEncrypt(env,td.refresh_token),now=new Date().toISOString();await env.LEDGER_DB.prepare('INSERT INTO google_connections (ledger_hash,email,refresh_token_enc,scopes,connected_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(ledger_hash) DO UPDATE SET email=excluded.email,refresh_token_enc=excluded.refresh_token_enc,scopes=excluded.scopes,updated_at=excluded.updated_at').bind(row.ledgerHash,email,enc,String(td.scope||''),now,now).run();
+    const back=new URL(row.returnUrl);back.searchParams.set('google','connected');return Response.redirect(back.toString(),302);
+  }
+  if(['/v1/google/status','/v1/google/oauth/start','/v1/google/sync','/v1/google/disconnect'].includes(url.pathname)){
+    if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
+    if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
+    const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);const ledgerHash=await sha256Hex(access),configured=googleConfigured(env);
+    if(url.pathname==='/v1/google/status'&&request.method==='GET'){
+      const conn=configured?await googleConnection(env,ledgerHash):null,pid=cleanFileMeta(url.searchParams.get('pid')||'',160),link=configured&&pid?await googleProjectLink(env,ledgerHash,pid):null;
+      return json({ok:true,configured,connected:!!conn,email:conn&&conn.email||'',project:link||null},200,origin,rid);
+    }
+    if(!configured)return json({error:'GOOGLE_NOT_CONFIGURED'},503,origin,rid);
+    if(url.pathname==='/v1/google/oauth/start'&&request.method==='POST'){
+      const b=await readJson(request),returnUrl=googleReturnUrl(request,b&&b.returnUrl,env);if(!returnUrl)return json({error:'GOOGLE_RETURN_URL_DENIED'},400,origin,rid);
+      await env.LEDGER_DB.prepare('DELETE FROM google_oauth_states WHERE expires_at<?').bind(Date.now()).run();const state=randomHex(24),verifier=randomHex(32)+randomHex(16),challenge=await googlePkceChallenge(verifier),stateHash=await sha256Hex(state),now=new Date().toISOString(),expires=Date.now()+10*60*1000,redirectUri=new URL('/v1/google/oauth/callback',request.url).toString();
+      await env.LEDGER_DB.prepare('INSERT INTO google_oauth_states (state_hash,ledger_hash,code_verifier,return_url,expires_at,created_at) VALUES (?,?,?,?,?,?)').bind(stateHash,ledgerHash,verifier,returnUrl,expires,now).run();
+      const a=new URL('https://accounts.google.com/o/oauth2/v2/auth');a.searchParams.set('client_id',String(env.GOOGLE_CLIENT_ID));a.searchParams.set('redirect_uri',redirectUri);a.searchParams.set('response_type','code');a.searchParams.set('scope','openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets');a.searchParams.set('access_type','offline');a.searchParams.set('prompt','consent');a.searchParams.set('state',state);a.searchParams.set('code_challenge',challenge);a.searchParams.set('code_challenge_method','S256');return json({ok:true,authorizationUrl:a.toString()},200,origin,rid);
+    }
+    if(url.pathname==='/v1/google/sync'&&request.method==='POST'){try{return json(await googleSyncProject(env,ledgerHash,await readJson(request)),200,origin,rid);}catch(e){const code=String(e&&e.message||'GOOGLE_SYNC_FAILED');return json({error:code},code==='GOOGLE_NOT_CONNECTED'?409:502,origin,rid);}}
+    if(url.pathname==='/v1/google/disconnect'&&request.method==='POST'){await env.LEDGER_DB.prepare('DELETE FROM google_connections WHERE ledger_hash=?').bind(ledgerHash).run();await env.LEDGER_DB.prepare('DELETE FROM google_project_links WHERE ledger_hash=?').bind(ledgerHash).run();return json({ok:true},200,origin,rid);}
+    return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
   }
   if(!['/v1/ocr/expense','/v1/ocr/boq'].includes(url.pathname)||request.method!=='POST')return json({error:'NOT_FOUND'},404,'',rid);
   if(!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
