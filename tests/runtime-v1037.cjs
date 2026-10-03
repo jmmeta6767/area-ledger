@@ -2,13 +2,15 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
 const src=fs.readFileSync('gateway/public/index.html','utf8');
 function fn(name){const p=src.indexOf('function '+name+'(');assert(p>=0,'missing '+name);const n=src.indexOf('\nfunction ',p+10);return src.slice(p,n<0?src.length:n);}
 
-for(const name of ['runtimeDiag','runtimeNow','runtimeScheduleRender','runtimeActionDuplicate','runtimeDiagnosticsSnapshot','runtimePageRelease'])assert(src.includes('function '+name+'('),'missing '+name);
+for(const name of ['runtimeDiag','runtimeNow','runtimeScheduleRender','runtimeActionSignature','runtimeActionDuplicate','runtimeDiagnosticsSnapshot','runtimePageRelease'])assert(src.includes('function '+name+'('),'missing '+name);
 assert(src.includes('runtimeDiag:{startedAt:Date.now()'),'ephemeral runtime diagnostics state missing');
 assert(src.includes("if(runtimeActionDuplicate(el)){e.preventDefault();if(e.stopImmediatePropagation)e.stopImmediatePropagation();return;}"),'duplicate write action guard missing');
 
 const guard=fn('runtimeActionDuplicate');
 for(const a of ['save','saveMore','saveBillPayment','apPaySave','saveBizDoc','saveQuote','manualJournalSave','bankReconcile','periodClose'])assert(guard.includes(a+':'),'protected action missing '+a);
-assert(guard.includes('now-last<750'),'duplicate action window changed');
+assert(guard.includes("sig=runtimeActionSignature(a)"),'payment-aware action signature missing');assert(guard.includes('now-last<750'),'duplicate action window changed');
+
+const sig=fn('runtimeActionSignature');assert(sig.includes("apPayAmount")&&sig.includes("apPayDate")&&sig.includes("apPayMethod"),'AP payment signature missing');assert(sig.includes("payAmount")&&sig.includes("payDate")&&sig.includes("payMethod"),'bill payment signature missing');
 
 const exp=fn('expenseScanProgressSet'),batch=fn('expenseBatchScan');
 assert(exp.includes('runtimeScheduleRender()'),'expense scan progress should coalesce renders');

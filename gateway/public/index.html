@@ -3238,11 +3238,17 @@ function runtimeScheduleRender(){
   var cb=function(){U.runtimeRenderRaf=0;render();};
   U.runtimeRenderRaf=typeof requestAnimationFrame==='function'?requestAnimationFrame(cb):setTimeout(cb,16);
 }
+function runtimeActionSignature(a){
+  function val(id){var x=document.getElementById(id);return x&&x.value!==undefined?String(x.value):'';}
+  if(a==='apPaySave')return [val('apPayAmount'),val('apPayDate'),val('apPayMethod')].join('|');
+  if(a==='saveBillPayment')return [val('payAmount'),val('payDate'),val('payMethod')].join('|');
+  return '';
+}
 function runtimeActionDuplicate(el){
   var a=el&&el.getAttribute?el.getAttribute('data-act'):'',groups={save:'tx-save',saveMore:'tx-save',saveBillPayment:'bill-payment',apPaySave:'ap-payment',saveBizDoc:'bizdoc-save',saveQuote:'quote-save',manualJournalSave:'journal-save',bankReconcile:'bank-reconcile',periodClose:'period-close'},g=groups[a];
   var d=runtimeDiag();d.actions++;
   if(!g)return false;
-  var id=el.getAttribute('data-id')||'',key=g+'|'+id,now=Date.now(),last=+U.runtimeActionStamps[key]||0;U.runtimeActionStamps[key]=now;
+  var id=el.getAttribute('data-id')||'',sig=runtimeActionSignature(a),key=g+'|'+id+'|'+sig,now=Date.now(),last=+U.runtimeActionStamps[key]||0;U.runtimeActionStamps[key]=now;
   if(now-last<750){d.blockedActions++;return true;}
   return false;
 }
