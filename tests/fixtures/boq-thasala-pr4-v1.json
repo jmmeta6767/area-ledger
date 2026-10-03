@@ -1,0 +1,457 @@
+{
+  "fixture": "boq-thasala-pr4-v1",
+  "source": "ปร.4 อาคารอเนกประสงค์ หมู่ 7 บ้านท่าศาลา ศรีเมืองชุม · 4 ภาพจริง",
+  "declaredTotal": 412812.83,
+  "pageTotals": [
+    48884.85,
+    79147.88,
+    274129.38,
+    10650.72
+  ],
+  "pageSlices": [
+    [
+      1,
+      8
+    ],
+    [
+      9,
+      17
+    ],
+    [
+      18,
+      28
+    ],
+    [
+      29,
+      32
+    ]
+  ],
+  "rows": [
+    {
+      "index": 1,
+      "name": "งานสกัดพื้นอาคารเดิม",
+      "category": "ค่าแรง",
+      "qty": 18,
+      "unit": "ตร.ม.",
+      "unitPrice": 72,
+      "amount": 1296,
+      "sectionCode": "1.1.1",
+      "sectionName": "งานเตรียม (งานสนาม)"
+    },
+    {
+      "index": 2,
+      "name": "งานขุดดิน",
+      "category": "ค่าแรง",
+      "qty": 28.8,
+      "unit": "ลบ.ม.",
+      "unitPrice": 153,
+      "amount": 4406.4,
+      "sectionCode": "1.1.1",
+      "sectionName": "งานเตรียม (งานสนาม)"
+    },
+    {
+      "index": 3,
+      "name": "ทรายหยาบรองพื้น",
+      "category": "ค่าของ",
+      "qty": 21.62,
+      "unit": "ลบ.ม.",
+      "unitPrice": 375,
+      "amount": 8107.5,
+      "sectionCode": "1.1.2",
+      "sectionName": "งานวัสดุรองฐานราก"
+    },
+    {
+      "index": 4,
+      "name": "ทรายหยาบรองพื้น",
+      "category": "ค่าแรง",
+      "qty": 21.62,
+      "unit": "ลบ.ม.",
+      "unitPrice": 112,
+      "amount": 2421.44,
+      "sectionCode": "1.1.2",
+      "sectionName": "งานวัสดุรองฐานราก"
+    },
+    {
+      "index": 5,
+      "name": "คอนกรีตโครงสร้าง รูปลูกบาศก์ 180 กก./ตร.ซม.",
+      "category": "ค่าของ",
+      "qty": 0.9,
+      "unit": "ลบ.ม.",
+      "unitPrice": 2364.48,
+      "amount": 2128.03,
+      "sectionCode": "1.1.3",
+      "sectionName": "งานคอนกรีตและแบบหล่อ"
+    },
+    {
+      "index": 6,
+      "name": "คอนกรีตโครงสร้าง รูปลูกบาศก์ 180 กก./ตร.ซม.",
+      "category": "ค่าแรง",
+      "qty": 0.9,
+      "unit": "ลบ.ม.",
+      "unitPrice": 329,
+      "amount": 296.1,
+      "sectionCode": "1.1.3",
+      "sectionName": "งานคอนกรีตและแบบหล่อ"
+    },
+    {
+      "index": 7,
+      "name": "คอนกรีตโครงสร้าง รูปลูกบาศก์ 280 กก./ตร.ซม.",
+      "category": "ค่าของ",
+      "qty": 9.86,
+      "unit": "ลบ.ม.",
+      "unitPrice": 2644.86,
+      "amount": 26078.32,
+      "sectionCode": "1.1.3",
+      "sectionName": "งานคอนกรีตและแบบหล่อ"
+    },
+    {
+      "index": 8,
+      "name": "คอนกรีตโครงสร้าง รูปลูกบาศก์ 280 กก./ตร.ซม.",
+      "category": "ค่าแรง",
+      "qty": 9.86,
+      "unit": "ลบ.ม.",
+      "unitPrice": 421,
+      "amount": 4151.06,
+      "sectionCode": "1.1.3",
+      "sectionName": "งานคอนกรีตและแบบหล่อ"
+    },
+    {
+      "index": 9,
+      "name": "เหล็กเสริม RB 9 mm. SR 24",
+      "category": "ค่าของ",
+      "qty": 0.17,
+      "unit": "ตัน",
+      "unitPrice": 21632.05,
+      "amount": 3677.45,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 10,
+      "name": "เหล็กเสริม RB 9 mm. SR 24",
+      "category": "ค่าแรง",
+      "qty": 0.17,
+      "unit": "ตัน",
+      "unitPrice": 4900,
+      "amount": 833,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 11,
+      "name": "เหล็กเสริม DB 12 mm. SD-40",
+      "category": "ค่าของ",
+      "qty": 0.03,
+      "unit": "ตัน",
+      "unitPrice": 21049.08,
+      "amount": 631.47,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 12,
+      "name": "เหล็กเสริม DB 12 mm. SD-40",
+      "category": "ค่าแรง",
+      "qty": 0.03,
+      "unit": "ตัน",
+      "unitPrice": 3900,
+      "amount": 117,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 13,
+      "name": "เหล็กเสริม DB 16 mm. SD-40",
+      "category": "ค่าของ",
+      "qty": 1.13,
+      "unit": "ตัน",
+      "unitPrice": 20713.53,
+      "amount": 23406.29,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 14,
+      "name": "เหล็กเสริม DB 16 mm. SD-40",
+      "category": "ค่าแรง",
+      "qty": 1.13,
+      "unit": "ตัน",
+      "unitPrice": 3900,
+      "amount": 4407,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 15,
+      "name": "ลวดผูกเหล็ก ศก.1.25 มม. (เบอร์ 18)",
+      "category": "ค่าของ",
+      "qty": 39.9,
+      "unit": "กก.",
+      "unitPrice": 44.39,
+      "amount": 1771.16,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 16,
+      "name": "ไม้แบบ",
+      "category": "ค่าของ",
+      "qty": 59.14,
+      "unit": "ลบ.ฟ.",
+      "unitPrice": 545.41,
+      "amount": 32255.55,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 17,
+      "name": "ค่าแรงงานไม้แบบ",
+      "category": "ค่าแรง",
+      "qty": 73.92,
+      "unit": "ตร.ม.",
+      "unitPrice": 163,
+      "amount": 12048.96,
+      "sectionCode": "1.1.4",
+      "sectionName": "งานเหล็กเสริมคอนกรีต"
+    },
+    {
+      "index": 18,
+      "name": "ท่อเหล็กกลวงสี่เหลี่ยมจัตุรัส หนา 2.0 mm. ขนาด 2\"x2\" ยาว 6 m.",
+      "category": "ค่าของ",
+      "qty": 17,
+      "unit": "ท่อน",
+      "unitPrice": 491.59,
+      "amount": 8357.03,
+      "sectionCode": "1.1.6",
+      "sectionName": "งานโครงสร้างเหล็กรูปพรรณ"
+    },
+    {
+      "index": 19,
+      "name": "เหล็กรูปพรรณ C-100x50x25x3.2 mm. ยาว 6 m.",
+      "category": "ค่าของ",
+      "qty": 137,
+      "unit": "ท่อน",
+      "unitPrice": 762.62,
+      "amount": 104478.94,
+      "sectionCode": "1.1.6",
+      "sectionName": "งานโครงสร้างเหล็กรูปพรรณ"
+    },
+    {
+      "index": 20,
+      "name": "ค่าแรงงานประกอบเหล็กโครงหลังคาทั่วไป",
+      "category": "ค่าแรง",
+      "qty": 4793.85,
+      "unit": "กก.",
+      "unitPrice": 12,
+      "amount": 57526.2,
+      "sectionCode": "1.1.6",
+      "sectionName": "งานโครงสร้างเหล็กรูปพรรณ"
+    },
+    {
+      "index": 21,
+      "name": "แผ่นเพลทเหล็ก ขนาด 10 x 10 นิ้ว หนา 12 mm.",
+      "category": "ค่าของ",
+      "qty": 16,
+      "unit": "แผ่น",
+      "unitPrice": 367.29,
+      "amount": 5876.64,
+      "sectionCode": "1.1.6",
+      "sectionName": "งานโครงสร้างเหล็กรูปพรรณ"
+    },
+    {
+      "index": 22,
+      "name": "โบล์ทเหล็ก M20 x 400 mm.",
+      "category": "ค่าของ",
+      "qty": 32,
+      "unit": "ชุด",
+      "unitPrice": 131.78,
+      "amount": 4216.96,
+      "sectionCode": "1.1.6",
+      "sectionName": "งานโครงสร้างเหล็กรูปพรรณ"
+    },
+    {
+      "index": 23,
+      "name": "งานทาสีใหม่",
+      "category": "ค่าของ",
+      "qty": 267,
+      "unit": "ตร.ม.",
+      "unitPrice": 36.28,
+      "amount": 9686.76,
+      "sectionCode": "1.1.6",
+      "sectionName": "งานโครงสร้างเหล็กรูปพรรณ"
+    },
+    {
+      "index": 24,
+      "name": "งานทาสีใหม่",
+      "category": "ค่าแรง",
+      "qty": 267,
+      "unit": "ตร.ม.",
+      "unitPrice": 36,
+      "amount": 9612,
+      "sectionCode": "1.1.6",
+      "sectionName": "งานโครงสร้างเหล็กรูปพรรณ"
+    },
+    {
+      "index": 25,
+      "name": "วัสดุมุงหลังคา Metal sheet แผ่นเหล็กรีดลอน 0.40 mm.",
+      "category": "ค่าของ",
+      "qty": 368,
+      "unit": "เมตร",
+      "unitPrice": 140.19,
+      "amount": 51589.92,
+      "sectionCode": "1.2.1",
+      "sectionName": "งานหลังคา"
+    },
+    {
+      "index": 26,
+      "name": "ค่าแรงมุงหลังคา",
+      "category": "ค่าแรง",
+      "qty": 272,
+      "unit": "ตร.ม.",
+      "unitPrice": 72,
+      "amount": 19584,
+      "sectionCode": "1.2.1",
+      "sectionName": "งานหลังคา"
+    },
+    {
+      "index": 27,
+      "name": "อุปกรณ์ยึดหลังคา (สกรูยึดแผ่นหลังคา)",
+      "category": "ค่าของ",
+      "qty": 8,
+      "unit": "กล่อง",
+      "unitPrice": 191.59,
+      "amount": 1532.72,
+      "sectionCode": "1.2.1",
+      "sectionName": "งานหลังคา"
+    },
+    {
+      "index": 28,
+      "name": "วัสดุครอบสันหลังคาเหล็ก",
+      "category": "ค่าของ",
+      "qty": 17,
+      "unit": "เมตร",
+      "unitPrice": 98.13,
+      "amount": 1668.21,
+      "sectionCode": "1.2.1",
+      "sectionName": "งานหลังคา"
+    },
+    {
+      "index": 29,
+      "name": "งานฉาบปูนฉาบโครงสร้าง",
+      "category": "ค่าของ",
+      "qty": 48,
+      "unit": "ตร.ม.",
+      "unitPrice": 27.25,
+      "amount": 1308,
+      "sectionCode": "1.2.2",
+      "sectionName": "งานตกแต่งโครงสร้าง"
+    },
+    {
+      "index": 30,
+      "name": "งานฉาบปูนฉาบโครงสร้าง",
+      "category": "ค่าแรง",
+      "qty": 48,
+      "unit": "ตร.ม.",
+      "unitPrice": 109,
+      "amount": 5232,
+      "sectionCode": "1.2.2",
+      "sectionName": "งานตกแต่งโครงสร้าง"
+    },
+    {
+      "index": 31,
+      "name": "งานทาสีน้ำพลาสติกโครงสร้าง",
+      "category": "ค่าของ",
+      "qty": 48,
+      "unit": "ตร.ม.",
+      "unitPrice": 50.64,
+      "amount": 2430.72,
+      "sectionCode": "1.2.2",
+      "sectionName": "งานตกแต่งโครงสร้าง"
+    },
+    {
+      "index": 32,
+      "name": "งานทาสีน้ำพลาสติกโครงสร้าง",
+      "category": "ค่าแรง",
+      "qty": 48,
+      "unit": "ตร.ม.",
+      "unitPrice": 35,
+      "amount": 1680,
+      "sectionCode": "1.2.2",
+      "sectionName": "งานตกแต่งโครงสร้าง"
+    }
+  ],
+  "ocrCases": [
+    {
+      "id": "labor-only-demolition",
+      "text": "1 งานสกัดพื้นอาคารเดิม 18 ตร.ม. - - 72.00 1,296.00 1,296.00",
+      "expected": [
+        {
+          "category": "ค่าแรง",
+          "qty": 18,
+          "unit": "ตร.ม.",
+          "unitPrice": 72
+        }
+      ]
+    },
+    {
+      "id": "dual-sand",
+      "text": "3 ทรายหยาบรองพื้น 21.62 ลบ.ม. 375.00 8,107.50 112.00 2,421.44 10,528.94",
+      "expected": [
+        {
+          "category": "ค่าของ",
+          "qty": 21.62,
+          "unit": "ลบ.ม.",
+          "unitPrice": 375
+        },
+        {
+          "category": "ค่าแรง",
+          "qty": 21.62,
+          "unit": "ลบ.ม.",
+          "unitPrice": 112
+        }
+      ]
+    },
+    {
+      "id": "cubic-foot-formwork",
+      "text": "16 ไม้แบบ 59.14 ลบ.ฟ. 545.41 32,255.55",
+      "expected": [
+        {
+          "category": "ค่าของ",
+          "qty": 59.14,
+          "unit": "ลบ.ฟ.",
+          "unitPrice": 545.41
+        }
+      ]
+    },
+    {
+      "id": "box-roof-screws",
+      "text": "27 อุปกรณ์ยึดหลังคา (สกรูยึดแผ่นหลังคา) 8 กล่อง 191.59 1,532.72",
+      "expected": [
+        {
+          "category": "ค่าของ",
+          "qty": 8,
+          "unit": "กล่อง",
+          "unitPrice": 191.59
+        }
+      ]
+    },
+    {
+      "id": "circled-annotation-row",
+      "text": "29 งานฉาบปูนฉาบโครงสร้าง 48 ตร.ม. (17) 27.25 1,308.00 (31) 109.00 5,232.00 6,540.00",
+      "expected": [
+        {
+          "category": "ค่าของ",
+          "qty": 48,
+          "unit": "ตร.ม.",
+          "unitPrice": 27.25
+        },
+        {
+          "category": "ค่าแรง",
+          "qty": 48,
+          "unit": "ตร.ม.",
+          "unitPrice": 109
+        }
+      ]
+    }
+  ]
+}
