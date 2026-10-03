@@ -3373,7 +3373,7 @@ function newDraft(type,pid){
   return {id:null,type:type,amount:'',boqId:'',cat:type==='in'?CAT_IN[1]:((S.last&&CAT_OUT.indexOf(S.last.cat)>-1)?S.last.cat:CAT_OUT[0]),pay:(S.last&&S.last.pay)||'transfer',sub:'',subCustom:'',pid:pid||((S.last&&proj(S.last.pid))?S.last.pid:first),partner:'',date:today(),vat:false,wht:false,paid:true,dueEnabled:true,due:addDays(7),photo:'',photoRef:'',photoThumb:'',photoHash:'',photoMime:'',photoDeleteRef:'',note:'',ocrConfidence:0,ocrSource:'',ocrReviewed:false};
 }
 
-/* v1000 Business Stable Candidate · runtime APP_RELEASE/storage contracts intentionally frozen at proven baseline */
+/* v1000 Business Stable Candidate · retains v850 UX / Workspace consolidation · runtime APP_RELEASE/storage contracts intentionally frozen at proven baseline */
 /* ---------- หน้าจอ ---------- */
 function homeUrgentAlert(allMode,active,all){
   var alerts=[],scopeProjects=allMode?S.projects:(active?[active]:[]);
