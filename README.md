@@ -6,6 +6,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1004 Legacy Production Alias Readiness CORS Hotfix
+
+- Fixes the iPhone/Safari failure where the legacy production app origin `https://g.areamaibab.workers.dev` could reach the canonical AI Gateway allowlist but still failed before OCR because `/ready` and `/health` returned before CORS headers were applied.
+- `/ready` and `/health` now apply the same explicit-origin policy as protected API routes: known origins receive their exact `Access-Control-Allow-Origin`; unknown origins fail closed with `ORIGIN_DENIED`.
+- No wildcard CORS is introduced. Gemini credentials, accounting data, storage keys, D1/R2 bindings, and review-before-save behavior are unchanged.
+- Runtime regression tests cover allowed cross-origin health/readiness and denied unknown origins.
+
+
+
 ## v1003 Production AI Vision Route + Receipt Totals
 
 - Fixes production app alias `g.areamaibab.workers.dev`: AI Vision now targets the canonical production Gateway.
