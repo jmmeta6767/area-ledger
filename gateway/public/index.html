@@ -4349,8 +4349,12 @@ function boqRowQuality(x){
   if(!unit&&qty<=1.01&&price<=1.01)score-=5;if(!thai&&latin>=8&&!known)score-=2;if(/^(?:EET|EE|Erin|aay|he|aR)(?:\s|$)/i.test(name))score-=4;
   return score;
 }
+function boqStrongEvidenceRow(x){
+  x=x||{};var name=String(x.name||'').replace(/\s+/g,' ').trim(),qty=+x.qty,price=+x.unitPrice,confidence=Math.max(0,Math.min(1,+x.ocrConfidence||0));
+  return name.length>=2&&qty>0&&isFinite(qty)&&price>=0&&isFinite(price)&&confidence>=.80&&(x.ocrEquation===true||x.ocrDynamicColumns===true);
+}
 function boqQualityRows(rows){
-  var out=[],seen={};(rows||[]).forEach(function(x){if(boqRowQuality(x)<4)return;var k=boqImportKey(x);if(!seen[k]){seen[k]=1;out.push(x);}});return out;
+  var out=[],seen={};(rows||[]).forEach(function(x){var row=x;if(boqRowQuality(x)<4){if(!boqStrongEvidenceRow(x))return;row=Object.assign({},x,{ocrNeedsReview:true,note:(String(x.note||'')+(x.note?' · ':'')+'ตัวเลขผ่านสมการ/ตำแหน่งตาราง แต่ชื่อรายการ OCR ต้องตรวจจากภาพ').slice(0,500)});}var k=boqImportKey(row);if(!seen[k]){seen[k]=1;out.push(row);}});return out;
 }
 function boqRowsNeedVision(rows,imageCount){
   var good=boqQualityRows(rows),pages=Math.max(1,+imageCount||1),min=pages>1?Math.max(3,pages*2):1,raw=Math.max(1,(rows||[]).length);
@@ -4405,7 +4409,7 @@ function boqImportImages(files,pid){
     var strictRows=thaiGovBoqRowsMerged(all),geoRows=boqMergeOcrRows(posRows,eqRows),localRows=geoRows.length?boqMergeOcrRows(geoRows,strictRows):strictRows,localQuality=boqRowsNeedVision(localRows,clean.length),localGood=localQuality.good,rows=localGood,mode=posRows.length?'Positional + Equation BOQ':(eqRows.length?'Equation BOQ':'Local OCR'),declared=aiDeclared||thaiGovBoqDeclaredTotal(all);if(aiGood.length){rows=boqMergeOcrRows(aiGood,localGood);mode=localQuality.need?'AI Vision + Verified Local':'AI Vision + Local OCR';}
     if(!rows.length){rows=boqQualityRows(boqGenericRows(all));if(rows.length)mode='Local OCR fallback';}
     var rec=boqOcrReconcile(rows,declared);U.boqImportBusy=false;U.boqOcrProgressCtx=null;U.boqOcrAbort=null;U.boqOcrToken='';
-    if(!rows.length){boqProgressSet(100,'อ่านเสร็จ · ยังจับแถว BOQ ไม่ได้'+(localTimedOut?' · OCR ในเครื่องหมดเวลา':''));toast((localTimedOut?'OCR ในเครื่องหมดเวลา · ':'')+'ยังจับ BOQ ไม่ได้ · รูปที่เลือกยังคงอยู่');return;}
+    if(!rows.length){var aiHint=aiOn?(aiErrors.length?' · AI: '+aiErrors.slice(0,2).join(' / '):' · AI ไม่พบแถวที่ผ่านเกณฑ์'):' · AI Vision ยังไม่ได้เปิด';boqProgressSet(100,'อ่านเสร็จ · ยังจับแถว BOQ ไม่ได้'+(localTimedOut?' · OCR ในเครื่องหมดเวลา':'')+aiHint);toast((localTimedOut?'OCR ในเครื่องหมดเวลา · ':'')+'ยังจับ BOQ ไม่ได้'+aiHint+' · รูปที่เลือกยังคงอยู่');return;}
     boqProgressSet(100,'อ่านเสร็จ · พบ '+rows.length+' รายการ');U.boqImageQueue=[];
     boqImportPreview(pid,rows,(names[0]||'รูป BOQ')+(clean.length>1?' +'+(clean.length-1)+' รูป':''),{image:true,multiImage:true,imageCount:clean.length,failedImages:failed,aiFailedImages:aiFailed,aiErrors:aiErrors,before:clean.reduce(function(n,x){return n+x.size;},0),after:clean.reduce(function(n,x){return n+x.size;},0),optimized:false,ocr:true,ocrMode:mode+' · '+clean.length+' รูป · แนวตรง 0°',pages:clean.length,rotations:rotations,reconcile:rec,rejected:Math.max(0,(localRows||[]).length-localGood.length),positionalRows:posRows.length,equationRows:eqRows.length,wordCount:wordCount});
   })().catch(function(e){console.error('BOQ image pipeline',e);if(!boqOcrActive(token))return;U.boqImportBusy=false;U.boqOcrProgressCtx=null;U.boqOcrAbort=null;U.boqOcrToken='';boqProgressSet(100,'เกิดข้อผิดพลาด · ไม่บันทึกข้อมูล');toast('อ่าน BOQ ไม่สำเร็จ · รูปที่เลือกยังอยู่');});

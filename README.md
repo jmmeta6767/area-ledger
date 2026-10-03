@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1014 BOQ Field-Image Recovery
+
+- Adds a regression case for the supplied Thai ปร.4/BOQ layout with handwritten circled reference numbers beside printed material/labor prices.
+- Rows with strong quantity × unit price ≈ amount or validated dynamic-column evidence are no longer discarded solely because Thai item text OCR is noisy; they enter Preview marked for mandatory human review.
+- Zero-row results now expose whether AI Vision was disabled or which provider/image errors occurred, instead of only reporting a generic “จับ BOQ ไม่ได้”.
+- No automatic accounting save is introduced; all recovered rows still stop at Preview for correction and approval.
+
 ## v1013 BOQ Multi-Image No-Hang
 
 - Fixes the BOQ import progress UI so the bar and percentage repaint live instead of remaining visually stuck at 1%.
