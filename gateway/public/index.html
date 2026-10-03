@@ -1902,6 +1902,36 @@ textarea{resize:vertical}
 
 /* v145 compact receivable/payable UX */
 .due-page{display:grid;gap:12px;padding-bottom:10px}.due-group{background:var(--m-card,#fff);border:1px solid var(--m-line,#e2e5e5);border-radius:18px;overflow:hidden}.due-group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;border-bottom:1px solid var(--m-line,#e2e5e5)}.due-group-head small{display:block;color:var(--m-mut,#69737d);font-size:.76rem;margin-bottom:2px}.due-group-head h2{margin:0;font-size:1.05rem}.due-group-head>b{font-size:1.18rem;white-space:nowrap}.due-in .due-group-head{background:#f4fbf6}.due-out .due-group-head{background:#fff7f4}.due-guarantee .due-group-head{background:#fff9e8}.due-list .row{border-radius:0!important;border:0!important;border-bottom:1px solid var(--m-line,#e2e5e5)!important;margin:0!important;box-shadow:none!important}.due-list .row:last-child{border-bottom:0!important}.due-empty{padding:18px 16px;color:var(--m-mut,#69737d);font-size:.9rem}.due-note{padding:4px 3px;color:var(--m-mut,#69737d);font-size:.78rem;line-height:1.55}@media(max-width:430px){.due-page{gap:10px}.due-group-head{padding:13px 14px}.due-group-head>b{font-size:1.05rem}}
+
+/* v1024 company profile + worksite social feed */
+.company-profile{max-width:760px;margin:0 auto;padding-bottom:24px}
+.profile-hero{overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:0 7px 24px rgba(17,24,39,.06)}
+.profile-cover{height:112px;background:linear-gradient(135deg,#111d2b,#26394d 62%,#e4ad2e);display:flex;align-items:flex-end;padding:16px;color:#ffd85d;font:800 11px var(--display);letter-spacing:.12em}
+.profile-main{display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:13px;align-items:end;padding:0 16px 12px;margin-top:-35px}
+.profile-main>img{width:78px;height:78px;border-radius:22px;object-fit:cover;border:4px solid var(--surface);background:#ffd447;box-shadow:0 4px 12px rgba(17,24,39,.12)}
+.profile-title{min-width:0;padding-top:36px}.profile-title small{color:#8b6b12;font-weight:800}.profile-title h2{font-size:21px;margin:2px 0 0;line-height:1.2}.profile-title p{color:var(--muted);font-size:12px;margin:5px 0 0}
+.profile-edit-btn{align-self:center;margin-top:31px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 11px;font-weight:800;color:var(--ink);min-height:42px}
+.profile-bio{padding:0 16px;margin:2px 0 10px;font-size:13px;line-height:1.65;color:var(--ink);white-space:pre-wrap}
+.profile-contact{padding:0 16px 10px;display:flex;gap:6px;flex-wrap:wrap}.profile-contact span{background:color-mix(in srgb,var(--surface) 75%,#d9e0e4);border-radius:999px;padding:5px 8px;font-size:10.5px;color:var(--muted)}
+.profile-socials{display:flex;gap:7px;overflow:auto;padding:2px 16px 12px;scrollbar-width:none}.profile-socials::-webkit-scrollbar{display:none}
+.profile-social-chip{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:7px 9px;text-align:left;max-width:190px;min-height:43px}.profile-social-chip b,.profile-social-chip span{display:block}.profile-social-chip b{font-size:10px}.profile-social-chip span{font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-stats{border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,1fr)}.profile-stats>div{text-align:center;padding:11px 5px}.profile-stats>div+div{border-left:1px solid var(--line)}.profile-stats b{display:block;font-size:19px}.profile-stats small{color:var(--muted);font-size:10px}
+.profile-compose{margin:12px 0}.profile-compose>button{width:100%;border:0;background:#ffc52f;color:#17202b;border-radius:18px;padding:14px 15px;display:grid;grid-template-columns:44px 1fr auto;gap:11px;text-align:left;align-items:center;box-shadow:0 6px 18px rgba(211,156,14,.18)}.profile-compose-plus{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:#17202b;color:#fff;font-size:26px}.profile-compose b,.profile-compose small{display:block}.profile-compose b{font-size:15px}.profile-compose small{font-size:10.5px;margin-top:2px;color:#685014}.profile-compose strong{font-size:25px}
+.profile-feed-head{display:flex;justify-content:space-between;align-items:end;margin:18px 3px 8px}.profile-feed-head small{font-size:10px;font-weight:900;letter-spacing:.1em;color:#8e6c12}.profile-feed-head h3{margin:2px 0 0}.profile-feed-head>span{font-size:11px;color:var(--muted)}
+.profile-filter{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.profile-filter::-webkit-scrollbar{display:none}.profile-filter button{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-weight:800;color:var(--muted)}.profile-filter button.on{background:#17202b;color:#fff;border-color:#17202b}
+.profile-post-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;margin:0 0 12px;overflow:hidden;box-shadow:0 5px 18px rgba(17,24,39,.045)}
+.profile-post-head{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:13px 14px 8px}.profile-post-head>img{width:42px;height:42px;border-radius:13px;object-fit:cover;background:#ffd447}.profile-post-head b,.profile-post-head small{display:block}.profile-post-head small{font-size:10.5px;color:var(--muted);margin-top:2px}.profile-post-kind{font-size:9px;font-weight:900;border-radius:999px;background:#fff1c5;color:#826000;padding:5px 7px;white-space:nowrap}
+.profile-post-text{padding:5px 14px 12px;font-size:13.5px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.profile-post-photos{display:grid;gap:2px;background:#eef1f2}.profile-post-photos.n1{grid-template-columns:1fr}.profile-post-photos.n2,.profile-post-photos.n4{grid-template-columns:1fr 1fr}.profile-post-photos.n3{grid-template-columns:1.4fr 1fr;grid-template-rows:1fr 1fr}.profile-post-photos.n3 button:first-child{grid-row:1/3}.profile-post-photos button{border:0;padding:0;background:#eef1f2;min-height:155px}.profile-post-photos img{width:100%;height:100%;max-height:360px;object-fit:cover;display:block}.profile-post-photos.n1 img{aspect-ratio:4/3}.profile-post-photos.n2 img,.profile-post-photos.n4 img{aspect-ratio:1/1}.profile-post-photos.n3 img{height:100%}
+.profile-post-actions{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}.profile-post-actions button{min-height:43px;border:0;border-left:1px solid var(--line);background:transparent;font-weight:800;color:var(--muted)}.profile-post-actions button:first-child{border-left:0}.profile-post-actions button.danger{color:#a54432}
+.profile-empty{padding:30px 18px;text-align:center;border:1px dashed var(--line);border-radius:18px;color:var(--muted);background:var(--surface)}
+.profile-editor .field,.profile-post-editor .field{margin-top:12px}.profile-social-edit,.profile-post-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.profile-photo-picker{margin-top:14px;min-height:74px;border:1.5px dashed var(--line);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;text-align:center;cursor:pointer}.profile-photo-picker b,.profile-photo-picker small{display:block}.profile-photo-picker small{font-size:10px;color:var(--muted);margin-top:3px}
+.profile-editor-photos{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px}.profile-editor-photos>div{position:relative}.profile-editor-photos img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px}.profile-editor-photos button{position:absolute;right:3px;top:3px;width:28px;height:28px;border:0;border-radius:999px;background:rgba(0,0,0,.7);color:#fff;font-size:18px}
+.profile-saving{padding:10px 12px;border-radius:11px;background:#fff8df;color:#7b5c00;font-size:12px;margin-top:10px}
+.profile-project-post{background:#fff7d6!important;color:#765500!important}
+@media(max-width:520px){.company-profile{padding-bottom:8px}.profile-main{grid-template-columns:68px minmax(0,1fr) auto;padding:0 12px 11px;margin-top:-31px;gap:9px}.profile-main>img{width:68px;height:68px;border-radius:19px}.profile-title{padding-top:33px}.profile-title h2{font-size:17px}.profile-title p{font-size:10px}.profile-edit-btn{font-size:11px;padding:8px 9px}.profile-post-photos button{min-height:124px}.profile-social-edit,.profile-post-meta-grid{grid-template-columns:1fr}.profile-editor-photos{grid-template-columns:repeat(4,1fr)}}
+@media(prefers-color-scheme:dark){.profile-cover{background:linear-gradient(135deg,#0e151d,#1a2a39 62%,#7a5b12)}.profile-compose>button{background:#dca81f}.profile-filter button.on{background:#eef1f3;color:#17202b}.profile-post-kind{background:#443718;color:#f3c75a}.profile-post-photos{background:#151b20}.profile-project-post{background:#3a3016!important;color:#f0c14b!important}}
+
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -2345,7 +2375,7 @@ function boqEnsureWorkSection(x){
 
 function migrate(o){
   if(!o||typeof o!=='object')o=emptyState();
-  ['projects','tx','boq','guarantees','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'].forEach(function(k){if(o[k]!==undefined&&(!Array.isArray(o[k])||o[k].some(function(x){return !x||typeof x!=='object'||Array.isArray(x);})))throw new Error('Invalid collection: '+k);});
+  ['projects','tx','boq','guarantees','quotes','bills','receipts','profilePosts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'].forEach(function(k){if(o[k]!==undefined&&(!Array.isArray(o[k])||o[k].some(function(x){return !x||typeof x!=='object'||Array.isArray(x);})))throw new Error('Invalid collection: '+k);});
   o=JSON.parse(JSON.stringify(o)); /* Migrate a copy; preserve the source snapshot. */
   if(!Array.isArray(o.projects))o.projects=[];
   if(!Array.isArray(o.tx))o.tx=[];
@@ -2371,6 +2401,22 @@ function migrate(o){
   if(typeof o.lastRestoreFingerprint!=='string')o.lastRestoreFingerprint='';if(typeof o.lastRestoreSourceOrigin!=='string')o.lastRestoreSourceOrigin='';if(!isFinite(+o.lastRestoreAt)||+o.lastRestoreAt<0)o.lastRestoreAt=0;else o.lastRestoreAt=+o.lastRestoreAt;
   if(o.business.legalNameEn===undefined)o.business.legalNameEn='';
   if(o.business.addressEn===undefined)o.business.addressEn='';
+  ['tagline','bio','lineId','website','facebook','instagram','tiktok'].forEach(function(k){if(typeof o.business[k]!=='string')o.business[k]='';});
+  if(!Array.isArray(o.profilePosts))o.profilePosts=[];
+  o.profilePosts=o.profilePosts.map(function(p){
+    if(!p)p={};if(!p.id)p.id=uid();
+    if(['site','portfolio','delivery','announce'].indexOf(p.type)<0)p.type='site';
+    if(typeof p.pid!=='string')p.pid='';if(p.pid&&!(o.projects||[]).some(function(x){return x.id===p.pid;}))p.pid='';
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(String(p.date||'')))p.date=today();
+    p.text=String(p.text||'').slice(0,2000);
+    if(!Array.isArray(p.photos))p.photos=[];p.photos=p.photos.slice(0,4).map(function(ph){
+      ph=ph&&typeof ph==='object'?ph:{};
+      return {ref:String(ph.ref||'').slice(0,240),thumb:/^data:image\//i.test(String(ph.thumb||''))?String(ph.thumb):'',data:/^data:image\//i.test(String(ph.data||''))?String(ph.data):'',mime:/^image\/(?:jpeg|png|webp)$/i.test(String(ph.mime||''))?String(ph.mime).toLowerCase():'image/jpeg'};
+    });
+    if(!isFinite(+p.createdAt)||+p.createdAt<0)p.createdAt=Date.now();else p.createdAt=+p.createdAt;
+    if(!isFinite(+p.updatedAt)||+p.updatedAt<0)p.updatedAt=p.createdAt;else p.updatedAt=+p.updatedAt;
+    return p;
+  });
   if(!Array.isArray(o.materialApprovals))o.materialApprovals=[];
   if(!Array.isArray(o.siteEvents))o.siteEvents=[];
   if(!Array.isArray(o.contractChanges))o.contractChanges=[];
@@ -2425,7 +2471,8 @@ var IC={
  build:'M5 21V5a1 1 0 011-1h8a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M9 8h2M9 12h2M9 16h2',
  clock:'M12 7v5l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
  back:'M15 6l-6 6 6 6',
- cam:'M4 8h3l2-3h6l2 3h3v11H4zM12 17a3.5 3.5 0 100-7 3.5 3.5 0 000 7z'
+ cam:'M4 8h3l2-3h6l2 3h3v11H4zM12 17a3.5 3.5 0 100-7 3.5 3.5 0 000 7z',
+ profile:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7'
 };
 function ic(n){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><path d="'+IC[n]+'"/></svg>';}
 
@@ -2446,7 +2493,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',profileFilter:'all',profilePostDraft:null,profilePostImages:[],profilePostDeleteRefs:[],profileSaveBusy:false,pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
 
 function defaultChartAccounts(){return[
 {id:'1000',code:'1000',name:'เงินสด',type:'asset',normal:'debit'},
@@ -2471,7 +2518,7 @@ function defaultChartAccounts(){return[
 ];}
 
 
-function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],profilePosts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
 var ACCOUNTING_POLICY_VERSION='1.0';
 var NAV_SESSION_KEY='area-ledger-nav-v1';
@@ -3404,8 +3451,8 @@ function leaveAddTo(target){
   if(!draftDirty()){U.draft=null;target();return true;}
   U.sheet={kind:'leaveAdd',target:target};render();return false;
 }
-function navState(){return {view:U.view||'home',pid:U.pid||null,docListKind:U.docListKind||'',docProjectPid:U.docProjectPid||'',docBillFilter:U.docBillFilter||'all',docQuery:U.docQuery||'',docKind:U.docKind||'',docId:U.docId||'',exportPid:U.exportPid||'',month:U.month||today().slice(0,7),boqProjectPid:U.boqProjectPid||'',boqQuery:U.boqQuery||'',boqCollapsed:U.boqCollapsed&&typeof U.boqCollapsed==='object'?Object.assign({},U.boqCollapsed):{},boqAnchorId:U.boqAnchorId||'',boqScroll:Math.max(0,+U.boqScroll||0),dueProjectPid:U.dueProjectPid||'',dueOpen:U.dueOpen&&typeof U.dueOpen==='object'?Object.assign({},U.dueOpen):{},homeOpen:U.homeOpen&&typeof U.homeOpen==='object'?Object.assign({},U.homeOpen):{},projectHubStatus:U.projectHubStatus||'',projectHubQuery:U.projectHubQuery||'',listFilterOpen:!!U.listFilterOpen,guaranteeProjectPid:U.guaranteeProjectPid||'',guaranteeFilter:U.guaranteeFilter||'all',guaranteeQuery:U.guaranteeQuery||'',reportOpen:U.reportOpen&&typeof U.reportOpen==='object'?Object.assign({},U.reportOpen):{},filter:U.filter?Object.assign({},U.filter):null};}
-function navSessionAllowed(v){return ['home','list','projects','project','boq','due','guarantees','report','print','docs','procurement','doclist','quoteprint'].indexOf(v)>=0;}
+function navState(){return {view:U.view||'home',pid:U.pid||null,docListKind:U.docListKind||'',docProjectPid:U.docProjectPid||'',docBillFilter:U.docBillFilter||'all',docQuery:U.docQuery||'',docKind:U.docKind||'',docId:U.docId||'',exportPid:U.exportPid||'',month:U.month||today().slice(0,7),boqProjectPid:U.boqProjectPid||'',boqQuery:U.boqQuery||'',boqCollapsed:U.boqCollapsed&&typeof U.boqCollapsed==='object'?Object.assign({},U.boqCollapsed):{},boqAnchorId:U.boqAnchorId||'',boqScroll:Math.max(0,+U.boqScroll||0),dueProjectPid:U.dueProjectPid||'',dueOpen:U.dueOpen&&typeof U.dueOpen==='object'?Object.assign({},U.dueOpen):{},homeOpen:U.homeOpen&&typeof U.homeOpen==='object'?Object.assign({},U.homeOpen):{},projectHubStatus:U.projectHubStatus||'',projectHubQuery:U.projectHubQuery||'',listFilterOpen:!!U.listFilterOpen,guaranteeProjectPid:U.guaranteeProjectPid||'',guaranteeFilter:U.guaranteeFilter||'all',guaranteeQuery:U.guaranteeQuery||'',profileFilter:U.profileFilter||'all',reportOpen:U.reportOpen&&typeof U.reportOpen==='object'?Object.assign({},U.reportOpen):{},filter:U.filter?Object.assign({},U.filter):null};}
+function navSessionAllowed(v){return ['home','list','projects','project','boq','due','guarantees','profile','report','print','docs','procurement','doclist','quoteprint'].indexOf(v)>=0;}
 function saveNavSession(st){
   try{
     st=st||navState();if(!navSessionAllowed(st.view))return false;
@@ -3422,10 +3469,10 @@ function restoreNavSession(){
   if(['quote','bill','receipt'].indexOf(st.docListKind)<0)st.docListKind='';
   if(['quote','bill','receipt'].indexOf(st.docKind)<0)st.docKind='';
   if(st.view==='quoteprint'){var docs=docCollection(st.docKind||'quote')||[];if(!st.docId||!docs.some(function(x){return x.id===st.docId;})){st.view='doclist';st.docId='';}}
-  U.view=st.view||'home';U.pid=st.pid||null;U.docListKind=st.docListKind||'';U.docProjectPid=st.docProjectPid||'';U.docBillFilter=['all','open','overdue','paid'].indexOf(st.docBillFilter)>=0?st.docBillFilter:'all';U.docQuery=String(st.docQuery||'').slice(0,120);U.docKind=st.docKind||'';U.docId=st.docId||'';U.exportPid=st.exportPid||'';U.month=/^\d{4}-\d{2}$/.test(st.month||'')?st.month:today().slice(0,7);U.boqProjectPid=st.boqProjectPid||'';U.boqQuery=String(st.boqQuery||'').slice(0,120);U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);U.boqScroll=Math.max(0,+st.boqScroll||0);U.dueProjectPid=st.dueProjectPid||'';U.dueOpen=st.dueOpen&&typeof st.dueOpen==='object'?Object.assign({},st.dueOpen):{};U.homeOpen=st.homeOpen&&typeof st.homeOpen==='object'?Object.assign({},st.homeOpen):{};U.projectHubStatus=['current','delivered','closed','all'].indexOf(st.projectHubStatus)>=0?st.projectHubStatus:'';U.projectHubQuery=String(st.projectHubQuery||'').slice(0,120);U.listFilterOpen=!!st.listFilterOpen;U.guaranteeProjectPid=st.guaranteeProjectPid||'';U.guaranteeFilter=st.guaranteeFilter||'all';U.guaranteeQuery=String(st.guaranteeQuery||'').slice(0,120);U.reportOpen=st.reportOpen&&typeof st.reportOpen==='object'?Object.assign({},st.reportOpen):{};if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);
+  U.view=st.view||'home';U.pid=st.pid||null;U.docListKind=st.docListKind||'';U.docProjectPid=st.docProjectPid||'';U.docBillFilter=['all','open','overdue','paid'].indexOf(st.docBillFilter)>=0?st.docBillFilter:'all';U.docQuery=String(st.docQuery||'').slice(0,120);U.docKind=st.docKind||'';U.docId=st.docId||'';U.exportPid=st.exportPid||'';U.month=/^\d{4}-\d{2}$/.test(st.month||'')?st.month:today().slice(0,7);U.boqProjectPid=st.boqProjectPid||'';U.boqQuery=String(st.boqQuery||'').slice(0,120);U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);U.boqScroll=Math.max(0,+st.boqScroll||0);U.dueProjectPid=st.dueProjectPid||'';U.dueOpen=st.dueOpen&&typeof st.dueOpen==='object'?Object.assign({},st.dueOpen):{};U.homeOpen=st.homeOpen&&typeof st.homeOpen==='object'?Object.assign({},st.homeOpen):{};U.projectHubStatus=['current','delivered','closed','all'].indexOf(st.projectHubStatus)>=0?st.projectHubStatus:'';U.projectHubQuery=String(st.projectHubQuery||'').slice(0,120);U.listFilterOpen=!!st.listFilterOpen;U.guaranteeProjectPid=st.guaranteeProjectPid||'';U.guaranteeFilter=st.guaranteeFilter||'all';U.guaranteeQuery=String(st.guaranteeQuery||'').slice(0,120);U.profileFilter=['all','site','portfolio','delivery','announce'].indexOf(st.profileFilter)>=0?st.profileFilter:'all';U.reportOpen=st.reportOpen&&typeof st.reportOpen==='object'?Object.assign({},st.reportOpen):{};if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);
   return true;
 }
-function applyNavState(st){if(!st)st={view:'home'};U.view=st.view||'home';U.pid=st.pid||null;if(st.docListKind!==undefined)U.docListKind=st.docListKind||'';if(st.docProjectPid!==undefined)U.docProjectPid=st.docProjectPid||'';if(st.docBillFilter!==undefined)U.docBillFilter=['all','open','overdue','paid'].indexOf(st.docBillFilter)>=0?st.docBillFilter:'all';if(st.docQuery!==undefined)U.docQuery=String(st.docQuery||'').slice(0,120);if(st.docKind!==undefined)U.docKind=st.docKind||'';if(st.docId!==undefined)U.docId=st.docId||'';if(st.exportPid!==undefined)U.exportPid=st.exportPid||'';if(st.month!==undefined&&/^\d{4}-\d{2}$/.test(st.month||''))U.month=st.month;if(st.boqProjectPid!==undefined)U.boqProjectPid=st.boqProjectPid||'';if(st.boqQuery!==undefined)U.boqQuery=String(st.boqQuery||'').slice(0,120);if(st.boqCollapsed!==undefined)U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};if(st.boqAnchorId!==undefined)U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);if(st.boqScroll!==undefined)U.boqScroll=Math.max(0,+st.boqScroll||0);if(st.dueProjectPid!==undefined)U.dueProjectPid=st.dueProjectPid||'';if(st.dueOpen!==undefined)U.dueOpen=st.dueOpen&&typeof st.dueOpen==='object'?Object.assign({},st.dueOpen):{};if(st.homeOpen!==undefined)U.homeOpen=st.homeOpen&&typeof st.homeOpen==='object'?Object.assign({},st.homeOpen):{};if(st.projectHubStatus!==undefined)U.projectHubStatus=['current','delivered','closed','all'].indexOf(st.projectHubStatus)>=0?st.projectHubStatus:'';if(st.projectHubQuery!==undefined)U.projectHubQuery=String(st.projectHubQuery||'').slice(0,120);if(st.listFilterOpen!==undefined)U.listFilterOpen=!!st.listFilterOpen;if(st.guaranteeProjectPid!==undefined)U.guaranteeProjectPid=st.guaranteeProjectPid||'';if(st.guaranteeFilter!==undefined)U.guaranteeFilter=st.guaranteeFilter||'all';if(st.guaranteeQuery!==undefined)U.guaranteeQuery=String(st.guaranteeQuery||'').slice(0,120);if(st.reportOpen!==undefined)U.reportOpen=st.reportOpen&&typeof st.reportOpen==='object'?Object.assign({},st.reportOpen):{};if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);U.sheet=null;U.confirm=null;U.appMenu=false;U.anim=1;saveNavSession();render();window.scrollTo(0,0);}
+function applyNavState(st){if(!st)st={view:'home'};U.view=st.view||'home';U.pid=st.pid||null;if(st.docListKind!==undefined)U.docListKind=st.docListKind||'';if(st.docProjectPid!==undefined)U.docProjectPid=st.docProjectPid||'';if(st.docBillFilter!==undefined)U.docBillFilter=['all','open','overdue','paid'].indexOf(st.docBillFilter)>=0?st.docBillFilter:'all';if(st.docQuery!==undefined)U.docQuery=String(st.docQuery||'').slice(0,120);if(st.docKind!==undefined)U.docKind=st.docKind||'';if(st.docId!==undefined)U.docId=st.docId||'';if(st.exportPid!==undefined)U.exportPid=st.exportPid||'';if(st.month!==undefined&&/^\d{4}-\d{2}$/.test(st.month||''))U.month=st.month;if(st.boqProjectPid!==undefined)U.boqProjectPid=st.boqProjectPid||'';if(st.boqQuery!==undefined)U.boqQuery=String(st.boqQuery||'').slice(0,120);if(st.boqCollapsed!==undefined)U.boqCollapsed=st.boqCollapsed&&typeof st.boqCollapsed==='object'?Object.assign({},st.boqCollapsed):{};if(st.boqAnchorId!==undefined)U.boqAnchorId=String(st.boqAnchorId||'').slice(0,160);if(st.boqScroll!==undefined)U.boqScroll=Math.max(0,+st.boqScroll||0);if(st.dueProjectPid!==undefined)U.dueProjectPid=st.dueProjectPid||'';if(st.dueOpen!==undefined)U.dueOpen=st.dueOpen&&typeof st.dueOpen==='object'?Object.assign({},st.dueOpen):{};if(st.homeOpen!==undefined)U.homeOpen=st.homeOpen&&typeof st.homeOpen==='object'?Object.assign({},st.homeOpen):{};if(st.projectHubStatus!==undefined)U.projectHubStatus=['current','delivered','closed','all'].indexOf(st.projectHubStatus)>=0?st.projectHubStatus:'';if(st.projectHubQuery!==undefined)U.projectHubQuery=String(st.projectHubQuery||'').slice(0,120);if(st.listFilterOpen!==undefined)U.listFilterOpen=!!st.listFilterOpen;if(st.guaranteeProjectPid!==undefined)U.guaranteeProjectPid=st.guaranteeProjectPid||'';if(st.guaranteeFilter!==undefined)U.guaranteeFilter=st.guaranteeFilter||'all';if(st.guaranteeQuery!==undefined)U.guaranteeQuery=String(st.guaranteeQuery||'').slice(0,120);if(st.profileFilter!==undefined)U.profileFilter=['all','site','portfolio','delivery','announce'].indexOf(st.profileFilter)>=0?st.profileFilter:'all';if(st.reportOpen!==undefined)U.reportOpen=st.reportOpen&&typeof st.reportOpen==='object'?Object.assign({},st.reportOpen):{};if(st.filter&&typeof st.filter==='object')U.filter=Object.assign({},U.filter||{},st.filter);U.sheet=null;U.confirm=null;U.appMenu=false;U.anim=1;saveNavSession();render();window.scrollTo(0,0);}
 function go(v,extra,opts){
   opts=opts||{};var cur=navState(),next=Object.assign({},cur,{view:v||'home'});
   if(extra)for(var k in extra)next[k]=extra[k];
@@ -4737,7 +4784,7 @@ function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
   var s=stats(p.id),pcost=projectCostWithGuarantees(p.id),x=budgetPct(p),left=p.budget-pcost.total,actualCost=pcost.total,forecastProfit=approvedContractValue(p.id)-actualCost;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div><div class="workflow-section-head"><span>งานประจำวัน</span><small>BOQ · เพิ่มรายการ · แก้ไขโครงการ</small></div>';
-  var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid project-command-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button class="btn" data-act="accountingProjectCost" data-id="'+p.id+'">ต้นทุนบัญชี</button><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+p.id+'">เอกสาร</button><button class="btn" data-act="projectGuarantees" data-id="'+p.id+'">หลักประกัน</button><button class="btn" data-act="govRiskOpen" data-id="'+p.id+'">สัญญา / หนังสือ</button></div></div>';
+  var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid project-command-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button class="btn" data-act="accountingProjectCost" data-id="'+p.id+'">ต้นทุนบัญชี</button><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+p.id+'">เอกสาร</button><button class="btn" data-act="projectGuarantees" data-id="'+p.id+'">หลักประกัน</button><button class="btn" data-act="govRiskOpen" data-id="'+p.id+'">สัญญา / หนังสือ</button><button class="btn profile-project-post" data-act="profilePostNew" data-id="'+p.id+'">โพสต์หน้างาน</button></div></div>';
 
   var cc=contractControl(p.id),cq=contractActionQueue(p.id);
   h+='<div class="workflow-section-head"><span>สัญญาและความเสี่ยง</span><small>กำหนดงาน · Variation · หนังสือ · เหตุการณ์</small></div>';
@@ -5411,6 +5458,30 @@ function sheetHtml(){
     if(!t.paid&&!txLocked)b+='<button class="btn" data-act="editDueTx" data-id="'+t.id+'">'+(t.due?'แก้ไขวันครบกำหนด':'เพิ่มวันครบกำหนด')+'</button>'+(t.due?'<button class="btn" data-act="clearDueTx" data-id="'+t.id+'">ปิดวันครบกำหนด</button>':'');
     b+='<button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='cloudPhoto'){var cu=String(sh.url||'');b='<h3>ไฟล์ใบเสร็จจาก Cloudflare R2</h3>'+(cu?'<div class="photo"><img src="'+esc(cu)+'" alt="รูปใบเสร็จจาก R2"></div>':'<div class="muted">เปิดไฟล์ไม่สำเร็จ</div>')+'<div class="stack"><button class="btn" data-act="closeSheet">ปิด</button></div>';
+
+  }else if(sh.kind==='profileEdit'){
+    var pb=S.business||{};b='<div class="profile-editor"><div class="doc-editor-head"><div><small>COMPANY PROFILE</small><h3>แก้ไขโปรไฟล์บริษัท</h3></div></div>'+
+      '<div class="field"><label for="profileBrand">ชื่อที่แสดง</label><input id="profileBrand" maxlength="120" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
+      '<div class="field"><label for="profileLegal">ชื่อธุรกิจ / บริษัท</label><input id="profileLegal" maxlength="180" value="'+esc(pb.legalName||'')+'"></div>'+
+      '<div class="field"><label for="profileTagline">คำโปรย</label><input id="profileTagline" maxlength="180" value="'+esc(pb.tagline||'')+'" placeholder="เช่น รับเหมาก่อสร้าง · งานภาครัฐ · ทีมหน้างาน"></div>'+
+      '<div class="field"><label for="profileBio">แนะนำบริษัท</label><textarea id="profileBio" rows="5" maxlength="1200" placeholder="บริการ ประสบการณ์ พื้นที่ให้บริการ และจุดเด่น">'+esc(pb.bio||'')+'</textarea></div>'+
+      '<div class="field"><label for="profilePhone">โทรศัพท์</label><input id="profilePhone" type="tel" maxlength="60" value="'+esc(pb.phone||'')+'"></div>'+
+      '<div class="field"><label for="profileEmail">อีเมล</label><input id="profileEmail" type="email" maxlength="120" value="'+esc(pb.email||'')+'"></div>'+
+      '<div class="field"><label for="profileAddress">ที่อยู่</label><textarea id="profileAddress" rows="3" maxlength="500">'+esc(pb.address||'')+'</textarea></div>'+
+      '<div class="profile-social-edit"><div class="field"><label for="profileLine">LINE ID</label><input id="profileLine" maxlength="160" value="'+esc(pb.lineId||'')+'"></div><div class="field"><label for="profileWebsite">เว็บไซต์</label><input id="profileWebsite" inputmode="url" maxlength="240" value="'+esc(pb.website||'')+'" placeholder="https://..."></div><div class="field"><label for="profileFacebook">Facebook</label><input id="profileFacebook" maxlength="240" value="'+esc(pb.facebook||'')+'" placeholder="URL หรือชื่อบัญชี"></div><div class="field"><label for="profileInstagram">Instagram</label><input id="profileInstagram" maxlength="240" value="'+esc(pb.instagram||'')+'" placeholder="@ชื่อบัญชี"></div><div class="field"><label for="profileTikTok">TikTok</label><input id="profileTikTok" maxlength="240" value="'+esc(pb.tiktok||'')+'" placeholder="@ชื่อบัญชี"></div></div>'+
+      '<div class="stack"><button class="btn pri" data-act="profileSaveCompany">บันทึกโปรไฟล์</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div></div>';
+  }else if(sh.kind==='profilePost'){
+    var pd=U.profilePostDraft||{id:'',type:'site',pid:'',date:today(),text:''},pph=(U.profilePostImages||[]).slice(0,4);
+    b='<div class="profile-post-editor"><div class="doc-editor-head"><div><small>WORKSITE POST</small><h3>'+(pd.id?'แก้ไขโพสต์':'โพสต์อัปเดตหน้างาน')+'</h3></div><span class="doc-status pend">'+pph.length+'/4 รูป</span></div>'+
+      '<div class="field"><label for="profilePostType">ประเภทโพสต์</label><select id="profilePostType"><option value="site"'+(pd.type==='site'?' selected':'')+'>อัปเดตหน้างาน</option><option value="portfolio"'+(pd.type==='portfolio'?' selected':'')+'>ผลงาน</option><option value="delivery"'+(pd.type==='delivery'?' selected':'')+'>จัดส่ง / ส่งมอบ</option><option value="announce"'+(pd.type==='announce'?' selected':'')+'>ประกาศ</option></select></div>'+
+      '<div class="profile-post-meta-grid"><div class="field"><label for="profilePostPid">โครงการ</label><select id="profilePostPid"><option value="">ไม่ผูกโครงการ</option>'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(pd.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div><div class="field"><label for="profilePostDate">วันที่</label><input id="profilePostDate" type="date" value="'+esc(pd.date||today())+'"></div></div>'+
+      '<div class="field"><label for="profilePostText">ข้อความโพสต์</label><textarea id="profilePostText" rows="6" maxlength="2000" placeholder="อัปเดตความคืบหน้า งานที่ทำวันนี้ ผลงาน หรือรายละเอียดส่งมอบ...">'+esc(pd.text||'')+'</textarea></div>'+
+      '<label class="profile-photo-picker" for="profilePostPhotos"><b>＋ เพิ่มรูปหน้างาน</b><small>สูงสุด 4 รูป · ย่อรูปสำหรับ iPhone อัตโนมัติ · เมื่อ Cloud Sync เปิดจะเก็บต้นฉบับใน R2</small></label><input id="profilePostPhotos" type="file" multiple accept="image/*,.heic,.heif" style="display:none">'+
+      (pph.length?'<div class="profile-editor-photos">'+pph.map(function(ph,i){return '<div><img src="'+esc(profilePhotoSrc(ph))+'" alt="รูปโพสต์"><button data-act="profilePhotoRemove" data-v="'+i+'" aria-label="ลบรูป">×</button></div>';}).join('')+'</div>':'')+
+      (U.profileSaveBusy?'<div class="profile-saving">กำลังประมวลผลรูป / บันทึกโพสต์…</div>':'')+
+      '<div class="stack"><button class="btn pri" data-act="profilePostSave" data-id="'+esc(pd.id||'')+'"'+(U.profileSaveBusy?' disabled':'')+'>'+(pd.id?'บันทึกการแก้ไข':'โพสต์อัปเดต')+'</button><button class="btn" data-act="closeSheet"'+(U.profileSaveBusy?' disabled':'')+'>ยกเลิก</button></div></div>';
+  }else if(sh.kind==='profileLocalPhoto'){
+    b='<h3>'+esc(sh.title||'รูปหน้างาน')+'</h3><div class="photo"><img src="'+esc(sh.src||'')+'" alt="'+esc(sh.title||'รูปหน้างาน')+'"></div><div class="stack"><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='dueEdit'){
     var dt=S.tx.find(function(x){return x.id===sh.id;});if(!dt){U.sheet=null;return '';}
     b='<h3>'+(dt.due?'แก้ไขวันครบกำหนด':'เพิ่มวันครบกำหนด')+'</h3>'+
@@ -5780,6 +5851,108 @@ function urgentCount(){
 }
 
 
+
+function profilePostTypeLabel(v){return ({site:'อัปเดตหน้างาน',portfolio:'ผลงาน',delivery:'จัดส่ง / ส่งมอบ',announce:'ประกาศ'})[v]||'อัปเดตหน้างาน';}
+function profileProjectName(pid){var p=pid&&proj(pid);return p?p.name:'';}
+function profileSafeUrl(kind,value){
+  var x=String(value||'').trim();if(!x)return '';
+  if(/^https:\/\//i.test(x))return x;
+  if(kind==='website'&&/^www\./i.test(x))return 'https://'+x;
+  x=x.replace(/^@/,'').replace(/^\s+|\s+$/g,'');
+  if(kind==='line')return 'https://line.me/R/ti/p/~'+encodeURIComponent(x);
+  if(kind==='facebook')return 'https://www.facebook.com/'+encodeURIComponent(x);
+  if(kind==='instagram')return 'https://www.instagram.com/'+encodeURIComponent(x);
+  if(kind==='tiktok')return 'https://www.tiktok.com/@'+encodeURIComponent(x);
+  return '';
+}
+function profileSocialChip(kind,label,value){
+  var url=profileSafeUrl(kind,value);if(!value)return '';
+  return url?'<button class="profile-social-chip" data-act="profileOpenLink" data-url="'+esc(url)+'"><b>'+esc(label)+'</b><span>'+esc(value)+'</span></button>':'<span class="profile-social-chip"><b>'+esc(label)+'</b><span>'+esc(value)+'</span></span>';
+}
+function profilePhotoSrc(ph){return String(ph&&((ph.thumb||ph.data))||'');}
+function profilePostDraftCapture(){
+  var d=U.profilePostDraft&&typeof U.profilePostDraft==='object'?U.profilePostDraft:{id:'',type:'site',pid:'',date:today(),text:''};
+  var map={profilePostType:'type',profilePostPid:'pid',profilePostDate:'date',profilePostText:'text'};
+  Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)d[map[id]]=el.value;});
+  U.profilePostDraft=d;return d;
+}
+function profilePhotoResize(file){
+  return new Promise(function(resolve,reject){
+    if(!file||file.size>18*1024*1024){reject(new Error('PHOTO_TOO_LARGE'));return;}
+    var r=new FileReader();r.onerror=function(){reject(new Error('PHOTO_READ_FAILED'));};r.onload=function(){
+      var im=new Image();im.onerror=function(){reject(new Error('PHOTO_DECODE_FAILED'));};im.onload=function(){
+        try{
+          function draw(max,q){var k=Math.min(1,max/Math.max(im.width,im.height)),w=Math.max(1,Math.round(im.width*k)),h=Math.max(1,Math.round(im.height*k)),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);return c.toDataURL('image/jpeg',q);}
+          resolve({data:draw(900,.68),thumb:draw(420,.56),ref:'',mime:'image/jpeg'});
+        }catch(e){reject(e);}
+      };im.src=String(r.result||'');
+    };r.readAsDataURL(file);
+  });
+}
+async function profileAddPhotos(files){
+  profilePostDraftCapture();var list=Array.from(files||[]),room=Math.max(0,4-(U.profilePostImages||[]).length);if(!room){toast('โพสต์ได้สูงสุด 4 รูป');return;}
+  list=list.slice(0,room);if(!list.length)return;U.profileSaveBusy=true;render();
+  var added=0,failed=0;
+  for(var i=0;i<list.length;i++){try{var ph=await profilePhotoResize(list[i]);U.profilePostImages.push(ph);added++;}catch(_){failed++;}}
+  U.profileSaveBusy=false;render();toast(added?'เพิ่มรูปแล้ว '+added+' รูป'+(failed?' · อ่านไม่ได้ '+failed:''):'อ่านรูปไม่สำเร็จ');
+}
+async function profileSavePost(){
+  if(U.profileSaveBusy)return;var d=profilePostDraftCapture(),photos=(U.profilePostImages||[]).slice(0,4);
+  d.text=String(d.text||'').trim().slice(0,2000);if(!d.text&&!photos.length){toast('ใส่ข้อความหรือรูปหน้างานก่อน');return;}
+  if(['site','portfolio','delivery','announce'].indexOf(d.type)<0)d.type='site';if(d.pid&&!proj(d.pid))d.pid='';if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date||''))d.date=today();
+  U.profileSaveBusy=true;render();var id=d.id||uid(),out=[];
+  for(var i=0;i<photos.length;i++){
+    var ph=photos[i]||{},row={ref:String(ph.ref||''),thumb:String(ph.thumb||''),data:String(ph.data||''),mime:String(ph.mime||'image/jpeg')};
+    if(row.data&&cloudSyncEnabled()){
+      try{var up=await cloudFileUpload(row.data,'profile-post',id,'worksite-'+d.date+'-'+id+'-'+(i+1)+'.jpg');if(up.ok&&up.data&&up.data.key){row.ref=up.data.key;row.data='';row.mime=up.data.mime||'image/jpeg';}}catch(_){}
+    }
+    out.push(row);
+  }
+  var idx=(S.profilePosts||[]).findIndex(function(x){return x.id===id;}),prev=idx>=0?JSON.parse(JSON.stringify(S.profilePosts[idx])):null,post={id:id,type:d.type,pid:d.pid,date:d.date,text:d.text,photos:out,createdAt:prev?prev.createdAt:Date.now(),updatedAt:Date.now()};
+  if(idx>=0)S.profilePosts[idx]=post;else S.profilePosts.push(post);
+  if(!persist()){if(idx>=0)S.profilePosts[idx]=prev;else S.profilePosts=S.profilePosts.filter(function(x){return x.id!==id;});U.profileSaveBusy=false;render();toast('บันทึกโพสต์ไม่สำเร็จ · ข้อมูลเดิมยังอยู่');return;}
+  var del=(U.profilePostDeleteRefs||[]).slice();U.profilePostDeleteRefs=[];for(var j=0;j<del.length;j++)if(cloudSyncEnabled())cloudFileDelete(del[j]);
+  U.profileSaveBusy=false;U.profilePostDraft=null;U.profilePostImages=[];U.sheet=null;render();toast(idx>=0?'แก้ไขโพสต์แล้ว':'โพสต์อัปเดตหน้างานแล้ว');
+}
+function profileDeletePost(id){
+  var idx=(S.profilePosts||[]).findIndex(function(x){return x.id===id;});if(idx<0)return;var post=S.profilePosts[idx],snap=JSON.parse(JSON.stringify(post));S.profilePosts.splice(idx,1);
+  if(!persist()){S.profilePosts.splice(idx,0,snap);toast('ลบโพสต์ไม่สำเร็จ');return;}
+  (post.photos||[]).forEach(function(ph){if(ph.ref&&cloudSyncEnabled())cloudFileDelete(ph.ref);});U.confirm=null;render();toast('ลบโพสต์แล้ว');
+}
+function profileSharePost(id){
+  var p=(S.profilePosts||[]).find(function(x){return x.id===id;});if(!p)return;var b=S.business||{},name=S.brand||b.legalName||'AREA MAIBAB',project=profileProjectName(p.pid),text=[name,profilePostTypeLabel(p.type),project,p.text].filter(Boolean).join('\n');
+  if(navigator.share){navigator.share({title:name,text:text}).catch(function(){});return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast('คัดลอกข้อความโพสต์แล้ว');},function(){toast('คัดลอกไม่สำเร็จ');});return;}
+  toast('เครื่องนี้ไม่รองรับเมนูแชร์');
+}
+function profileOpenPhoto(postId,index){
+  var p=(S.profilePosts||[]).find(function(x){return x.id===postId;}),ph=p&&p.photos&&p.photos[index];if(!ph)return;
+  if(ph.ref){cloudFileOpen(ph.ref,ph.mime||'image/jpeg');return;}
+  var src=ph.data||ph.thumb;if(src){U.sheet={kind:'profileLocalPhoto',src:src,title:profilePostTypeLabel(p.type)};render();}
+}
+function vProfile(){
+  var b=S.business||{},posts=(S.profilePosts||[]).slice().sort(function(a,z){var d=String(z.date||'').localeCompare(String(a.date||''));return d||(+z.createdAt||0)-(+a.createdAt||0);}),filter=U.profileFilter||'all',view=filter==='all'?posts:posts.filter(function(p){return p.type===filter;}),photoCount=posts.reduce(function(n,p){return n+(p.photos||[]).length;},0),linked={};
+  posts.forEach(function(p){if(p.pid)linked[p.pid]=1;});
+  var socials=profileSocialChip('line','LINE',b.lineId)+profileSocialChip('website','Website',b.website)+profileSocialChip('facebook','Facebook',b.facebook)+profileSocialChip('instagram','Instagram',b.instagram)+profileSocialChip('tiktok','TikTok',b.tiktok);
+  var h='<section class="company-profile"><div class="profile-hero"><div class="profile-cover">AREA COMPANY PROFILE · WORKSITE FEED</div><div class="profile-main"><img src="area-logo-header.jpg" alt="AREA MAIBAB"><div class="profile-title"><small>COMPANY PROFILE</small><h2>'+esc(S.brand||b.legalName||'AREA MAIBAB')+'</h2><p>'+esc(b.tagline||b.legalName||'ข้อมูลบริษัทและผลงานหน้างาน')+'</p></div><button class="profile-edit-btn" data-act="profileEdit">แก้ไข</button></div>'+
+    (b.bio?'<div class="profile-bio">'+esc(b.bio)+'</div>':'<div class="profile-bio muted">เพิ่มคำแนะนำบริษัท บริการ และพื้นที่ทำงานได้จากปุ่มแก้ไขโปรไฟล์</div>')+
+    '<div class="profile-contact">'+(b.phone?'<span>☎ '+esc(b.phone)+'</span>':'')+(b.email?'<span>✉ '+esc(b.email)+'</span>':'')+(b.address?'<span>⌖ '+esc(b.address)+'</span>':'')+'</div>'+
+    (socials?'<div class="profile-socials">'+socials+'</div>':'')+
+    '<div class="profile-stats"><div><b>'+posts.length+'</b><small>โพสต์</small></div><div><b>'+Object.keys(linked).length+'</b><small>หน้างานที่อัปเดต</small></div><div><b>'+photoCount+'</b><small>รูปผลงาน</small></div></div></div>'+
+    '<div class="profile-compose"><button data-act="profilePostNew"><span class="profile-compose-plus">＋</span><span><b>อัปเดตหน้างาน / ลงผลงาน</b><small>โพสต์รูป ความคืบหน้า จัดส่ง ส่งมอบ หรือประกาศ</small></span><strong>›</strong></button></div>'+
+    '<div class="profile-feed-head"><div><small>WORKSITE FEED</small><h3>อัปเดตล่าสุด</h3></div><span>'+view.length+' โพสต์</span></div>'+
+    '<div class="profile-filter">'+[['all','ทั้งหมด'],['site','หน้างาน'],['portfolio','ผลงาน'],['delivery','ส่งมอบ'],['announce','ประกาศ']].map(function(x){return '<button class="'+(filter===x[0]?'on':'')+'" data-act="profileFilter" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';
+  if(!view.length)h+='<div class="profile-empty">ยังไม่มีโพสต์ในหมวดนี้<br><small>แตะ “อัปเดตหน้างาน / ลงผลงาน” เพื่อสร้างโพสต์แรก</small></div>';
+  view.forEach(function(p){
+    var pn=profileProjectName(p.pid),ph=(p.photos||[]).filter(function(x){return profilePhotoSrc(x);});
+    h+='<article class="profile-post-card"><div class="profile-post-head"><img src="area-logo-header.jpg" alt=""><div><b>'+esc(S.brand||b.legalName||'AREA MAIBAB')+'</b><small>'+dstr(p.date)+(pn?' · '+esc(pn):'')+'</small></div><span class="profile-post-kind">'+esc(profilePostTypeLabel(p.type))+'</span></div>'+
+      (p.text?'<div class="profile-post-text">'+esc(p.text)+'</div>':'')+
+      (ph.length?'<div class="profile-post-photos n'+ph.length+'">'+ph.map(function(x,i){return '<button data-act="profilePhotoOpen" data-id="'+p.id+'" data-v="'+i+'" aria-label="เปิดรูป '+(i+1)+'"><img src="'+esc(profilePhotoSrc(x))+'" alt="รูปหน้างาน '+(i+1)+'"></button>';}).join('')+'</div>':'')+
+      '<div class="profile-post-actions"><button data-act="profilePostShare" data-id="'+p.id+'">แชร์</button><button data-act="profilePostEdit" data-id="'+p.id+'">แก้ไข</button><button class="danger" data-act="profilePostDelete" data-id="'+p.id+'">'+(U.confirm==='profile'+p.id?'ยืนยันลบ':'ลบ')+'</button></div></article>';
+  });
+  return h+'</section>';
+}
+
 function appMenuHtml(){
   if(!U.appMenu)return '';
   var due=urgentCount(),gDue=(S.guarantees||[]).filter(function(g){var s=guaranteeRecordStatus(g);return !g.returned&&(s.key==='ready'||s.key==='near');}).length;
@@ -5787,7 +5960,8 @@ function appMenuHtml(){
     {label:'งานประจำวัน',hint:'ใช้บ่อย',items:[
       ['home','home','ภาพรวม','ยอดเงินและสถานะวันนี้',0],
       ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
-      ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'กำหนดรับเงินและจ่ายเงิน',due]
+      ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'กำหนดรับเงินและจ่ายเงิน',due],
+      ['profile','profile','โปรไฟล์บริษัท','ข้อมูลบริษัท · โพสต์หน้างาน · ผลงาน',0]
     ]},
     {label:'โครงการและต้นทุน',hint:'งานก่อสร้าง',items:[
       ['projects','build','โครงการ','ข้อมูลโครงการ · สัญญา · ต้นทุน',0],
@@ -5820,7 +5994,7 @@ function render(){
   var mode=(S.ui&&S.ui.viewMode==='desktop')?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',mode);
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
-  var validViews={home:1,list:1,add:1,projects:1,project:1,boq:1,due:1,guarantees:1,report:1,print:1,docs:1,procurement:1,doclist:1,quoteprint:1};
+  var validViews={home:1,list:1,add:1,projects:1,project:1,boq:1,due:1,guarantees:1,report:1,print:1,docs:1,procurement:1,doclist:1,quoteprint:1,profile:1};
   if(!validViews[U.view])U.view='home';
   if(U.view==='project'&&!proj(U.pid)){U.view='projects';U.pid=null;}
   var v=U.view,title='',body='',back=false;
@@ -5834,6 +6008,7 @@ function render(){
   else if(v==='guarantees'){title='งานประกัน';body=vGuarantees();back=true;}
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
+  else if(v==='profile'){title='โปรไฟล์บริษัท';body=vProfile();back=true;}
   else if(v==='docs'){title='เอกสารธุรกิจ';body=vDocs();back=true;}
   else if(v==='procurement'){title='งานพัสดุ';body=vProcurement();back=true;}
   else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
@@ -6020,6 +6195,23 @@ document.addEventListener('click',function(e){
   }
   if(a==='appMenu'){U.appMenu=true;render();return;}
   if(a==='appMenuClose'){U.appMenu=false;render();return;}
+
+  if(a==='profileEdit'){U.appMenu=false;U.sheet={kind:'profileEdit'};render();return;}
+  if(a==='profilePostNew'){U.appMenu=false;U.profilePostDraft={id:'',type:'site',pid:(id&&proj(id)?id:''),date:today(),text:''};U.profilePostImages=[];U.profilePostDeleteRefs=[];U.sheet={kind:'profilePost'};render();return;}
+  if(a==='profilePostEdit'){var pe=(S.profilePosts||[]).find(function(x){return x.id===id;});if(!pe)return;U.profilePostDraft={id:pe.id,type:pe.type||'site',pid:pe.pid||'',date:pe.date||today(),text:pe.text||''};U.profilePostImages=JSON.parse(JSON.stringify(pe.photos||[]));U.profilePostDeleteRefs=[];U.sheet={kind:'profilePost',id:id};render();return;}
+  if(a==='profileFilter'){U.profileFilter=['all','site','portfolio','delivery','announce'].indexOf(v)>=0?v:'all';saveNavSession();render();return;}
+  if(a==='profileSaveCompany'){
+    var oldBrand=S.brand,oldBusiness=JSON.parse(JSON.stringify(S.business||{})),gb=function(n){var x=document.getElementById(n);return x?String(x.value||'').trim():'';};S.business=S.business||{};
+    S.brand=gb('profileBrand').slice(0,120)||'AREA MAIBAB';S.business.legalName=gb('profileLegal').slice(0,180);S.business.tagline=gb('profileTagline').slice(0,180);S.business.bio=gb('profileBio').slice(0,1200);S.business.phone=gb('profilePhone').slice(0,60);S.business.email=gb('profileEmail').slice(0,120);S.business.address=gb('profileAddress').slice(0,500);S.business.lineId=gb('profileLine').slice(0,160);S.business.website=gb('profileWebsite').slice(0,240);S.business.facebook=gb('profileFacebook').slice(0,240);S.business.instagram=gb('profileInstagram').slice(0,240);S.business.tiktok=gb('profileTikTok').slice(0,240);
+    if(!persist()){S.brand=oldBrand;S.business=oldBusiness;toast('บันทึกโปรไฟล์ไม่สำเร็จ');return;}U.sheet=null;render();toast('อัปเดตโปรไฟล์บริษัทแล้ว');return;
+  }
+  if(a==='profilePostSave'){profileSavePost();return;}
+  if(a==='profilePhotoRemove'){profilePostDraftCapture();var px=Math.max(0,+v||0),ph=(U.profilePostImages||[])[px];if(ph&&ph.ref){U.profilePostDeleteRefs=U.profilePostDeleteRefs||[];U.profilePostDeleteRefs.push(ph.ref);}U.profilePostImages.splice(px,1);render();return;}
+  if(a==='profilePhotoOpen'){profileOpenPhoto(id,Math.max(0,+v||0));return;}
+  if(a==='profilePostShare'){profileSharePost(id);return;}
+  if(a==='profilePostDelete'){if(U.confirm==='profile'+id){profileDeletePost(id);}else{U.confirm='profile'+id;render();toast('แตะยืนยันลบอีกครั้ง');}return;}
+  if(a==='profileOpenLink'){var pu=el.dataset.url||'';if(/^https:\/\//i.test(pu))window.open(pu,'_blank','noopener');return;}
+
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='menuGo'){U.appMenu=false;if(v==='docs')U.docProjectPid='';go(v);return;}
   if(a==='docSection'){U.docProjectPid='';U.docBillFilter='all';U.docQuery='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
@@ -6370,6 +6562,7 @@ document.addEventListener('toggle',function(e){
   if(U.view==='home'&&d.classList.contains('home-fold')){var hk=d.getAttribute('data-home-key');if(!hk)return;U.homeOpen=U.homeOpen&&typeof U.homeOpen==='object'?U.homeOpen:{};U.homeOpen[hk]=!!d.open;saveNavSession();}
 },true);
 document.addEventListener('change',function(e){
+  if(e.target&&e.target.id==='profilePostPhotos'&&e.target.files&&e.target.files.length){profileAddPhotos(e.target.files);return;}
   if(e.target&&e.target.id==='docProjectFilter'){var dpp=e.target.value||'';U.docProjectPid=dpp&&proj(dpp)?dpp:'';U.docQuery='';saveNavSession();render();return;}
   if(e.target&&e.target.id==='guaranteeProjectFilter'){var gp=e.target.value||'';U.guaranteeProjectPid=gp&&proj(gp)?gp:'';U.guaranteeQuery='';saveNavSession();render();return;}
   if(e.target&&e.target.id==='dueProjectFilter'){var dp=e.target.value||'';U.dueProjectPid=dp&&proj(dp)?dp:'';U.dueOpen={};saveNavSession();render();return;}
