@@ -5,6 +5,16 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1039 Local OCR Page Provenance
+
+- Local OCR now preserves `sourcePage`, `sourceFile`, and `sourceKind` for every BOQ row from multi-image and scanned-PDF imports.
+- Identical-value rows on different source pages are no longer collapsed as parser duplicates; same-page duplicate evidence is still deduplicated.
+- Multi-image and scanned-PDF Local OCR assemble rows per source page before merging, so page geometry and subtotal checks are retained through fallback.
+- Local page totals use conservative scope detection: explicit page totals reconcile per page; explicit document totals reconcile globally; ambiguous totals are only treated as page totals when they already reconcile locally.
+- Preview shows source page/file provenance, and final BOQ save persists that provenance for later audit and troubleshooting.
+- Existing AI row arithmetic checks, page/document total reconciliation, memory cleanup and human Preview/final confirmation remain unchanged.
+
+
 ## v1039 full-app UX/UI audit
 
 - Adds explicit `data-view`, `data-sheet-kind` and `sheet-open` runtime scopes so every primary screen and every bottom sheet can receive deterministic responsive styling without leaking rules into unrelated views.

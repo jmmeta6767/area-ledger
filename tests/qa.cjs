@@ -530,7 +530,7 @@ w('งานฉาบปูนเสาโครงสร้าง',335,215,300)
 w('งานทาสีน้ำพลาสติกโครงสร้าง',350,276,330),w('48.00',755,282),w('ตร.ม.',860,279),w('(18)',965,270),w('50.64',1035,275),w('2,430.72',1145,287,90),w('(32)',1230,273),w('35.00',1300,280),w('1,680.00',1405,291,90),w('4,110.72',1530,294,90)
 ]};const rows=c.boqRowBandRows(data,1800);assert.equal(rows.length,4);assert(rows.some(x=>x.category==='ค่าของ'&&x.qty===48&&x.unitPrice===27.25));assert(rows.some(x=>x.category==='ค่าแรง'&&x.qty===48&&x.unitPrice===109));assert(rows.some(x=>x.category==='ค่าของ'&&x.unitPrice===50.64));assert(rows.some(x=>x.category==='ค่าแรง'&&x.unitPrice===35));assert(rows.every(x=>x.ocrRowBand===true));});
 reset();test('v1015 row-band evidence survives noisy-name quality gate and remains review-required',()=>{var r={name:'EET unreadable item',category:'ค่าของ',qty:48,unit:'ตร.ม.',unitPrice:27.25,ocrConfidence:.95,ocrNeedsReview:true,ocrRowBand:true,note:'row band'};assert(c.boqRowQuality(r)<4);var rows=c.boqQualityRows([r]);assert.equal(rows.length,1);assert.equal(rows[0].ocrNeedsReview,true);});
-reset();test('v1015 BOQ image pipeline merges row-band geometry before positional/equation fallback',()=>{const read=c.boqReadImage.toString(),run=c.boqImportImages.toString();assert(read.includes('boqRowBandRows(r.data,cv.width)'));assert(read.includes('bandRows:band'));assert(run.includes('bandRows=bandRows.concat(rr.bandRows||[])'));assert(run.includes('boqMergeOcrRows(bandRows'));assert(run.includes("mode=bandRows.length?'Row Band + Equation BOQ'"));});
+reset();test('v1015 BOQ image pipeline merges row-band geometry before positional/equation fallback',()=>{const read=c.boqReadImage.toString(),run=c.boqImportImages.toString();assert(read.includes('boqRowBandRows(r.data,cv.width)'));assert(read.includes('bandRows:band'));assert(run.includes("bandRows=bandRows.concat(boqSourceRows(rr.bandRows||[],i+1,clean[i].name,'local-row-band'))"));assert(c.boqLocalPageAssemble.toString().includes('boqMergeOcrRows(bandRows'));assert(run.includes("mode=bandRows.length?'Row Band + Equation BOQ'"));});
 reset();test('v1015 zero-row diagnostic exposes row-band equation and OCR word evidence',()=>{const run=c.boqImportImages.toString();assert(run.includes("' · RowBand '+bandRows.length"));assert(run.includes("' · สมการ '+eqRows.length"));assert(run.includes("' · อ่านค่า '+wordCount+' จุด'"));});
 reset();test('v1015 Gemini BOQ prompt teaches the 48 sqm circled-number material/labor pattern',()=>{const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('48.00 ตร.ม. (17) 27.25 1,308.00 (31) 109.00 5,232.00 6,540.00'));assert(w.includes('48.00 ตร.ม. (18) 50.64 2,430.72 (32) 35.00 1,680.00 4,110.72'));assert(w.includes('เลข 17 และ 31 เป็นเลขวงกลมกำกับราคา'));});
 
@@ -765,6 +765,33 @@ reset();test('v1038 provider and browser BOQ contracts preserve declaredTotalSco
   const v=c.aiGatewayValidateBoq({rows:[{name:'งาน A',qty:1,unit:'งาน',unitPrice:100,amount:100,category:'ค่าของ'}],declaredTotal:100,declaredTotalScope:'page'});assert.equal(v.declaredTotalScope,'page');
   const bad=c.aiGatewayValidateBoq({rows:[{name:'งาน A',qty:1,unit:'งาน',unitPrice:100,amount:100,category:'ค่าของ'}],declaredTotal:100,declaredTotalScope:'weird'});assert.equal(bad.declaredTotalScope,'');
   const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('declaredTotalScope'));assert(w.includes('scope="page"'));assert(w.includes('scope="document"'));assert(w.includes("scope0==='page'||scope0==='document'"));
+});
+
+
+reset();test('v1039 source provenance keeps identical legitimate BOQ rows from different pages separate',()=>{
+  const a={name:'งานทาสีใหม่',category:'ค่าของ',qty:10,unit:'ตร.ม.',unitPrice:36.28,sourcePage:1,sourceFile:'p1.jpg'},b={...a,sourcePage:2,sourceFile:'p2.jpg'};
+  assert.equal(c.boqMergeOcrSame(a,b),false);assert.notEqual(c.boqPreviewRowKey(a),c.boqPreviewRowKey(b));assert.equal(c.boqImportKey(a),c.boqImportKey(b));
+});
+reset();test('v1039 local page assembler preserves page file and kind provenance',()=>{
+  const text='3 ทรายหยาบรองพื้น 21.62 ลบ.ม. 375.00 8,107.50 112.00 2,421.44 10,528.94';
+  const x=c.boqLocalPageAssemble(text,[],[],[],2,'page-2.jpg',4);assert.equal(x.rows.length,2);x.rows.forEach(r=>{assert.equal(r.sourcePage,2);assert.equal(r.sourceFile,'page-2.jpg');assert.equal(r.sourceKind,'local-ocr');});
+});
+reset();test('v1039 local page total scope is conservative and page totals reconcile independently',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8')),rows=fx.rows.slice(0,8).map(x=>c.boqSourceRows([x],1,'p1.jpg','local-ocr')[0]);
+  const info=c.boqLocalDeclaredTotalInfo('รวมราคาประจำหน้านี้ 48,884.85',4);assert.equal(info.scope,'page');assert.equal(info.total,48884.85);
+  const chk=c.boqAiPageTotalCheck(rows,info.total,info.scope,4);assert.equal(chk.checked,true);assert.equal(chk.ok,true);
+  const doc=c.boqLocalDeclaredTotalInfo('รวมทั้งสิ้น 412,812.83',4);assert.equal(doc.scope,'document');assert.equal(doc.total,412812.83);
+});
+reset();test('v1039 preview dedupe keeps same-value rows on separate pages but still blocks existing BOQ duplicates',()=>{
+  c.S.projects=[{id:'p',name:'P'}];c.S.boq=[];c.U.boqImport=null;const r1={name:'A',category:'ค่าของ',qty:1,unit:'งาน',unitPrice:100,sourcePage:1,sourceFile:'a.jpg'},r2={...r1,sourcePage:2,sourceFile:'b.jpg'};
+  c.boqImportPreview('p',[r1,r2],'set');assert.equal(c.U.boqImport.rows.length,2);c.U.boqImport=null;c.S.boq=[{id:'x',pid:'p',name:'A',category:'ค่าของ',qty:1,unit:'งาน',unitPrice:100}];c.boqImportPreview('p',[r1,r2],'set2');assert.equal(c.U.boqImport,null);
+});
+reset();test('v1039 final import persists source page file and kind provenance',()=>{
+  const src=fs.readFileSync('gateway/public/index.html','utf8'),a=src.indexOf("else if(a==='boqImportConfirm')"),b=src.indexOf("else if(a==='undoBoqBatch')",a),part=src.slice(a,b);
+  assert(part.includes('sourcePage:Math.max(0,+x.sourcePage||0)'));assert(part.includes("sourceFile:String(x.sourceFile||'').slice(0,180)"));assert(part.includes("sourceKind:String(x.sourceKind||'').slice(0,40)"));assert(part.includes('boqPreviewRowKey(x)'));
+});
+reset();test('v1039 local image and PDF fallbacks retain per-page checks instead of collapsing all pages first',()=>{
+  const a=c.boqImportImages.toString(),b=c.boqImportScannedPdf.toString();assert(a.includes('localPageChecks[i]=lp.check'));assert(a.includes('boqLocalPageAssemble(rr.text'));assert(b.includes('pageLocal=boqLocalPageAssemble'));assert(b.includes('localPageChecks[p-1]=pageLocal.check'));assert(b.includes('PDF Local Row-Band / Equation'));
 });
 
 console.log(`PASS ${checks} QA groups`);
