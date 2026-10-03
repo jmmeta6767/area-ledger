@@ -1,10 +1,13 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const src=fs.readFileSync('gateway/public/index.html','utf8');
 assert(src.includes('v1040: distinguish an unset project budget from 0% usage'),'missing v1040 budget state UX');
+assert(src.includes('function projectBudgetControl(p){var a=projectCostAccounting(p.id),b=Math.max(0,+a.bac||0);return {budget:b,pct:b>0?a.budgetUtilization:0};}'),'project card must use the authoritative accounting budget/usage basis');
+assert(src.includes('control=projectBudgetControl(p),budget=control.budget,x=control.pct'),'project list must render the same budget control used by accounting');
 assert(src.includes("budget>0?Math.round(x*100)+'%':'ยังไม่ตั้งงบ'"),'unset budget must not display a false 0%');
 assert(src.includes("budget>0?barCls(x):'budget-unset'"),'unset budgets must hide the meaningless progress bar');
 assert(src.includes('.project-hub-glance .budget-not-set b'),'unset-budget label must remain readable on mobile');
+assert(src.includes('budgetUtilization=bac>0?actual/bac:0'),'central accounting utilization formula changed unexpectedly');
 assert(src.includes('project-list-card')&&src.includes('projectHubProjects()'),'project list rendering contract changed');
 assert(src.includes("KEY='site-ledger-v1'")||src.includes("const KEY='site-ledger-v1'"),'storage key contract missing');
 assert(src.includes("'site-ledger-db'"),'IndexedDB contract missing');
-console.log('PASS v1040 project budget state regression');
+console.log('PASS v1040 project budget state and accounting-basis regression');
