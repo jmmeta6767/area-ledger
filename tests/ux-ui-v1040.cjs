@@ -8,11 +8,15 @@ const paperClose=render.indexOf("   '</div>'+\n   '<div class=\"doc-actions-bar 
 assert(paperClose>=0,'document action bar must sit outside the A4 paper');
 assert(render.includes('aria-label=\"การดำเนินการกับเอกสาร\"'),'mobile action bar needs an accessible group label');
 for(const action of ['convertDoc','billPay','doPrint','downloadDocPdf','editDoc'])assert(render.includes('data-act=\"'+action+'\"'),'document action missing: '+action);
-assert(src.includes('v1040 Business Document mobile action bar'),'v1040 document toolbar layer missing');
+assert(src.includes('v1040 iPhone business-document preview and action controls'),'v1040 document UX layer missing');
+assert(src.includes('data-label=\"ราคาต่อหน่วย\"'),'responsive document cells need visible labels');
+assert(src.includes('body[data-view=\"quoteprint\"] .quote-paper.rd-paper:not(.pdf-export)'),'iPhone preview must reflow without changing PDF layout');
+assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper.pdf-export .rd-table{display:table!important'),'PDF export restores the A4 table');
+assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper .rd-table td::before{display:none!important'),'printed A4 table hides mobile-only labels');
 assert(src.includes('body[data-view="quoteprint"] .doc-actions-bar'),'toolbar must be scoped to document preview');
 assert(src.includes('bottom:calc(88px + env(safe-area-inset-bottom,0px))'),'iPhone Safari toolbar clearance missing');
 assert(src.includes('width:min(calc(100vw - 24px),460px)'),'mobile toolbar must fit the viewport');
-assert(src.includes('@media print{.doc-actions-bar{display:none!important}}'),'action toolbar must stay out of printed documents');
+assert(src.includes('.doc-actions-bar{display:none!important}'),'action toolbar must stay out of printed documents');
 assert(src.includes('rd-paper.pdf-export{width:210mm!important'),'A4 PDF output width changed');
 assert(src.includes("KEY='site-ledger-v1'")||src.includes("const KEY='site-ledger-v1'"),'storage contract changed');
 assert(src.includes("'site-ledger-db'"),'IndexedDB contract changed');
