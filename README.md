@@ -6,6 +6,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1006 Legacy g Service Binding Hotfix
+
+- Replaces the legacy `g` Worker compatibility proxy's public network subrequest with a Cloudflare Service Binding to `area-ledger-ai-gateway`.
+- This keeps `g.areamaibab.workers.dev` as the browser origin, preserves Safari localStorage, and gives stale cached clients a direct Worker-to-Worker path for `/health`, `/ready`, and `/v1/*`.
+- The `g` Worker still stores no Gemini secret and has no D1/R2 accounting bindings; it only serves the tested app assets and forwards approved Gateway paths.
+- Production live acceptance continues to verify the real `g` origin and must pass the compatibility `/ready` proxy before cutover is accepted.
+
 ## v1005 Legacy g App Shell Sync
 
 - Keeps the user-facing origin `https://g.areamaibab.workers.dev` so iPhone/Safari localStorage and installed-PWA data stay on the same origin.
