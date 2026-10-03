@@ -32,7 +32,16 @@ jobs:
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
       - name: Regression QA
-        run: node tests/qa.cjs
+        run: |
+          set -o pipefail
+          node tests/qa.cjs 2>&1 | tee qa-regression.log
+      - name: Upload Regression QA Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-regression-log
+          path: qa-regression.log
+          if-no-files-found: ignore
       - name: Gateway contract QA
         run: node tests/gateway-contract.cjs
       - name: Gateway runtime QA
