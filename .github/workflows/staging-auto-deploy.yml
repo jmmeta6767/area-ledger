@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'gateway/**'
+      - 'legacy-app/**'
       - 'tests/**'
       - '.github/workflows/**'
   workflow_dispatch:
@@ -56,6 +57,7 @@ jobs:
           node tests/production-cutover-v805.cjs
           node --check tests/capture-production-bindings.mjs
           node tests/gateway-preflight.cjs
+          node tests/legacy-app.cjs
       - name: Deploy staging
         working-directory: gateway
         env:

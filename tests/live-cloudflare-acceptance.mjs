@@ -7,6 +7,7 @@ const declaredTarget=String(process.env.AREA_LEDGER_ACCEPTANCE_TARGET||'').trim(
 const target=declaredTarget||(base.includes('-staging.')?'staging':'production');
 const sourceSha=String(process.env.AREA_LEDGER_ACCEPTANCE_SHA||'').trim();
 const workflowRun=String(process.env.AREA_LEDGER_ACCEPTANCE_RUN||'').trim();
+const appBase=(process.env.AREA_LEDGER_APP_BASE||'https://g.areamaibab.workers.dev').replace(/\/$/,'');
 const key=crypto.randomBytes(32).toString('base64url');
 const common={'X-AREA-Gateway-Version':'1','X-AREA-Ledger-Key':key,'Content-Type':'application/json'};
 async function req(path,opt={}){
@@ -40,6 +41,16 @@ try{
   evidence.checks.provenance=true;
   const warmup=await waitForGateway(); const health=warmup.health; assert.equal(health.data.productionReady,true);evidence.checks.health=true;evidence.checks.healthAttempts=warmup.attempt;
   const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ok,true);evidence.checks.ready=true;
+  if(target==='production'){
+    const browserReady=await fetch(base+'/ready',{method:'GET',headers:{Origin:appBase},cache:'no-store'});
+    assert.equal(browserReady.ok,true);assert.equal(browserReady.headers.get('access-control-allow-origin'),appBase);
+    const browserData=await browserReady.json();assert.equal(browserData.ok,true);evidence.checks.browserOriginReady=true;
+    const legacyHealth=await fetch(appBase+'/legacy-health',{method:'GET',cache:'no-store'});assert.equal(legacyHealth.ok,true);
+    const legacyData=await legacyHealth.json();assert.equal(legacyData.service,'area-ledger-legacy-app');assert.equal(legacyData.canonicalGateway,base);evidence.checks.legacyAppHealth=true;
+    const legacyReady=await fetch(appBase+'/ready',{method:'GET',cache:'no-store'});assert.equal(legacyReady.ok,true);const legacyReadyData=await legacyReady.json();assert.equal(legacyReadyData.ok,true);evidence.checks.legacyGatewayProxy=true;
+    const app=await fetch(appBase+'/?contract=v1005',{method:'GET',cache:'no-store'});assert.equal(app.ok,true);const html=await app.text();
+    assert(html.includes('area-ledger-client-contract'));assert(html.includes('v1005-canonical-gateway'));assert(html.includes('https://area-ledger-ai-gateway.areamaibab.workers.dev'));evidence.checks.legacyAppCurrent=true;
+  }
   const platform=await req('/v1/platform/status',{method:'GET'});assert.equal(platform.data.productionReady,true);evidence.checks.platform=true;
   const now=Date.now(),state1={projects:[{id:'acceptance-p1',name:'Live Acceptance'}],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:[],quotes:[],bills:[],receipts:[],dataRevision:1,updatedAt:now,acceptanceMarker:'synthetic-no-user-data'};
   const put1=await req('/v1/ledger/state',{method:'PUT',body:JSON.stringify({state:state1,expectedRevision:0,expectedChecksum:''})});assert.equal(put1.data.ok,true);assert.match(put1.data.meta.checksum,/^[0-9a-f]{64}$/);evidence.checks.durableCreate=true;

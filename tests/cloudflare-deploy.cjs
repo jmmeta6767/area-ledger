@@ -55,3 +55,15 @@ for(const k of ['AREA_LEDGER_ACCEPTANCE_TARGET','AREA_LEDGER_ACCEPTANCE_SHA','AR
 assert(y.includes('AREA_LEDGER_ACCEPTANCE_TARGET: staging'));
 assert(y.includes('AREA_LEDGER_ACCEPTANCE_TARGET: production'));
 assert(auto.includes('AREA_LEDGER_ACCEPTANCE_TARGET: staging'));
+
+const legacyCfg=fs.readFileSync('legacy-app/wrangler.toml','utf8');
+const legacyWorker=fs.readFileSync('legacy-app/src/worker.js','utf8');
+assert(legacyCfg.includes('name = "g"'));
+assert(legacyCfg.includes('directory = "../gateway/public"'));
+assert(legacyCfg.includes('binding = "ASSETS"'));
+assert(!/OCR_API_KEY|GEMINI|LEDGER_DB|LEDGER_FILES|durable_objects/.test(legacyCfg));
+assert(legacyWorker.includes("https://area-ledger-ai-gateway.areamaibab.workers.dev"));
+assert(legacyWorker.includes("pathname.startsWith('/v1/')"));
+assert(y.includes('Deploy legacy g production app shell'));
+assert(y.includes('working-directory: legacy-app'));
+assert(y.includes('AREA_LEDGER_APP_BASE: https://g.areamaibab.workers.dev'));

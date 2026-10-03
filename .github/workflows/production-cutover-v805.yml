@@ -123,6 +123,7 @@ jobs:
           node --check tests/live-cloudflare-acceptance.mjs
           node --check tests/capture-production-bindings.mjs
           node tests/gateway-preflight.cjs
+          node tests/legacy-app.cjs
 
       - name: Deploy production and auto-provision isolated bindings
         working-directory: gateway
@@ -178,9 +179,17 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@4.145.0 deploy
 
+      - name: Deploy legacy g production app shell
+        working-directory: legacy-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.145.0 deploy
+
       - name: Live production acceptance
         env:
           AREA_LEDGER_LIVE_BASE: https://area-ledger-ai-gateway.areamaibab.workers.dev
+          AREA_LEDGER_APP_BASE: https://g.areamaibab.workers.dev
           AREA_LEDGER_ACCEPTANCE_TARGET: production
           AREA_LEDGER_ACCEPTANCE_SHA: ${{ needs.authorize.outputs.source_sha }}
           AREA_LEDGER_ACCEPTANCE_RUN: ${{ github.run_id }}
