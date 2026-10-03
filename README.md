@@ -6,6 +6,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1016 Gemini Flash-Lite Document Extraction
+
+- Switches receipt and BOQ Vision extraction from `gemini-3.5-flash` to stable `gemini-3.5-flash-lite`.
+- Flash-Lite keeps multimodal image input and structured JSON output while targeting document parsing and high-volume extraction workloads.
+- Existing 40-second provider timeout, review-before-save rules, local OCR/Row-Band fallback, D1/R2 storage and accounting data contracts remain unchanged.
+- Production stays gated behind successful staging live acceptance; no production authorization marker is included in this commit.
+
 ## v1015 BOQ Skew Row-Band Reconstruction
 
 - Adds a quantity-anchored Row-Band parser for scanned Thai government BOQ/ปร.4 tables when OCR words on the same printed row drift vertically because of scan skew, perspective, or table lines.

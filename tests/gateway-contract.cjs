@@ -54,7 +54,7 @@ assert(!/auditMeta\([^)]*(image|text|amount|partner)/.test(worker));
 assert(!/OCR_API_KEY\s*=\s*["'][^"']+["']/.test(wrangler));
 assert(/RATE_LIMIT_PER_MINUTE\s*=\s*"20"/.test(wrangler));
 assert(/^OCR_PROVIDER\s*=\s*"gemini"$/m.test(wrangler));
-assert(/^GEMINI_MODEL\s*=\s*"gemini-3.5-flash"$/m.test(wrangler));
+assert(/^GEMINI_MODEL\s*=\s*"gemini-3.5-flash-lite"$/m.test(wrangler));
 assert(/PROVIDER_TIMEOUT_MS\s*=\s*"40000"/.test(wrangler));
 assert(/PROVIDER_RETRIES\s*=\s*"1"/.test(wrangler));
 assert(/REQUIRE_DURABLE_STATE\s*=\s*"true"/.test(wrangler));
@@ -69,7 +69,7 @@ assert.notDeepEqual(fs.readFileSync('gateway/public/index.html'),fs.readFileSync
 assert(fs.readFileSync('index.html','utf8').includes('LEGACY RECOVERY ONLY'),'root index must remain recovery-only');
 assert(/\[env\.staging\]/.test(wrangler));
 assert(/name\s*=\s*"area-ledger-ai-gateway-staging"/.test(wrangler));
-assert(/GEMINI_MODEL\s*=\s*"gemini-3.5-flash"/.test(wrangler));
+assert(/GEMINI_MODEL\s*=\s*"gemini-3.5-flash-lite"/.test(wrangler));
 assert(/\[env\.staging\.vars\][\s\S]*OCR_PROVIDER\s*=\s*"gemini"/.test(wrangler));
 assert(worker.includes("/v1/ledger/state"));
 assert(worker.includes("/v1/ledger/status"));

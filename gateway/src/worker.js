@@ -191,7 +191,7 @@ function validateOcrImage(b,kind){
   return {image,lang:'tha+eng',kind:kind==='boq'?'boq':'expense'};
 }
 function safeProviderUrl(raw){raw=String(raw||'').trim();if(!raw)return '';try{const u=new URL(raw);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error();return u.href;}catch(_){throw Error('PROVIDER_URL_INVALID');}}
-function providerConfig(env){const kind=String(env.OCR_PROVIDER||'generic').toLowerCase();if(!['generic','gemini'].includes(kind))throw Error('PROVIDER_UNSUPPORTED');const model=String(env.GEMINI_MODEL||'gemini-3.5-flash').trim();return {kind,model,url:kind==='gemini'?'https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent':safeProviderUrl(env.OCR_UPSTREAM_URL),key:String(env.OCR_API_KEY||''),timeout:Math.max(5000,Math.min(45000,Number(env.PROVIDER_TIMEOUT_MS)||40000)),retries:Math.max(0,Math.min(1,Number(env.PROVIDER_RETRIES)||1))};}
+function providerConfig(env){const kind=String(env.OCR_PROVIDER||'generic').toLowerCase();if(!['generic','gemini'].includes(kind))throw Error('PROVIDER_UNSUPPORTED');const model=String(env.GEMINI_MODEL||'gemini-3.5-flash-lite').trim();return {kind,model,url:kind==='gemini'?'https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent':safeProviderUrl(env.OCR_UPSTREAM_URL),key:String(env.OCR_API_KEY||''),timeout:Math.max(5000,Math.min(45000,Number(env.PROVIDER_TIMEOUT_MS)||40000)),retries:Math.max(0,Math.min(1,Number(env.PROVIDER_RETRIES)||1))};}
 function providerReady(env){try{const p=providerConfig(env);return !!p.key&&(p.kind==='gemini'||!!p.url);}catch(_){return false;}}
 function providerRequest(p,payload,rid){
   if(p.kind==='gemini'){
