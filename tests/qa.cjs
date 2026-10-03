@@ -724,5 +724,48 @@ reset();test('v1036 Gemini BOQ contract returns visible per-category amount and 
   const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('ทุกแถวต้องคืน amount'));assert(w.includes('ห้ามคำนวณย้อนสร้าง amount เอง'));assert(w.includes('"amount":0'));assert(w.includes('equationError=amount>0'));assert(w.includes('equationOk=amount>0?equationError<=.03:null'));assert(w.includes('clean.push({name,qty,unit,unitPrice,amount,category,sectionCode,sectionName,confidence,equationError,equationOk})'));
 });
 
+
+reset();test('v1038 real Tha Sala page totals reconcile independently without becoming a false document total',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8'));
+  const pages=fx.pageSlices.map(([a,b],i)=>{
+    const rows=fx.rows.slice(a-1,b).map(x=>c.boqAiImportRow({name:x.name,qty:x.qty,unit:x.unit,unitPrice:x.unitPrice,amount:x.amount,category:x.category,sectionCode:x.sectionCode,sectionName:x.sectionName,confidence:.96},.96,'fixture page'));
+    const chk=c.boqAiPageTotalCheck(rows,fx.pageTotals[i],'page',4);assert.equal(chk.checked,true);assert.equal(chk.ok,true);return {rows,chk};
+  });
+  const all=pages.flatMap(x=>x.rows),checks=pages.map(x=>x.chk),cov=c.boqAiCoverage(all,4,0,pages.map(x=>x.rows.length),checks);
+  assert.equal(cov.need,false);assert.equal(cov.pageTotalMismatch,0);assert.equal(cov.reconcile.declared,0);
+});
+reset();test('v1038 a wrong page subtotal forces local cross-check even when every row equation passes',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8')),pages=fx.pageSlices.map(([a,b],i)=>{
+    const rows=fx.rows.slice(a-1,b).map(x=>c.boqAiImportRow({name:x.name,qty:x.qty,unit:x.unit,unitPrice:x.unitPrice,amount:x.amount,category:x.category,confidence:.96},.96,'fixture page'));
+    return {rows,chk:c.boqAiPageTotalCheck(rows,fx.pageTotals[i]+(i===2?500:0),'page',4)};
+  });
+  const cov=c.boqAiCoverage(pages.flatMap(x=>x.rows),4,0,pages.map(x=>x.rows.length),pages.map(x=>x.chk));
+  assert.equal(cov.need,true);assert.equal(cov.pageTotalMismatch,1);assert(cov.reasons.some(x=>x.includes('ยอดรวมรายหน้าไม่ตรงรายการ 1 หน้า')));
+});
+reset();test('v1038 document total is reconciled globally while preceding page subtotals stay page-scoped',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8')),all=[],checks=[],counts=[];
+  fx.pageSlices.forEach(([a,b],i)=>{
+    const rows=fx.rows.slice(a-1,b).map(x=>c.boqAiImportRow({name:x.name,qty:x.qty,unit:x.unit,unitPrice:x.unitPrice,amount:x.amount,category:x.category,confidence:.96},.96,'fixture page'));all.push(...rows);counts.push(rows.length);
+    checks.push(c.boqAiPageTotalCheck(rows,i===3?fx.declaredTotal:fx.pageTotals[i],i===3?'document':'page',4));
+  });
+  const cov=c.boqAiCoverage(all,4,fx.declaredTotal,counts,checks);assert.equal(cov.need,false);assert.equal(cov.reconcile.ok,true);assert.equal(checks[3].effectiveScope,'document');assert.equal(checks[3].checked,false);
+});
+reset();test('v1038 unknown totals are inferred as page only when they reconcile locally and as document on one-page BOQ',()=>{
+  const rows=[c.boqAiImportRow({name:'งาน A',qty:2,unit:'งาน',unitPrice:50,amount:100,category:'ค่าของ',confidence:.95},.95,'AI')];
+  const multi=c.boqAiPageTotalCheck(rows,100,'',4);assert.equal(multi.effectiveScope,'page');assert.equal(multi.checked,true);assert.equal(multi.ok,true);
+  const unknownDoc=c.boqAiPageTotalCheck(rows,999,'',4);assert.equal(unknownDoc.effectiveScope,'');assert.equal(unknownDoc.checked,false);
+  const single=c.boqAiPageTotalCheck(rows,100,'',1);assert.equal(single.effectiveScope,'document');assert.equal(single.checked,false);
+});
+reset();test('v1038 conflicting document totals reported on different pages fail closed',()=>{
+  const rows=Array.from({length:8},(_,i)=>c.boqAiImportRow({name:'งาน '+i,qty:1,unit:'งาน',unitPrice:100,amount:100,category:'ค่าของ',confidence:.95},.95,'AI'));
+  const checks=[{effectiveScope:'document',declared:800},{effectiveScope:'document',declared:900},{effectiveScope:'page',declared:200,checked:true,ok:true},{effectiveScope:'page',declared:200,checked:true,ok:true}];
+  const x=c.boqAiCoverage(rows,4,800,[2,2,2,2],checks);assert.equal(x.need,true);assert.equal(x.documentTotalConflict,true);assert(x.reasons.includes('ยอดรวมทั้งเอกสารจากหลายหน้าไม่ตรงกัน'));
+});
+reset();test('v1038 provider and browser BOQ contracts preserve declaredTotalScope',()=>{
+  const v=c.aiGatewayValidateBoq({rows:[{name:'งาน A',qty:1,unit:'งาน',unitPrice:100,amount:100,category:'ค่าของ'}],declaredTotal:100,declaredTotalScope:'page'});assert.equal(v.declaredTotalScope,'page');
+  const bad=c.aiGatewayValidateBoq({rows:[{name:'งาน A',qty:1,unit:'งาน',unitPrice:100,amount:100,category:'ค่าของ'}],declaredTotal:100,declaredTotalScope:'weird'});assert.equal(bad.declaredTotalScope,'');
+  const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('declaredTotalScope'));assert(w.includes('scope="page"'));assert(w.includes('scope="document"'));assert(w.includes("scope0==='page'||scope0==='document'"));
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
