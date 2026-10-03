@@ -57,6 +57,8 @@ jobs:
         run: node tests/ux-ui-v1033.cjs
       - name: v1034 CSS QA polish regression
         run: node tests/ux-ui-v1034.cjs
+      - name: v1035 runtime performance regression
+        run: node tests/runtime-v1035.cjs
       - name: Cloudflare production contract QA
         run: node tests/cloudflare-production.cjs
       - name: Cloudflare deploy pipeline QA

@@ -3031,6 +3031,18 @@ body.view-add .add-mobile-focus{padding-bottom:10px!important}
     border-color:rgba(183,121,0,.35)!important;
   }
 }
+
+/* v1035 runtime performance polish · off-screen paint containment */
+@supports (content-visibility:auto){
+  .list-month-group,.project-hub-card,.profile-post-card,.due-group,.docs-recent,.home-fold{
+    content-visibility:auto;
+    contain-intrinsic-size:240px;
+  }
+  .list-row-wrap,.boq-check-row{
+    content-visibility:auto;
+    contain-intrinsic-size:72px;
+  }
+}
 </style>
 </head>
 <body>
@@ -4388,8 +4400,20 @@ function cloudflarePartialRecoveryDetected(){
 }
 function vHome(){
   var allMode=U.homePid==='__all',active=allMode?null:(proj(U.homePid)||S.projects[0]||null),pid=active?active.id:'',all=allMode?S.tx.slice():(pid?S.tx.filter(function(t){return t.pid===pid;}):S.tx.slice());
-  var paidIn=all.filter(function(t){return t.type==='in'&&txPaidNet(t)>.01;}),paidOut=all.filter(function(t){return t.type==='out'&&txPaidNet(t)>.01;}),inW=all.filter(function(t){return t.type==='in'&&txOutstandingNet(t)>.01;}),outW=all.filter(function(t){return t.type==='out'&&txOutstandingNet(t)>.01;}),outRows=all.filter(function(t){return t.type==='out';});
-  var rec=paidIn.reduce(function(n,x){return n+txPaidNet(x);},0),spent=paidOut.reduce(function(n,x){return n+txPaidNet(x);},0),outstandingIn=inW.reduce(function(n,x){return n+txOutstandingNet(x);},0),outstandingOut=outW.reduce(function(n,x){return n+txOutstandingNet(x);},0),openingTotal=allMode?((+S.opening||0)+(+S.openCash||0)):0,bal=openingTotal+rec-spent,h='',retRows=(allMode?S.projects:(active?[active]:[])).filter(function(p){return p.retAmt&&!p.retRecv;}),retTotal=retRows.reduce(function(a,p){return a+(+p.retAmt||0);},0);
+  var paidOut=[],inW=[],outW=[],rec=0,spent=0,outstandingIn=0,outstandingOut=0,inCount=0,outCount=0;
+  all.forEach(function(t){
+    var paid=txPaidNet(t),due=txOutstandingNet(t);
+    if(t.type==='in'){
+      inCount++;
+      if(paid>.01)rec+=paid;
+      if(due>.01){inW.push(t);outstandingIn+=due;}
+    }else if(t.type==='out'){
+      outCount++;
+      if(paid>.01){paidOut.push(t);spent+=paid;}
+      if(due>.01){outW.push(t);outstandingOut+=due;}
+    }
+  });
+  var openingTotal=allMode?((+S.opening||0)+(+S.openCash||0)):0,bal=openingTotal+rec-spent,h='',retRows=(allMode?S.projects:(active?[active]:[])).filter(function(p){return p.retAmt&&!p.retRecv;}),retTotal=retRows.reduce(function(a,p){return a+(+p.retAmt||0);},0);
   var gScope=allMode?(S.guarantees||[]).filter(function(g){return !g.returned;}):[],gExposure=gScope.reduce(function(a,g){return a+(+g.amount||0);},0),gReady=gScope.filter(function(g){return g.dueDate&&dd(today(),g.dueDate)<=0;}),gNear=gScope.filter(function(g){var d=g.dueDate?dd(today(),g.dueDate):null;return d!==null&&d>0&&d<=90;});
   var cfFresh=/\.workers\.dev$/i.test(location.hostname||'')&&!S.projects.length&&!S.tx.length&&!S.boq.length&&!(S.ui&&S.ui.cloudflareFreshDismissed);
   if(cfFresh)h+='<div class="card" style="border:2px solid var(--amber);margin:8px 0 14px"><b>เปิด AREA Ledger บน Cloudflare แล้ว</b><p class="muted" style="margin:6px 0 10px">ข้อมูล Safari ของเว็บเดิมจะไม่ข้ามโดเมนอัตโนมัติ ถ้ามีข้อมูลเดิมให้กู้คืนไฟล์สำรอง .json ก่อนเริ่มบันทึกรายการใหม่</p><div class="stack"><button class="btn pri" data-act="restoreOpen">กู้คืนไฟล์สำรอง</button><button class="btn" data-act="cloudflareFreshDismiss">เริ่มใช้งานใหม่บน Cloudflare</button></div></div>';
@@ -4421,7 +4445,7 @@ function vHome(){
   if(allMode&&S.projects.length){h+='<section class="desktop-profit-table"><h3>ผลการเงินรายโครงการ</h3><table><thead><tr><th>โครงการ</th><th>มูลค่างาน</th><th>ต้นทุน</th><th>เงินประกันค้างรับ</th><th>กำไรคาดการณ์</th><th>กำไร/ขาดทุนสุทธิ</th><th>Margin คาดการณ์</th></tr></thead><tbody>'+S.projects.map(function(p){var st=stats(p.id),pc=projectCostWithGuarantees(p.id),v=+p.contract||0,cost=pc.total,pf=v-cost,mg=v?pf/v*100:0,netp=st.recd-cost;return '<tr><td>'+esc(p.name)+'</td><td><b>'+fmt(v)+'</b></td><td><b>'+fmt(cost)+'</b></td><td><b>'+fmt(pc.pendingGuarantee)+'</b></td><td><b class="'+(pf>=0?'in':'out')+'">'+fmt(pf)+'</b></td><td>'+(st.recd>0?'<b class="'+(netp>=0?'in':'out')+'">'+fmt(netp)+'</b>':'<span class="muted">รอรับรายได้</span>')+'</td><td><b class="'+(mg>=0?'in':'out')+'">'+mg.toFixed(1)+'%</b></td></tr>';}).join('')+'</tbody></table><p class="muted" style="font-size:.82rem">ต้นทุนรวมเงินประกันที่ยังรอคืน · เงินประกันค้างรับแสดงแยกเพื่อรีเช็คยอดรวมทุกโครงการ · กำไรคาดการณ์ = มูลค่างานตามสัญญา − ต้นทุนรวม</p></section>';}
 
 
-  var hf=U.homeFilter||'all',cnt={all:all.length,in:all.filter(function(t){return t.type==='in';}).length,out:all.filter(function(t){return t.type==='out';}).length,pend:inW.length+outW.length};
+  var hf=U.homeFilter||'all',cnt={all:all.length,in:inCount,out:outCount,pend:inW.length+outW.length};
   h+='<div class="mtabs">'+[['all','ทั้งหมด'],['in','รับเงิน'],['out','จ่ายเงิน'],['pend','ค้าง']].map(function(x){return '<button class="'+(hf===x[0]?'on':'')+'" aria-pressed="'+(hf===x[0]?'true':'false')+'" data-act="homeFilter" data-v="'+x[0]+'">'+x[1]+' ('+cnt[x[0]]+')</button>';}).join('')+'</div>';
 
   var list=all.filter(function(t){return hf==='all'||(hf==='pend'?txOutstandingNet(t)>.01:t.type===hf);}).sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:-1;});
@@ -4491,10 +4515,12 @@ function vList(){
   if(U.filter.sub===undefined)U.filter.sub='';
   if(U.filter.q===undefined)U.filter.q='';
   if(U.filter.auditCat===undefined)U.filter.auditCat='';
-  var F=U.filter,foreman=S.role==='foreman',fs=F.status||(F.paidOnly?'paid':'all');
-  var auditF=Object.assign({},F,{auditCat:''}),auditPool=S.tx.filter(function(t){return listFilterBaseMatch(t,auditF,foreman)&&listQueryMatch(t,F.q);});
+  var F=U.filter,foreman=S.role==='foreman',fs=F.status||(F.paidOnly?'paid':'all'),searchTokens=listQueryTokens(F.q),searchCache=Object.create(null);
+  function searchOf(t){var k=t&&t.id?String(t.id):'';if(k&&Object.prototype.hasOwnProperty.call(searchCache,k))return searchCache[k];var hay=listSearchText(t);if(k)searchCache[k]=hay;return hay;}
+  function queryMatch(t){var hay=searchOf(t);for(var si=0;si<searchTokens.length;si++)if(hay.indexOf(searchTokens[si])<0)return false;return true;}
+  var auditF=Object.assign({},F,{auditCat:''}),auditPool=S.tx.filter(function(t){return listFilterBaseMatch(t,auditF,foreman)&&queryMatch(t);});
   var base=S.tx.filter(function(t){return listFilterBaseMatch(t,F,foreman);}).sort(function(a,b){var ad=a.date||'',bd=b.date||'';if(!ad&&!bd)return 0;if(!ad)return 1;if(!bd)return -1;return ad<bd?1:ad>bd?-1:0;});
-  var visible=base.filter(function(t){return listQueryMatch(t,F.q);}),pendingMode=fs==='pending',renderLimit=Math.max(120,+U.listRenderLimit||120),renderRows=visible.slice(0,renderLimit);
+  var visible=base.filter(queryMatch),pendingMode=fs==='pending',renderLimit=Math.max(120,+U.listRenderLimit||120),renderRows=visible.slice(0,renderLimit);
   var i=0,o=0;visible.forEach(function(t){var v=pendingMode?txOutstandingNet(t):(+t.amount||0);if(t.type==='in')i+=v;else o+=v;});
   var audit={material:0,labor:0,other:0,review:0,materialCount:0,laborCount:0,otherCount:0};
   auditPool.forEach(function(t){if(t.type!=='out')return;var g=txAuditGroup(t),v=+t.amount||0;audit[g]+=v;audit[g+'Count']++;if(txNeedsCategoryReview(t))audit.review++;});
@@ -4517,7 +4543,7 @@ function vList(){
   order.forEach(function(k){
     var rows=groups[k],shown=rows.length;
     h+='<section class="list-month-group" data-list-month="'+esc(k)+'"><div class="list-month-head"><b>'+esc(listMonthLabel(k))+'</b><small data-month-count>'+shown+' รายการที่แสดง</small></div>';
-    rows.forEach(function(t){var val=pendingMode?txOutstandingNet(t):(+t.amount||0);h+='<div class="list-row-wrap" data-list-type="'+esc(t.type)+'" data-list-value="'+val+'" data-list-search="'+esc(listSearchText(t))+'">'+rowTx(t,true,{outstanding:pendingMode})+'</div>';});
+    rows.forEach(function(t){var val=pendingMode?txOutstandingNet(t):(+t.amount||0);h+='<div class="list-row-wrap" data-list-type="'+esc(t.type)+'" data-list-value="'+val+'" data-list-search="'+esc(searchOf(t))+'">'+rowTx(t,true,{outstanding:pendingMode})+'</div>';});
     h+='</section>';
   });
   if(visible.length>renderRows.length)h+='<div class="incremental-load"><small>แสดง '+renderRows.length+' จาก '+visible.length+' รายการ</small><button class="btn" data-act="listLoadMore">โหลดเพิ่ม '+Math.min(120,visible.length-renderRows.length)+' รายการ</button></div>';
@@ -5514,8 +5540,14 @@ function vBoq(){
     return h;
   }
   p=proj(pid);
-  var rows=boqRows(pid);rows.forEach(function(x){boqEnsureWorkSection(x);});var total=rows.reduce(function(n,x){return n+boqAmount(x);},0),materialTotal=rows.filter(function(x){return (x.category||'')!=='ค่าแรง';}).reduce(function(n,x){return n+boqAmount(x);},0),laborTotal=rows.filter(function(x){return (x.category||'')==='ค่าแรง';}).reduce(function(n,x){return n+boqAmount(x);},0),q=String(U.boqQuery||'').slice(0,120),tokens=boqQueryTokens(q),needle=tokens.join(' '),showFind=rows.length>=12||!!needle,matched=rows.filter(function(x){return boqQuickMatch(x,q);}),sectionMatch={},sectionMeta={};
-  rows.forEach(function(x){var sk=(x.sectionCode||'')+'|'+(x.sectionName||''),m=sectionMeta[sk]||(sectionMeta[sk]={count:0,total:0});m.count++;m.total+=boqAmount(x);});
+  var rows=boqRows(pid),total=0,materialTotal=0,laborTotal=0,sectionMeta=Object.create(null),rowIndex=new Map();
+  rows.forEach(function(x,ri){
+    boqEnsureWorkSection(x);rowIndex.set(x,ri);
+    var amount=boqAmount(x),sk=(x.sectionCode||'')+'|'+(x.sectionName||''),m=sectionMeta[sk]||(sectionMeta[sk]={count:0,total:0});
+    total+=amount;m.count++;m.total+=amount;
+    if((x.category||'')==='ค่าแรง')laborTotal+=amount;else materialTotal+=amount;
+  });
+  var q=String(U.boqQuery||'').slice(0,120),tokens=boqQueryTokens(q),needle=tokens.join(' '),showFind=rows.length>=12||!!needle,matched=rows.filter(function(x){return boqQuickMatch(x,q);}),sectionMatch=Object.create(null);
   matched.forEach(function(x){sectionMatch[(x.sectionCode||'')+'|'+(x.sectionName||'')]=1;});
   var sectionCount=Object.keys(sectionMeta).length,collapsible=rows.length>=12&&sectionCount>=2,boqRenderLimit=Math.max(200,+U.boqRenderLimit||200),boqDisplayRows=(tokens.length?matched:rows).slice(0,boqRenderLimit);
 
@@ -5539,7 +5571,7 @@ function vBoq(){
 
   var lastSec='',sectionNo=0,sectionId='';
   boqDisplayRows.forEach(function(x,di){
-    var i=rows.indexOf(x),sk=(x.sectionCode||'')+'|'+(x.sectionName||'');
+    var i=rowIndex.get(x),sk=(x.sectionCode||'')+'|'+(x.sectionName||'');
     if(sk!==lastSec){
       lastSec=sk;sectionNo++;sectionId='s'+sectionNo;
       var meta=sectionMeta[sk],collapsed=collapsible&&!tokens.length&&boqSectionCollapsed(pid,sk),tag=collapsible&&!tokens.length?'button':'div';

@@ -5,6 +5,16 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1035 runtime performance polish
+
+- Dashboard transaction aggregation now computes paid income, paid expenses, outstanding AR/AP and transaction type counts in a single pass instead of repeatedly filtering and reducing the same transaction array.
+- Transaction List tokenizes the active search query once per render and caches each transaction's searchable text for reuse across audit filtering, visible filtering and row markup.
+- BOQ summary totals, material/labor totals, section totals and row indexes are built in one pass; row numbering now uses a `Map` lookup instead of repeated `rows.indexOf(x)` calls while rendering.
+- Adds progressive off-screen paint containment with `content-visibility:auto` for long list/BOQ rows and major card groups; unsupported browsers ignore it safely.
+- Existing incremental render ceilings remain unchanged (120 transaction rows / 200 BOQ rows per batch), preserving the current mobile interaction and load-more behavior.
+- Runtime/performance only: no accounting formulas, BOQ values, OCR acceptance/accuracy, storage, Cloud Sync, D1/R2, tax, document or profile data contracts change.
+
+
 ## v1033 BOQ Real Accuracy
 
 - Adds an independent 32-row real PR4 fixture from the Tha Sala M.7 multipurpose-building BOQ, including four page totals and the reconciled 412,812.83 grand total.
