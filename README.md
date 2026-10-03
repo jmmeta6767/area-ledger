@@ -6,6 +6,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1019 Transaction Recheck View
+
+- รายการทั้งหมดแสดง ว/ด/ป แบบตัวเลข พ.ศ. บนทุกบรรทัด เช่น `25/9/2569` เพื่อเทียบกับชีตหน้างานได้ตรงบรรทัด.
+- เพิ่มป้ายหมวด `ค่าของ`, `ค่าแรง`, และ `หมวดอื่น` พร้อมยอดรวม/จำนวนรายการแยกหมวดในหน้ารายการ.
+- เพิ่มตัวกรองด่วน `ค่าของ / ค่าแรง / หมวดอื่น / ต้องตรวจ` เพื่อค้นหารายการที่จัดหมวดไม่ตรงได้ทันที.
+- ระบบแนะนำหมวดจากชื่อรายการแบบ deterministic และแสดง `ควรเป็น ...` เมื่อหมวดที่บันทึกไว้ขัดกับหลักฐานคำสำคัญ โดยไม่แก้ข้อมูลบัญชีอัตโนมัติ.
+- เพิ่มกฎสำหรับรายการงานจริง เช่น เหล็ก ปูน ทราย สี/ทินเนอร์ J-bolt/เพลท/ลวดเชื่อม = ค่าของ; งานโครงสร้าง/วิศวกรคุมงาน = ค่าแรง; เครน/เครื่องมือเช่า = ค่าเช่า; ตีตราสาร = ค่างานเอกสาร.
+
 ## v1018 Multi-row Expense Capture
 
 - A single photo can now contain a full expense table. AI Vision returns structured `rows[]` instead of collapsing the sheet into one grand total.
