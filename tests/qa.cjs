@@ -581,7 +581,7 @@ reset();test('v1025 photo ingestion is sequential and post save is guarded again
 
 
 reset();test('v1026 bottom-right primary tab is company Profile, not receivable-payable',()=>{const src=fs.readFileSync('gateway/public/index.html','utf8'),i=src.indexOf("var tabs=[['home'"),block=src.slice(i,i+1500);assert(block.includes("['profile','profile','โปรไฟล์']"));assert(!block.includes("['due','clock','ค้างรับ/จ่าย']"));});
-reset();test('v1026 profile behaves as a primary workspace without back button header',()=>{const src=c.render.toString();assert(src.includes("v==='profile'"));assert(src.includes("title='โปรไฟล์บริษัท';body=vProfile();back=false"));});
+reset();test('v1026 profile behaves as a primary workspace without back button header',()=>{const i=code.indexOf('function render()'),src=code.slice(i,i+4200);assert(src.includes("v==='profile'"));assert(src.includes("title='โปรไฟล์บริษัท';body=vProfile();back=false"));});
 reset();test('v1026 urgent due badge moves to Overview while due remains available in drawer',()=>{const src=fs.readFileSync('gateway/public/index.html','utf8'),i=src.indexOf("var tabs=[['home'"),block=src.slice(i,i+1800);assert(block.includes("ub=(t[0]==='home'?urgentCount():0)"));const d=src.slice(src.indexOf('function appMenuHtml()'),src.indexOf('function render()'));assert(d.includes("['due','clock','ค้างรับ / ค้างจ่าย'"));});
 reset();test('v1026 storage and accounting contracts remain unchanged',()=>{assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db');assert(code.includes("APP_RELEASE=800"));});
 
