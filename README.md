@@ -6,6 +6,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1024 Company Profile + Worksite Feed
+
+- Adds a first-class Company Profile view for business identity, contact details, service bio, LINE, website, Facebook, Instagram and TikTok references.
+- Adds a mobile-first worksite feed inspired by portfolio/social apps: worksite updates, portfolio posts, delivery/handover posts and announcements.
+- Posts can link to a project, carry a Buddhist-date display, include up to four photos, and support edit/delete/share-copy actions.
+- Images are resized on-device for iPhone stability. When Cloud Sync/R2 is available, post images are offloaded to R2 while compact thumbnails remain in the ledger; if R2 is unavailable, the compressed image stays with the post so data is not lost.
+- External social networks are not auto-posted or granted account access. Share uses the device Share sheet/copy workflow so the owner stays in control of publication.
+- Existing accounting, BOQ, guarantee, transaction and storage keys are unchanged.
+
 ## v1023 Complete Expense Amounts on iPhone
 
 - Mobile expense status cards use one full-width row per status, so paid and outstanding amounts retain all digits and two decimal places.
