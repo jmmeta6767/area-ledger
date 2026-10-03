@@ -67,3 +67,8 @@ assert(legacyWorker.includes("pathname.startsWith('/v1/')"));
 assert(y.includes('Deploy legacy g production app shell'));
 assert(y.includes('working-directory: legacy-app'));
 assert(y.includes('AREA_LEDGER_APP_BASE: https://g.areamaibab.workers.dev'));
+
+assert(legacyCfg.includes('[[services]]'));
+assert(legacyCfg.includes('binding = "GATEWAY"'));
+assert(legacyCfg.includes('service = "area-ledger-ai-gateway"'));
+assert(legacyWorker.includes('return env.GATEWAY.fetch(new Request('));
