@@ -4925,15 +4925,20 @@ function thaiGovBoqDeclaredTotal(text){
 function boqOcrReconcile(rows,declared){
   var calc=(rows||[]).reduce(function(a,x){return a+boqAmount(x);},0),d=+declared||0;if(d&&calc&&d<calc*.1)d=0;var diff=d?Math.abs(calc-d):0,tol=d?Math.max(5,d*.005):0;return {declared:d,calculated:calc,diff:diff,tolerance:tol,ok:!!d&&diff<=tol};
 }
-function thaiGovUnit(line){var m=String(line||'').match(/(?:^|\s)(ตร\.ม\.|ตรม\.?|ม\.2|ม2|ลบ\.ม\.|ลบม\.?|ม\.3|ม3|ลบ\.ฟ\.|ลบฟ\.?|ฟุต\.?|ม\.|เมตร|กก\.|กิโลกรัม|ตัน|ชุด|อัน|ตัว|แผ่น|เส้น|ท่อน|ถุง|กระสอบ|ลูก|ก้อน|กล่อง|ม้วน|กระป๋อง|ถัง|บาน|ใบ|คู่|แพ็ค|ลัง|ขวด|ลิตร|คิว|เที่ยว|งาน|หลัง|จุด|บ่อ|ต้น|เครื่อง|วัน|เดือน|ชั่วโมง|แห่ง)(?:\s|$)/i);return m?m[1]:'';}
+function thaiGovUnitMatch(line){
+  var text=String(line||''),re=/(?:^|\s)(ตร\.ม\.|ตรม\.?|ม\.2|ม2|ลบ\.ม\.|ลบม\.?|ม\.3|ม3|ลบ\.ฟ\.|ลบฟ\.?|ฟุต\.?|ม\.|เมตร|กก\.|กิโลกรัม|ตัน|ชุด|อัน|ตัว|แผ่น|เส้น|ท่อน|ถุง|กระสอบ|ลูก|ก้อน|กล่อง|ม้วน|กระป๋อง|ถัง|บาน|ใบ|คู่|แพ็ค|ลัง|ขวด|ลิตร|คิว|เที่ยว|งาน|หลัง|จุด|บ่อ|ต้น|เครื่อง|วัน|เดือน|ชั่วโมง|แห่ง)(?=\s|$)/ig,m,best=null;
+  while((m=re.exec(text))){var start=m.index+(m[0].charAt(0)===' '?1:0),end=start+m[1].length,before=text.slice(0,start).trim(),qty=/(?:^|\s)\d[\d,]*(?:\.\d+)?\s*$/.test(before),cand={unit:m[1],start:start,end:end,qtyAdjacent:qty};if(!best||(cand.qtyAdjacent&&!best.qtyAdjacent)||(cand.qtyAdjacent===best.qtyAdjacent&&cand.start<best.start))best=cand;if(re.lastIndex===m.index)re.lastIndex++;}
+  return best;
+}
+function thaiGovUnit(line){var m=thaiGovUnitMatch(line);return m?m.unit:'';}
 function thaiGovNoise(line){return /(?:ดอกเบี้ย|เงินกู้|factor\s*f|ภาษี|vat|รวม|หมายเหตุ|ประมาณราคา|แบบ\s*ปร\.|ราคากลาง|ค่าใช้จ่ายพิเศษ|สรุป|ผู้ประมาณ|คณะกรรมการ|รายการ|จำนวนเงิน|ราคาต่อหน่วย|กลุ่มงาน|งานโครงสร้างวิศวกรรม|หมวดงาน|ส่วนราชการ|โครงการ)/i.test(line);}
 function thaiGovBoqRows(text){
   var ls=String(text||'').split(/\n+/).map(function(x){return x.replace(/\s+/g,' ').trim();}).filter(Boolean),out=[],rejected=0;
   ls.forEach(function(line){
     if(thaiGovNoise(line)){rejected++;return;}
-    var unit=thaiGovUnit(line),um=unit?line.match(new RegExp('(?:^|\\s)'+unit.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')+'(?:\\s|$)','i')):null;
+    var um=thaiGovUnitMatch(line),unit=um&&um.unit||'';
     if(!unit||!um){rejected++;return;}
-    var unitStart=um.index+(um[0].charAt(0)===' '?1:0),unitEnd=um.index+um[0].length,numRe=/\d[\d,]*(?:\.\d+)?/g,m,nums=[];
+    var unitStart=um.start,unitEnd=um.end,numRe=/\d[\d,]*(?:\.\d+)?/g,m,nums=[];
     while((m=numRe.exec(line))){nums.push({raw:m[0],value:thaiBoqNum(m[0]),start:m.index,end:m.index+m[0].length});}
     var before=nums.filter(function(n){return n.end<=unitStart&&isFinite(n.value);}),after=nums.filter(function(n){return n.start>=unitEnd&&isFinite(n.value)&&n.value>=0;});
     if(!before.length||after.length<2){rejected++;return;}
@@ -4961,8 +4966,8 @@ function boqGenericRows(text){
   var ls=String(text||'').split(/\n+/).map(function(x){return x.replace(/\s+/g,' ').trim();}).filter(Boolean),out=[],rejected=0;
   ls.forEach(function(line){
     if(boqGenericNoise(line)){rejected++;return;}
-    var unit=thaiGovUnit(line),um=unit?line.match(new RegExp('(?:^|\\s)'+unit.replace(/[.*+?^$\{\}()|[\]\\]/g,'\\$&')+'(?:\\s|$)','i')):null;if(!unit||!um){rejected++;return;}
-    var unitStart=um.index+(um[0].charAt(0)===' '?1:0),unitEnd=um.index+um[0].length,numRe=/\d[\d,]*(?:\.\d+)?/g,m,nums=[];
+    var um=thaiGovUnitMatch(line),unit=um&&um.unit||'';if(!unit||!um){rejected++;return;}
+    var unitStart=um.start,unitEnd=um.end,numRe=/\d[\d,]*(?:\.\d+)?/g,m,nums=[];
     while((m=numRe.exec(line))){var v=thaiBoqNum(m[0]);if(isFinite(v))nums.push({value:v,start:m.index,end:m.index+m[0].length});}
     var before=nums.filter(function(n){return n.end<=unitStart&&n.value>0;}),after=nums.filter(function(n){return n.start>=unitEnd&&n.value>=0;});
     if(!before.length||!after.length){rejected++;return;}
