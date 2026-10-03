@@ -4761,7 +4761,7 @@ function vProject(){
   h+='</div>';
 
   var cats=Object.keys(s.byCat).sort(function(a,b){return s.byCat[b]-s.byCat[a];});
-  if(cats.length)h+='<details class="project-fold project-cost-fold"><summary><span>ค่าใช้จ่ายตามหมวด<small>'+cats.length+' หมวด · รายจ่ายบัญชี '+fmt(s.outB)+(pcost.pendingGuaranteeAdd>0?' · เงินประกันนอกบัญชี +'+fmt(pcost.pendingGuaranteeAdd):'')+'</small></span></summary><div class="project-fold-body"><div class="sec master-detail-card">'+donut(s.byCat,s.outB)+catRows(cats,s.byCat,s.bySub,s.outB)+'</div></div></details>';
+  if(cats.length)h+='<details class="project-fold project-cost-fold"><summary><span>ค่าใช้จ่ายตามหมวด<small>'+cats.length+' หมวด · รวม '+fmt(s.outB)+(pcost.pendingGuaranteeAdd>0?' · เงินประกันรอคืนที่เพิ่มในต้นทุน +'+fmt(pcost.pendingGuaranteeAdd):'')+'</small></span></summary><div class="project-fold-body"><div class="sec master-detail-card">'+donut(s.byCat,s.outB)+catRows(cats,s.byCat,s.bySub,s.outB)+'</div></div></details>';
 
   var list=S.tx.filter(function(t){return t.pid===p.id;}).sort(function(a,b){return a.date<b.date?1:-1;}),pendingList=list.filter(function(t){return txOutstandingNet(t)>.01;});
   h+='<details class="project-fold project-list-fold"'+(list.length&&list.length<=5?' open':'')+'><summary><span>รายการของโครงการนี้<small>'+list.length+' รายการ'+(pendingList.length?' · ค้าง '+pendingList.length:'')+'</small></span></summary><div class="project-fold-body">';
