@@ -567,5 +567,28 @@ reset();test('v1022 all-project dashboard exposes dedicated guarantee receivable
 reset();test('v1022 all-project project summaries expose per-project guarantee receivable',()=>{var s=c.vHome.toString();assert(s.includes('ประกันค้างรับ'));assert(s.includes('<th>เงินประกันค้างรับ</th>'));assert(s.includes('pc.pendingGuarantee'));});
 reset();test('v1022 guarantee control summary uses effective delivery-plus-two-year due date',()=>{var s=c.guaranteeControlSummary.toString();assert(s.includes('guaranteeEffectiveDueDate'));var f=c.guaranteeDueWithinDays.toString();assert(f.includes('guaranteeEffectiveDueDate'));});
 
+
+reset();test('v1024 company profile state is durable and migration-safe',()=>{
+  const e=c.emptyState();assert(Array.isArray(e.profilePosts));assert.equal(e.profilePosts.length,0);assert.equal(typeof e.business.tagline,'string');assert.equal(typeof e.business.instagram,'string');assert.equal(typeof e.business.tiktok,'string');
+  const m=c.migrate(Object.assign({},e,{profilePosts:[{id:'post1',type:'site',pid:'',date:'2026-10-03',text:'อัปเดตหน้างาน',photos:[],createdAt:1,updatedAt:1}]}));assert.equal(m.profilePosts.length,1);assert.equal(m.profilePosts[0].text,'อัปเดตหน้างาน');
+});
+reset();test('v1024 profile page exposes business editor, worksite composer, filters and social-style actions',()=>{
+  c.S.business=Object.assign({},c.S.business,{legalName:'หจก. แอเรีย ไม้แบบ',tagline:'งานก่อสร้าง',bio:'อัปเดตหน้างาน',facebook:'areamaibab',instagram:'@areamaibab',tiktok:'@areamaibab'});c.S.brand='AREA MAIBAB';
+  c.S.profilePosts=[{id:'p1',type:'site',pid:'',date:'2026-10-03',text:'เทคอนกรีตแล้ว',photos:[],createdAt:1,updatedAt:1}];c.U.profileFilter='all';
+  const out=c.vProfile();for(const token of ['COMPANY PROFILE','WORKSITE FEED','profileEdit','profilePostNew','profilePostShare','profilePostEdit','profilePostDelete','Facebook','Instagram','TikTok'])assert(out.includes(token));
+});
+reset();test('v1024 profile editors support company data and up to four worksite photos',()=>{
+  c.U.sheet={kind:'profileEdit'};let out=c.sheetHtml();for(const token of ['profileBrand','profileLegal','profileBio','profileFacebook','profileInstagram','profileTikTok','profileSaveCompany'])assert(out.includes(token));
+  c.U.profilePostDraft={id:'',type:'site',pid:'',date:'2026-10-03',text:''};c.U.profilePostImages=[];c.U.sheet={kind:'profilePost'};out=c.sheetHtml();for(const token of ['profilePostType','profilePostPid','profilePostDate','profilePostText','profilePostPhotos','profilePostSave','สูงสุด 4 รูป'])assert(out.includes(token));
+});
+reset();test('v1024 profile is reachable from drawer and render navigation',()=>{
+  c.U.appMenu=true;const menu=c.appMenuHtml();assert(menu.includes('data-v="profile"'));assert(menu.includes('โปรไฟล์บริษัท'));const renderSrc=c.render.toString();assert(renderSrc.includes('profile:1'));assert(renderSrc.includes("v==='profile'"));assert(renderSrc.includes('vProfile()'));
+});
+reset();test('v1024 worksite photos use mobile resize and R2 offload path when cloud sync is enabled',()=>{
+  const a=c.profilePhotoResize.toString(),b=c.profileSavePost.toString();assert(a.includes("toDataURL('image/jpeg'"));assert(a.includes('draw(900,.68)'));assert(a.includes('draw(420,.56)'));assert(b.includes("cloudFileUpload(row.data,'profile-post'"));assert(b.includes('cloudSyncEnabled()'));assert(b.includes('profilePostDeleteRefs'));
+});
+reset();test('v1024 project screen exposes direct worksite post action',()=>{const src=c.vProject.toString();assert(src.includes('profilePostNew'));assert(src.includes('โพสต์หน้างาน'));});
+reset();test('v1024 D1 mirror treats profile posts as a first-class ledger collection',()=>{const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes("'receipts','profilePosts'"));});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
