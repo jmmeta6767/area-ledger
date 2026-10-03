@@ -5,6 +5,16 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1038 BOQ Per-Page Total Reconciliation
+
+- AI Vision distinguishes a page subtotal from the final document total using `declaredTotalScope` (`page` / `document`) instead of treating the largest visible total as the whole-BOQ total.
+- Page-scoped totals reconcile only against rows extracted from that page; a wrong page subtotal forces Local OCR / human cross-check.
+- Document-scoped totals reconcile against the complete multi-page BOQ; conflicting document totals reported on different pages fail closed.
+- Unknown totals are treated conservatively: on a multi-page BOQ they are inferred as page totals only when they already reconcile to that page, while a one-page BOQ may treat an unknown visible total as document scope.
+- The four real Tha Sala page totals (48,884.85 / 79,147.88 / 274,129.38 / 10,650.72) are now regression-tested separately from the 412,812.83 grand total.
+- Existing row-level quantity × unit-price verification, human Preview, memory cleanup and Safari long-session guards remain unchanged.
+
+
 ## v1037 Safari long-session hardening
 
 - Adds ephemeral runtime diagnostics for session age, render count/duration, action count, duplicate-action blocks and Safari BFCache restores; diagnostics are visible under Advanced / System Diagnostics and are never persisted to accounting or Cloud storage.
