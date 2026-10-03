@@ -12,6 +12,7 @@ assert(src.includes('v1040 iPhone business-document preview and action controls'
 assert(src.includes('data-label=\"ราคาต่อหน่วย\"'),'responsive document cells need visible labels');
 assert(src.includes('body[data-view=\"quoteprint\"] .quote-paper.rd-paper:not(.pdf-export)'),'iPhone preview must reflow without changing PDF layout');
 assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper.pdf-export .rd-table{display:table!important'),'PDF export restores the A4 table');
+assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper.pdf-export .rd-table td::before{display:none!important'),'PDF export hides mobile field labels');
 assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper .rd-table td::before{display:none!important'),'printed A4 table hides mobile-only labels');
 assert(src.includes('body[data-view="quoteprint"] .doc-actions-bar'),'toolbar must be scoped to document preview');
 assert(src.includes('bottom:calc(88px + env(safe-area-inset-bottom,0px))'),'iPhone Safari toolbar clearance missing');
