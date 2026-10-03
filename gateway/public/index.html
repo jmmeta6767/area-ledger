@@ -961,6 +961,40 @@ body.wallpaper-on .mgroup{
  .app-drawer-docs{border-color:#303b46}.app-drawer-docs button{background:#222d38;border-color:#35414c;color:#fff}.app-drawer-docs button:first-child{background:#3a3320}
 }
 
+
+/* v834: organized navigation and categorized settings */
+.app-drawer{overflow-y:auto;-webkit-overflow-scrolling:touch}
+.app-drawer-menu{padding:8px 0 2px}
+.app-drawer-group-label{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 8px 5px;margin-top:2px}
+.app-drawer-group-label span{font-size:11px;font-weight:900;color:#52606c;letter-spacing:.02em}
+.app-drawer-group-label small{font-size:9px;color:#9aa2a9}
+.app-drawer-group-label:not(:first-child){border-top:1px solid #eef1f2;margin-top:7px;padding-top:13px}
+.app-drawer-docs>b{font-weight:900}
+.settings-intro{font-size:.84rem;line-height:1.55;color:#66717e;margin:0 0 12px}
+.settings-group{border:1px solid #dfe4e7;border-radius:14px;background:#fff;margin:10px 0;overflow:hidden}
+.settings-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 15px;background:#f7f9fa}
+.settings-group>summary::-webkit-details-marker{display:none}
+.settings-group>summary span{min-width:0}.settings-group>summary b,.settings-group>summary small{display:block}
+.settings-group>summary b{font-size:.94rem;color:#1d2a35}.settings-group>summary small{font-size:.71rem;color:#74808a;margin-top:3px;line-height:1.4}
+.settings-group>summary strong{font-size:20px;color:#7e8891;transition:transform .15s ease}
+.settings-group[open]>summary strong{transform:rotate(180deg)}
+.settings-group-body{padding:4px 14px 14px}
+.settings-group-body>.field{margin-top:12px}
+.settings-inline-actions,.settings-system-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.settings-inline-actions .btn,.settings-system-grid .btn{margin:0;min-height:46px;padding:9px 8px;font-size:.78rem}
+.settings-save-stack{margin-top:14px!important}
+.settings-footnote{font-size:.78rem!important;line-height:1.55;margin-top:12px!important}
+@media(max-width:430px){
+  .app-drawer-group-label{padding-left:6px;padding-right:6px}
+  .settings-group>summary{padding:13px 12px}
+  .settings-group-body{padding:3px 11px 12px}
+  .settings-system-grid{grid-template-columns:1fr 1fr}
+}
+@media(prefers-color-scheme:dark){
+  .app-drawer-group-label span{color:#d7e0e7}.app-drawer-group-label small{color:#8d99a4}.app-drawer-group-label:not(:first-child){border-color:#303b46}
+  .settings-group{background:#17202b;border-color:#34414c}.settings-group>summary{background:#202b36}.settings-group>summary b{color:#fff}.settings-group>summary small{color:#b0bbc5}.settings-intro{color:#b0bbc5}
+}
+
 /* FULL-BLEED MOBILE APP — FlowAccount-like viewport */
 /* Phone: use the complete browser viewport. No narrow centered app column. */
 @media(max-width:700px){
@@ -5097,31 +5131,49 @@ function sheetHtml(){
       '<div class="field"><label>Origin</label><input id="appOrigin" readonly value="'+esc(location.origin)+'"></div>'+
       '<div class="stack"><button class="btn" data-act="migrationCheck">Host Migration Safety</button><button class="btn" data-act="aiUseStaging">ใช้ Staging Gateway</button><button class="btn" data-act="aiUseProduction">ใช้ Production Gateway</button><button class="btn" data-act="aiSmokeTest">Cloudflare /health + /ready</button><button class="btn" data-act="deploymentStatusOpen">Deployment Control Center</button><button class="btn" data-act="copyAppOrigin">คัดลอก Origin</button><button class="btn" data-act="openGatewayHealth">เปิด Gateway /health</button><button class="btn" data-act="reliabilityCheck">Reliability Self-Check</button><button class="btn" data-act="disasterRecoveryCheck">Disaster Recovery Certification</button><button class="btn" data-act="releaseCheck">Release Readiness</button><button class="btn" data-act="cutoverCheck">RC2 Cutover Gate</button><button class="btn" data-act="productionCandidateCheck">RC2 Production Candidate</button><button class="btn" data-act="productionStableCheck">Production Stable Gate</button><button class="btn" data-act="settings">กลับตั้งค่า</button></div>';
   }else if(sh.kind==='settings'){
-    b='<h3 class="settings-title"><span>ตั้งค่า</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3><div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">แตะแล้วสลับโหมดทันที ไม่ต้องยืนยัน</small></div><div class="field"><span class="lbl">ผู้ใช้งาน (ทดลองสิทธิ์)</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div>'+
-     '<div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
-     (S.role==='owner'?'<div class="field"><label for="brn">ชื่อกิจการ / ชื่อที่แสดง</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
-     '<div class="field"><span class="lbl" style="font-size:1.05rem;font-weight:800">ข้อมูลเพื่อแสดงบนเอกสาร</span></div>'+
-     '<div class="field"><label for="blegal">ชื่อธุรกิจ (TH)</label><input id="blegal" type="text" value="'+esc((S.business&&S.business.legalName)||'ห้างหุ้นส่วนจำกัด แอเรีย ไม้แบบ')+'"></div>'+
-     '<div class="field"><label for="blegalen">ชื่อธุรกิจ (EN)</label><input id="blegalen" type="text" value="'+esc((S.business&&S.business.legalNameEn)||'')+'" placeholder="กรอกชื่อภาษาอังกฤษ ถ้ามี"></div>'+
-     '<div class="field"><label for="baddr">ที่อยู่ธุรกิจ (TH)</label><textarea id="baddr" rows="3">'+esc((S.business&&S.business.address)||'669 หมู่ที่ 12 ต.โป่งผา อ.แม่สาย จ.เชียงราย 57130')+'</textarea></div>'+
-     '<div class="field"><label for="baddren">ที่อยู่ธุรกิจ (EN)</label><textarea id="baddren" rows="3" placeholder="กรอกที่อยู่ภาษาอังกฤษ ถ้ามี">'+esc((S.business&&S.business.addressEn)||'')+'</textarea></div>'+
-     '<div class="field"><label for="btax">เลขที่ผู้เสียภาษี / เลขบัตรประจำตัวประชาชน</label><input id="btax" type="text" inputmode="numeric" value="'+esc((S.business&&S.business.taxId)||'0573569000465')+'" placeholder="13 หลัก"></div>'+
-     '<div class="field"><label for="bphone">เบอร์ติดต่อธุรกิจ</label><input id="bphone" type="tel" value="'+esc((S.business&&S.business.phone)||'0649893124')+'"></div>'+
-     '<div class="field"><label for="bemail">อีเมล</label><input id="bemail" type="email" value="'+esc((S.business&&S.business.email)||'')+'"></div>'+
-     '<div class="field"><label for="bbranch">สำนักงาน</label><select id="bbranch"><option '+(((S.business&&S.business.branch)||'สำนักงานใหญ่')==='สำนักงานใหญ่'?'selected':'')+'>สำนักงานใหญ่</option><option '+((S.business&&S.business.branch)==='สาขา'?'selected':'')+'>สาขา</option></select></div>'+
-     '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">ห้างหุ้นส่วนจำกัด</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
-     '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+'<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div><small class="muted" style="display:block;margin-top:7px">พื้นหลังสไตล์สำนักงาน/งานก่อสร้างแบบจาง เพื่อไม่รบกวนการอ่านบัญชี</small></div>'+
-     
-     '<div class="field"><span class="lbl" style="font-size:1.05rem;font-weight:800">AI / OCR Gateway</span><small class="muted">โหมด Local เป็นค่าเริ่มต้น · Remote OCR จะไม่ส่งรูปออกจากเครื่องจนกว่าจะเปิดความยินยอม</small></div>'+
-     '<div class="field"><span class="lbl">โหมด OCR</span><div class="seg"><button class="'+(aiGatewayConfig().mode==='local'?'on':'')+'" data-act="aiMode" data-v="local">Local</button><button class="'+(aiGatewayConfig().mode==='gateway'?'on':'')+'" data-act="aiMode" data-v="gateway">Cloudflare</button></div></div>'+
-     '<div class="field"><label for="aiEndpoint">Gateway endpoint</label><input id="aiEndpoint" type="text" inputmode="url" autocapitalize="none" autocomplete="off" value="'+esc(aiGatewayConfig().endpoint)+'" placeholder="https://...workers.dev"><small class="muted" style="display:block;margin-top:7px">API key ไม่ถูกเก็บในแอปหรือเบราว์เซอร์</small></div>'+
-     '<div class="field"><label for="aiTimeout">Timeout (ms)</label><input id="aiTimeout" type="number" inputmode="numeric" min="3000" max="30000" step="1000" value="'+aiGatewayConfig().timeoutMs+'"></div>'+
-     '<button class="tog '+(aiGatewayConfig().remoteOcrConsent?'on':'')+'" data-act="aiConsent"><span class="sw"></span><span><b>อนุญาต Remote OCR</b><small>'+(aiGatewayConfig().remoteOcrConsent?'เปิดแล้ว · รูปจะส่งเฉพาะเมื่อใช้เมนู OCR':'ปิดอยู่ · ระบบจะตรวจ /ready ก่อนอนุญาตส่งรูป')+'</small></span></button>'+
-     '<div class="stack"><button class="btn" data-act="aiCheckReady">ตรวจการเชื่อมต่อ OCR</button><button class="btn" data-act="systemAdvanced">Advanced / System Diagnostics</button></div>'+
-     '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div><div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div><div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>':'')+
-     '<div class="stack">'+(S.role==='owner'?'<button class="btn pri" data-act="saveOpen">บันทึกข้อมูลบริษัทและบัญชี</button><button class="btn pri" data-act="ownerOps">Owner Operations 1.1</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button><button class="btn" data-act="systemAdvanced">Advanced / System Diagnostics</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button>':'')+'<button class="btn" data-act="closeSheet">ปิด</button></div>'+
-     '<p class="muted" style="font-size:.82rem;margin-top:14px">ข้อมูลเก็บเฉพาะในอุปกรณ์นี้และไม่ซิงค์ข้ามเครื่อง กรุณาสำรองข้อมูลก่อนย้ายเครื่องหรือเคลียร์ข้อมูล Safari · '+(S.role==='owner'?(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล'):'')+'</p>';
-  }else if(sh.kind==='bizdoc'){
+    var ownerSettings=S.role==='owner';
+    b='<h3 class="settings-title"><span>ตั้งค่า / ระบบ</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3>'+
+      '<p class="settings-intro">จัดหมวดตามงานที่ใช้จริง · หัวข้อที่ไม่ใช้ทุกวันพับเก็บไว้เพื่อลดความรก</p>'+
+      '<details class="settings-group" open><summary><span><b>ทั่วไปและหน้าจอ</b><small>รูปแบบการแสดงผล · สิทธิ์ผู้ใช้ · พื้นหลัง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+        '<div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">สลับได้ทันทีโดยไม่กระทบข้อมูล</small></div>'+
+        '<div class="field"><span class="lbl">ผู้ใช้งาน</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div><div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
+        '<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div></div>'+
+      '</div></details>'+
+      (ownerSettings?
+      '<details class="settings-group"><summary><span><b>กิจการและภาษี</b><small>ชื่อกิจการ · ที่อยู่ · เลขภาษี · VAT</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+        '<div class="field"><label for="brn">ชื่อที่แสดงในแอพ</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
+        '<div class="field"><label for="blegal">ชื่อธุรกิจ (TH)</label><input id="blegal" type="text" value="'+esc((S.business&&S.business.legalName)||'ห้างหุ้นส่วนจำกัด แอเรีย ไม้แบบ')+'"></div>'+
+        '<div class="field"><label for="blegalen">ชื่อธุรกิจ (EN)</label><input id="blegalen" type="text" value="'+esc((S.business&&S.business.legalNameEn)||'')+'" placeholder="ถ้ามี"></div>'+
+        '<div class="field"><label for="baddr">ที่อยู่ธุรกิจ (TH)</label><textarea id="baddr" rows="3">'+esc((S.business&&S.business.address)||'669 หมู่ที่ 12 ต.โป่งผา อ.แม่สาย จ.เชียงราย 57130')+'</textarea></div>'+
+        '<div class="field"><label for="baddren">ที่อยู่ธุรกิจ (EN)</label><textarea id="baddren" rows="3" placeholder="ถ้ามี">'+esc((S.business&&S.business.addressEn)||'')+'</textarea></div>'+
+        '<div class="field"><label for="btax">เลขผู้เสียภาษี / บัตรประชาชน</label><input id="btax" type="text" inputmode="numeric" value="'+esc((S.business&&S.business.taxId)||'0573569000465')+'" placeholder="13 หลัก"></div>'+
+        '<div class="field"><label for="bphone">เบอร์ติดต่อ</label><input id="bphone" type="tel" value="'+esc((S.business&&S.business.phone)||'0649893124')+'"></div>'+
+        '<div class="field"><label for="bemail">อีเมล</label><input id="bemail" type="email" value="'+esc((S.business&&S.business.email)||'')+'"></div>'+
+        '<div class="field"><label for="bbranch">สำนักงาน</label><select id="bbranch"><option '+(((S.business&&S.business.branch)||'สำนักงานใหญ่')==='สำนักงานใหญ่'?'selected':'')+'>สำนักงานใหญ่</option><option '+((S.business&&S.business.branch)==='สาขา'?'selected':'')+'>สาขา</option></select></div>'+
+        '<div class="field"><span class="lbl">ประเภทกิจการ</span><div class="seg"><button class="'+((S.business&&S.business.businessType)==='บริษัท'?'on':'')+'" data-act="bizType" data-v="บริษัท">บริษัท</button><button class="'+(((S.business&&S.business.businessType)||'ห้างหุ้นส่วนจำกัด')==='ห้างหุ้นส่วนจำกัด'?'on':'')+'" data-act="bizType" data-v="ห้างหุ้นส่วนจำกัด">หจก.</button><button class="'+((S.business&&S.business.businessType)==='บุคคลธรรมดา/ฟรีแลนซ์'?'on':'')+'" data-act="bizType" data-v="บุคคลธรรมดา/ฟรีแลนซ์">บุคคลธรรมดา</button></div></div>'+
+        '<div class="field"><span class="lbl">ภาษีมูลค่าเพิ่ม (VAT)</span><div class="seg"><button class="'+(S.business&&S.business.vatRegistered?'on':'')+'" data-act="bizVat" data-v="1">จด VAT</button><button class="'+(!(S.business&&S.business.vatRegistered)?'on':'')+'" data-act="bizVat" data-v="0">ไม่จด VAT</button></div></div>'+
+      '</div></details>'+
+      '<details class="settings-group"><summary><span><b>ธนาคารและยอดยกมา</b><small>บัญชีรับเงิน · เงินในบัญชี · เงินสดในมือ</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+        '<div class="field"><label for="bnk">ชื่อบัญชีที่ใช้โอน</label><input id="bnk" type="text" value="'+esc(S.bank||'')+'" placeholder="เช่น Krungthai Business"></div>'+
+        '<div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div>'+
+        '<div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>'+
+      '</div></details>'+
+      '<details class="settings-group"><summary><span><b>AI / OCR</b><small>อ่านบิลและ BOQ · Local / Cloudflare</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+        '<div class="field"><span class="lbl">โหมด OCR</span><div class="seg"><button class="'+(aiGatewayConfig().mode==='local'?'on':'')+'" data-act="aiMode" data-v="local">Local</button><button class="'+(aiGatewayConfig().mode==='gateway'?'on':'')+'" data-act="aiMode" data-v="gateway">Cloudflare</button></div><small class="muted">Remote OCR จะไม่ส่งรูปออกจากเครื่องจนกว่าจะเปิดความยินยอม</small></div>'+
+        '<div class="field"><label for="aiEndpoint">Gateway endpoint</label><input id="aiEndpoint" type="text" inputmode="url" autocapitalize="none" autocomplete="off" value="'+esc(aiGatewayConfig().endpoint)+'" placeholder="https://...workers.dev"></div>'+
+        '<div class="field"><label for="aiTimeout">Timeout (ms)</label><input id="aiTimeout" type="number" inputmode="numeric" min="3000" max="30000" step="1000" value="'+aiGatewayConfig().timeoutMs+'"></div>'+
+        '<button class="tog '+(aiGatewayConfig().remoteOcrConsent?'on':'')+'" data-act="aiConsent"><span class="sw"></span><span><b>อนุญาต Remote OCR</b><small>'+(aiGatewayConfig().remoteOcrConsent?'เปิดแล้ว · ส่งรูปเฉพาะเมื่อเรียก OCR':'ปิดอยู่ · ตรวจ /ready ก่อนเปิด')+'</small></span></button>'+
+        '<div class="settings-inline-actions"><button class="btn" data-act="aiCheckReady">ตรวจ OCR</button><button class="btn" data-act="systemAdvanced">Diagnostics</button></div>'+
+      '</div></details>'+
+      '<details class="settings-group"><summary><span><b>ข้อมูล สำรอง และระบบ</b><small>สุขภาพข้อมูล · Backup · Restore · เครื่องมือขั้นสูง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+        '<div class="settings-system-grid"><button class="btn pri" data-act="ownerOps">Owner Operations</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button><button class="btn" data-act="systemAdvanced">Advanced Diagnostics</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button></div>'+
+      '</div></details>'+
+      '<div class="stack settings-save-stack"><button class="btn pri" data-act="saveOpen">บันทึกข้อมูลกิจการและบัญชี</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
+      '<p class="muted settings-footnote">ข้อมูลใช้งานออฟไลน์ในเครื่องและ Cloud Sync เป็นคนละชั้น · '+(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล')+'</p>'
+      :
+      '<div class="stack settings-save-stack"><button class="btn" data-act="closeSheet">ปิด</button></div>')+
+      '';
+}else if(sh.kind==='bizdoc'){
     var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind),docPid=(q&&q.pid)||U.docProjectPid||'',docProj=docPid?proj(docPid):null,di=docItems(q||{});
     b='<div class="bizdoc-editor compact-doc-editor">'+
       '<div class="doc-editor-head"><div><small>BUSINESS DOCUMENT</small><h3>'+(q?'แก้ไข':'สร้าง')+tt[0]+'</h3></div><span class="doc-status pend">'+(q?'แก้ไข':'ร่างใหม่')+'</span></div>'+
@@ -5241,19 +5293,36 @@ function urgentCount(){
 
 function appMenuHtml(){
   if(!U.appMenu)return '';
-  var due=urgentCount(),gDue=(S.guarantees||[]).filter(function(g){var s=guaranteeRecordStatus(g);return !g.returned&&(s.key==='ready'||s.key==='near');}).length,items=[
-    ['home','home','ภาพรวม','สรุปสถานะการเงิน'],
-    ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
-    ['projects','build','โครงการ','จัดการงานและส่งออกรายงาน'],
-    ['boq','list','BOQ','รายการ BOQ · นำเข้า · แก้ไข'],
-    ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'ติดตามกำหนดชำระ'],
-    ['guarantees','shield','งานประกัน',gDue?gDue+' รายการใกล้/ครบกำหนดรับคืน':'ยอดเงินประกันและวันรับคืน'],
-    ['report','chart','รายงาน','สรุปบัญชีและภาษี'],
-    ['procurement','box','งานพัสดุ','ขออนุมัติใช้วัสดุ / หนังสือราชการ'],
-    ['docs','documents','เอกสารธุรกิจ','ใบเสนอราคา / ใบวางบิล / ใบเสร็จ']
+  var due=urgentCount(),gDue=(S.guarantees||[]).filter(function(g){var s=guaranteeRecordStatus(g);return !g.returned&&(s.key==='ready'||s.key==='near');}).length;
+  var groups=[
+    {label:'งานประจำวัน',hint:'ใช้บ่อย',items:[
+      ['home','home','ภาพรวม','ยอดเงินและสถานะวันนี้',0],
+      ['list','list','รายการรับ–จ่าย','ค้นหาและตรวจรายการทั้งหมด',0],
+      ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม':'กำหนดรับเงินและจ่ายเงิน',due]
+    ]},
+    {label:'โครงการและต้นทุน',hint:'งานก่อสร้าง',items:[
+      ['projects','build','โครงการ','ข้อมูลโครงการ · สัญญา · ต้นทุน',0],
+      ['boq','documents','BOQ / ประมาณราคา','นำเข้า · ตรวจ · แก้ไข BOQ',0],
+      ['guarantees','shield','เงินประกันผลงาน',gDue?gDue+' รายการใกล้/ครบกำหนด':'ติดตามยอดและวันรับคืน',gDue]
+    ]},
+    {label:'เอกสารและงานราชการ',hint:'สำนักงาน',items:[
+      ['docs','documents','เอกสารธุรกิจ','ใบเสนอราคา · วางบิล · ใบเสร็จ',0],
+      ['procurement','box','พัสดุ / หนังสือราชการ','วัสดุ · หนังสือ · งานสัญญา',0]
+    ]},
+    {label:'รายงานและควบคุม',hint:'ผู้บริหาร',items:[
+      ['report','chart','รายงาน','บัญชี · ภาษี · ผลโครงการ',0]
+    ]}
   ];
   var active=U.view==='project'?'projects':(['doclist','quoteprint'].indexOf(U.view)>=0?'docs':U.view);
-  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer" aria-label="เมนูหลัก"><div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div><div class="app-drawer-menu">'+items.map(function(x){return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(active===x[0]?'on':'')+'"'+(active===x[0]?' aria-current="page"':'')+'><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+((x[0]==='due'&&due)||(x[0]==='guarantees'&&gDue)?'<i>'+Math.min(x[0]==='due'?due:gDue,99)+'</i>':'')+'<strong>›</strong></button>';}).join('')+'</div><div class="app-drawer-docs"><b>เอกสาร</b><div><button data-act="drawerDocList" data-kind="quote">'+ic('quote')+'<span>ใบเสนอราคา</span></button><button data-act="drawerDocList" data-kind="bill">'+ic('bill')+'<span>ใบวางบิล</span></button><button data-act="drawerDocList" data-kind="receipt">'+ic('receipt')+'<span>ใบเสร็จ</span></button></div></div><div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings">'+ic('settings')+'<span>ตั้งค่า</span></button></div></aside></div>';
+  function itemHtml(x){
+    return '<button data-act="menuGo" data-v="'+x[0]+'" class="'+(active===x[0]?'on':'')+'"'+(active===x[0]?' aria-current="page"':'')+'><span class="app-drawer-ico">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[4]?'<i>'+Math.min(x[4],99)+'</i>':'')+'<strong>›</strong></button>';
+  }
+  return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer" aria-label="เมนูหลัก">'+
+    '<div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div>'+
+    '<div class="app-drawer-menu">'+groups.map(function(g){return '<div class="app-drawer-group-label"><span>'+g.label+'</span><small>'+g.hint+'</small></div>'+g.items.map(itemHtml).join('');}).join('')+'</div>'+
+    '<div class="app-drawer-docs"><b>สร้างเอกสารด่วน</b><div><button data-act="drawerDocList" data-kind="quote">'+ic('quote')+'<span>ใบเสนอราคา</span></button><button data-act="drawerDocList" data-kind="bill">'+ic('bill')+'<span>ใบวางบิล</span></button><button data-act="drawerDocList" data-kind="receipt">'+ic('receipt')+'<span>ใบเสร็จ</span></button></div></div>'+
+    '<div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings">'+ic('settings')+'<span>ตั้งค่า / ระบบ</span></button></div>'+
+    '</aside></div>';
 }
 
 function render(){
