@@ -6,6 +6,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1023 Complete Expense Amounts on iPhone
+
+- Mobile expense status cards use one full-width row per status, so paid and outstanding amounts retain all digits and two decimal places.
+- Long totals can wrap without ellipsis; the status header total moves to a new line when needed.
+- Desktop retains two columns. Keyboard focus and dark-mode amount contrast are improved.
+- Presentation-only change; existing amount calculations, click filters and stored accounting data are unchanged.
+
 ## v1022 All-Project Guarantee Receivable
 
 - หน้า `รวมทุกโครงการ` แสดงการ์ด `เงินประกันค้างรับ` แยกจากต้นทุนอย่างชัดเจน โดยรวมยอดจากทุกโครงการที่เลือกอยู่ใน Dashboard.
