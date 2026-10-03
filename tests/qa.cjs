@@ -668,5 +668,36 @@ reset();test('v1031 text-layer PDF falls back to full-page OCR when table covera
   var src=c.boqImportPdf.toString();assert(src.includes('textCoverage=boqRowsNeedVision(rows,pdf.numPages)'));assert(src.includes('textLayerFallback:true'));assert(src.includes('Text Layer แต่ตารางไม่ครบ'));
 });
 
+
+reset();test('v1033 real Tha Sala PR4 fixture remains 32 rows and reconciles four pages to 412812.83',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8'));assert.equal(fx.rows.length,32);
+  const total=fx.rows.reduce((n,x)=>n+x.qty*x.unitPrice,0);assert(Math.abs(total-fx.declaredTotal)<.01);
+  const pages=fx.pageSlices.map(([a,b])=>fx.rows.slice(a-1,b).reduce((n,x)=>n+x.qty*x.unitPrice,0));
+  pages.forEach((v,i)=>assert(Math.abs(v-fx.pageTotals[i])<.02));
+  assert.equal(c.boqOcrReconcile(fx.rows,fx.declaredTotal).ok,true);
+});
+reset();test('v1033 local PR4 unit lexicon covers every unit used by the real Tha Sala fixture',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8')),units=[...new Set(fx.rows.map(x=>x.unit))];
+  units.forEach(unit=>assert.equal(c.thaiGovUnit('ตัวอย่าง 1 '+unit+' 100.00 100.00'),unit));
+  for(const unit of ['ลบ.ฟ.','กล่อง','ก้อน','กระสอบ','ม้วน','กระป๋อง','ถัง','บาน','ใบ','คู่','ลิตร'])assert.equal(c.thaiGovUnit('งาน 1 '+unit+' 10 10'),unit);
+});
+reset();test('v1033 real PR4 OCR text cases recover labor-only dual-price cubic-foot box and circled-number rows',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8'));
+  fx.ocrCases.forEach(tc=>{const rows=c.thaiGovBoqRows(tc.text);assert.equal(rows.length,tc.expected.length,tc.id);tc.expected.forEach(ex=>assert(rows.some(x=>x.category===ex.category&&Math.abs(x.qty-ex.qty)<.001&&x.unit===ex.unit&&Math.abs(x.unitPrice-ex.unitPrice)<.01),tc.id+' '+JSON.stringify(ex)));});
+});
+reset();test('v1033 OCR merge dedupes the same evidence but preserves different prices and different source sections',()=>{
+  const a={name:'งานทาสีใหม่ — ค่าวัสดุ',category:'ค่าของ',qty:267,unit:'ตร.ม.',unitPrice:36.28,sectionCode:'1.1',sectionName:'งานสี'};
+  const near=Object.assign({},a,{unitPrice:36.29,ocrConfidence:.9});
+  const price=Object.assign({},a,{unitPrice:39.5});
+  const sec=Object.assign({},a,{sectionCode:'2.1',sectionName:'งานปรับปรุง'});
+  assert.equal(c.boqMergeOcrRows([a],[near]).length,1);
+  assert.equal(c.boqMergeOcrRows([a],[price]).length,2);
+  assert.equal(c.boqMergeOcrRows([a],[sec]).length,2);
+});
+reset();test('v1033 seeded Tha Sala BOQ matches the independent real fixture fields and sections',()=>{
+  const fx=JSON.parse(fs.readFileSync('tests/fixtures/boq-thasala-pr4-v1.json','utf8'));c.S.projects=[{id:'thasala-m7',name:'ท่าศาลา'}];c.S.boq=[];delete c.S.thasalaPr4Imported;assert.equal(c.mergeThaSalaPr4Boq(),true);assert.equal(c.S.boq.length,fx.rows.length);
+  fx.rows.forEach((ex,i)=>{const got=c.S.boq[i];for(const k of ['name','category','unit','sectionCode','sectionName'])assert.equal(got[k],ex[k],k+' row '+(i+1));assert(Math.abs(got.qty-ex.qty)<.0001);assert(Math.abs(got.unitPrice-ex.unitPrice)<.0001);});
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
