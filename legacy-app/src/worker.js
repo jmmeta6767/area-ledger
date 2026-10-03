@@ -27,7 +27,7 @@ export default {
       const target=new URL(url.pathname+url.search,CANONICAL_GATEWAY);
       const headers=new Headers(request.headers);
       headers.set('X-AREA-Legacy-App','g');
-      return fetch(new Request(target.toString(),{
+      return env.GATEWAY.fetch(new Request(target.toString(),{
         method:request.method,
         headers,
         body:['GET','HEAD'].includes(request.method)?undefined:request.body,
