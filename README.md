@@ -6,6 +6,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1009 Vision Provider Acceptance Retry
+
+- Keeps the v1008 production provider configuration unchanged after a direct live Gateway probe returned HTTP 200 through Gemini 3.5 Flash.
+- Production Vision acceptance now retries transient 429/5xx provider failures up to four times with bounded backoff instead of failing the whole cutover on one temporary upstream spike.
+- Non-retryable failures still stop immediately and the cutover remains fail-closed.
+- Acceptance evidence records how many Vision attempts were required.
+
 ## v1008 Gemini 3.5 Vision Provider Cutover
 
 - Replaces `gemini-2.5-flash` with `gemini-3.5-flash` after the production API key returned a Google 404 for 2.5 while direct text and image probes succeeded on 3.5.
