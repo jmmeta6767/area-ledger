@@ -6,6 +6,14 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1005 Legacy g App Shell Sync
+
+- Keeps the user-facing origin `https://g.areamaibab.workers.dev` so iPhone/Safari localStorage and installed-PWA data stay on the same origin.
+- Adds a dedicated static app-shell deployment named `g` using the exact `gateway/public` assets that passed release QA.
+- The legacy worker proxies only `/health`, `/ready`, and `/v1/*` to the canonical production Gateway, so older cached clients can recover without an origin migration.
+- Production live acceptance now verifies the real `g...` page, the browser Origin CORS path, the legacy readiness proxy, and a v1005 client-contract marker.
+- The legacy app shell holds no Gemini secret, D1/R2 binding, or accounting state. Accounting data and AI remain on the canonical Gateway; review-before-save remains unchanged.
+
 ## v1004 Legacy Production Alias Readiness CORS Hotfix
 
 - Fixes the iPhone/Safari failure where the legacy production app origin `https://g.areamaibab.workers.dev` could reach the canonical AI Gateway allowlist but still failed before OCR because `/ready` and `/health` returned before CORS headers were applied.
