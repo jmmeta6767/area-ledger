@@ -3207,8 +3207,28 @@ function fmt(n,dec){var s=Math.abs(n).toLocaleString('th-TH',dec?{minimumFractio
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
+/* v1036 runtime memory stability · explicit release helpers for iOS/Safari */
+function runtimeReleaseCanvas(c){
+  if(!c)return;
+  try{var x=c.getContext&&c.getContext('2d');if(x&&typeof x.reset==='function')x.reset();}catch(_){}
+  try{c.width=1;c.height=1;}catch(_){}
+}
+function runtimeReleaseImage(im){
+  if(!im)return;
+  try{im.onload=null;im.onerror=null;im.src='';}catch(_){}
+}
+function runtimeReleaseObjectUrl(u){if(!u)return;try{URL.revokeObjectURL(u);}catch(_){}}
+function runtimeReleasePdf(pdf){
+  if(!pdf)return;
+  try{if(typeof pdf.cleanup==='function')pdf.cleanup();}catch(_){}
+  try{var d=typeof pdf.destroy==='function'?pdf.destroy():null;if(d&&typeof d.catch==='function')d.catch(function(){});}catch(_){}
+}
+function runtimeReleaseCloudPhoto(){
+  if(U&&U.sheet&&U.sheet.kind==='cloudPhoto'&&U.sheet.url){runtimeReleaseObjectUrl(U.sheet.url);U.sheet.url='';}
+}
+
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',profilePostSaving:false,profilePhotoBusy:false,profileIdentityBusy:'',profilePublicBusy:false,profileFilter:'all',profileProjectPid:'',pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',profilePostSaving:false,profilePhotoBusy:false,profileIdentityBusy:'',profilePublicBusy:false,profileFilter:'all',profileProjectPid:'',boqOcrPdf:null,pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
 
 function defaultChartAccounts(){return[
 {id:'1000',code:'1000',name:'เงินสด',type:'asset',normal:'debit'},
@@ -3306,10 +3326,17 @@ async function cloudFileDelete(key){if(!key)return false;var x=await cloudGatewa
 async function cloudFileUpload(dataUrl,entityType,entityId,name){return cloudGateway('POST','/v1/files/upload',{dataUrl:dataUrl,entityType:entityType||'attachment',entityId:entityId||'',name:name||'attachment'});}
 async function cloudFileOpen(key,mime){
   if(!key||!cloudLedgerKey(false))return false;var headers=cloudHeaders();if(!headers)return false;delete headers['Content-Type'];
-  try{var r=await fetch('/v1/files/object?key='+encodeURIComponent(key),{method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});if(!r.ok)return false;var b=await r.blob(),u=URL.createObjectURL(b);U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};render();return true;}catch(_){return false;}
+  try{var r=await fetch('/v1/files/object?key='+encodeURIComponent(key),{method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});if(!r.ok)return false;var b=await r.blob(),u=URL.createObjectURL(b);runtimeReleaseCloudPhoto();U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};render();return true;}catch(_){return false;}
 }
 function cloudPhotoThumb(dataUrl){
-  return new Promise(function(resolve){if(!/^data:image\//i.test(String(dataUrl||''))){resolve('');return;}var im=new Image();im.onerror=function(){resolve('');};im.onload=function(){try{var M=180,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.48));}catch(_){resolve('');}};im.src=dataUrl;});
+  return new Promise(function(resolve){
+    if(!/^data:image\//i.test(String(dataUrl||''))){resolve('');return;}
+    var im=new Image(),c=null;
+    function finish(v){runtimeReleaseCanvas(c);c=null;runtimeReleaseImage(im);resolve(v||'');}
+    im.onerror=function(){finish('');};
+    im.onload=function(){try{var M=180,k=Math.min(1,M/Math.max(im.width,im.height));c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);finish(c.toDataURL('image/jpeg',.48));}catch(_){finish('');}};
+    im.src=dataUrl;
+  });
 }
 async function cloudOffloadOneTxPhoto(id,silent){
   var t=(S.tx||[]).find(function(x){return x.id===id;});if(!t||!/^data:image\//i.test(String(t.photo||''))||!cloudSyncEnabled())return false;
@@ -4605,8 +4632,9 @@ function expenseBatchScan(files){
       var file=fs[i],data=null,groupId='expense-source-'+uid();
       U.expenseBatchProgress=Math.max(+U.expenseBatchProgress||1,Math.min(95,5+Math.round(i/fs.length*90)));render();
       try{
-        data=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var M=1100,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);resolve({canvas:c,photo:c.toDataURL('image/jpeg',.65)});};im.onerror=reject;im.src=r.result;};r.onerror=reject;r.readAsDataURL(file);});
-        var res=await expenseOcrRecognize(data.canvas),qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res),items;
+        data=await new Promise(function(resolve,reject){var r=new FileReader(),im=null;r.onload=function(){im=new Image();im.onload=function(){try{var M=1100,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);var photo=c.toDataURL('image/jpeg',.65);runtimeReleaseImage(im);r.onload=null;r.onerror=null;resolve({canvas:c,photo:photo});}catch(e){runtimeReleaseImage(im);reject(e);}};im.onerror=function(e){runtimeReleaseImage(im);reject(e);};im.src=r.result;};r.onerror=reject;r.readAsDataURL(file);});
+        var res;try{res=await expenseOcrRecognize(data.canvas);}finally{runtimeReleaseCanvas(data&&data.canvas);if(data)data.canvas=null;}
+        var qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res),items;
         if(Array.isArray(res.rows)&&res.rows.length>1)items=expenseBatchItemsFromResult(res,data.photo,file.name,pid,defaultPay,groupId);
         else items=[{id:uid(),file:file.name,photo:data.photo,amount:+res.amount||0,cat:res.cat||'ค่าของ',sub:res.sub||'',partner:res.partner||'',date:validIsoDate(String(res.date||''))?String(res.date):today(),pid:pid,pay:defaultPay,include:false,ocrConfidence:qa.score,ocrSource:res.source||'local',ocrUncertainFields:review.uncertainFields.slice(),sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'}];
         if(U.expenseBatch!==batchToken||!U.sheet||U.sheet.kind!=='expenseBatch')break;
@@ -4633,19 +4661,21 @@ function expenseScanImage(file){
   var draft=U.draft,token=uid();U.expenseScanToken=token;U.expenseScanBusy=true;U.expenseScanMsg='';U.expenseScanProgress=1;U.expenseScanStage='เตรียมรูป';render();
   function current(){return U.draft===draft&&U.expenseScanToken===token;}
   function done(msg,stage){if(U.expenseScanToken!==token)return;U.expenseScanProgress=100;U.expenseScanStage=stage||'เสร็จแล้ว';U.expenseScanBusy=false;if(current()){U.expenseScanMsg=msg;render();}}
-  var r=new FileReader();
-  r.onerror=function(){done('อ่านไฟล์ไม่ได้ กรุณาเลือกรูปใหม่','อ่านไฟล์ไม่สำเร็จ');};
+  var r=new FileReader(),im=null,c=null;
+  function cleanup(){runtimeReleaseCanvas(c);c=null;runtimeReleaseImage(im);if(r){r.onload=null;r.onerror=null;}}
+  r.onerror=function(){cleanup();done('อ่านไฟล์ไม่ได้ กรุณาเลือกรูปใหม่','อ่านไฟล์ไม่สำเร็จ');};
   r.onload=function(){
-    if(!current()){done('','ยกเลิกแล้ว');return;}expenseScanProgressSet(15,'เปิดรูป');
-    var im=new Image();
-    im.onerror=function(){done('รูปอ่านไม่ได้ กรุณาเลือก JPG/PNG หรือกรอกเอง','รูปไม่รองรับ');};
+    if(!current()){cleanup();done('','ยกเลิกแล้ว');return;}expenseScanProgressSet(15,'เปิดรูป');
+    im=new Image();
+    im.onerror=function(){cleanup();done('รูปอ่านไม่ได้ กรุณาเลือก JPG/PNG หรือกรอกเอง','รูปไม่รองรับ');};
     im.onload=function(){
-      if(!current()){done('','ยกเลิกแล้ว');return;}
+      if(!current()){cleanup();done('','ยกเลิกแล้ว');return;}
       expenseScanProgressSet(28,'จัดรูปแนวตั้งสำหรับอ่าน');
       try{
-        var M=1800,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+        var M=1800,k=Math.min(1,M/Math.max(im.width,im.height));c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);
         draft.photo=c.toDataURL('image/jpeg',.82);var beforeOcr=JSON.stringify(draft);expenseScanProgressSet(45,'เตรียม AI / OCR');expenseScanProgressSet(55,'กำลังอ่านยอด ร้านค้า วันที่ และรายการ');
         expenseOcrRecognize(c).then(function(res){
+          cleanup();
           if(!current()){done('','ยกเลิกแล้ว');return;}expenseScanProgressSet(88,'ตรวจความมั่นใจ');
           if(JSON.stringify(draft)!==beforeOcr){done('ข้อมูลถูกแก้ไขระหว่าง OCR · คงค่าที่คุณกรอกไว้','คงข้อมูลที่คุณแก้');return;}
           if(Array.isArray(res.rows)&&res.rows.length>1){
@@ -4658,8 +4688,8 @@ function expenseScanImage(file){
           expenseScanProgressSet(96,'กรอกข้อมูลให้ตรวจ');
           draft.cat=res.cat||'ค่าของ';if(res.sub)draft.sub=res.sub;draft.amount=String(amt);if(res.partner)draft.partner=res.partner;if(validIsoDate(String(res.date||'')))draft.date=res.date;draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
           done((res.source==='ai'?'AI อ่านบิลและกรอกข้อมูลแล้ว':'OCR ในเครื่องกรอกข้อมูลแล้ว')+' · '+(review.uncertainFields.length?'ควรตรวจเพิ่ม: '+review.uncertainFields.join(', ')+' · ':'')+'กรุณาตรวจรูปกับยอด ร้านค้า รายการ หมวด วันที่ และโครงการ แล้วกดบันทึก','เสร็จแล้ว');
-        }).catch(function(){done('OCR ใช้งานไม่ได้ · แนบรูปไว้แล้ว กรุณากรอกเอง','OCR ไม่สำเร็จ');});
-      }catch(e){done('เตรียมรูปไม่สำเร็จ กรุณาเลือกรูปใหม่','เตรียมรูปไม่สำเร็จ');}
+        }).catch(function(){cleanup();done('OCR ใช้งานไม่ได้ · แนบรูปไว้แล้ว กรุณากรอกเอง','OCR ไม่สำเร็จ');});
+      }catch(e){cleanup();done('เตรียมรูปไม่สำเร็จ กรุณาเลือกรูปใหม่','เตรียมรูปไม่สำเร็จ');}
     };
     im.src=r.result;
   };
@@ -5015,7 +5045,7 @@ function boqAiReadFile(file,index,total,token){
   return new Promise(function(resolve){
     if(!aiGatewayEndpoint('v1/ocr/boq')){resolve({ok:false,rows:[],declaredTotal:0,error:'AI_NOT_CONFIGURED'});return;}
     var done=false,url=URL.createObjectURL(file),im=new Image(),cv=null,loadTimer=null,waitTimer=null,started=Date.now();
-    function finish(out){if(done)return;done=true;if(loadTimer)clearTimeout(loadTimer);if(waitTimer)clearInterval(waitTimer);try{URL.revokeObjectURL(url);}catch(_){}if(cv){try{cv.width=cv.height=1;}catch(_){}}resolve(out);}
+    function finish(out){if(done)return;done=true;if(loadTimer)clearTimeout(loadTimer);if(waitTimer)clearInterval(waitTimer);runtimeReleaseObjectUrl(url);runtimeReleaseCanvas(cv);cv=null;runtimeReleaseImage(im);resolve(out);}
     loadTimer=setTimeout(function(){finish({ok:false,rows:[],declaredTotal:0,error:'IMAGE_DECODE_TIMEOUT',timeout:true});},12000);
     im.onload=function(){
       if(loadTimer){clearTimeout(loadTimer);loadTimer=null;}
@@ -5043,7 +5073,7 @@ function boqAwaitTimeout(promise,ms,code,onTimeout){
 }
 function boqOcrRelease(token){
   if(U.boqOcrToken!==token)return;
-  U.boqOcrToken='';U.boqImportBusy=false;U.boqOcrProgressCtx=null;U.boqOcrAbort=null;U.boqOcrWorker=null;
+  var pdf=U.boqOcrPdf;U.boqOcrToken='';U.boqImportBusy=false;U.boqOcrProgressCtx=null;U.boqOcrAbort=null;U.boqOcrWorker=null;U.boqOcrPdf=null;runtimeReleasePdf(pdf);
 }
 function boqImportScannedPdf(file,pid,optInfo){
   if(U.boqOcrAbort){try{U.boqOcrAbort.abort();}catch(_){}}
@@ -5058,7 +5088,8 @@ function boqImportScannedPdf(file,pid,optInfo){
       var loading;
       try{loading=pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise;}catch(e){boqOcrRelease(token);boqProgressSet(100,'เปิด PDF ไม่สำเร็จ');toast('OCR PDF ไม่สำเร็จ');return;}
       boqAwaitTimeout(loading,20000,'PDF_OPEN_TIMEOUT').then(async function(pdf){
-        if(!boqOcrActive(token))return;
+        if(!boqOcrActive(token)){runtimeReleasePdf(pdf);return;}
+        U.boqOcrPdf=pdf;
         var pages=Math.min(pdf.numPages,30),aiEligible=pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq'),signal=U.boqOcrAbort&&U.boqOcrToken===token?U.boqOcrAbort.signal:null;
         U.boqOcrProgressCtx={index:1,total:pages};
         if(aiEligible){
@@ -5142,10 +5173,11 @@ function boqOcrWords(data){
 }
 function boqOcrActive(token){return !!token&&U.boqImportBusy&&U.boqOcrToken===token;}
 function boqCancelImport(){
-  var worker=U.boqOcrWorker;U.boqOcrToken='';U.boqImportBusy=false;U.boqOcrProgressCtx=null;
+  var worker=U.boqOcrWorker,pdf=U.boqOcrPdf;U.boqOcrToken='';U.boqImportBusy=false;U.boqOcrProgressCtx=null;
   if(U.boqOcrAbort){try{U.boqOcrAbort.abort();}catch(_){}}
-  U.boqOcrAbort=null;U.boqOcrWorker=null;
+  U.boqOcrAbort=null;U.boqOcrWorker=null;U.boqOcrPdf=null;
   if(worker&&typeof worker.terminate==='function'){try{worker.terminate();}catch(_){}}
+  runtimeReleasePdf(pdf);
   boqProgressSet(Math.max(1,+U.boqOcrProgressValue||1),'ยกเลิกแล้ว · ไฟล์/รูปที่เลือกยังอยู่');
 }
 async function boqProgressSet(percent,label){
@@ -5321,7 +5353,7 @@ function boqTableSignal(data,text){var words=boqOcrWords(data),score=boqOcrScore
 function boqLayoutText(data,fallback){var words=boqOcrWords(data);if(!words.length)return String(fallback||'');var hs=words.map(function(w){return Math.max(1,w.bbox.y1-w.bbox.y0);}).sort(function(a,b){return a-b;}),med=hs[Math.floor(hs.length/2)]||18,tol=Math.max(8,med*.65),lines=[];words.sort(function(a,b){var ay=(a.bbox.y0+a.bbox.y1)/2,by=(b.bbox.y0+b.bbox.y1)/2;return Math.abs(ay-by)>tol?ay-by:a.bbox.x0-b.bbox.x0;}).forEach(function(w){var cy=(w.bbox.y0+w.bbox.y1)/2,line=null,best=1e9;lines.forEach(function(l){var d=Math.abs(l.y-cy);if(d<best&&d<=tol){best=d;line=l;}});if(!line){line={y:cy,words:[]};lines.push(line);}line.words.push(w);line.y=(line.y*(line.words.length-1)+cy)/line.words.length;});lines.sort(function(a,b){return a.y-b.y;});return lines.map(function(l){return l.words.sort(function(a,b){return a.bbox.x0-b.bbox.x0;}).map(function(w){return String(w.text||'').trim();}).filter(Boolean).join(' ');}).join('\n');}
 function boqReadImage(file,index,total,worker,token){return new Promise(function(resolve){
   var done=false,url=URL.createObjectURL(file),im=new Image(),cv=null,loadTimer=null,ocrTimer=null;
-  function finish(out){if(done)return;done=true;if(loadTimer)clearTimeout(loadTimer);if(ocrTimer)clearTimeout(ocrTimer);try{URL.revokeObjectURL(url);}catch(_){}if(cv){try{cv.width=cv.height=1;}catch(_){}}resolve(out);}
+  function finish(out){if(done)return;done=true;if(loadTimer)clearTimeout(loadTimer);if(ocrTimer)clearTimeout(ocrTimer);runtimeReleaseObjectUrl(url);runtimeReleaseCanvas(cv);cv=null;runtimeReleaseImage(im);resolve(out);}
   loadTimer=setTimeout(function(){finish({ok:false,text:'',file:file,positionalRows:[],equationRows:[],bandRows:[],wordCount:0,error:'IMAGE_DECODE_TIMEOUT',timeout:true});},12000);
   im.onload=async function(){
     if(loadTimer){clearTimeout(loadTimer);loadTimer=null;}
@@ -5443,7 +5475,32 @@ function boqImportExcel(file,pid){
   loadSheetJs(function(ok){if(!ok){toast('โหลดตัวอ่าน Excel ไม่สำเร็จ');return;}var rd=new FileReader();rd.onload=function(){try{var wb=XLSX.read(rd.result,{type:'array'}),all=[];wb.SheetNames.forEach(function(n){var g=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});all=all.concat(boqRowsFromGrid(g));});boqImportPreview(pid,all,file.name);}catch(e){toast('อ่าน Excel ไม่สำเร็จ');}};rd.readAsArrayBuffer(file);});
 }
 function boqImportPdf(file,pid,optInfo){
-  loadPdfJs(function(ok){if(!ok){U.boqImportBusy=false;toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');return;}var rd=new FileReader();rd.onload=function(){pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise.then(async function(pdf){var lines=[],textItems=0,pagesWithText=0;for(var p=1;p<=pdf.numPages;p++){var pg=await pdf.getPage(p),tc=await pg.getTextContent(),by={};if(tc.items&&tc.items.length){pagesWithText++;textItems+=tc.items.length;}tc.items.forEach(function(it){var y=Math.round(it.transform[5]/2)*2;(by[y]||(by[y]=[])).push({x:it.transform[4],s:it.str});});Object.keys(by).sort(function(a,b){return +b-+a;}).forEach(function(y){var row=by[y].sort(function(a,b){return a.x-b.x;}).map(function(z){return z.s;});if(row.some(function(v){return String(v||'').trim();}))lines.push(row);});}if(!textItems||!pagesWithText){boqImportSetStatus('ตรวจพบ PDF สแกน · เริ่ม OCR ภาษาไทยอัตโนมัติ…');boqImportScannedPdf(file,pid,optInfo);return;}var rows=boqRowsFromGrid(lines),textCoverage=boqRowsNeedVision(rows,pdf.numPages);if(!rows.length||(pdf.numPages>1&&textCoverage.need)){boqImportSetStatus('พบ Text Layer แต่ตารางไม่ครบ · สลับเป็น OCR ทั้งหน้าอัตโนมัติ…');boqImportScannedPdf(file,pid,Object.assign({},optInfo||{},{textLayerFallback:true,textItems:textItems,pagesWithText:pagesWithText,textRows:rows.length}));return;}U.boqImportBusy=false;boqImportPreview(pid,rows,file.name,optInfo);}).catch(function(e){U.boqImportBusy=false;console.error('BOQ PDF import',e);toast('อ่าน PDF ไม่สำเร็จ · ไฟล์อาจเสียหรือถูกป้องกัน');});};rd.onerror=function(){toast('อ่านไฟล์ PDF จากเครื่องไม่สำเร็จ');};rd.readAsArrayBuffer(file);});
+  loadPdfJs(function(ok){
+    if(!ok){U.boqImportBusy=false;toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');return;}
+    var rd=new FileReader();
+    rd.onload=function(){
+      var raw=rd.result;rd.onload=null;rd.onerror=null;
+      var loading;try{loading=pdfjsLib.getDocument({data:new Uint8Array(raw)}).promise;}catch(e){U.boqImportBusy=false;toast('อ่าน PDF ไม่สำเร็จ · ไฟล์อาจเสียหรือถูกป้องกัน');return;}
+      raw=null;
+      loading.then(async function(pdf){
+        try{
+          var lines=[],textItems=0,pagesWithText=0;
+          for(var p=1;p<=pdf.numPages;p++){
+            var pg=await pdf.getPage(p),tc=await pg.getTextContent(),by={};
+            if(tc.items&&tc.items.length){pagesWithText++;textItems+=tc.items.length;}
+            tc.items.forEach(function(it){var y=Math.round(it.transform[5]/2)*2;(by[y]||(by[y]=[])).push({x:it.transform[4],s:it.str});});
+            Object.keys(by).sort(function(a,b){return +b-+a;}).forEach(function(y){var row=by[y].sort(function(a,b){return a.x-b.x;}).map(function(z){return z.s;});if(row.some(function(v){return String(v||'').trim();}))lines.push(row);});
+          }
+          if(!textItems||!pagesWithText){boqImportSetStatus('ตรวจพบ PDF สแกน · เริ่ม OCR ภาษาไทยอัตโนมัติ…');boqImportScannedPdf(file,pid,optInfo);return;}
+          var rows=boqRowsFromGrid(lines),textCoverage=boqRowsNeedVision(rows,pdf.numPages);
+          if(!rows.length||(pdf.numPages>1&&textCoverage.need)){boqImportSetStatus('พบ Text Layer แต่ตารางไม่ครบ · สลับเป็น OCR ทั้งหน้าอัตโนมัติ…');boqImportScannedPdf(file,pid,Object.assign({},optInfo||{},{textLayerFallback:true,textItems:textItems,pagesWithText:pagesWithText,textRows:rows.length}));return;}
+          U.boqImportBusy=false;boqImportPreview(pid,rows,file.name,optInfo);
+        }finally{runtimeReleasePdf(pdf);}
+      }).catch(function(e){U.boqImportBusy=false;console.error('BOQ PDF import',e);toast('อ่าน PDF ไม่สำเร็จ · ไฟล์อาจเสียหรือถูกป้องกัน');});
+    };
+    rd.onerror=function(){rd.onload=null;rd.onerror=null;U.boqImportBusy=false;toast('อ่านไฟล์ PDF จากเครื่องไม่สำเร็จ');};
+    rd.readAsArrayBuffer(file);
+  });
 }
 function boqQuickText(x){return [x&&x.name,x&&x.sectionCode,x&&x.sectionName,x&&x.category,x&&x.unit,x&&x.note].map(function(v){return String(v||'').trim().toLowerCase();}).join(' ').replace(/\s+/g,' ').trim();}
 function boqQueryTokens(q){return String(q||'').trim().toLowerCase().split(/\s+/).filter(Boolean).slice(0,10);}
@@ -6691,20 +6748,28 @@ function profilePostCaption(p){var b=S.business||{},a=[S.brand||b.legalName||'AR
 function profilePhotoResize(file){
   return new Promise(function(resolve,reject){
     if(!file||file.size>12*1024*1024){reject(new Error('IMAGE_TOO_LARGE'));return;}
-    var r=new FileReader();r.onerror=function(){reject(new Error('READ_FAILED'));};r.onload=function(){var im=new Image();im.onerror=function(){reject(new Error('DECODE_FAILED'));};im.onload=function(){try{
-      function make(max,q){var k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q);}
-      resolve({ref:'',data:make(1280,.72),thumb:make(480,.58),mime:'image/jpeg',name:String(file.name||'worksite.jpg').slice(0,160)});
-    }catch(e){reject(e);}};im.src=String(r.result||'');};r.readAsDataURL(file);
+    var r=new FileReader(),im=null;
+    function fail(e){runtimeReleaseImage(im);if(r){r.onload=null;r.onerror=null;}reject(e);}
+    r.onerror=function(){fail(new Error('READ_FAILED'));};
+    r.onload=function(){im=new Image();im.onerror=function(){fail(new Error('DECODE_FAILED'));};im.onload=function(){try{
+      function make(max,q){var k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas'),out='';c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);out=c.toDataURL('image/jpeg',q);runtimeReleaseCanvas(c);return out;}
+      var out={ref:'',data:make(1280,.72),thumb:make(480,.58),mime:'image/jpeg',name:String(file.name||'worksite.jpg').slice(0,160)};runtimeReleaseImage(im);r.onload=null;r.onerror=null;resolve(out);
+    }catch(e){fail(e);}};im.src=String(r.result||'');};
+    r.readAsDataURL(file);
   });
 }
 function profileIdentityResize(file,kind){
   return new Promise(function(resolve,reject){
     if(!file||file.size>12*1024*1024){reject(new Error('IMAGE_TOO_LARGE'));return;}
-    var r=new FileReader();r.onerror=function(){reject(new Error('READ_FAILED'));};r.onload=function(){var im=new Image();im.onerror=function(){reject(new Error('DECODE_FAILED'));};im.onload=function(){try{
+    var r=new FileReader(),im=null,c=null;
+    function fail(e){runtimeReleaseCanvas(c);c=null;runtimeReleaseImage(im);if(r){r.onload=null;r.onerror=null;}reject(e);}
+    r.onerror=function(){fail(new Error('READ_FAILED'));};
+    r.onload=function(){im=new Image();im.onerror=function(){fail(new Error('DECODE_FAILED'));};im.onload=function(){try{
       var avatar=kind==='avatar',tw=avatar?520:1280,th=avatar?520:420,srcRatio=im.width/im.height,target=tw/th,sx=0,sy=0,sw=im.width,sh=im.height;
       if(srcRatio>target){sw=Math.round(im.height*target);sx=Math.max(0,Math.round((im.width-sw)/2));}else{sh=Math.round(im.width/target);sy=Math.max(0,Math.round((im.height-sh)/2));}
-      var c=document.createElement('canvas');c.width=tw;c.height=th;c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,tw,th);resolve({data:c.toDataURL('image/jpeg',avatar ? .76 : .68),mime:'image/jpeg'});
-    }catch(e){reject(e);}};im.src=String(r.result||'');};r.readAsDataURL(file);
+      c=document.createElement('canvas');c.width=tw;c.height=th;c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,tw,th);var out={data:c.toDataURL('image/jpeg',avatar ? .76 : .68),mime:'image/jpeg'};runtimeReleaseCanvas(c);c=null;runtimeReleaseImage(im);r.onload=null;r.onerror=null;resolve(out);
+    }catch(e){fail(e);}};im.src=String(r.result||'');};
+    r.readAsDataURL(file);
   });
 }
 async function profileSetIdentity(kind,file){
@@ -7129,7 +7194,7 @@ document.addEventListener('click',function(e){
     if(cd){if(accountingPeriodLocked(cd.date,'รายการบัญชี'))return;cd.due='';cd.paid=false;if(!persist())return;U.sheet={kind:'tx',id:id};render();toast('ปิดวันครบกำหนดแล้ว');}
   }
   else if(a==='boqCancelImport'){var cp=U.sheet&&U.sheet.pid||U.boqProjectPid||'';boqCancelImport();U.sheet={kind:'boqImportFile',pid:cp};render();toast('หยุดการอ่าน BOQ แล้ว · รูปที่เลือกยังอยู่');}
-  else if(a==='closeSheet'){if(U.boqImportBusy&&U.sheet&&U.sheet.kind==='boqImportFile')boqCancelImport();var wasBoq=U.sheet&&U.sheet.kind==='boq'&&U.view==='boq';if(U.sheet&&U.sheet.kind==='cloudPhoto'&&U.sheet.url){try{URL.revokeObjectURL(U.sheet.url);}catch(_){}}U.sheet=null;U.confirm=null;if(wasBoq)saveNavSession();render();pwaApplyPendingUpdate();}
+  else if(a==='closeSheet'){if(U.boqImportBusy&&U.sheet&&U.sheet.kind==='boqImportFile')boqCancelImport();var wasBoq=U.sheet&&U.sheet.kind==='boq'&&U.view==='boq';runtimeReleaseCloudPhoto();U.sheet=null;U.confirm=null;if(wasBoq)saveNavSession();render();pwaApplyPendingUpdate();}
   else if(a==='apPayOpen'){var apt0=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt0)return;if(txOutstandingNet(apt0)<=.01){toast('รายการนี้ชำระครบแล้ว');return;}U.sheet={kind:'apPay',id:id};render();}
   else if(a==='apPaySave'){var apt1=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt1){toast('ไม่พบเจ้าหนี้');return;}var amtAP=Math.round((+(document.getElementById('apPayAmount')||{}).value||0)*100)/100,dateAP=(document.getElementById('apPayDate')||{}).value||today(),payAP=(document.getElementById('apPayMethod')||{}).value||'transfer',remainAP=txOutstandingNet(apt1);if(!(amtAP>0)||amtAP-remainAP>.01){toast('จำนวนชำระต้องมากกว่า 0 และไม่เกินยอดคงเหลือ');return;}if(accountingPeriodLocked(dateAP,'การชำระเจ้าหนี้'))return;var snapAP=JSON.parse(JSON.stringify(apt1)),pmt={id:uid(),date:dateAP,amount:amtAP,pay:payAP,createdAt:Date.now()};apt1.payments=txPayments(apt1).slice();apt1.payments.push(pmt);var stAP=txPaymentState(apt1);apt1.paid=stAP.settled;apt1.pay=stAP.settled&&apt1.payments.length===1?payAP:(apt1.pay||'');if(stAP.settled)apt1.due='';accountingAudit('ap-payment','tx',apt1.id,snapAP,apt1,'ชำระเจ้าหนี้ '+fmt(amtAP));if(!persist()){Object.keys(apt1).forEach(function(k){delete apt1[k];});Object.assign(apt1,snapAP);toast('บันทึกชำระไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast(stAP.settled?'ชำระเจ้าหนี้ครบแล้ว':'บันทึกจ่ายบางส่วนแล้ว · เหลือ '+fmt(stAP.remain));}
   else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(!t){toast('ไม่พบรายการ');return;}if(accountingPeriodLocked(t.date,'รายการบัญชี'))return;if(t.paid){U.sheet=null;render();toast('รายการนี้ชำระแล้ว');return;}var prevPaid=t.paid,prevDue=t.due,prevPay=t.pay;t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';if(!persist()){t.paid=prevPaid;t.due=prevDue;t.pay=prevPay;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}

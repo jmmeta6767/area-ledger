@@ -5,6 +5,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1036 runtime memory stability
+
+- Adds explicit canvas, Image, object-URL and PDF.js release helpers for long-running iPhone/Safari sessions instead of relying only on garbage collection.
+- BOQ AI/local image OCR now revokes object URLs, shrinks canvases and clears Image handlers/src on every success, timeout, failure and cancellation path.
+- Scanned-PDF OCR tracks the active PDF.js document and destroys it on completion or cancel; text-layer PDF import also destroys its PDF.js document in a `finally` path before preview/fallback continues.
+- Expense single-image and multi-image OCR release decode Images and OCR canvases immediately after recognition while retaining the compressed receipt photo string used by the review flow.
+- Profile avatar/cover/post image resize and R2 receipt-thumbnail generation release temporary canvases and decode Images immediately after encoding.
+- Cloud R2 photo preview now centralizes object-URL revocation both before replacement and when the sheet closes.
+- Runtime stability only: no OCR extraction rules, accounting formulas, BOQ values, storage keys, Cloud Sync/D1/R2 contracts, tax or document behavior changes.
+
+
 ## v1035 runtime performance polish
 
 - Dashboard transaction aggregation now computes paid income, paid expenses, outstanding AR/AP and transaction type counts in a single pass instead of repeatedly filtering and reducing the same transaction array.

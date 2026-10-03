@@ -59,6 +59,8 @@ jobs:
         run: node tests/ux-ui-v1034.cjs
       - name: v1035 runtime performance regression
         run: node tests/runtime-v1035.cjs
+      - name: v1036 runtime memory stability regression
+        run: node tests/runtime-v1036.cjs
       - name: Cloudflare production contract QA
         run: node tests/cloudflare-production.cjs
       - name: Cloudflare deploy pipeline QA
