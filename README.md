@@ -6,6 +6,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1008 Gemini 3.5 Vision Provider Cutover
+
+- Replaces `gemini-2.5-flash` with `gemini-3.5-flash` after the production API key returned a Google 404 for 2.5 while direct text and image probes succeeded on 3.5.
+- Gemini image extraction uses JSON response mode with `thinkingLevel=minimal`; the old forced temperature setting is removed.
+- Gateway provider timeout is raised to 40 seconds and the browser request budget to 45 seconds. Existing clients carrying the old 15-second default are migrated to 45 seconds.
+- v1007 handwritten integer recovery remains active, so AI text containing 325 × 4 / TOTAL 1300 can recover 1,300 even if the provider amount field is zero.
+- Production live acceptance now verifies a valid PNG image reaches Gemini successfully; receipt-specific extraction quality remains covered by deterministic parser regression tests and physical field validation.
+- Review-before-save, storage keys, D1/R2 bindings, and the `g.areamaibab.workers.dev` user origin remain unchanged.
+
 ## v1007 Handwritten Integer Total Recovery
 
 - Fixes the exact small-shop receipt gap where client fallback only recognized numbers with two decimal places; handwritten `1300` and `325` were ignored.
