@@ -3993,11 +3993,11 @@ async function aiGatewayRequest(path,payload){
   try{
     if(ctrl)timer=setTimeout(function(){ctrl.abort();},cfg.timeoutMs);
     var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',signal:ctrl?ctrl.signal:undefined,body:JSON.stringify(clean)});status=res.status;
-    if(!res.ok)throw new Error('AI gateway HTTP '+res.status);
-    var rp=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Gateway-Version')||''):'',rr=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Request-ID')||''):'';
+    var rp=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Gateway-Version')||''):'',rr=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Request-ID')||''):'',raw={};try{raw=await res.json();}catch(_){raw={};}
+    if(!res.ok){var code=raw&&raw.error?String(raw.error):('HTTP_'+res.status),err=new Error(code);err.gatewayStatus=res.status;err.gatewayCode=code;throw err;}
     if(rp!=='1'||rr!==rid)throw new Error('AI gateway response identity mismatch');
-    var raw=await res.json(),out=path==='v1/ocr/boq'?aiGatewayValidateBoq(raw):aiGatewayValidateExpense(raw);recordOcrDiagnostic({base:aiGatewayBase(),ok:true,status:status,durationMs:Date.now()-started,requestId:rid});return out;
-  }catch(e){recordOcrDiagnostic({base:aiGatewayBase(),ok:false,status:status,errorCode:e&&e.name==='AbortError'?'TIMEOUT':String(e&&e.message||'OCR_ERROR').slice(0,80),durationMs:Date.now()-started,requestId:rid});throw e;
+    var out=path==='v1/ocr/boq'?aiGatewayValidateBoq(raw):aiGatewayValidateExpense(raw);recordOcrDiagnostic({base:aiGatewayBase(),ok:true,status:status,durationMs:Date.now()-started,requestId:rid});return out;
+  }catch(e){recordOcrDiagnostic({base:aiGatewayBase(),ok:false,status:status,errorCode:e&&e.name==='AbortError'?'TIMEOUT':String(e&&e.gatewayCode||e&&e.message||'OCR_ERROR').slice(0,80),durationMs:Date.now()-started,requestId:rid});throw e;
   }finally{if(timer)clearTimeout(timer);}
 }
 function expenseOcrResult(text){

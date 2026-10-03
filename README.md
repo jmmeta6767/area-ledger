@@ -5,6 +5,12 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1011 OCR Gateway Diagnostic Fidelity
+
+- Browser OCR requests now parse structured gateway errors before falling back, preserving provider/gateway codes such as `PROVIDER_TIMEOUT`, `PROVIDER_HTTP_*`, `RATE_LIMITED`, or `ORIGIN_DENIED` in the existing OCR diagnostic record.
+- Successful responses still require matching gateway protocol/request identity before their accounting or BOQ payload is accepted.
+- Receipt and BOQ review-before-save behavior is unchanged; this release improves diagnosis without auto-saving AI output.
+
 ## v1010 Vision Staging Gate
 
 - Live staging acceptance now exercises the real Gemini Vision provider before any production cutover is authorized.

@@ -510,5 +510,7 @@ reset();test('v1009 production Vision canary retries transient provider failures
 
 reset();test('v1010 staging acceptance exercises the real Vision provider before production',()=>{const s=fs.readFileSync('tests/live-cloudflare-acceptance.mjs','utf8');assert(s.includes('async function visionProviderAcceptance'));assert(s.includes("if(target==='staging')await visionProviderAcceptance(base)"));assert(s.includes('visionProviderLast'));assert(s.includes('visionProviderImageAttempts'));});
 
+reset();test('v1011 browser OCR diagnostics preserve gateway/provider error codes',()=>{const src=c.aiGatewayRequest.toString();assert(src.includes("raw&&raw.error?String(raw.error):('HTTP_'+res.status)"));assert(src.includes('err.gatewayCode=code'));assert(src.includes("String(e&&e.gatewayCode||e&&e.message||'OCR_ERROR')"));assert(!src.includes("throw new Error('AI gateway HTTP '+res.status)"));});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
