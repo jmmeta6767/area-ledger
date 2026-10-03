@@ -1,4 +1,4 @@
-// v1002 receipt review production cutover trigger; functional assertions below remain unchanged.
+// v1003 AI Vision receipt fix production cutover trigger; functional assertions below remain unchanged.
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const y=fs.readFileSync('.github/workflows/production-cutover-v805.yml','utf8');
 const authPath='.github/production-cutover-v805';
