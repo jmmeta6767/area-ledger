@@ -128,7 +128,7 @@ async function googleProjectFiles(env,ledgerHash,pid){
 }
 function r2Ready(env){return !!(env&&env.LEDGER_FILES&&typeof env.LEDGER_FILES.put==='function'&&typeof env.LEDGER_FILES.get==='function'&&typeof env.LEDGER_FILES.delete==='function');}
 function productionComponents(env){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,d1Ledger=d1Ready(env),r2Files=r2Ready(env),exactOrigins=allowedOrigins(env).length;return {providerConfigured,durableState,d1Ledger,r2Files,exactOrigins,ready:providerConfigured&&durableState&&d1Ledger&&r2Files};}
-async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT ledger_hash FROM google_connections LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT project_id FROM google_project_links LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT drive_file_id FROM google_drive_files LIMIT 1').all();return true;}catch(_){return false;}}
+async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT ledger_hash FROM google_connections LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT project_id FROM google_project_links LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT drive_file_id FROM google_drive_files LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT public_id FROM public_profiles LIMIT 1').all();return true;}catch(_){return false;}}
 async function productionPlatformStatus(env){const c=productionComponents(env);c.d1Schema=await d1SchemaReady(env);c.googleWorkspace=googleConfigured(env);c.ready=!!(c.ready&&c.d1Schema);return c;}
 
 function cleanFileMeta(v,max){return String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max||120);}
@@ -174,6 +174,91 @@ async function r2Probe(env,ledgerHash){
     return {ok:true,wrote:true,read:true,deleted:true};
   }catch(_){return {ok:false,error:'R2_PROBE_FAILED',status:503};}
   finally{if(wrote){try{await env.LEDGER_FILES.delete(key);}catch(_){}}}
+}
+
+function cleanPublicText(v,max){
+  return String(v==null?'':v).replace(/\r/g,'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g,'').trim().slice(0,max||500);
+}
+function publicIdOk(v){return /^[0-9a-f]{32}$/.test(String(v||''));}
+function publicProfileRefAllowed(ledgerHash,key){return !!key&&fileObjectAllowed(ledgerHash,String(key));}
+function sanitizePublicProfileSnapshot(raw,ledgerHash){
+  raw=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+  const posts=Array.isArray(raw.posts)?raw.posts.slice(0,60):[],safePosts=[];
+  for(const p0 of posts){
+    const p=p0&&typeof p0==='object'?p0:{},type=['site','portfolio','delivery','announce'].includes(p.type)?p.type:'portfolio',photos=[];
+    for(const ph0 of (Array.isArray(p.photos)?p.photos.slice(0,4):[])){
+      const ph=ph0&&typeof ph0==='object'?ph0:{},ref=String(ph.ref||'');
+      if(!publicProfileRefAllowed(ledgerHash,ref))continue;
+      const mime=/^image\/(?:jpeg|png|webp)$/i.test(String(ph.mime||''))?String(ph.mime).toLowerCase():'image/jpeg';
+      photos.push({ref,mime});
+    }
+    safePosts.push({
+      id:cleanFileMeta(p.id,120)||randomHex(8),
+      type,
+      projectName:cleanPublicText(p.projectName,180),
+      date:/^\d{4}-\d{2}-\d{2}$/.test(String(p.date||''))?String(p.date):'',
+      text:cleanPublicText(p.text,2000),
+      pinned:!!p.pinned,
+      photos
+    });
+  }
+  const stats=raw.stats&&typeof raw.stats==='object'?raw.stats:{},avatarRef=String(raw.avatarRef||''),coverRef=String(raw.coverRef||'');
+  return {
+    version:1,
+    brand:cleanPublicText(raw.brand,120),
+    legalName:cleanPublicText(raw.legalName,180),
+    businessType:cleanPublicText(raw.businessType,100),
+    tagline:cleanPublicText(raw.tagline,180),
+    bio:cleanPublicText(raw.bio,1200),
+    phone:cleanPublicText(raw.phone,80),
+    email:cleanPublicText(raw.email,160),
+    address:cleanPublicText(raw.address,600),
+    lineId:cleanPublicText(raw.lineId,160),
+    website:cleanPublicText(raw.website,300),
+    facebook:cleanPublicText(raw.facebook,300),
+    instagram:cleanPublicText(raw.instagram,300),
+    tiktok:cleanPublicText(raw.tiktok,300),
+    avatarRef:publicProfileRefAllowed(ledgerHash,avatarRef)?avatarRef:'',
+    coverRef:publicProfileRefAllowed(ledgerHash,coverRef)?coverRef:'',
+    stats:{
+      activeProjects:Math.max(0,Math.min(9999,Number(stats.activeProjects)||0)),
+      deliveredProjects:Math.max(0,Math.min(9999,Number(stats.deliveredProjects)||0)),
+      posts:safePosts.length
+    },
+    posts:safePosts
+  };
+}
+function publicProfileRefs(snapshot){
+  const out=new Set();if(snapshot&&snapshot.avatarRef)out.add(snapshot.avatarRef);if(snapshot&&snapshot.coverRef)out.add(snapshot.coverRef);
+  for(const p of (snapshot&&snapshot.posts)||[])for(const ph of (p.photos||[]))if(ph&&ph.ref)out.add(ph.ref);
+  return out;
+}
+async function publicProfileRowById(env,id,activeOnly){
+  if(!d1Ready(env)||!publicIdOk(id))return null;
+  const sql='SELECT public_id AS publicId,ledger_hash AS ledgerHash,snapshot_json AS snapshotJson,active,published_at AS publishedAt,updated_at AS updatedAt FROM public_profiles WHERE public_id=?'+(activeOnly?' AND active=1':'')+' LIMIT 1';
+  try{return await env.LEDGER_DB.prepare(sql).bind(id).first();}catch(_){return null;}
+}
+async function publicProfileStatus(env,ledgerHash){
+  if(!d1Ready(env))return {ok:false,error:'D1_NOT_CONFIGURED'};
+  try{const row=await env.LEDGER_DB.prepare('SELECT public_id AS publicId,active,published_at AS publishedAt,updated_at AS updatedAt FROM public_profiles WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first();return {ok:true,published:!!(row&&+row.active===1),profile:row||null};}
+  catch(_){return {ok:false,error:'PUBLIC_PROFILE_SCHEMA_NOT_READY'};}
+}
+async function publicProfilePublish(env,ledgerHash,body){
+  if(!d1Ready(env))return {ok:false,error:'D1_NOT_CONFIGURED'};
+  const snapshot=sanitizePublicProfileSnapshot(body&&body.snapshot,ledgerHash),encoded=JSON.stringify(snapshot),bytes=new TextEncoder().encode(encoded).byteLength;
+  if(bytes>700000)return {ok:false,error:'PUBLIC_PROFILE_TOO_LARGE'};
+  const now=new Date().toISOString();
+  try{
+    const old=await env.LEDGER_DB.prepare('SELECT public_id AS publicId,published_at AS publishedAt FROM public_profiles WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first(),id=old&&publicIdOk(old.publicId)?old.publicId:randomHex(16),publishedAt=old&&old.publishedAt||now;
+    await env.LEDGER_DB.prepare('INSERT INTO public_profiles (public_id,ledger_hash,snapshot_json,active,published_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(ledger_hash) DO UPDATE SET snapshot_json=excluded.snapshot_json,active=1,updated_at=excluded.updated_at').bind(id,ledgerHash,encoded,1,publishedAt,now).run();
+    return {ok:true,publicId:id,published:true,publishedAt,updatedAt:now,urlPath:'/portfolio.html?id='+id,postCount:snapshot.posts.length};
+  }catch(_){return {ok:false,error:'PUBLIC_PROFILE_PUBLISH_FAILED'};}
+}
+async function publicProfileRevoke(env,ledgerHash){
+  if(!d1Ready(env))return {ok:false,error:'D1_NOT_CONFIGURED'};
+  const now=new Date().toISOString();
+  try{const row=await env.LEDGER_DB.prepare('SELECT public_id AS publicId FROM public_profiles WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first();if(!row)return {ok:true,published:false,publicId:''};await env.LEDGER_DB.prepare('UPDATE public_profiles SET active=0,updated_at=? WHERE ledger_hash=?').bind(now,ledgerHash).run();return {ok:true,published:false,publicId:String(row.publicId||''),updatedAt:now};}
+  catch(_){return {ok:false,error:'PUBLIC_PROFILE_REVOKE_FAILED'};}
 }
 
 async function ledgerStub(env,key){if(!env.GATEWAY_STATE)return null;const name='ledger:'+await sha256Hex(key),id=env.GATEWAY_STATE.idFromName(name);return env.GATEWAY_STATE.get(id);}
@@ -324,7 +409,33 @@ export default{async fetch(request,env){
   const started=Date.now(),url=new URL(request.url),rid=requestId(request),origin=corsOrigin(request,env),sentOrigin=request.headers.get('Origin')||'';
   if(url.pathname==='/health'&&request.method==='GET'){if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);const c=await productionPlatformStatus(env);return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:c.providerConfigured,durableState:c.durableState,cloudLedger:c.durableState,cloudLedgerBackup:c.durableState,d1Ledger:c.d1Ledger,d1Schema:c.d1Schema,r2Files:c.r2Files,productionReady:c.ready,auditSink:!!env.GATEWAY_AUDIT},200,origin,rid);}
   if(url.pathname==='/ready'&&request.method==='GET'){if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),r2Files:r2Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,origin,rid);}
+  if(url.pathname==='/v1/public/profile'&&request.method==='GET'){
+    if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
+    const id=String(url.searchParams.get('id')||'').toLowerCase();if(!publicIdOk(id))return json({error:'PUBLIC_PROFILE_ID_INVALID'},400,origin,rid);
+    const row=await publicProfileRowById(env,id,true);if(!row)return json({error:'PUBLIC_PROFILE_NOT_FOUND'},404,origin,rid);
+    let snapshot;try{snapshot=JSON.parse(row.snapshotJson||'{}');}catch(_){return json({error:'PUBLIC_PROFILE_CORRUPT'},500,origin,rid);}
+    return json({ok:true,publicId:id,updatedAt:row.updatedAt,snapshot},200,origin,rid);
+  }
+  if(url.pathname==='/v1/public/profile-media'&&request.method==='GET'){
+    if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
+    const id=String(url.searchParams.get('id')||'').toLowerCase(),key=String(url.searchParams.get('key')||'');if(!publicIdOk(id))return json({error:'PUBLIC_PROFILE_ID_INVALID'},400,origin,rid);
+    const row=await publicProfileRowById(env,id,true);if(!row)return json({error:'PUBLIC_PROFILE_NOT_FOUND'},404,origin,rid);
+    let snapshot;try{snapshot=JSON.parse(row.snapshotJson||'{}');}catch(_){return json({error:'PUBLIC_PROFILE_CORRUPT'},500,origin,rid);}
+    if(!publicProfileRefs(snapshot).has(key))return json({error:'PUBLIC_MEDIA_DENIED'},403,origin,rid);
+    const x=await r2Get(env,String(row.ledgerHash||''),key);if(!x.ok)return json({error:x.error},x.status||500,origin,rid);if(!/^image\//i.test(x.mime))return json({error:'PUBLIC_MEDIA_TYPE_DENIED'},403,origin,rid);
+    const h=new Headers({'Content-Type':x.mime,'Cache-Control':'public, max-age=3600, stale-while-revalidate=86400','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-AREA-Request-ID':rid});if(origin)h.set('Access-Control-Allow-Origin',origin);if(x.etag)h.set('ETag',x.etag);return new Response(x.obj.body,{status:200,headers:h});
+  }
   if(request.method==='OPTIONS')return origin?json({ok:true,protocol:PROTOCOL_VERSION},204,origin,rid):json({error:'ORIGIN_DENIED'},403,'',rid);
+  if(url.pathname==='/v1/profile/public-status'||url.pathname==='/v1/profile/publish'||url.pathname==='/v1/profile/revoke'){
+    if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
+    if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
+    const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);
+    const ledgerHash=await sha256Hex(access),rate=await ledgerRateAllowed(request,env);if(rate===null)return json({error:'DURABLE_STATE_REQUIRED'},503,origin,rid);if(!rate)return json({error:'RATE_LIMITED'},429,origin,rid);
+    if(url.pathname==='/v1/profile/public-status'&&request.method==='GET'){const x=await publicProfileStatus(env,ledgerHash);return json(x,x.ok?200:503,origin,rid);}
+    if(url.pathname==='/v1/profile/publish'&&request.method==='POST'){let body;try{body=await readLedgerJson(request);}catch(e){return json({error:String(e&&e.message||'PUBLIC_PROFILE_INVALID')},400,origin,rid);}const x=await publicProfilePublish(env,ledgerHash,body);return json(x,x.ok?200:(x.error==='PUBLIC_PROFILE_TOO_LARGE'?413:500),origin,rid);}
+    if(url.pathname==='/v1/profile/revoke'&&request.method==='POST'){const x=await publicProfileRevoke(env,ledgerHash);return json(x,x.ok?200:500,origin,rid);}
+    return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
+  }
   if(url.pathname==='/v1/files/status'||url.pathname==='/v1/files/list'||url.pathname==='/v1/files/probe'||url.pathname==='/v1/files/upload'||url.pathname==='/v1/files/object'||url.pathname==='/v1/files/delete'){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
