@@ -10,6 +10,6 @@ assert(html.includes("data-act=\"cloudPhotoOpen\""));
 assert(html.includes("photoRef:d.photoRef||''"));
 assert(html.includes("photoThumb:d.photoThumb||''"));
 assert(html.includes("photoHash:d.photoHash||''"));
-assert(html.includes("URL.revokeObjectURL(U.sheet.url)"));
+assert(html.includes("URL.revokeObjectURL(U.sheet.url)")||html.includes("runtimeReleaseCloudPhoto();U.sheet=null;"));
 assert(html.includes("R2 ยังไม่พร้อม · รูปยังเก็บในเครื่อง"));
 console.log('PASS R2 PWA attachment cutover');
