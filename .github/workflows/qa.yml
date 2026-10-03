@@ -57,6 +57,8 @@ jobs:
         run: node tests/v800-business-stable.cjs
       - name: v900 business stable candidate QA
         run: node tests/v900-business-stable.cjs
+      - name: v1000 business stable candidate QA
+        run: node tests/v1000-business-stable.cjs
       - name: v805 production cutover contract QA
         run: node tests/production-cutover-v805.cjs
       - name: Live acceptance script syntax
