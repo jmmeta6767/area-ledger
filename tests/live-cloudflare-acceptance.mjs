@@ -50,11 +50,23 @@ try{
     const legacyReady=await fetch(appBase+'/ready',{method:'GET',cache:'no-store'});assert.equal(legacyReady.ok,true);const legacyReadyData=await legacyReady.json();assert.equal(legacyReadyData.ok,true);evidence.checks.legacyGatewayProxy=true;
     const app=await fetch(appBase+'/?contract=v1005',{method:'GET',cache:'no-store'});assert.equal(app.ok,true);const html=await app.text();
     assert(html.includes('area-ledger-client-contract'));assert(html.includes('v1005-canonical-gateway'));assert(html.includes('https://area-ledger-ai-gateway.areamaibab.workers.dev'));evidence.checks.legacyAppCurrent=true;
-    const canaryRid='acceptance-vision-'+crypto.randomBytes(8).toString('hex');
     const providerPixel='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-    const canaryRes=await fetch(base+'/v1/ocr/expense',{method:'POST',headers:{Origin:appBase,'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':canaryRid},body:JSON.stringify({image:'data:image/png;base64,'+providerPixel,lang:'tha+eng'})});
-    assert.equal(canaryRes.ok,true);assert.equal(canaryRes.headers.get('x-area-gateway-version'),'1');assert.equal(canaryRes.headers.get('x-area-request-id'),canaryRid);
-    const canaryData=await canaryRes.json();assert.equal(typeof canaryData.amount,'number');evidence.checks.visionProviderImage=true;
+    let canaryOk=false,canaryLast=null,canaryAttempts=0;
+    for(let attempt=1;attempt<=4;attempt++){
+      canaryAttempts=attempt;
+      const canaryRid='acceptance-vision-'+crypto.randomBytes(8).toString('hex');
+      try{
+        const canaryRes=await fetch(base+'/v1/ocr/expense',{method:'POST',headers:{Origin:appBase,'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':canaryRid},body:JSON.stringify({image:'data:image/png;base64,'+providerPixel,lang:'tha+eng'})});
+        let canaryData=null;try{canaryData=await canaryRes.json();}catch(_){}
+        canaryLast={status:canaryRes.status,data:canaryData};
+        const identityOk=canaryRes.headers.get('x-area-gateway-version')==='1'&&canaryRes.headers.get('x-area-request-id')===canaryRid;
+        if(canaryRes.ok&&identityOk&&canaryData&&typeof canaryData.amount==='number'){canaryOk=true;break;}
+        if(![429,500,502,503,504].includes(canaryRes.status))break;
+      }catch(e){canaryLast={error:String(e&&e.message||e)};}
+      if(attempt<4)await sleep(2500*attempt);
+    }
+    assert.equal(canaryOk,true,'Vision provider canary failed after '+canaryAttempts+' attempts: '+JSON.stringify(canaryLast));
+    evidence.checks.visionProviderImage=true;evidence.checks.visionProviderImageAttempts=canaryAttempts;
   }
   const platform=await req('/v1/platform/status',{method:'GET'});assert.equal(platform.data.productionReady,true);evidence.checks.platform=true;
   const now=Date.now(),state1={projects:[{id:'acceptance-p1',name:'Live Acceptance'}],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:[],quotes:[],bills:[],receipts:[],dataRevision:1,updatedAt:now,acceptanceMarker:'synthetic-no-user-data'};
