@@ -5,6 +5,16 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1013 BOQ Multi-Image No-Hang
+
+- Fixes the BOQ import progress UI so the bar and percentage repaint live instead of remaining visually stuck at 1%.
+- When AI Vision is enabled, BOQ image batches now use AI first; local Tesseract runs only as a fallback/supplement when AI rows are insufficient.
+- AI image decoding is bounded to 12 seconds and each AI request is bounded to 28 seconds. A failed image is skipped and the batch continues instead of hanging all selected images.
+- Local OCR fallback is also bounded; a stalled Tesseract recognition is terminated instead of leaving iPhone Safari spinning indefinitely.
+- The BOQ Cancel button now aborts the active Gateway request, terminates the local OCR worker, preserves the selected image queue, and prevents late async results from overwriting the UI.
+- AI waiting status shows elapsed seconds per image so a live request is distinguishable from a frozen page.
+- Storage contracts remain unchanged: `site-ledger-v1` and `site-ledger-db`.
+
 ## v1012 Scanned-PDF AI BOQ Path
 
 - Scanned BOQ PDFs up to 8 pages now use the configured Gemini Vision gateway first, page by page, before falling back to the existing Thai/English local OCR path.
