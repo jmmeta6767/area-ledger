@@ -4402,7 +4402,7 @@ function boqImportImages(files,pid){
     finally{U.boqOcrWorker=null;if(worker&&typeof worker.terminate==='function'){try{await worker.terminate();}catch(_){}}}
     if(!boqOcrActive(token))return;
     boqProgressSet(96,'กำลังจัดตารางและตรวจสมการ');
-    var strictRows=thaiGovBoqRowsMerged(all),geoRows=boqMergeOcrRows(posRows,eqRows),localRows=geoRows.length?boqMergeOcrRows(geoRows,strictRows):strictRows,localGood=boqQualityRows(localRows),rows=aiGood.length?boqMergeOcrRows(aiGood,localGood):localGood,mode=aiGood.length?'AI Vision + Local OCR':(posRows.length?'Positional + Equation BOQ':(eqRows.length?'Equation BOQ':'Local OCR')),declared=aiDeclared||thaiGovBoqDeclaredTotal(all);
+    var strictRows=thaiGovBoqRowsMerged(all),geoRows=boqMergeOcrRows(posRows,eqRows),localRows=geoRows.length?boqMergeOcrRows(geoRows,strictRows):strictRows,localQuality=boqRowsNeedVision(localRows,clean.length),localGood=localQuality.good,rows=localGood,mode=posRows.length?'Positional + Equation BOQ':(eqRows.length?'Equation BOQ':'Local OCR'),declared=aiDeclared||thaiGovBoqDeclaredTotal(all);if(aiGood.length){rows=boqMergeOcrRows(aiGood,localGood);mode=localQuality.need?'AI Vision + Verified Local':'AI Vision + Local OCR';}
     if(!rows.length){rows=boqQualityRows(boqGenericRows(all));if(rows.length)mode='Local OCR fallback';}
     var rec=boqOcrReconcile(rows,declared);U.boqImportBusy=false;U.boqOcrProgressCtx=null;U.boqOcrAbort=null;U.boqOcrToken='';
     if(!rows.length){boqProgressSet(100,'อ่านเสร็จ · ยังจับแถว BOQ ไม่ได้'+(localTimedOut?' · OCR ในเครื่องหมดเวลา':''));toast((localTimedOut?'OCR ในเครื่องหมดเวลา · ':'')+'ยังจับ BOQ ไม่ได้ · รูปที่เลือกยังคงอยู่');return;}
