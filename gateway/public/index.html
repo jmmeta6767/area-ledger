@@ -4851,7 +4851,7 @@ function boqImportScannedPdf(file,pid,optInfo){
         var pages=Math.min(pdf.numPages,30),aiEligible=pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq'),signal=U.boqOcrAbort&&U.boqOcrToken===token?U.boqOcrAbort.signal:null;
         U.boqOcrProgressCtx={index:1,total:pages};
         if(aiEligible){
-          var aiRows=[],aiDeclared=0,aiFailed=0;
+          var aiRows=[],aiDeclared=0,aiFailed=0,aiPageCounts=[],aiCoverage=null;
           boqProgressSet(3,'เตรียม AI Vision สำหรับ PDF สแกน');
           for(var ap=1;ap<=pages;ap++){
             if(!boqOcrActive(token))return;
@@ -4865,17 +4865,17 @@ function boqImportScannedPdf(file,pid,optInfo){
               if(!boqOcrActive(token)){acv.width=acv.height=1;return;}
               var ax=await aiGatewayRequest('v1/ocr/boq',{image:acv.toDataURL('image/jpeg',.88),lang:'tha+eng'},{timeoutMs:28000,signal:signal});
               if(!boqOcrActive(token)){acv.width=acv.height=1;return;}
-              (ax.rows||[]).forEach(function(r){aiRows.push(boqEnsureWorkSection({name:r.name,category:r.category||'ค่าของ',qty:+r.qty||0,unit:r.unit||'',unitPrice:+r.unitPrice||0,sectionCode:r.sectionCode||'',sectionName:r.sectionName||'',sectionSource:r.sectionName?'source':'',note:'AI Vision PDF สแกน · ต้องตรวจจากภาพก่อนบันทึก',ocrConfidence:Math.max(0,Math.min(1,+r.confidence||+ax.confidence||0)),ocrNeedsReview:true}));});
+              var axRows=ax.rows||[];aiPageCounts[ap-1]=axRows.length;axRows.forEach(function(r){aiRows.push(boqEnsureWorkSection({name:r.name,category:r.category||'ค่าของ',qty:+r.qty||0,unit:r.unit||'',unitPrice:+r.unitPrice||0,sectionCode:r.sectionCode||'',sectionName:r.sectionName||'',sectionSource:r.sectionName?'source':'',note:'AI Vision PDF สแกน · ต้องตรวจจากภาพก่อนบันทึก',ocrConfidence:Math.max(0,Math.min(1,+r.confidence||+ax.confidence||0)),ocrNeedsReview:true}));});
               aiDeclared=Math.max(aiDeclared,+ax.declaredTotal||0);
-            }catch(e){if(!boqOcrActive(token)){acv.width=acv.height=1;return;}aiFailed++;console.warn('AI Vision scanned PDF page',ap,e);}
+            }catch(e){if(!boqOcrActive(token)){acv.width=acv.height=1;return;}aiPageCounts[ap-1]=0;aiFailed++;console.warn('AI Vision scanned PDF page',ap,e);}
             acv.width=acv.height=1;boqProgressSet(5+Math.round(ap/pages*78),'AI Vision อ่านหน้า '+ap+'/'+pages+' แล้ว');
           }
-          var aiGood=boqQualityRows(aiRows);
-          if(aiGood.length){
-            var aiRec=boqOcrReconcile(aiGood,aiDeclared);boqOcrRelease(token);boqProgressSet(100,'AI Vision อ่าน PDF สแกนเสร็จ · พบ '+aiGood.length+' รายการ');
-            boqImportPreview(pid,aiGood,file.name,Object.assign({},optInfo||{},{ocr:true,ocrMode:'AI Vision PDF สแกน · '+pages+' หน้า · แนวตรง 0°',pages:pages,aiFailedImages:aiFailed,reconcile:aiRec,rejected:Math.max(0,aiRows.length-aiGood.length)}));return;
+          aiCoverage=boqAiCoverage(aiRows,pages,aiDeclared,aiPageCounts);var aiGood=aiCoverage.good;
+          if(!aiCoverage.need){
+            var aiRec=aiCoverage.reconcile;boqOcrRelease(token);boqProgressSet(100,'AI Vision อ่าน PDF ครบ '+pages+' หน้า · พบ '+aiGood.length+' รายการ');
+            boqImportPreview(pid,aiGood,file.name,Object.assign({},optInfo||{},{ocr:true,ocrMode:'AI Vision PDF Verified Coverage · '+pages+' หน้า · แนวตรง 0°',pages:pages,aiFailedImages:aiFailed,aiPageCounts:aiPageCounts,aiCoverageReasons:aiCoverage.reasons,reconcile:aiRec,rejected:Math.max(0,aiRows.length-aiGood.length)}));return;
           }
-          boqProgressSet(86,'AI Vision ยังจับแถวไม่พอ · ใช้ OCR ในเครื่องสำรอง');
+          boqProgressSet(86,'AI Vision PDF ยังไม่ครบ · '+(aiCoverage.reasons[0]||'ต้องตรวจเพิ่ม')+' · ใช้ OCR ในเครื่องสำรอง');
         }
         var ok=await new Promise(function(resolve){loadTesseract(resolve);});if(!boqOcrActive(token))return;
         if(!ok){boqOcrRelease(token);boqProgressSet(100,'โหลด OCR ไทยไม่สำเร็จ');toast('โหลด OCR ไทยไม่สำเร็จ');return;}
@@ -5137,6 +5137,14 @@ function boqRowsNeedVision(rows,imageCount){
   var good=boqQualityRows(rows),pages=Math.max(1,+imageCount||1),min=pages>1?Math.max(3,pages*2):1,raw=Math.max(1,(rows||[]).length);
   return {need:good.length<min||good.length/raw<.65,good:good,min:min};
 }
+function boqAiCoverage(rows,pageCount,declared,pageCounts){
+  rows=Array.isArray(rows)?rows:[];var pages=Math.max(1,+pageCount||1),q=boqRowsNeedVision(rows,pages),d=+declared||0,rec=boqOcrReconcile(q.good,d),counts=Array.isArray(pageCounts)?pageCounts.slice(0,pages):[],min=pages>1?Math.max(3,pages*2):(d>0?1:2),raw=Math.max(1,rows.length),ratio=q.good.length/raw,pageGap=pages>1&&counts.length===pages&&counts.some(function(n){return !(+n>0);}),totalMismatch=d>0&&!rec.ok,reasons=[];
+  if(pageGap)reasons.push('มีหน้าที่ AI ไม่พบรายการ');
+  if(q.good.length<min)reasons.push('จำนวนรายการน้อยกว่าความครอบคลุมขั้นต่ำ '+min);
+  if(ratio<.65)reasons.push('รายการผ่านคุณภาพน้อยกว่า 65%');
+  if(totalMismatch)reasons.push('ยอดรวม AI ไม่ตรงเอกสาร');
+  return {need:pageGap||q.good.length<min||ratio<.65||totalMismatch,good:q.good,min:min,raw:rows.length,ratio:ratio,pageGap:pageGap,pageCounts:counts,reconcile:rec,reasons:reasons};
+}
 function boqAcceptanceSummary(rows,sourceKind){
   rows=Array.isArray(rows)?rows:[];var invalid=0,review=0,low=0,material=0,labor=0,total=0;
   rows.forEach(function(x){var q=+x.qty,p=+x.unitPrice;if(!(q>0)||!isFinite(q)||p<0||!isFinite(p)||!String(x.name||'').trim())invalid++;if(x.ocrNeedsReview)review++;if(x.ocrConfidence!==undefined&&+x.ocrConfidence<.65)low++;if(x.category==='ค่าแรง')labor++;else material++;total+=boqAmount(x);});
@@ -5148,7 +5156,7 @@ function boqImportImages(files,pid){
   if(U.boqOcrAbort){try{U.boqOcrAbort.abort();}catch(_){}}
   var token=uid();U.boqOcrToken=token;U.boqOcrAbort=typeof AbortController!=='undefined'?new AbortController():null;U.boqOcrWorker=null;U.boqImportBusy=true;U.boqOcrProgressValue=1;U.boqOcrProgressCtx={index:1,total:clean.length};U.boqImportStatus='OCR BOQ · 1% · เตรียมอ่าน '+clean.length+' รูป';render();boqProgressSet(1,'เตรียมอ่าน '+clean.length+' รูป');
   (async function(){
-    var names=clean.map(function(f){return f.name;}),rotations=clean.map(function(){return 0;}),aiRows=[],aiDeclared=0,aiFailed=0,aiErrors=[],aiGood=[],aiOn=!!aiGatewayEndpoint('v1/ocr/boq');
+    var names=clean.map(function(f){return f.name;}),rotations=clean.map(function(){return 0;}),aiRows=[],aiDeclared=0,aiFailed=0,aiErrors=[],aiGood=[],aiPageCounts=[],aiCoverage=null,aiOn=!!aiGatewayEndpoint('v1/ocr/boq');
     if(aiOn){
       boqProgressSet(4,'เริ่ม AI Vision · '+clean.length+' รูป');
       for(var a=0;a<clean.length;a++){
@@ -5156,16 +5164,16 @@ function boqImportImages(files,pid){
         boqProgressSet(5+Math.round(a/clean.length*72),'AI Vision อ่านรูป '+(a+1)+'/'+clean.length);
         var ar=await boqAiReadFile(clean[a],a+1,clean.length,token);
         if(!boqOcrActive(token))return;
-        if(ar.ok){aiRows=aiRows.concat(ar.rows||[]);aiDeclared=Math.max(aiDeclared,+ar.declaredTotal||0);if(!(ar.rows||[]).length){aiFailed++;aiErrors.push('รูป '+(a+1)+': ไม่พบแถว');}}
-        else{aiFailed++;aiErrors.push('รูป '+(a+1)+': '+String(ar.error||'อ่านไม่สำเร็จ'));}
+        if(ar.ok){var arRows=ar.rows||[];aiPageCounts[a]=arRows.length;aiRows=aiRows.concat(arRows);aiDeclared=Math.max(aiDeclared,+ar.declaredTotal||0);if(!arRows.length){aiFailed++;aiErrors.push('รูป '+(a+1)+': ไม่พบแถว');}}
+        else{aiPageCounts[a]=0;aiFailed++;aiErrors.push('รูป '+(a+1)+': '+String(ar.error||'อ่านไม่สำเร็จ'));}
         boqProgressSet(5+Math.round((a+1)/clean.length*72),(ar.ok?'AI Vision อ่านรูป ':'ข้ามรูป ')+(a+1)+'/'+clean.length+(ar.ok?' แล้ว':' · '+String(ar.error||'อ่านไม่สำเร็จ')));
       }
-      aiGood=boqQualityRows(aiRows);var aiMin=clean.length>1?clean.length:1;
-      if(aiGood.length>=aiMin){
-        if(!boqOcrActive(token))return;var aiRec=boqOcrReconcile(aiGood,aiDeclared);U.boqImportBusy=false;U.boqOcrProgressCtx=null;U.boqOcrAbort=null;U.boqOcrToken='';boqProgressSet(100,'AI Vision เสร็จ · พบ '+aiGood.length+' รายการ');U.boqImageQueue=[];
-        boqImportPreview(pid,aiGood,(names[0]||'รูป BOQ')+(clean.length>1?' +'+(clean.length-1)+' รูป':''),{image:true,multiImage:true,imageCount:clean.length,failedImages:aiFailed,aiFailedImages:aiFailed,aiErrors:aiErrors,before:clean.reduce(function(n,x){return n+x.size;},0),after:clean.reduce(function(n,x){return n+x.size;},0),optimized:false,ocr:true,ocrMode:'AI Vision First · '+clean.length+' รูป · แนวตรง 0°',pages:clean.length,rotations:rotations,reconcile:aiRec,rejected:Math.max(0,aiRows.length-aiGood.length),positionalRows:0,equationRows:0,wordCount:0});return;
+      aiCoverage=boqAiCoverage(aiRows,clean.length,aiDeclared,aiPageCounts);aiGood=aiCoverage.good;
+      if(!aiCoverage.need){
+        if(!boqOcrActive(token))return;var aiRec=aiCoverage.reconcile;U.boqImportBusy=false;U.boqOcrProgressCtx=null;U.boqOcrAbort=null;U.boqOcrToken='';boqProgressSet(100,'AI Vision เสร็จ · ครบ '+clean.length+' รูป · พบ '+aiGood.length+' รายการ');U.boqImageQueue=[];
+        boqImportPreview(pid,aiGood,(names[0]||'รูป BOQ')+(clean.length>1?' +'+(clean.length-1)+' รูป':''),{image:true,multiImage:true,imageCount:clean.length,failedImages:aiFailed,aiFailedImages:aiFailed,aiErrors:aiErrors,aiPageCounts:aiPageCounts,aiCoverageReasons:aiCoverage.reasons,before:clean.reduce(function(n,x){return n+x.size;},0),after:clean.reduce(function(n,x){return n+x.size;},0),optimized:false,ocr:true,ocrMode:'AI Vision Verified Coverage · '+clean.length+' รูป · แนวตรง 0°',pages:clean.length,rotations:rotations,reconcile:aiRec,rejected:Math.max(0,aiRows.length-aiGood.length),positionalRows:0,equationRows:0,wordCount:0});return;
       }
-      boqProgressSet(80,'AI Vision ได้ '+aiGood.length+' รายการ · ใช้ OCR ในเครื่องเสริม');
+      boqProgressSet(80,'AI Vision ยังไม่ครบ · '+(aiCoverage.reasons[0]||'ต้องตรวจเพิ่ม')+' · ใช้ OCR ในเครื่องเสริม');
     }else boqProgressSet(5,'ไม่ได้เปิด AI Vision · ใช้ OCR ในเครื่อง');
 
     var ok=await new Promise(function(resolve){loadTesseract(resolve);});if(!boqOcrActive(token))return;
@@ -5214,7 +5222,7 @@ function boqImportExcel(file,pid){
   loadSheetJs(function(ok){if(!ok){toast('โหลดตัวอ่าน Excel ไม่สำเร็จ');return;}var rd=new FileReader();rd.onload=function(){try{var wb=XLSX.read(rd.result,{type:'array'}),all=[];wb.SheetNames.forEach(function(n){var g=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});all=all.concat(boqRowsFromGrid(g));});boqImportPreview(pid,all,file.name);}catch(e){toast('อ่าน Excel ไม่สำเร็จ');}};rd.readAsArrayBuffer(file);});
 }
 function boqImportPdf(file,pid,optInfo){
-  loadPdfJs(function(ok){if(!ok){U.boqImportBusy=false;toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');return;}var rd=new FileReader();rd.onload=function(){pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise.then(async function(pdf){var lines=[],textItems=0,pagesWithText=0;for(var p=1;p<=pdf.numPages;p++){var pg=await pdf.getPage(p),tc=await pg.getTextContent(),by={};if(tc.items&&tc.items.length){pagesWithText++;textItems+=tc.items.length;}tc.items.forEach(function(it){var y=Math.round(it.transform[5]/2)*2;(by[y]||(by[y]=[])).push({x:it.transform[4],s:it.str});});Object.keys(by).sort(function(a,b){return +b-+a;}).forEach(function(y){var row=by[y].sort(function(a,b){return a.x-b.x;}).map(function(z){return z.s;});if(row.some(function(v){return String(v||'').trim();}))lines.push(row);});}if(!textItems||!pagesWithText){boqImportSetStatus('ตรวจพบ PDF สแกน · เริ่ม OCR ภาษาไทยอัตโนมัติ…');boqImportScannedPdf(file,pid,optInfo);return;}var rows=boqRowsFromGrid(lines);if(!rows.length){toast('พบข้อความใน PDF แต่ยังจับตาราง BOQ ไม่ได้ · กรุณาตรวจหัวตารางหรือใช้ Excel');return;}U.boqImportBusy=false;boqImportPreview(pid,rows,file.name,optInfo);}).catch(function(e){U.boqImportBusy=false;console.error('BOQ PDF import',e);toast('อ่าน PDF ไม่สำเร็จ · ไฟล์อาจเสียหรือถูกป้องกัน');});};rd.onerror=function(){toast('อ่านไฟล์ PDF จากเครื่องไม่สำเร็จ');};rd.readAsArrayBuffer(file);});
+  loadPdfJs(function(ok){if(!ok){U.boqImportBusy=false;toast('โหลดตัวอ่าน PDF ไม่สำเร็จ');return;}var rd=new FileReader();rd.onload=function(){pdfjsLib.getDocument({data:new Uint8Array(rd.result)}).promise.then(async function(pdf){var lines=[],textItems=0,pagesWithText=0;for(var p=1;p<=pdf.numPages;p++){var pg=await pdf.getPage(p),tc=await pg.getTextContent(),by={};if(tc.items&&tc.items.length){pagesWithText++;textItems+=tc.items.length;}tc.items.forEach(function(it){var y=Math.round(it.transform[5]/2)*2;(by[y]||(by[y]=[])).push({x:it.transform[4],s:it.str});});Object.keys(by).sort(function(a,b){return +b-+a;}).forEach(function(y){var row=by[y].sort(function(a,b){return a.x-b.x;}).map(function(z){return z.s;});if(row.some(function(v){return String(v||'').trim();}))lines.push(row);});}if(!textItems||!pagesWithText){boqImportSetStatus('ตรวจพบ PDF สแกน · เริ่ม OCR ภาษาไทยอัตโนมัติ…');boqImportScannedPdf(file,pid,optInfo);return;}var rows=boqRowsFromGrid(lines),textCoverage=boqRowsNeedVision(rows,pdf.numPages);if(!rows.length||(pdf.numPages>1&&textCoverage.need)){boqImportSetStatus('พบ Text Layer แต่ตารางไม่ครบ · สลับเป็น OCR ทั้งหน้าอัตโนมัติ…');boqImportScannedPdf(file,pid,Object.assign({},optInfo||{},{textLayerFallback:true,textItems:textItems,pagesWithText:pagesWithText,textRows:rows.length}));return;}U.boqImportBusy=false;boqImportPreview(pid,rows,file.name,optInfo);}).catch(function(e){U.boqImportBusy=false;console.error('BOQ PDF import',e);toast('อ่าน PDF ไม่สำเร็จ · ไฟล์อาจเสียหรือถูกป้องกัน');});};rd.onerror=function(){toast('อ่านไฟล์ PDF จากเครื่องไม่สำเร็จ');};rd.readAsArrayBuffer(file);});
 }
 function boqQuickText(x){return [x&&x.name,x&&x.sectionCode,x&&x.sectionName,x&&x.category,x&&x.unit,x&&x.note].map(function(v){return String(v||'').trim().toLowerCase();}).join(' ').replace(/\s+/g,' ').trim();}
 function boqQueryTokens(q){return String(q||'').trim().toLowerCase().split(/\s+/).filter(Boolean).slice(0,10);}
