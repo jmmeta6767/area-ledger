@@ -7,7 +7,7 @@ function corsOrigin(r,env){const o=r.headers.get('Origin')||'';if(!o)return '';c
 function protocolOk(r){return r.headers.get('X-AREA-Gateway-Version')===PROTOCOL_VERSION;}
 function ledgerAccessKey(r){const k=String(r.headers.get('X-AREA-Ledger-Key')||'').trim();return /^[A-Za-z0-9_-]{32,128}$/.test(k)?k:'';}
 async function sha256Hex(text){const b=new TextEncoder().encode(String(text||'')),h=await crypto.subtle.digest('SHA-256',b);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
-const LEDGER_COLLECTIONS=['projects','tx','boq','guarantees','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts','quotes','bills','receipts'];
+const LEDGER_COLLECTIONS=['projects','tx','boq','guarantees','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts','quotes','bills','receipts','profilePosts'];
 function d1Ready(env){return !!(env&&env.LEDGER_DB&&typeof env.LEDGER_DB.prepare==='function'&&typeof env.LEDGER_DB.batch==='function');}
 function canonicalValue(v){if(Array.isArray(v))return v.map(canonicalValue);if(v&&typeof v==='object'){const o={};Object.keys(v).sort().forEach(k=>{o[k]=canonicalValue(v[k]);});return o;}return v;}
 function d1StateParts(state){const meta={},collections={};Object.keys(state||{}).forEach(k=>{if(LEDGER_COLLECTIONS.indexOf(k)<0)meta[k]=state[k];});LEDGER_COLLECTIONS.forEach(k=>{collections[k]=Array.isArray(state&&state[k])?state[k]:[];});return {meta,collections};}
