@@ -1,3 +1,12 @@
+## v1014 BOQ Row-Band Reconstruction
+
+- Adds a quantity-anchored row-band parser for scanned Thai government BOQ/ปร.4 tables. It reconstructs each row between neighboring quantity anchors instead of requiring every OCR word to share nearly the same Y coordinate.
+- Circled handwritten reference numbers such as 17/18/31/32 are ignored naturally because only price/amount pairs that satisfy `qty × unitPrice ≈ amount` are accepted.
+- The parser handles slight scan skew and table-line interference, then separates material and labor by detected table columns and cross-checks the printed row total when available.
+- The Gemini BOQ prompt now includes representative 48 ตร.ม. material/labor rows so Vision is explicitly taught not to confuse circled annotations with prices.
+- Failure diagnostics now report AI rows, RowBand rows, equation rows, and OCR word count while preserving selected images.
+- All OCR/AI BOQ rows remain preview-only until the user reviews and saves them.
+
 # AREA Ledger V2 — Master v800
 
 Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701, based on GitHub `main` v701
