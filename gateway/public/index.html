@@ -5859,7 +5859,7 @@ function profileIdentityResize(file,kind){
     var r=new FileReader();r.onerror=function(){reject(new Error('READ_FAILED'));};r.onload=function(){var im=new Image();im.onerror=function(){reject(new Error('DECODE_FAILED'));};im.onload=function(){try{
       var avatar=kind==='avatar',tw=avatar?520:1280,th=avatar?520:420,srcRatio=im.width/im.height,target=tw/th,sx=0,sy=0,sw=im.width,sh=im.height;
       if(srcRatio>target){sw=Math.round(im.height*target);sx=Math.max(0,Math.round((im.width-sw)/2));}else{sh=Math.round(im.width/target);sy=Math.max(0,Math.round((im.height-sh)/2));}
-      var c=document.createElement('canvas');c.width=tw;c.height=th;c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,tw,th);resolve({data:c.toDataURL('image/jpeg',avatar?.76:.68),mime:'image/jpeg'});
+      var c=document.createElement('canvas');c.width=tw;c.height=th;c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,tw,th);resolve({data:c.toDataURL('image/jpeg',avatar ? .76 : .68),mime:'image/jpeg'});
     }catch(e){reject(e);}};im.src=String(r.result||'');};r.readAsDataURL(file);
   });
 }
