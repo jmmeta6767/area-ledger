@@ -109,9 +109,26 @@ async function googleSyncProject(env,ledgerHash,body){
   const hash=await sha256Hex(JSON.stringify({id:project.id,name:project.name,rows:project.rows})),now=new Date().toISOString();await env.LEDGER_DB.prepare('UPDATE google_project_links SET last_sync_hash=?,last_sync_at=?,updated_at=? WHERE ledger_hash=? AND project_id=?').bind(hash,now,now,ledgerHash,project.id).run();
   return {ok:true,projectId:project.id,rows:data.boq.length-1,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
 }
+
+function parseGoogleUploadDataUrl(value){
+  const m=/^data:(application\/pdf|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|application\/vnd\.ms-excel|text\/csv|image\/(?:jpeg|png|webp|heic|heif));base64,([A-Za-z0-9+/=\r\n]+)$/i.exec(String(value||''));if(!m)throw Error('GOOGLE_FILE_TYPE_UNSUPPORTED');
+  let bin;try{bin=atob(m[2].replace(/\s+/g,''));}catch(_){throw Error('GOOGLE_FILE_BASE64_INVALID');}
+  if(bin.length<1||bin.length>8*1024*1024)throw Error(bin.length>8*1024*1024?'GOOGLE_FILE_TOO_LARGE':'GOOGLE_FILE_EMPTY');
+  const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return {mime:m[1].toLowerCase(),bytes:out};
+}
+async function googleUploadProjectFile(env,ledgerHash,body){
+  const project=googleCleanProject({project:body&&body.project,rows:[]}),name=cleanFileMeta(body&&body.name,180)||'BOQ-source',parsed=parseGoogleUploadDataUrl(body&&body.dataUrl),token=await googleAccessToken(env,ledgerHash),asset=await googleEnsureProjectAssets(env,ledgerHash,project,token),boundary='area_'+randomHex(12);
+  const meta={name,parents:[asset.folderId],appProperties:{areaLedger:'1',projectId:project.id}},head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: '+parsed.mime+'\r\n\r\n',tail='\r\n--'+boundary+'--';
+  const blob=new Blob([head,parsed.bytes,tail],{type:'multipart/related; boundary='+boundary}),d=await googleJson('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id%2Cname%2CmimeType%2Csize%2CwebViewLink',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary},body:blob}),now=new Date().toISOString(),view=String(d.webViewLink||('https://drive.google.com/file/d/'+d.id+'/view'));
+  await env.LEDGER_DB.prepare('INSERT INTO google_drive_files (ledger_hash,project_id,drive_file_id,file_name,mime,size_bytes,web_view_link,created_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(ledger_hash,project_id,drive_file_id) DO UPDATE SET file_name=excluded.file_name,mime=excluded.mime,size_bytes=excluded.size_bytes,web_view_link=excluded.web_view_link').bind(ledgerHash,project.id,String(d.id||''),name,String(d.mimeType||parsed.mime),Math.max(0,+d.size||parsed.bytes.byteLength),view,now).run();
+  return {ok:true,projectId:project.id,file:{id:String(d.id||''),name:name,mime:String(d.mimeType||parsed.mime),size:Math.max(0,+d.size||parsed.bytes.byteLength),webViewLink:view,createdAt:now},driveUrl:asset.driveUrl,sheetUrl:asset.sheetUrl};
+}
+async function googleProjectFiles(env,ledgerHash,pid){
+  if(!d1Ready(env))return [];try{const q=await env.LEDGER_DB.prepare('SELECT drive_file_id AS id,file_name AS name,mime,size_bytes AS size,web_view_link AS webViewLink,created_at AS createdAt FROM google_drive_files WHERE ledger_hash=? AND project_id=? ORDER BY created_at DESC LIMIT 100').bind(ledgerHash,pid).all();return q&&q.results||[];}catch(_){return [];}
+}
 function r2Ready(env){return !!(env&&env.LEDGER_FILES&&typeof env.LEDGER_FILES.put==='function'&&typeof env.LEDGER_FILES.get==='function'&&typeof env.LEDGER_FILES.delete==='function');}
 function productionComponents(env){const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,d1Ledger=d1Ready(env),r2Files=r2Ready(env),exactOrigins=allowedOrigins(env).length;return {providerConfigured,durableState,d1Ledger,r2Files,exactOrigins,ready:providerConfigured&&durableState&&d1Ledger&&r2Files};}
-async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT ledger_hash FROM google_connections LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT project_id FROM google_project_links LIMIT 1').all();return true;}catch(_){return false;}}
+async function d1SchemaReady(env){if(!d1Ready(env))return false;try{await env.LEDGER_DB.prepare('SELECT schema_version FROM ledger_meta LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT object_key FROM ledger_files LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT ledger_hash FROM google_connections LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT project_id FROM google_project_links LIMIT 1').all();await env.LEDGER_DB.prepare('SELECT drive_file_id FROM google_drive_files LIMIT 1').all();return true;}catch(_){return false;}}
 async function productionPlatformStatus(env){const c=productionComponents(env);c.d1Schema=await d1SchemaReady(env);c.googleWorkspace=googleConfigured(env);c.ready=!!(c.ready&&c.d1Schema);return c;}
 
 function cleanFileMeta(v,max){return String(v||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max||120);}
@@ -381,13 +398,13 @@ export default{async fetch(request,env){
     const enc=await googleEncrypt(env,td.refresh_token),now=new Date().toISOString();await env.LEDGER_DB.prepare('INSERT INTO google_connections (ledger_hash,email,refresh_token_enc,scopes,connected_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(ledger_hash) DO UPDATE SET email=excluded.email,refresh_token_enc=excluded.refresh_token_enc,scopes=excluded.scopes,updated_at=excluded.updated_at').bind(row.ledgerHash,email,enc,String(td.scope||''),now,now).run();
     const back=new URL(row.returnUrl);back.searchParams.set('google','connected');return Response.redirect(back.toString(),302);
   }
-  if(['/v1/google/status','/v1/google/oauth/start','/v1/google/sync','/v1/google/disconnect'].includes(url.pathname)){
+  if(['/v1/google/status','/v1/google/oauth/start','/v1/google/sync','/v1/google/file-upload','/v1/google/disconnect'].includes(url.pathname)){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
     const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);const ledgerHash=await sha256Hex(access),configured=googleConfigured(env);
     if(url.pathname==='/v1/google/status'&&request.method==='GET'){
-      const conn=configured?await googleConnection(env,ledgerHash):null,pid=cleanFileMeta(url.searchParams.get('pid')||'',160),link=configured&&pid?await googleProjectLink(env,ledgerHash,pid):null;
-      return json({ok:true,configured,connected:!!conn,email:conn&&conn.email||'',project:link||null},200,origin,rid);
+      const conn=configured?await googleConnection(env,ledgerHash):null,pid=cleanFileMeta(url.searchParams.get('pid')||'',160),link=configured&&pid?await googleProjectLink(env,ledgerHash,pid):null,files=configured&&pid?await googleProjectFiles(env,ledgerHash,pid):[];
+      return json({ok:true,configured,connected:!!conn,email:conn&&conn.email||'',project:link||null,files:files},200,origin,rid);
     }
     if(!configured)return json({error:'GOOGLE_NOT_CONFIGURED'},503,origin,rid);
     if(url.pathname==='/v1/google/oauth/start'&&request.method==='POST'){
@@ -397,6 +414,7 @@ export default{async fetch(request,env){
       const a=new URL('https://accounts.google.com/o/oauth2/v2/auth');a.searchParams.set('client_id',String(env.GOOGLE_CLIENT_ID));a.searchParams.set('redirect_uri',redirectUri);a.searchParams.set('response_type','code');a.searchParams.set('scope','openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets');a.searchParams.set('access_type','offline');a.searchParams.set('prompt','consent');a.searchParams.set('state',state);a.searchParams.set('code_challenge',challenge);a.searchParams.set('code_challenge_method','S256');return json({ok:true,authorizationUrl:a.toString()},200,origin,rid);
     }
     if(url.pathname==='/v1/google/sync'&&request.method==='POST'){try{return json(await googleSyncProject(env,ledgerHash,await readJson(request)),200,origin,rid);}catch(e){const code=String(e&&e.message||'GOOGLE_SYNC_FAILED');return json({error:code},code==='GOOGLE_NOT_CONNECTED'?409:502,origin,rid);}}
+    if(url.pathname==='/v1/google/file-upload'&&request.method==='POST'){try{return json(await googleUploadProjectFile(env,ledgerHash,await readLedgerJson(request)),200,origin,rid);}catch(e){const code=String(e&&e.message||'GOOGLE_FILE_UPLOAD_FAILED'),status=code==='GOOGLE_NOT_CONNECTED'?409:code==='GOOGLE_FILE_TOO_LARGE'?413:code==='GOOGLE_FILE_TYPE_UNSUPPORTED'||code==='GOOGLE_FILE_BASE64_INVALID'||code==='GOOGLE_FILE_EMPTY'?400:502;return json({error:code},status,origin,rid);}}
     if(url.pathname==='/v1/google/disconnect'&&request.method==='POST'){await env.LEDGER_DB.prepare('DELETE FROM google_connections WHERE ledger_hash=?').bind(ledgerHash).run();await env.LEDGER_DB.prepare('DELETE FROM google_project_links WHERE ledger_hash=?').bind(ledgerHash).run();return json({ok:true},200,origin,rid);}
     return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
   }
