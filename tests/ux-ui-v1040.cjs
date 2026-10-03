@@ -15,8 +15,9 @@ assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper.pdf-export .rd-tab
 assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper.pdf-export .rd-table td::before{display:none!important'),'PDF export hides mobile field labels');
 assert(src.includes('body[data-view=\"quoteprint\"] .rd-paper .rd-table td::before{display:none!important'),'printed A4 table hides mobile-only labels');
 assert(src.includes('body[data-view="quoteprint"] .doc-actions-bar'),'toolbar must be scoped to document preview');
-assert(src.includes('bottom:calc(88px + env(safe-area-inset-bottom,0px))'),'iPhone Safari toolbar clearance missing');
-assert(src.includes('width:min(calc(100vw - 24px),460px)'),'mobile toolbar must fit the viewport');
+assert(src.includes('body[data-view="quoteprint"] .quote-paper.rd-paper:not(.pdf-export){box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;min-height:0!important'),'portrait paper must use the phone width');
+assert(src.includes('body[data-view="quoteprint"] .doc-actions-bar{position:static!important;inset:auto!important;transform:none!important'),'mobile actions must remain in document flow below Safari controls');
+assert(src.includes('body[data-view="quoteprint"] main{box-sizing:border-box!important;width:100%!important;max-width:none!important'),'document view must not expand to A4 width on a phone');
 assert(src.includes('.doc-actions-bar{display:none!important}'),'action toolbar must stay out of printed documents');
 assert(src.includes('rd-paper.pdf-export{width:210mm!important'),'A4 PDF output width changed');
 assert(src.includes("KEY='site-ledger-v1'")||src.includes("const KEY='site-ledger-v1'"),'storage contract changed');
