@@ -65,6 +65,8 @@ jobs:
         run: node tests/runtime-v1037.cjs
       - name: v1039 full-app UX/UI audit regression
         run: node tests/ux-ui-v1039.cjs
+      - name: v1040 iPhone business-document action bar regression
+        run: node tests/ux-ui-v1040.cjs
       - name: Cloudflare production contract QA
         run: node tests/cloudflare-production.cjs
       - name: Cloudflare deploy pipeline QA

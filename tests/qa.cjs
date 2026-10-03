@@ -817,5 +817,15 @@ test('BOQ warning acknowledgement expires when destination changes',()=>{
   action('boqImportConfirm','p',{boqImportPid:'q'});action('boqImportConfirm','p',{boqImportPid:'q'});assert.equal(c.S.boq[0].pid,'q');
 });
 
+
+reset();test('v1040 business document actions render outside the A4 print surface',()=>{
+  c.S.quotes=[{id:'q1040',no:'QT-20261004',date:'2026-10-04',customer:'ลูกค้าทดสอบ',description:'รายการทดสอบ',qty:1,unit:'งาน',unitPrice:100,items:[{description:'รายการทดสอบ',qty:1,unit:'งาน',unitPrice:100}]}];
+  c.S.business={legalName:'AREA MAIBAB',vatRegistered:false};c.U.docKind='quote';c.U.docId='q1040';
+  const out=c.vBusinessDoc(),paper=out.indexOf('class="quote-paper rd-paper"'),bar=out.indexOf('class="doc-actions-bar no-print"');
+  assert(paper>=0&&bar>paper);assert(out.indexOf('</div>',paper)<bar);assert(out.includes('role="group" aria-label="การดำเนินการกับเอกสาร"'));
+  for(const a of ['convertDoc','doPrint','downloadDocPdf','editDoc'])assert(out.includes('data-act="'+a+'"'));
+  assert(out.includes('QT-20261004'));assert(out.includes(c.fmt(100)));assert(out.includes('data-label=\"มูลค่า\"'));
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});

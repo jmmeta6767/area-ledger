@@ -5,6 +5,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1040 iPhone Business Document Actions
+
+- Moves Quote, Billing Note and Receipt actions outside the A4 document surface so they remain reachable on narrow iPhone screens.
+- Reflows document detail rows into labeled, readable cards on iPhone while retaining the A4 layout for print and PDF export.
+- Pins a two-column action bar above the Safari browser controls, with safe-area spacing and touch-sized buttons; the bar is excluded from print/PDF output.
+- Presentation and navigation markup only: accounting amounts, VAT/WHT calculations, document lineage, storage keys, D1/R2 and Cloud Sync contracts are unchanged.
+- Physical iPhone/Safari acceptance remains a device check; automated CSS/source regression does not claim device-level verification.
+
+
 ## v1039 Local OCR Page Provenance
 
 - Local OCR now preserves `sourcePage`, `sourceFile`, and `sourceKind` for every BOQ row from multi-image and scanned-PDF imports.
