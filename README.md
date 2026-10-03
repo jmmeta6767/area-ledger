@@ -5,6 +5,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1031 BOQ Field Acceptance Hardening
+
+- AI-only BOQ extraction must pass a page-coverage gate before Preview: no missing page, enough verified rows for the number of pages, at least 65% quality-row retention, and declared-total reconciliation when a document total is available.
+- One-page AI with only one extracted row is accepted only when that row reconciles to a visible declared total; otherwise local OCR is used as a completeness cross-check.
+- Multi-image and scanned-PDF paths record per-page AI row counts so a blank/failed page cannot be hidden by successful rows from other pages.
+- PDFs with a text layer that does not yield a sufficiently complete BOQ table automatically fall back to full-page OCR instead of stopping with a manual Excel workaround.
+- Existing human Preview, paged review, section provenance, duplicate guards, and cancel/timeout protections remain unchanged.
+
+
 ## v1032 mobile command hierarchy
 
 - Adds view-scoped presentation classes for Add and Project pages so mobile UX overrides do not leak across modules.
