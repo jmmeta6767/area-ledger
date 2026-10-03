@@ -4,7 +4,7 @@ function fn(name){const p=src.indexOf('function '+name+'(');assert(p>=0,'missing
 
 for(const name of ['runtimeDiag','runtimeNow','runtimeScheduleRender','runtimeActionDuplicate','runtimeDiagnosticsSnapshot','runtimePageRelease'])assert(src.includes('function '+name+'('),'missing '+name);
 assert(src.includes('runtimeDiag:{startedAt:Date.now()'),'ephemeral runtime diagnostics state missing');
-assert(src.includes("if(runtimeActionDuplicate(el)){e.preventDefault();e.stopImmediatePropagation();return;}"),'duplicate write action guard missing');
+assert(src.includes("if(runtimeActionDuplicate(el)){e.preventDefault();if(e.stopImmediatePropagation)e.stopImmediatePropagation();return;}"),'duplicate write action guard missing');
 
 const guard=fn('runtimeActionDuplicate');
 for(const a of ['save','saveMore','saveBillPayment','apPaySave','saveBizDoc','saveQuote','manualJournalSave','bankReconcile','periodClose'])assert(guard.includes(a+':'),'protected action missing '+a);
