@@ -514,5 +514,9 @@ reset();test('v1011 browser OCR diagnostics preserve gateway/provider error code
 
 reset();test('v1012 scanned PDF BOQ uses AI Vision first with bounded mobile page budget and local fallback',()=>{const src=c.boqImportScannedPdf.toString();assert(src.includes("pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq')"));assert(src.includes("aiGatewayRequest('v1/ocr/boq'"));assert(src.includes('AI Vision PDF สแกน'));assert(src.includes('boqQualityRows(aiRows)'));assert(src.includes('loadTesseract(function(tok)'));assert(src.includes("boqProgressSet(100"));assert(src.includes('ocrNeedsReview:true'));});
 
+reset();test('v1013 BOQ AI compresses payload below gateway limit and retries dense page as two segments',()=>{const src=code;assert(src.includes('function boqAiDataUrl(canvas)'));assert(src.includes('out.length<=2350000'));assert(src.includes("ช่วง '+(p+1)+'/2"));assert(src.includes("mode:'segments'"));assert(src.includes('boqAiRequestCanvas(sc'));});
+reset();test('v1013 BOQ no-row result exposes whether AI was attempted and first failure code',()=>{const src=code;assert(src.includes('aiAttempted=false'));assert(src.includes('aiErrors=[]'));assert(src.includes("AI Vision ไม่สำเร็จ "));assert(src.includes("AI Vision ยังไม่ได้เปิด"));assert(src.includes('รูปที่เลือกยังคงอยู่'));});
+reset();test('v1013 BOQ segmented prompt allows headerless crop but keeps equation validation',()=>{const w=fs.readFileSync('gateway/src/worker.js','utf8');assert(w.includes('ภาพอาจเป็นส่วนบน/ส่วนล่างที่ตัดมาจากหน้าเดียว'));assert(w.includes('qty × unitPrice ≈ amount'));assert(w.includes('ห้ามปฏิเสธทั้งภาพเพียงเพราะไม่มีหัวตาราง'));});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
