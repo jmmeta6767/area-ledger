@@ -5,6 +5,13 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1010 Vision Staging Gate
+
+- Live staging acceptance now exercises the real Gemini Vision provider before any production cutover is authorized.
+- Provider canary evidence records attempt count and the last HTTP/provider response, while retaining bounded retry behavior for transient 429/5xx failures.
+- Production cutover authorization was closed after the successful v1009 production acceptance; subsequent development remains staging-first until explicitly re-armed.
+- No accounting storage keys, D1/R2 schema, review-before-save behavior, or production secrets are changed.
+
 
 ## v1009 Vision Provider Acceptance Retry
 

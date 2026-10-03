@@ -32,6 +32,28 @@ async function waitForGateway(){
   throw last||new Error('gateway readiness failed');
 }
 const evidence={base,target,sourceSha:sourceSha||null,workflowRun:workflowRun||null,at:new Date().toISOString(),checks:{}};
+async function visionProviderAcceptance(origin){
+  const providerPixel='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+  let ok=false,last=null,attempts=0;
+  for(let attempt=1;attempt<=4;attempt++){
+    attempts=attempt;
+    const rid='acceptance-vision-'+crypto.randomBytes(8).toString('hex'),headers={'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid};
+    if(origin)headers.Origin=origin;
+    try{
+      const res=await fetch(base+'/v1/ocr/expense',{method:'POST',headers,body:JSON.stringify({image:'data:image/png;base64,'+providerPixel,lang:'tha+eng'})});
+      const raw=await res.text();let data=null;try{data=JSON.parse(raw);}catch(_){data={raw:raw.slice(0,500)};}
+      last={status:res.status,data,gatewayVersion:res.headers.get('x-area-gateway-version')||null,requestId:res.headers.get('x-area-request-id')||null};
+      const identityOk=last.gatewayVersion==='1'&&last.requestId===rid;
+      if(res.ok&&identityOk&&data&&typeof data.amount==='number'){ok=true;break;}
+      if(![429,500,502,503,504].includes(res.status))break;
+    }catch(e){last={error:String(e&&e.message||e)};}
+    if(attempt<4)await sleep(2500*attempt);
+  }
+  evidence.checks.visionProviderImageAttempts=attempts;
+  evidence.checks.visionProviderLast=last;
+  if(!ok)throw new Error('Vision provider canary failed after '+attempts+' attempts: '+JSON.stringify(last));
+  evidence.checks.visionProviderImage=true;
+}
 try{
   assert(['staging','production'].includes(target),'acceptance target must be staging or production');
   if(declaredTarget==='staging')assert.equal(base,'https://area-ledger-ai-gateway-staging.areamaibab.workers.dev');
@@ -41,6 +63,7 @@ try{
   evidence.checks.provenance=true;
   const warmup=await waitForGateway(); const health=warmup.health; assert.equal(health.data.productionReady,true);evidence.checks.health=true;evidence.checks.healthAttempts=warmup.attempt;
   const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ok,true);evidence.checks.ready=true;
+  if(target==='staging')await visionProviderAcceptance('');
   if(target==='production'){
     const browserReady=await fetch(base+'/ready',{method:'GET',headers:{Origin:appBase},cache:'no-store'});
     assert.equal(browserReady.ok,true);assert.equal(browserReady.headers.get('access-control-allow-origin'),appBase);
@@ -50,23 +73,7 @@ try{
     const legacyReady=await fetch(appBase+'/ready',{method:'GET',cache:'no-store'});assert.equal(legacyReady.ok,true);const legacyReadyData=await legacyReady.json();assert.equal(legacyReadyData.ok,true);evidence.checks.legacyGatewayProxy=true;
     const app=await fetch(appBase+'/?contract=v1005',{method:'GET',cache:'no-store'});assert.equal(app.ok,true);const html=await app.text();
     assert(html.includes('area-ledger-client-contract'));assert(html.includes('v1005-canonical-gateway'));assert(html.includes('https://area-ledger-ai-gateway.areamaibab.workers.dev'));evidence.checks.legacyAppCurrent=true;
-    const providerPixel='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-    let canaryOk=false,canaryLast=null,canaryAttempts=0;
-    for(let attempt=1;attempt<=4;attempt++){
-      canaryAttempts=attempt;
-      const canaryRid='acceptance-vision-'+crypto.randomBytes(8).toString('hex');
-      try{
-        const canaryRes=await fetch(base+'/v1/ocr/expense',{method:'POST',headers:{Origin:appBase,'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':canaryRid},body:JSON.stringify({image:'data:image/png;base64,'+providerPixel,lang:'tha+eng'})});
-        let canaryData=null;try{canaryData=await canaryRes.json();}catch(_){}
-        canaryLast={status:canaryRes.status,data:canaryData};
-        const identityOk=canaryRes.headers.get('x-area-gateway-version')==='1'&&canaryRes.headers.get('x-area-request-id')===canaryRid;
-        if(canaryRes.ok&&identityOk&&canaryData&&typeof canaryData.amount==='number'){canaryOk=true;break;}
-        if(![429,500,502,503,504].includes(canaryRes.status))break;
-      }catch(e){canaryLast={error:String(e&&e.message||e)};}
-      if(attempt<4)await sleep(2500*attempt);
-    }
-    assert.equal(canaryOk,true,'Vision provider canary failed after '+canaryAttempts+' attempts: '+JSON.stringify(canaryLast));
-    evidence.checks.visionProviderImage=true;evidence.checks.visionProviderImageAttempts=canaryAttempts;
+    await visionProviderAcceptance(appBase);
   }
   const platform=await req('/v1/platform/status',{method:'GET'});assert.equal(platform.data.productionReady,true);evidence.checks.platform=true;
   const now=Date.now(),state1={projects:[{id:'acceptance-p1',name:'Live Acceptance'}],tx:[],boq:[],guarantees:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:[],quotes:[],bills:[],receipts:[],dataRevision:1,updatedAt:now,acceptanceMarker:'synthetic-no-user-data'};

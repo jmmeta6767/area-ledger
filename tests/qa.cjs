@@ -508,5 +508,7 @@ reset();test('v1008 production live acceptance checks Gemini image provider with
 
 reset();test('v1009 production Vision canary retries transient provider failures',()=>{const s=fs.readFileSync('tests/live-cloudflare-acceptance.mjs','utf8');assert(s.includes('attempt<=4'));assert(s.includes('[429,500,502,503,504].includes(canaryRes.status)'));assert(s.includes('visionProviderImageAttempts'));assert(s.includes('await sleep(2500*attempt)'));assert(s.includes('Vision provider canary failed after'));});
 
+reset();test('v1010 staging acceptance exercises the real Vision provider before production',()=>{const s=fs.readFileSync('tests/live-cloudflare-acceptance.mjs','utf8');assert(s.includes('async function visionProviderAcceptance'));assert(s.includes("if(target==='staging')await visionProviderAcceptance('')"));assert(s.includes('visionProviderLast'));assert(s.includes('visionProviderImageAttempts'));});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
