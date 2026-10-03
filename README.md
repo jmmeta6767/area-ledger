@@ -6,6 +6,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 Standalone/PWA accounting and construction project control.
 
 
+## v1018 Multi-row Expense Capture
+
+- A single photo can now contain a full expense table. AI Vision returns structured `rows[]` instead of collapsing the sheet into one grand total.
+- Each row is converted into an editable expense draft with its own date, amount, category, description, project, and payment method.
+- The review sheet supports Select all / Select none and one-click save of all selected rows. Nothing is written to accounting before the human review step.
+- Thai Buddhist-era dates are requested as ISO dates, summary rows are excluded, and common construction expenses are mapped into the existing five cost categories.
+- One source image can safely support many saved transactions without duplicating the full image in every row: the first row keeps the evidence image while all rows keep a shared source-image hash and row index.
+- Closed accounting periods remain fail-closed and duplicate source images are rejected on re-import.
+
+
+
 ## v1017 BOQ Work Section Recovery
 
 - Restores BOQ work-section grouping without changing the existing material/labor split.
