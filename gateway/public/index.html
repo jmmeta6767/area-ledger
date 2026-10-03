@@ -2492,10 +2492,14 @@ button,input,select,textarea{min-width:0}
 }
 
 /* Profile/manual dark theme parity */
-:root[data-theme="dark"] .nav,
-@media(prefers-color-scheme:dark){.nav{
+:root[data-theme="dark"] .nav{
   background:rgba(26,35,45,.97)!important;border-top-color:#2a3541!important;
-}}
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .nav{
+    background:rgba(26,35,45,.97)!important;border-top-color:#2a3541!important;
+  }
+}
 :root[data-theme="dark"] .profile-hero,
 :root[data-theme="dark"] .profile-post-card,
 :root[data-theme="dark"] .profile-social-chip,
