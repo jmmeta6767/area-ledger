@@ -67,3 +67,4 @@ jobs:
         run: node --check tests/capture-production-bindings.mjs
       - name: Gateway staging preflight
         run: node tests/gateway-preflight.cjs
+          node tests/legacy-app.cjs
