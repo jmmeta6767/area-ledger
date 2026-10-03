@@ -1,0 +1,20 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const src=fs.readFileSync('gateway/public/index.html','utf8');
+
+assert(src.includes('v1033 documents due settings accessibility · iPhone-first finishing layer'),'missing v1033 UX layer');
+assert(src.includes("document.body.classList.toggle('view-docs',v==='docs'||v==='doclist'||v==='quoteprint')"),'view-docs scope missing');
+assert(src.includes("document.body.classList.toggle('view-due',v==='due')"),'view-due scope missing');
+assert(src.includes("d.setAttribute('aria-live','polite')"),'toast aria-live missing');
+assert(src.includes("d.setAttribute('aria-atomic','true')"),'toast aria-atomic missing');
+assert(src.includes('.docs-command-summary>div:first-child{grid-column:1/-1!important'),'document primary outstanding summary missing');
+assert(src.includes('.docs-recent-side{\n    grid-column:2!important;grid-row:2!important'),'recent document mobile second row missing');
+assert(src.includes('.due-command-grid>div:last-child{grid-column:1/-1!important'),'AR/AP 2+1 hierarchy missing');
+assert(src.includes('.settings-title button{width:48px!important;height:48px!important'),'settings close touch target missing');
+assert(src.includes('.settings-group-body input,.settings-group-body select,.settings-group-body textarea{min-height:48px!important'),'settings field touch targets missing');
+assert(src.includes('@media(forced-colors:active)'),'forced-colors accessibility support missing');
+assert(src.includes('.toast{\n  width:max-content;max-width:min(92vw,520px)!important'),'toast readable wrapping missing');
+assert(src.includes('@media(max-width:380px)'),'extra narrow fallback missing');
+assert(src.includes("['home','home','ภาพรวม'],['boq','documents','BOQ'],['add','plus',''],['projects','build','โครงการ'],['profile','profile','โปรไฟล์']"),'bottom navigation order changed');
+assert(src.includes("KEY='site-ledger-v1'")||src.includes("const KEY='site-ledger-v1'"),'storage key contract missing');
+assert(src.includes("'site-ledger-db'"),'IndexedDB contract missing');
+console.log('PASS v1033 documents/due/settings/accessibility UX regression');

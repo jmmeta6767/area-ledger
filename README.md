@@ -5,6 +5,18 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1033 documents, due control, settings and accessibility
+
+- Adds view-scoped document and AR/AP presentation classes without changing document, payment or accounting data contracts.
+- Reflows Business Documents summary cards on narrow iPhones so the primary outstanding amount gets full width and monetary values no longer ellipsize.
+- Keeps recent-document customer/project text readable and moves amount/status into a dedicated second row on mobile.
+- Reflows AR/AP summary from three cramped columns into a 2+1 hierarchy, with single-column fallback on extra-narrow devices and clearer urgent-item amounts.
+- Normalizes Settings touch targets, section summaries, text fields and system-action grids; extra-narrow screens switch system actions to one column.
+- Adds keyboard/focus-visible treatment to document, due and settings controls plus forced-colors support.
+- Toast status messages now expose `role=status`, `aria-live=polite` and `aria-atomic=true` for VoiceOver/screen-reader feedback.
+- Presentation/accessibility only: no accounting calculations, BOQ/OCR, storage, D1/R2, Cloud Sync, tax, document lifecycle or profile-publishing contract changes.
+
+
 ## v1031 BOQ Field Acceptance Hardening
 
 - AI-only BOQ extraction must pass a page-coverage gate before Preview: no missing page, enough verified rows for the number of pages, at least 65% quality-row retention, and declared-total reconciliation when a document total is available.
