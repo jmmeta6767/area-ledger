@@ -5,6 +5,15 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1030 BOQ Hardening
+
+- Preserves BOQ work-section metadata through final import and records section provenance.
+- Reconciles OCR totals after reviewer edits are synced and binds final confirmation to the full import fingerprint.
+- Reviews large BOQs in 60-row pages and requires every page to be checked before save.
+- Adds bounded scanned-PDF open/page/render/local-OCR timeouts with shared cancel controls.
+- Distinguishes duplicate rows by work section and material/labor category.
+
+
 
 ## v1030 UX/UI normalization
 

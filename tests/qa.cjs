@@ -512,7 +512,7 @@ reset();test('v1010 staging acceptance exercises the real Vision provider before
 
 reset();test('v1011 browser OCR diagnostics preserve gateway/provider error codes',()=>{const src=c.aiGatewayRequest.toString();assert(src.includes("raw&&raw.error?String(raw.error):('HTTP_'+res.status)"));assert(src.includes('err.gatewayCode=code'));assert(src.includes("String(e&&e.gatewayCode||e&&e.message||'OCR_ERROR')"));assert(!src.includes("throw new Error('AI gateway HTTP '+res.status)"));});
 
-reset();test('v1012 scanned PDF BOQ uses AI Vision first with bounded mobile page budget and local fallback',()=>{const src=c.boqImportScannedPdf.toString();assert(src.includes("pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq')"));assert(src.includes("aiGatewayRequest('v1/ocr/boq'"));assert(src.includes('AI Vision PDF สแกน'));assert(src.includes('boqQualityRows(aiRows)'));assert(src.includes('loadTesseract(function(tok)'));assert(src.includes("boqProgressSet(100"));assert(src.includes('ocrNeedsReview:true'));});
+reset();test('v1012 scanned PDF BOQ uses AI Vision first with bounded mobile page budget and local fallback',()=>{const src=c.boqImportScannedPdf.toString();assert(src.includes("pages<=8&&!!aiGatewayEndpoint('v1/ocr/boq')"));assert(src.includes("aiGatewayRequest('v1/ocr/boq'"));assert(src.includes('AI Vision PDF สแกน'));assert(src.includes('boqQualityRows(aiRows)'));assert(src.includes('loadTesseract'));assert(src.includes('boqCreateOcrWorker'));assert(src.includes("boqProgressSet(100"));assert(src.includes('ocrNeedsReview:true'));});
 
 reset();test('v1013 BOQ image progress repaints live instead of visually freezing at 1 percent',()=>{const src=fs.readFileSync('gateway/public/index.html','utf8');assert(src.includes('id="boqProgressBar"'));assert(src.includes('id="boqProgressPct"'));const p=c.boqProgressSet.toString();assert(p.includes("bar.style.width=p+'%'"));assert(p.includes("pct.textContent=p+'%'"));});
 reset();test('v1013 BOQ multi-image path is AI-first and skips local OCR when enough verified rows exist',()=>{const src=c.boqImportImages.toString();const ai=src.indexOf("aiGatewayEndpoint('v1/ocr/boq')"),local=src.indexOf('loadTesseract');assert(ai>=0&&local>ai);assert(src.includes("ocrMode:'AI Vision First"));assert(src.includes('aiGood.length>=aiMin'));});
@@ -608,6 +608,36 @@ reset();test('v1029 public snapshot contains only profile-facing fields and sele
 reset();test('v1029 profile hub shows customer portfolio publish controls without accounting totals',()=>{c.S.business.publicProfileEnabled=false;c.S.profilePosts=[];c.U.profileFilter='all';c.U.profileProjectPid='';var out=c.vProfile();assert(out.includes('CLIENT PORTFOLIO'));assert(out.includes('เผยแพร่ Portfolio'));assert(out.includes('ไม่รวม BOQ รายรับ รายจ่าย'));assert(!out.includes('ยอดคงเหลือ'));});
 reset();test('v1029 public portfolio link is pinned to customer-facing g host',()=>{assert.equal(c.profilePublicUrl('a'.repeat(32)),'https://g.areamaibab.workers.dev/portfolio.html?id='+'a'.repeat(32));assert.equal(c.profilePublicUrl('bad'),'');assert(code.includes("const PROFILE_PUBLIC_BASE='https://g.areamaibab.workers.dev/portfolio.html'"));});
 reset();test('v1029 public publishing uses authenticated gateway and R2 offload, not local data URLs',()=>{var p=c.profilePublishPublic.toString(),a=c.profileEnsurePublicAssets.toString();assert(p.includes("cloudGateway('POST','/v1/profile/publish'"));assert(a.includes('cloudLedgerKey(true)'));assert(a.includes("cloudFileUpload"));assert(c.profileBuildPublicSnapshot.toString().includes("filter(function(p){return !!p.publicVisible;}"));});
+
+
+reset();test('v1030 BOQ section provenance preserves visible source headings and marks fallback inference',()=>{
+  var visible=c.aiGatewayValidateBoq({rows:[{name:'ฐานราก คอนกรีต',qty:1,unit:'ลบ.ม.',unitPrice:2000,category:'ค่าของ',sectionCode:'1.2',sectionName:'งานฐานราก',confidence:.9}]});
+  assert.equal(visible.rows[0].sectionSource,'source');
+  var inferred={name:'เหล็กเสริม DB12',sectionCode:'',sectionName:'',sectionSource:''};c.boqEnsureWorkSection(inferred);assert.equal(inferred.sectionName,'งานเหล็กเสริม');assert.equal(inferred.sectionSource,'inferred');
+});
+reset();test('v1030 BOQ duplicate key distinguishes work section and material-labor category',()=>{
+  var base={name:'งานตัวอย่าง',qty:10,unit:'ม.',unitPrice:100,sectionCode:'1',sectionName:'งาน A',category:'ค่าของ'};
+  assert.notEqual(c.boqImportKey(base),c.boqImportKey(Object.assign({},base,{category:'ค่าแรง'})));
+  assert.notEqual(c.boqImportKey(base),c.boqImportKey(Object.assign({},base,{sectionCode:'2',sectionName:'งาน B'})));
+});
+reset();test('v1030 BOQ review pages require every page before final save',()=>{
+  var rows=Array.from({length:121},(_,i)=>({name:'รายการ '+(i+1),qty:1,unit:'งาน',unitPrice:10,category:'ค่าของ'})),im={rows};
+  c.U.boqReviewPage=0;c.U.boqReviewChecked={};
+  assert.equal(c.boqReviewPageCount(im),3);assert.equal(c.boqReviewFirstUnchecked(im),0);
+  assert.equal(c.boqReviewMarkCurrent(im),true);assert.equal(c.boqReviewFirstUnchecked(im),1);
+  c.U.boqReviewPage=1;assert.equal(c.boqReviewMarkCurrent(im),true);assert.equal(c.boqReviewFirstUnchecked(im),2);
+  c.U.boqReviewPage=2;assert.equal(c.boqReviewMarkCurrent(im),true);assert.equal(c.boqReviewFirstUnchecked(im),-1);
+});
+reset();test('v1030 BOQ final import syncs edits before reconciliation and persists section metadata',()=>{
+  const src=fs.readFileSync('gateway/public/index.html','utf8'),a=src.indexOf("else if(a==='boqImportConfirm')"),b=src.indexOf("else if(a==='undoBoqBatch')",a),part=src.slice(a,b);
+  assert(a>0&&b>a);assert(part.indexOf('boqReviewMarkCurrent(im0)')<part.indexOf('boqOcrReconcile(im0.rows'));
+  assert(part.includes("sectionCode:String(x.sectionCode||'')"));assert(part.includes("sectionName:String(x.sectionName||'')"));assert(part.includes("sectionSource:String(x.sectionSource||'')"));
+  assert(part.includes('im0.confirmBatch!==finalBatch'));
+});
+reset();test('v1030 scanned PDF BOQ shares bounded cancel-safe OCR controls with image imports',()=>{
+  const src=c.boqImportScannedPdf.toString();assert(src.includes('boqOcrToken=token'));assert(src.includes('boqOcrActive(token)'));assert(src.includes('timeoutMs:28000'));assert(src.includes('PDF_PAGE_TIMEOUT'));assert(src.includes('PDF_RENDER_TIMEOUT'));assert(src.includes('LOCAL_OCR_TIMEOUT'));assert(src.includes('boqOcrRelease(token)'));
+  const cancel=c.boqCancelImport.toString();assert(cancel.includes('U.boqOcrAbort.abort()'));assert(cancel.includes('worker.terminate()'));
+});
 
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
