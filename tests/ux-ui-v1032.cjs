@@ -1,5 +1,5 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
-const src=fs.readFileSync('gateway/public/index.html','utf8');
+const src=fs.readFileSync('gateway/public/index.html','utf8').replace(/\r\n/g,'\n');
 
 assert(src.includes('v1032 mobile command hierarchy · dashboard/project/form/sheet'),'missing v1032 UX layer');
 assert(src.includes("document.body.classList.toggle('view-add',v==='add')"),'view-add scope missing');

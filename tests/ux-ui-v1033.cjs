@@ -1,5 +1,5 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
-const src=fs.readFileSync('gateway/public/index.html','utf8');
+const src=fs.readFileSync('gateway/public/index.html','utf8').replace(/\r\n/g,'\n');
 
 assert(src.includes('v1033 documents due settings accessibility · iPhone-first finishing layer'),'missing v1033 UX layer');
 assert(src.includes("document.body.classList.toggle('view-docs',v==='docs'||v==='doclist'||v==='quoteprint')"),'view-docs scope missing');

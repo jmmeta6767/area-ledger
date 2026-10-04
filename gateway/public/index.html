@@ -3616,7 +3616,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1042,"sha":"","environment":"source"};
+var APP_BUILD={"version":1043,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4237,8 +4237,10 @@ function fieldAcceptanceDevice(){
  return {ok:iphone&&safari&&secure,iphone:iphone,safari:safari,secure:secure,label:iphone&&safari?'iPhone Safari':'ต้องใช้ iPhone Safari จริง'};
 }
 function fieldAcceptanceEvidence(){
- var x=S.ops&&S.ops.fieldAcceptance||{},keys=['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'],checks={};keys.forEach(function(k){checks[k]=!!x[k];});var age=x.at?Date.now()-x.at:Infinity,fresh=age>=0&&age<=7*24*60*60*1000,sameRelease=+x.release===APP_RELEASE,ok=fresh&&sameRelease&&keys.every(function(k){return checks[k];});
- return {ok:ok,fresh:fresh,sameRelease:sameRelease,checks:checks,at:+x.at||0,release:+x.release||0};
+ var x=S.ops&&S.ops.fieldAcceptance||{},keys=['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'],checks={},build=x.build||{},validBuild=/^[a-f0-9]{40}$/i.test(APP_BUILD.sha||'')&&['staging','production'].indexOf(APP_BUILD.environment)>=0,sameBuild=validBuild&&build.sha===APP_BUILD.sha&&build.environment===APP_BUILD.environment&&build.version===APP_BUILD.version,sameRelease=+x.release===APP_RELEASE;
+ keys.forEach(function(k){var at=x.checkAt&&+x.checkAt[k],age=at?Date.now()-at:Infinity;checks[k]=!!x[k]&&sameBuild&&sameRelease&&age>=0&&age<=7*24*60*60*1000;});
+ var fresh=keys.every(function(k){return checks[k];}),ok=fresh&&sameBuild&&sameRelease;
+ return {ok:ok,fresh:fresh,sameRelease:sameRelease,sameBuild:sameBuild,checks:checks,at:+x.at||0,release:+x.release||0};
 }
 function fieldAcceptanceV910Evidence(){
  var base=fieldAcceptanceEvidence(),x=S.ops&&S.ops.fieldAcceptance||{},deviceStamped=x.device==='iphone-safari'&&x.deviceVerified===true;
@@ -5810,7 +5812,7 @@ function boqStrongEvidenceRow(x){
   return name.length>=2&&qty>0&&isFinite(qty)&&price>=0&&isFinite(price)&&confidence>=.80&&(x.ocrEquation===true||x.ocrDynamicColumns===true||x.ocrRowBand===true);
 }
 function boqQualityRows(rows){
-  var out=[],seen={};(rows||[]).forEach(function(x){var row=x;if(boqRowQuality(x)<4){if(!boqStrongEvidenceRow(x))return;row=Object.assign({},x,{ocrNeedsReview:true,note:(String(x.note||'')+(x.note?' · ':'')+'ตัวเลขผ่านสมการ/ตำแหน่งตาราง แต่ชื่อรายการ OCR ต้องตรวจจากภาพ').slice(0,500)});}var k=boqImportKey(row);if(!seen[k]){seen[k]=1;out.push(row);}});return out;
+  var out=[],seen={};(rows||[]).forEach(function(x){var row=x;if(boqRowQuality(x)<4){if(!boqStrongEvidenceRow(x))return;row=Object.assign({},x,{ocrNeedsReview:true,note:(String(x.note||'')+(x.note?' · ':'')+'ตัวเลขผ่านสมการ/ตำแหน่งตาราง แต่ชื่อรายการ OCR ต้องตรวจจากภาพ').slice(0,500)});}var k=boqPreviewRowKey(row);if(!seen[k]){seen[k]=1;out.push(row);}});return out;
 }
 function boqRowsNeedVision(rows,imageCount){
   var good=boqQualityRows(rows),pages=Math.max(1,+imageCount||1),min=pages>1?Math.max(3,pages*2):1,raw=Math.max(1,(rows||[]).length);
@@ -7514,7 +7516,7 @@ function directAction(el){
   if(a==='productionStableCheck'){var ps=productionStableReadiness();toast(ps.ok?'Production Stable Gate: PASS':'Production Stable Gate: CHECK '+ps.issues.length+' จุด');return true;}
   if(a==='businessStableOpen'){U.sheet={kind:'businessStable'};render();return true;}
   if(a==='fieldAcceptToggle'){
-    var k=el.getAttribute('data-v')||'';if(['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'].indexOf(k)<0)return true;S.ops=S.ops||{};var f=S.ops.fieldAcceptance||{},turningOn=!f[k];if(turningOn){var dev=fieldAcceptanceDevice();if(!dev.ok){toast('ต้องยืนยันข้อนี้จาก iPhone Safari จริง');return true;}f.device='iphone-safari';f.deviceVerified=true;}f[k]=turningOn;f.at=Date.now();f.release=APP_RELEASE;S.ops.fieldAcceptance=f;persist({metaOnly:true});U.sheet={kind:'businessStable'};render();return true;
+    var k=el.getAttribute('data-v')||'';if(['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'].indexOf(k)<0)return true;S.ops=S.ops||{};var previous=S.ops.fieldAcceptance,evidence=fieldAcceptanceEvidence(),f=evidence.sameBuild&&evidence.sameRelease?Object.assign({},previous):{},turningOn=!evidence.checks[k];if(turningOn){var dev=fieldAcceptanceDevice();if(!dev.ok){toast('ต้องยืนยันข้อนี้จาก iPhone Safari จริง');return true;}if(!/^[a-f0-9]{40}$/i.test(APP_BUILD.sha||'')||['staging','production'].indexOf(APP_BUILD.environment)<0){toast('ต้องใช้รุ่นที่ deploy และระบุ commit แล้ว');return true;}f.device='iphone-safari';f.deviceVerified=true;}f.checkAt=Object.assign({},f.checkAt||{});f[k]=turningOn;f.checkAt[k]=turningOn?Date.now():0;f.at=Date.now();f.release=APP_RELEASE;f.build=Object.assign({},APP_BUILD);S.ops.fieldAcceptance=f;if(!persist({metaOnly:true}))S.ops.fieldAcceptance=previous;U.sheet={kind:'businessStable'};render();return true;
   }
   if(a==='accountingFreezeStamp'){
     var bline=accountingBaselineCertificate(today().slice(0,7));if(!bline.ok){toast('Accounting Baseline ยังมี '+bline.issues.length+' blocker');return true;}S.ops=S.ops||{};S.ops.accountingFreeze={at:Date.now(),release:APP_RELEASE,policy:ACCOUNTING_POLICY_VERSION,period:bline.period};persist({metaOnly:true});U.sheet={kind:'businessStable'};render();toast('Accounting Freeze '+ACCOUNTING_POLICY_VERSION+' ยืนยันแล้ว');return true;

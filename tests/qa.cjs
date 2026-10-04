@@ -10,7 +10,9 @@ const c={console,Date,Math,JSON,Number,String,Array,Object,Promise,Set,Map,RegEx
 vm.createContext(c);vm.runInContext(code,c);c.toast=x=>toasts.push(x);c.render=()=>{};c.go=()=>{};c.idbPut=async(k,v)=>{writes.push([k,v]);return true};c.idbSet=v=>c.idbPut('state',v);
 const run=s=>vm.runInContext(s,c),copy=x=>JSON.parse(JSON.stringify(x));let checks=0;
 function test(name,fn){fn();checks++;console.log('PASS',name)}
-function reset(){c.S=c.emptyState();c.S.projects=[{id:'p',name:'P',contract:1000,budget:500,endDate:'2026-10-31',status:'active'},{id:'q',name:'Q',contract:200}];c.U.pid='p';c.U.sheet=null;c.U.docListKind='';c.U.docProjectPid='';c.U.docBillFilter='all';c.U.docQuery='';c.U.expenseScanBusy=false;c.U.storageReadBlocked=false;c.U.storageConflict=false;c.committedState='';storage.clear();session.clear();fail=false;toasts.length=0;}
+const sourceBuild=copy(c.APP_BUILD);
+function stampedFieldFixture(){c.APP_BUILD={...sourceBuild,sha:"a".repeat(40),environment:"production"};const f=c.S.ops.fieldAcceptance;f.build=copy(c.APP_BUILD);f.checkAt=Object.fromEntries(["refresh","offlineOnline","receiptR2","ocr","editRoundTrip","networkSwitch"].map(k=>[k,Date.now()]));}
+function reset(){c.APP_BUILD=copy(sourceBuild);c.S=c.emptyState();c.S.projects=[{id:'p',name:'P',contract:1000,budget:500,endDate:'2026-10-31',status:'active'},{id:'q',name:'Q',contract:200}];c.U.pid='p';c.U.sheet=null;c.U.docListKind='';c.U.docProjectPid='';c.U.docBillFilter='all';c.U.docQuery='';c.U.expenseScanBusy=false;c.U.storageReadBlocked=false;c.U.storageConflict=false;c.committedState='';storage.clear();session.clear();fail=false;toasts.length=0;}
 function action(a,id='p',fields={}){for(const [k,v] of Object.entries(fields))elements[k]={value:v,focus(){}};const el={dataset:{act:a,id},getAttribute(k){return k==='data-act'?a:k==='data-id'?id:null},closest(){return this}};listeners.click.forEach(f=>f({target:el,preventDefault(){},stopPropagation(){}}));}
 (async()=>{
 test('JS syntax',()=>assert(scripts.length));
@@ -390,7 +392,7 @@ reset();test('v700 full acceptance evidence is release origin and freshness boun
 reset();test('v700 accounting baseline certificate fails closed on production blockers',()=>{var x=c.accountingBaselineCertificate('2026-10');assert.equal(Array.isArray(x.issues),true);assert(x.gate);assert(x.bank);assert(x.schema);});
 reset();test('v700 automation queue aggregates owner month-end cloud and recovery actions',()=>{var q=c.businessAutomationQueue();assert(Array.isArray(q));assert(q.some(x=>x.kind==='cloud'));assert(q.some(x=>x.kind==='recovery'));});
 reset();test('v700 business stable gate requires live Cloudflare accounting recovery and PWA evidence',()=>{var x=c.businessStableReadiness();assert.equal(x.version,800);assert.equal(x.channel,'business-stable');assert(Array.isArray(x.issues));assert(x.source&&x.cloud&&x.accounting&&x.disasterRecovery&&x.pwa);assert(html.includes('Business Stable v800'));assert(html.includes('data-act="businessStableRun"'));});
-reset();test('v800 field acceptance is explicit fresh and release-bound',()=>{c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};var x=c.fieldAcceptanceEvidence();assert.equal(x.ok,true);c.S.ops.fieldAcceptance.release=700;assert.equal(c.fieldAcceptanceEvidence().ok,false);});
+reset();test('v800 field acceptance is explicit fresh and release-bound',()=>{c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};stampedFieldFixture();var x=c.fieldAcceptanceEvidence();assert.equal(x.ok,true);c.S.ops.fieldAcceptance.release=700;assert.equal(c.fieldAcceptanceEvidence().ok,false);});
 reset();test('v800 accounting freeze is policy and release bound',()=>{var src=c.accountingFreezeEvidence.toString();assert(src.includes('ACCOUNTING_POLICY_VERSION'));assert(src.includes('samePolicy'));assert(src.includes('sameRelease'));assert(src.includes('accountingBaselineCertificate'));});
 reset();test('v800 stable1 gate refuses staging and incomplete live evidence',()=>{var x=c.stable1Readiness();assert.equal(x.version,800);assert.equal(x.channel,'business-stable-1.0');assert(Array.isArray(x.issues));assert(x.field&&x.accountingFreeze&&x.business);});
 reset();test('v800 business stable UI exposes six iPhone field checks and accounting freeze',()=>{for(const k of ['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'])assert(html.includes("'"+k+"'"));assert(html.includes('Accounting Freeze'));assert(html.includes('Business Stable v800'));});
@@ -473,7 +475,7 @@ reset();test('v900 phase 8 final UI keeps workflow groups and mobile guards with
 reset();test('v900 phase 9 Google remains intentionally optional and does not replace Ledger source',()=>{c.U.sheet={kind:'googleWorkspace',pid:'p'};c.U.googleWorkspace={loading:false,status:{configured:false,connected:false},error:''};const out=c.sheetHtml();assert(out.includes('พักการเชื่อมต่อไว้'));assert(out.includes('AREA Ledger ยังเป็นข้อมูลหลัก'));assert(c.googleWorkspaceSync.toString().includes('boqRows(pid)'));assert(!c.googleWorkspaceSync.toString().includes('S.boq='));});
 reset();test('v900 phase 10 stable gate never auto-certifies physical iPhone field acceptance',()=>{c.S.ops=c.S.ops||{};c.S.ops.fieldAcceptance={};const fa=c.fieldAcceptanceEvidence();assert.equal(fa.ok,false);const src=c.directAction.toString(),final=c.finalAcceptanceSnapshot();assert(!src.slice(src.indexOf("a==='finalAcceptanceRun'"),src.indexOf("a==='businessStableRun'")).includes('fieldAcceptance='));assert(final.checks.some(x=>x.code==='field'&&x.human===true&&!x.ok));assert(code.includes('ระบบอัตโนมัติจะไม่ยืนยัน iPhone Field Acceptance'));});
 
-reset();test('v910 physical Field Acceptance requires stamped iPhone Safari evidence',()=>{c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};assert.equal(c.fieldAcceptanceEvidence().ok,true);assert.equal(c.fieldAcceptanceV910Evidence().ok,false);c.S.ops.fieldAcceptance.device='iphone-safari';c.S.ops.fieldAcceptance.deviceVerified=true;assert.equal(c.fieldAcceptanceV910Evidence().ok,true);assert.equal(c.fieldAcceptanceDevice().ok,false);assert(c.directAction.toString().includes('ต้องยืนยันข้อนี้จาก iPhone Safari จริง'));});
+reset();test('v910 physical Field Acceptance requires stamped iPhone Safari evidence',()=>{c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};stampedFieldFixture();assert.equal(c.fieldAcceptanceEvidence().ok,true);assert.equal(c.fieldAcceptanceV910Evidence().ok,false);c.S.ops.fieldAcceptance.device='iphone-safari';c.S.ops.fieldAcceptance.deviceVerified=true;assert.equal(c.fieldAcceptanceV910Evidence().ok,true);assert.equal(c.fieldAcceptanceDevice().ok,false);assert(c.directAction.toString().includes('ต้องยืนยันข้อนี้จาก iPhone Safari จริง'));});
 reset();test('v920 BOQ acceptance summary exposes material labor review low confidence and invalid counts',()=>{const rows=[{name:'คอนกรีต',category:'ค่าของ',qty:2,unit:'ลบ.ม.',unitPrice:2000,sourceAmount:4000,ocrConfidence:.9,ocrNeedsReview:false},{name:'ติดตั้ง',category:'ค่าแรง',qty:10,unit:'ตร.ม.',unitPrice:40,sourceAmount:400,ocrConfidence:.6,ocrNeedsReview:true}];let x=c.boqAcceptanceSummary(rows,'ocr-image');assert.equal(x.ok,true);assert.equal(x.material,1);assert.equal(x.labor,1);assert.equal(x.review,1);assert.equal(x.lowConfidence,1);assert.equal(x.manualReviewRequired,true);x=c.boqAcceptanceSummary([{name:'bad',qty:0,unitPrice:1}],'file');assert.equal(x.ok,false);assert.equal(x.invalid,1);c.U.boqImport={pid:'p',rows:rows,file:'scan.jpg',pdfOptimize:{ocr:true}};c.U.sheet={kind:'boqImportPreview'};assert(c.sheetHtml().includes('boq-acceptance-summary'));});
 reset();test('v930 receipt review summary identifies uncertain fields and always requires human review',()=>{let x=c.expenseOcrReviewSummary({text:'TOTAL 470.00 ร้านวัสดุ',amount:470,partner:'ร้านวัสดุ',cat:'ค่าของ',sub:'ปูน',date:'2026-10-03'});assert.equal(x.ok,true);assert.equal(x.requiresHumanReview,true);assert.equal(x.uncertainFields.length,0);x=c.expenseOcrReviewSummary({text:'TOTAL 470.00',amount:470,cat:'ค่าของ'});assert(x.uncertainFields.includes('ร้านค้า/ผู้รับเงิน'));assert(x.uncertainFields.includes('วันที่'));assert(c.expenseScanImage.toString().includes('ocrUncertainFields'));});
 reset();test('v940 Month-End close is fail-closed on stale backup even when accounting checks are otherwise referenced',()=>{const x=c.monthEndCloseChecklist('2026-10');assert(x.items.some(i=>i.code==='BACKUP'));assert.equal(x.ok,false);assert(c.directAction.toString().includes('monthEndCloseChecklist(per2)'));assert(c.directAction.toString().includes('if(!me2.ok)'));});
@@ -846,7 +848,7 @@ reset();test('v1042 linking closed-period expenses is blocked in single and bulk
 reset();test('v1042 failed batch write also rolls back OCR audit entries',()=>{
  c.U.expenseBatchBusy=false;c.U.expenseBatch=[{photo:'data:image/jpeg;base64,AA',amount:10,cat:'ค่าของ',date:'2026-10-02',pid:'p',pay:'cash',include:true}];fail=true;action('expenseBatchSave');assert.equal(c.S.tx.length,0);assert.equal(c.S.auditLog.length,0);assert.equal(c.U.expenseBatch.length,1);
 });
-reset();test('v1042 source identity is distinct from frozen accounting release',()=>{assert.equal(c.APP_BUILD.version,1042);assert.equal(c.APP_RELEASE,800);assert(c.appBuildLabel().includes('v1042'));c.U.sheet={kind:'settings'};assert(c.sheetHtml().includes('data-build-info'));});
+reset();test('v1042 source identity is distinct from frozen accounting release',()=>{assert.equal(c.APP_BUILD.version,1043);assert.equal(c.APP_RELEASE,800);assert(c.appBuildLabel().includes('v1043'));c.U.sheet={kind:'settings'};assert(c.sheetHtml().includes('data-build-info'));});
 
 reset();test('BOQ AI coverage escalates rows with missing price or visible amount to local OCR',()=>{
  const rows=Array.from({length:8},(_,i)=>({name:'งานทดสอบ '+i,category:'ค่าของ',qty:1,unit:'งาน',unitPrice:10,sourceAmount:10,sourceKind:'ai-vision',ocrConfidence:.95}));
@@ -865,5 +867,28 @@ reset();test('BOQ preview marks missing scan values instead of presenting zero a
  const html=c.sheetHtml();assert(html.includes('ยังอ่านราคาต่อหน่วย/จำนวนเงินไม่ได้'));assert(html.includes('placeholder="ราคาต่อหน่วย"'));assert(html.includes('ยังคำนวณยอดไม่ได้'));
 });
 
+reset();test('field acceptance rejects legacy, changed build and changed environment evidence',()=>{
+ c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};
+ assert.equal(c.fieldAcceptanceEvidence().ok,false);
+ stampedFieldFixture();assert.equal(c.fieldAcceptanceEvidence().ok,true);
+ c.APP_BUILD.sha='b'.repeat(40);assert.equal(c.fieldAcceptanceEvidence().ok,false);
+ c.APP_BUILD.sha='a'.repeat(40);c.APP_BUILD.environment='staging';assert.equal(c.fieldAcceptanceEvidence().ok,false);
+ c.APP_BUILD.environment='production';c.APP_BUILD.version++;assert.equal(c.fieldAcceptanceEvidence().ok,false);
+});
+reset();test('rechecking one field test cannot refresh stale or future-dated sibling evidence',()=>{
+ c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};stampedFieldFixture();
+ const f=c.S.ops.fieldAcceptance;f.checkAt.ocr=Date.now()-8*24*60*60*1000;f.at=Date.now();
+ assert.equal(c.fieldAcceptanceEvidence().checks.ocr,false);assert.equal(c.fieldAcceptanceEvidence().ok,false);
+ f.checkAt.ocr=Date.now()+100000;assert.equal(c.fieldAcceptanceEvidence().checks.ocr,false);
+});
+reset();test('field confirmation stamps only tested build and rolls back failed persistence',()=>{
+ c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};stampedFieldFixture();
+ c.APP_BUILD.sha='b'.repeat(40);const oldNavigator=c.window.navigator;
+ c.window.navigator={userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'};
+ const el={getAttribute:k=>k==='data-act'?'fieldAcceptToggle':k==='data-v'?'refresh':null};
+ c.directAction(el);assert.equal(c.S.ops.fieldAcceptance.build.sha,c.APP_BUILD.sha);assert.equal(c.fieldAcceptanceEvidence().checks.refresh,true);assert.equal(c.fieldAcceptanceEvidence().checks.ocr,false);
+ const before=copy(c.S.ops.fieldAcceptance);fail=true;c.directAction(el);assert.deepEqual(copy(c.S.ops.fieldAcceptance),before);
+ c.window.navigator=oldNavigator;
+});
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});

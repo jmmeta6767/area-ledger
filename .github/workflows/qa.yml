@@ -37,6 +37,10 @@ jobs:
         run: node tests/cloudflare-only.cjs
       - name: Regression QA
         run: node tests/qa.cjs
+      - name: BOQ provenance regression
+        run: node tests/boq-quality-provenance.cjs
+      - name: Real document quality verifier regression
+        run: node tests/boq-quality-contract.mjs
       - name: Gateway contract QA
         run: node tests/gateway-contract.cjs
       - name: Gateway runtime QA
@@ -90,5 +94,6 @@ jobs:
       - name: Production binding capture syntax
         run: node --check tests/capture-production-bindings.mjs
       - name: Gateway staging preflight
-        run: node tests/gateway-preflight.cjs
+        run: |
+          node tests/gateway-preflight.cjs
           node tests/legacy-app.cjs

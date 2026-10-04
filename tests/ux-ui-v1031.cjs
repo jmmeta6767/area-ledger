@@ -1,5 +1,5 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
-const src=fs.readFileSync('gateway/public/index.html','utf8');
+const src=fs.readFileSync('gateway/public/index.html','utf8').replace(/\r\n/g,'\n');
 
 assert(src.includes('v1031 iPhone task-flow refinements · readability before density'),'missing v1031 UX layer');
 assert(src.includes('.list-command-summary>span:first-child'),'list count must receive full-width mobile row');

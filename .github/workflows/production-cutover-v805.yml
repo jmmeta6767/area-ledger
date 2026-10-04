@@ -108,6 +108,8 @@ jobs:
           node --check sw.js
           node tests/cloudflare-only.cjs
           node tests/qa.cjs
+          node tests/boq-quality-provenance.cjs
+          node tests/boq-quality-contract.mjs
           node tests/gateway-contract.cjs
           node tests/gateway-runtime.cjs
           node tests/cloud-ledger-sync.cjs
@@ -198,7 +200,9 @@ jobs:
           AREA_LEDGER_ACCEPTANCE_TARGET: production
           AREA_LEDGER_ACCEPTANCE_SHA: ${{ needs.authorize.outputs.source_sha }}
           AREA_LEDGER_ACCEPTANCE_RUN: ${{ github.run_id }}
-        run: node tests/live-cloudflare-acceptance.mjs
+        run: |
+          node tests/live-cloudflare-acceptance.mjs
+          node tests/boq-document-quality.mjs
 
       - name: Upload production cutover evidence
         if: always()
@@ -207,6 +211,7 @@ jobs:
           name: production-cutover-v805
           path: |
             live-acceptance.json
+            boq-document-quality.json
             production-bindings.json
             production-preflight.json
           if-no-files-found: ignore
