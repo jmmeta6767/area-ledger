@@ -5,6 +5,12 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+## v1043 Billing Reconciliation
+
+- Determine open receivables from the transaction's actual outstanding amount so a bill paid in full is not reported as still pending.
+- Add an end-to-end regression for partial and final payment, receipt lineage, overpayment rejection, and billing reconciliation.
+- No storage key, payment schema, tax formula, or cloud sync contract changed.
+
 ## v1042 Receipt Flow Guard
 
 - The “ออกใบเสร็จ” shortcut now opens unpaid billing notes so users record the payment amount and method before a receipt is issued.
