@@ -103,6 +103,8 @@ jobs:
       - name: Full release QA
         run: |
           node --check gateway/public/sw.js
+          node --check tests/stamp-build.mjs
+          node --check tests/live-cloudflare-acceptance.mjs
           node --check sw.js
           node tests/cloudflare-only.cjs
           node tests/qa.cjs
@@ -126,6 +128,8 @@ jobs:
           node tests/gateway-preflight.cjs
           node tests/legacy-app.cjs
 
+      - name: Stamp source identity
+        run: node tests/stamp-build.mjs ${{ needs.authorize.outputs.source_sha }} production
       - name: Deploy production and auto-provision isolated bindings
         working-directory: gateway
         env:

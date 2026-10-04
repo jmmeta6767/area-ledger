@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const [sha,environment]=process.argv.slice(2);
+assert.match(sha||'',/^[a-f0-9]{40}$/);
+assert(['staging','production'].includes(environment));
+const path='gateway/public/index.html',html=fs.readFileSync(path,'utf8');
+const match=html.match(/var APP_BUILD=(\{[^\n]+\});/);
+assert(match,'build identity placeholder missing');
+const build={...JSON.parse(match[1]),sha,environment};
+fs.writeFileSync(path,html.replace(match[0],'var APP_BUILD='+JSON.stringify(build)+';'));
+console.log('Build stamped:',build.version,sha,environment);
