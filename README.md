@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1041 Expense Batch Integrity Regression
+
+- Exercises multi-row expense saves through the actual app handler: only selected rows are written, totals/fields stay bound to their project and payment data, and OCR review provenance and source-row evidence survive.
+- Covers duplicate evidence rejection across different source groups, closed-period blocking, and persistence-failure rollback with the editable batch retained.
+- Adds an OCR normalization regression for incomplete row reads so missing amount/date/detail/vendor fields remain unselected and explicitly flagged for human review.
+- This is QA coverage only; the storage contract, accounting calculations, OCR extraction logic, Cloud Sync, D1/R2 and production cutover gates are unchanged.
+
 ## v1040 Expense Multi-Row Review UX
 
 - Reworks the OCR multi-expense review sheet with labeled amount/date/project/payment/category/detail fields, larger touch targets, row confidence/source context and a selected-row summary.
