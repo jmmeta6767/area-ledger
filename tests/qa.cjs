@@ -437,6 +437,7 @@ reset();test('v828 equation parser recovers BOQ row without headers or fixed col
 reset();test('v828 equation parser handles labor-only BOQ row',()=>{function w(t,x,y,ww=60){return {text:t,bbox:{x0:x-ww/2,x1:x+ww/2,y0:y-10,y1:y+10}}}var data={words:[w('งานสกัดพื้นคอนกรีตเดิม',260,200,240),w('18.00',700,200),w('ตร.ม.',820,200),w('19',1210,200),w('72.00',1280,200),w('1,296.00',1390,200,90),w('1,296.00',1510,200,90)]};var rows=c.boqEquationRows(data,1800);assert.equal(rows.length,1);assert.equal(rows[0].qty,18);assert.equal(rows[0].unitPrice,72);assert.equal(rows[0].category,'ค่าแรง');});
 reset();test('v828 equation parser tolerates rounded BOQ multiplication',()=>{function w(t,x,y,ww=60){return {text:t,bbox:{x0:x-ww/2,x1:x+ww/2,y0:y-10,y1:y+10}}}var data={words:[w('เหล็กเสริม DB 12 mm. SD.40',260,220,280),w('0.030',700,220),w('ตัน',820,220),w('21,049.08',1000,220,95),w('631.47',1110,220),w('3,900.00',1280,220,90),w('117.00',1390,220),w('748.47',1510,220)]};var rows=c.boqEquationRows(data,1800);assert(rows.length>=2);assert(rows.some(x=>Math.abs(x.unitPrice-21049.08)<.01));assert(rows.some(x=>Math.abs(x.unitPrice-3900)<.01));});
 reset();test('v829 rejects garbage 1x1 BOQ false positives before preview',()=>{var bad={name:'EET EE Erin aay. he, aR — ค่าแรง',category:'ค่าแรง',qty:1,unit:'',unitPrice:1};assert(c.boqRowQuality(bad)<4);assert.equal(c.boqQualityRows([bad]).length,0);var gate=c.boqRowsNeedVision([bad],4);assert.equal(gate.need,true);assert.equal(gate.good.length,0);});
+reset();test('v1044 rejects equation-stamped English OCR hallucination with category-only Thai text',()=>{var bad={name:'EET EE Erin aay. he, aR — ค่าแรง',category:'ค่าแรง',qty:1,unit:'',unitPrice:1,sourceAmount:1,sourceKind:'local-ocr',ocrConfidence:1,ocrEquation:true,ocrRowBand:true};assert(c.boqRowQuality(bad)<4);assert.equal(c.boqStrongEvidenceRow(bad),false);assert.equal(c.boqQualityRows([bad]).length,0);var gate=c.boqRowsNeedVision([bad],4);assert.equal(gate.need,true);assert.equal(gate.good.length,0);});
 reset();test('v829 multi-image BOQ quality gate escalates sparse local extraction',()=>{var sparse=[{name:'งานขุดดิน — ค่าแรง',category:'ค่าแรง',qty:28.8,unit:'ลบ.ม.',unitPrice:153}];var g=c.boqRowsNeedVision(sparse,4);assert.equal(g.need,true);assert.equal(g.good.length,1);var good=[];for(var i=0;i<8;i++)good.push({name:'งานก่อสร้าง '+i,category:i%2?'ค่าแรง':'ค่าของ',qty:10+i,unit:'ตร.ม.',unitPrice:100+i});assert.equal(c.boqRowsNeedVision(good,4).need,false);});
 reset();test('v829 BOQ import escalates weak local rows to AI Vision before preview',()=>{var s=c.boqImportImages.toString();assert(s.includes('boqRowsNeedVision'));assert(s.includes('localQuality.need'));assert(s.includes("aiGatewayEndpoint('v1/ocr/boq')"));assert(s.includes('AI Vision + Verified Local'));assert(s.includes('boqAiCoverage(aiRows,clean.length,aiDeclared,aiPageCounts,aiPageChecks)'));});
 reset();test('v830 BOQ run prompts AI Vision consent before local-only path when gateway is unavailable',()=>{var s=c.directAction.toString();assert(s.includes("a==='boqRunImages'"));assert(s.includes("kind:'boqAiConsent'"));assert(s.includes("a==='boqAiConsentRun'"));assert(s.includes("a==='boqRunLocalOnly'"));assert(s.includes('aiGatewayProductionBase()'));});
@@ -805,7 +806,7 @@ reset();test('v1039 local image and PDF fallbacks retain per-page checks instead
 
 function setupBoqWarning(declared,coverage){
   reset();c.U.confirm=null;c.U.boqReviewPage=0;c.U.boqReviewChecked={};
-  c.U.boqImport={pid:'p',file:'scan.jpg',rows:[{name:'งานทดสอบ',qty:1,unit:'งาน',unitPrice:100,category:'ค่าของ',sourcePage:1}],pdfOptimize:{ocr:true,reconcile:{declared},localCoverage:coverage||{}}};
+  c.U.boqImport={pid:'p',file:'scan.jpg',rows:[{name:'งานทดสอบ',qty:1,unit:'งาน',unitPrice:100,sourceAmount:100,category:'ค่าของ',sourcePage:1}],pdfOptimize:{ocr:true,reconcile:{declared},localCoverage:coverage||{}}};
 }
 for(const [label,declared,coverage] of [['missing',0,{}],['mismatch',200,{}],['page and missing',0,{pageTotalMismatch:1}],['document conflict',200,{documentTotalConflict:true}]]){
   test('BOQ warning '+label+' reaches explicit final confirmation and saves once',()=>{
@@ -848,7 +849,7 @@ reset();test('v1042 linking closed-period expenses is blocked in single and bulk
 reset();test('v1042 failed batch write also rolls back OCR audit entries',()=>{
  c.U.expenseBatchBusy=false;c.U.expenseBatch=[{photo:'data:image/jpeg;base64,AA',amount:10,cat:'ค่าของ',date:'2026-10-02',pid:'p',pay:'cash',include:true}];fail=true;action('expenseBatchSave');assert.equal(c.S.tx.length,0);assert.equal(c.S.auditLog.length,0);assert.equal(c.U.expenseBatch.length,1);
 });
-reset();test('v1042 source identity is distinct from frozen accounting release',()=>{assert.equal(c.APP_BUILD.version,1043);assert.equal(c.APP_RELEASE,800);assert(c.appBuildLabel().includes('v1043'));c.U.sheet={kind:'settings'};assert(c.sheetHtml().includes('data-build-info'));});
+reset();test('v1044 source identity is distinct from frozen accounting release',()=>{assert.equal(c.APP_BUILD.version,1044);assert.equal(c.APP_RELEASE,800);assert(c.appBuildLabel().includes('v1044'));c.U.sheet={kind:'settings'};assert(c.sheetHtml().includes('data-build-info'));});
 
 reset();test('BOQ AI coverage escalates rows with missing price or visible amount to local OCR',()=>{
  const rows=Array.from({length:8},(_,i)=>({name:'งานทดสอบ '+i,category:'ค่าของ',qty:1,unit:'งาน',unitPrice:10,sourceAmount:10,sourceKind:'ai-vision',ocrConfidence:.95}));
@@ -874,6 +875,13 @@ reset();test('field acceptance rejects legacy, changed build and changed environ
  c.APP_BUILD.sha='b'.repeat(40);assert.equal(c.fieldAcceptanceEvidence().ok,false);
  c.APP_BUILD.sha='a'.repeat(40);c.APP_BUILD.environment='staging';assert.equal(c.fieldAcceptanceEvidence().ok,false);
  c.APP_BUILD.environment='production';c.APP_BUILD.version++;assert.equal(c.fieldAcceptanceEvidence().ok,false);
+});
+
+reset();test('OCR preview rejects unitless unreadable rows and import handler cannot save them',()=>{
+ const bad={name:'EET EE Erin aay. he, aR — ค่าแรง',category:'ค่าแรง',qty:1,unit:'',unitPrice:1,sourceAmount:1,sourcePage:2,sourceFile:'IMG_6871.jpeg',sourceKind:'local-ocr',ocrConfidence:1,ocrEquation:true,ocrRowBand:true};
+ const summary=c.boqAcceptanceSummary([bad],'ocr');assert.equal(summary.invalid,1);assert.equal(summary.review,1);
+ c.U.boqImport={pid:'p',file:'scan.pdf',rows:[bad],pdfOptimize:{ocr:true}};c.U.sheet={kind:'boqImportPreview'};c.U.boqReviewPage=0;c.U.boqReviewChecked={};elements.boqImportPid={value:'p'};
+ action('boqImportConfirm','p');action('boqImportConfirm','p');assert.equal(c.S.boq.length,0);assert(toasts.some(x=>String(x).includes('แก้ชื่อ/หน่วย')));
 });
 reset();test('rechecking one field test cannot refresh stale or future-dated sibling evidence',()=>{
  c.S.ops.fieldAcceptance={at:Date.now(),release:800,refresh:true,offlineOnline:true,receiptR2:true,ocr:true,editRoundTrip:true,networkSwitch:true};stampedFieldFixture();
