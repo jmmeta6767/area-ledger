@@ -8,6 +8,7 @@ on:
       - 'legacy-app/**'
       - 'tests/**'
       - '.github/workflows/**'
+      - '.github/production-cutover-v805'
   workflow_dispatch:
 
 permissions:
