@@ -837,5 +837,19 @@ reset();test('v1042 receipt creation always starts from an unpaid bill and actua
   c.U.docKind='bill';fire('convertDoc','receipt','b1042');assert.equal(c.S.receipts.length,0);assert(toasts.at(-1).includes('รับเงินจริง'));
 });
 
+reset();test('v1042 partial and final payments create reconciled receipts linked to actual cash received',()=>{
+  c.S.business={legalName:'AREA MAIBAB',taxId:'1234567890123',vatRegistered:false};
+  c.S.bills=[{id:'b1042-pay',no:'BL-1042-PAY',date:'2026-10-04',customer:'ลูกค้าทดสอบ',pid:'p',items:[{description:'งานทดสอบ',qty:1,unit:'งาน',unitPrice:100}]}];
+  action('saveBillPayment','b1042-pay',{payAmount:'40',payDate:'2026-10-04',payMethod:'cash'});
+  assert.equal(c.S.receipts.length,1);assert.equal(c.S.receipts[0].sourceId,'b1042-pay');assert.equal(c.S.receipts[0].sourceKind,'bill');assert.equal(c.S.receipts[0].paymentAmount,40);
+  assert.equal(c.billPaymentSummary(c.S.bills[0]).paid,40);assert.equal(c.billPaymentSummary(c.S.bills[0]).remain,60);
+  const tx=c.S.tx.find(x=>x.billId==='b1042-pay');assert(tx);assert.equal(c.txPayments(tx)[0].receiptId,c.S.receipts[0].id);assert.equal(c.txPayments(tx)[0].amount,40);
+  action('saveBillPayment','b1042-pay',{payAmount:'70',payDate:'2026-10-04',payMethod:'transfer'});assert.equal(c.S.receipts.length,1);assert(toasts.at(-1).includes('เกินยอดคงเหลือ'));
+  action('saveBillPayment','b1042-pay',{payAmount:'60',payDate:'2026-10-05',payMethod:'transfer'});
+  assert.equal(c.S.receipts.length,2);assert.equal(c.billPaymentSummary(c.S.bills[0]).paid,100);assert.equal(c.billPaymentSummary(c.S.bills[0]).remain,0);
+  assert.equal(c.S.receipts[1].sourceId,'b1042-pay');assert.equal(c.S.receipts[1].paymentAmount,60);assert.equal(c.txPayments(tx)[1].receiptId,c.S.receipts[1].id);
+  assert.equal(c.documentFlowIntegrity('p').ok,true);assert.equal(c.billingReconcile('p').issues,0,JSON.stringify(c.billingReconcile('p')));
+});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
