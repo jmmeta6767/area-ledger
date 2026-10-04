@@ -6672,7 +6672,7 @@ function documentFlowIntegrity(pid){
 function billingReconcile(pid){
   var bills=(S.bills||[]).filter(function(b){return !pid||b.pid===pid;}),open=0,paid=0,overdue=0,unlinked=0,mismatch=0,missingReceipt=0,orphanTx=0;
   bills.forEach(function(b){
-    var sm=billPaymentSummary(b),pending=sm.rows.filter(function(t){return !t.paid;}),paidRows=sm.rows.filter(function(t){return t.paid||txPaidNet(t)>.01;});
+    var sm=billPaymentSummary(b),pending=sm.rows.filter(function(t){return !t.paid&&txOutstandingNet(t)>.01;}),paidRows=sm.rows.filter(function(t){return t.paid||txPaidNet(t)>.01;});
     paid+=sm.paid;open+=sm.remain;
     if(sm.remain>.01&&b.dueDate&&dd(today(),b.dueDate)<0)overdue+=sm.remain;
     if(sm.remain>.01&&pending.length===0)unlinked++;
@@ -6693,7 +6693,7 @@ function billingReconcile(pid){
 function safeRepairBilling(pid){
   var repairSnapshot=JSON.parse(JSON.stringify(S)),before=billingReconcile(pid),created=0,updated=0;
   (S.bills||[]).filter(function(b){return !pid||b.pid===pid;}).forEach(function(b){
-    var sm=billPaymentSummary(b),pending=sm.rows.filter(function(t){return !t.paid;});
+    var sm=billPaymentSummary(b),pending=sm.rows.filter(function(t){return !t.paid&&txOutstandingNet(t)>.01;});
     if(sm.remain>.01){
       if(pending.length===0){syncBillReceivable(b);created++;return;}
       if(pending.length===1&&Math.abs(net(pending[0])-sm.remain)>.01){syncBillReceivable(b);updated++;}
