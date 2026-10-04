@@ -61,6 +61,16 @@ try{
   if(sourceSha)assert.match(sourceSha,/^[0-9a-f]{40}$/i);
   if(workflowRun)assert.match(workflowRun,/^[0-9]+$/);
   evidence.checks.provenance=true;
+  if(sourceSha){
+    for(const origin of (target==='production'?[base,appBase]:[base])){
+      const response=await fetch(origin+'/?build='+sourceSha,{cache:'no-store'});
+      assert(response.ok,'app shell unavailable');
+      const text=await response.text(),match=text.match(/var APP_BUILD=(\{[^\n]+\});/);
+      assert(match,'deployed build identity missing');
+      const build=JSON.parse(match[1]);assert.equal(build.sha,sourceSha);assert.equal(build.environment,target);
+    }
+    evidence.checks.exactAppBuild=true;
+  }
   const warmup=await waitForGateway(); const health=warmup.health; assert.equal(health.data.productionReady,true);evidence.checks.health=true;evidence.checks.healthAttempts=warmup.attempt;
   const ready=await req('/ready',{method:'GET'}); assert.equal(ready.data.ok,true);evidence.checks.ready=true;
   if(target==='staging')await visionProviderAcceptance(base);

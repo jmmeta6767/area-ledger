@@ -824,5 +824,29 @@ test('BOQ warning acknowledgement expires when destination changes',()=>{
   action('boqImportConfirm','p',{boqImportPid:'q'});action('boqImportConfirm','p',{boqImportPid:'q'});assert.equal(c.S.boq[0].pid,'q');
 });
 
+reset();test('v1042 batch BOQ links survive save backup and reopen without double counting',()=>{
+ c.S.boq=[{id:'b1042',pid:'p',name:'วัสดุ',category:'ค่าของ',qty:1,unitPrice:500}];
+ c.U.expenseBatchBusy=false;c.U.sheet={kind:'expenseBatch'};
+ c.U.expenseBatch=[{id:'r1042',photo:'data:image/jpeg;base64,AA',amount:125,cat:'ค่าของ',sub:'วัสดุ',partner:'ร้าน',date:'2026-10-02',pid:'p',boqId:'b1042',pay:'cash',include:true,sourceGroupId:'g1042',sourceRowIndex:1,sourceRowCount:1}];
+ action('expenseBatchSave');assert.equal(c.S.tx.length,1);assert.equal(c.S.tx[0].boqId,'b1042');assert.equal(c.boqActual('b1042'),125);assert(c.S.auditLog.some(x=>x.entityId===c.S.tx[0].id));
+ const saved=c.restoreParse(c.backupJson());assert(saved.ok);c.S=c.migrate(saved.state);assert.equal(c.boqActual('b1042'),125);assert.equal(c.S.tx[0].sourceRowIndex,1);assert.equal(c.S.tx[0].photo,'data:image/jpeg;base64,AA');
+ action('expenseBatchSave');assert.equal(c.S.tx.length,1);
+});
+reset();test('v1042 rejects cross-project BOQ for the entire selected expense batch',()=>{
+ c.S.boq=[{id:'wrong',pid:'q',qty:1,unitPrice:100}];c.U.expenseBatchBusy=false;c.U.expenseBatch=[{photo:'data:image/jpeg;base64,AA',amount:10,cat:'ค่าของ',date:'2026-10-02',pid:'p',boqId:'wrong',pay:'cash',include:true}];action('expenseBatchSave');assert.equal(c.S.tx.length,0);assert.equal(c.S.auditLog.length,0);
+});
+reset();test('v1042 project changes clear batch BOQ without resetting other edited fields',()=>{
+ const row={pid:'q',boqId:'old',amount:99,sub:'แก้ไขแล้ว'};c.expenseBatchChangeProject(row,0);assert.equal(row.boqId,'');assert.equal(row.amount,99);assert.equal(row.sub,'แก้ไขแล้ว');
+});
+reset();test('v1042 linking closed-period expenses is blocked in single and bulk handlers',()=>{
+ c.S.accountingPeriods=[{period:'2026-10',status:'closed'}];c.S.boq=[{id:'b',pid:'p',name:'วัสดุ',category:'ค่าของ',qty:1,unitPrice:100}];c.S.tx=[{id:'t',pid:'p',type:'out',cat:'ค่าของ',sub:'วัสดุ',amount:50,date:'2026-10-02'}];
+ const query=c.document.querySelector;c.document.querySelector=()=>({value:'b'});action('boqLinkSave','t');c.document.querySelector=query;assert(!c.S.tx[0].boqId);
+ assert.equal(c.candLinkPlan(c.S.tx,c.S.boq).ready,0);action('boqLinkBulkCommit','p');assert(!c.S.tx[0].boqId);
+});
+reset();test('v1042 failed batch write also rolls back OCR audit entries',()=>{
+ c.U.expenseBatchBusy=false;c.U.expenseBatch=[{photo:'data:image/jpeg;base64,AA',amount:10,cat:'ค่าของ',date:'2026-10-02',pid:'p',pay:'cash',include:true}];fail=true;action('expenseBatchSave');assert.equal(c.S.tx.length,0);assert.equal(c.S.auditLog.length,0);assert.equal(c.U.expenseBatch.length,1);
+});
+reset();test('v1042 source identity is distinct from frozen accounting release',()=>{assert.equal(c.APP_BUILD.version,1042);assert.equal(c.APP_RELEASE,800);assert(c.appBuildLabel().includes('v1042'));c.U.sheet={kind:'settings'};assert(c.sheetHtml().includes('data-build-info'));});
+
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
