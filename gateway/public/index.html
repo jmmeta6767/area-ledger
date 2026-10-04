@@ -3314,6 +3314,56 @@ body[data-view="quoteprint"] :where(.quote-paper,.rd-paper){margin-inline:auto}
     .guarantee-mobile-row,.docs-recent>button,.profile-post-card,.proc-grid>*),
   .master-sheet{border-color:CanvasText!important}
 }
+
+/* v1040 — expense multi-row review: labeled fields, selected subtotal, unobscured compact footer */
+body[data-sheet-kind="expenseBatch"] .master-sheet{max-height:min(94dvh,960px)!important;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;scroll-padding-bottom:150px}
+body[data-sheet-kind="expenseBatch"] .master-sheet>h3{padding-top:5px}
+.expense-batch-intro{margin:4px 0 10px!important;line-height:1.5}
+.expense-batch-summary{display:grid;grid-template-columns:.82fr 1.15fr 1fr;gap:7px;margin:10px 0;padding:9px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.expense-batch-summary>div{min-width:0;padding:2px 5px}
+.expense-batch-summary>div+div{border-left:1px solid var(--line);padding-left:9px}
+.expense-batch-summary small,.expense-batch-summary b{display:block}
+.expense-batch-summary small{font-size:.68rem;color:var(--muted);line-height:1.3}
+.expense-batch-summary b{font:700 .86rem var(--display);margin-top:3px;line-height:1.3;overflow-wrap:anywhere}
+.expense-batch-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0!important;position:static!important;padding:0!important;background:none!important}
+.expense-batch-tools .btn{min-height:44px;padding:8px 10px;font-size:.83rem}
+.expense-batch-list{display:grid;gap:10px;margin:10px 0 14px}
+.expense-batch-row{display:grid;grid-template-columns:1fr;gap:10px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);transition:border-color .15s,box-shadow .15s}
+.expense-batch-row.is-selected{border-color:#dfa313;box-shadow:0 0 0 2px rgba(240,165,0,.13)}
+.expense-batch-row-head{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center}
+.expense-batch-check{position:relative;display:block;width:56px;height:58px;cursor:pointer}
+.expense-batch-check img,.expense-batch-source-row{width:56px;height:58px;border:1px solid var(--line);border-radius:10px;background:var(--bar)}
+.expense-batch-check img{display:block;object-fit:cover}
+.expense-batch-source-row{display:grid;place-items:center;text-align:center;padding:4px;font-size:.64rem;font-weight:800;color:var(--muted)}
+.expense-batch-check input{position:absolute;top:4px;left:4px;z-index:1;width:25px;height:25px;margin:0;accent-color:#147ce5}
+.expense-batch-meta{min-width:0;display:grid;gap:2px}
+.expense-batch-meta>b{font:700 .91rem var(--display);line-height:1.3}
+.expense-batch-meta>small{font-size:.72rem;color:var(--muted);line-height:1.4}
+.expense-batch-warning{display:block;margin-top:3px;color:#8a5c00;font-size:.7rem;font-weight:700;line-height:1.35}
+.expense-batch-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.expense-batch-field{display:block;min-width:0;margin:0!important;padding:0!important;background:transparent!important;border:0!important}
+.expense-batch-field>span{display:block;margin:0 0 4px;color:var(--muted);font-size:.7rem;font-weight:700;line-height:1.35}
+.expense-batch-field input,.expense-batch-field select{display:block;min-width:0;width:100%;min-height:46px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--ink);padding:9px 10px;font:inherit;font-size:.88rem}
+.expense-batch-field.amount,.expense-batch-field.date,.expense-batch-field.full{grid-column:1/-1}
+.expense-batch-field.amount input{font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums}
+.expense-batch-field :focus-visible,.expense-batch-check input:focus-visible{outline:3px solid rgba(20,124,229,.35);outline-offset:2px}
+.expense-batch-actions{position:sticky;bottom:calc(-8px - env(safe-area-inset-bottom,0px));z-index:8;display:grid;grid-template-columns:.78fr 1.42fr;gap:8px;margin:10px -14px -8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface);box-shadow:0 -8px 20px rgba(20,30,38,.12)}
+.expense-batch-actions-summary{grid-column:1/-1;display:flex;align-items:baseline;gap:7px;min-width:0;color:var(--muted);font-size:.74rem}
+.expense-batch-actions-summary b{color:var(--ink);font:700 .96rem var(--display);font-variant-numeric:tabular-nums}
+.expense-batch-actions-summary small{margin-left:auto;font-size:.72rem;white-space:nowrap}
+.expense-batch-actions>.btn{min-width:0;min-height:50px;margin:0!important;border-radius:12px!important;font-size:.9rem;white-space:normal;line-height:1.25}
+.expense-batch-actions>.btn.pri{font-weight:800}
+.expense-batch-actions>.btn:disabled,.expense-batch-tools>.btn:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:380px){
+ .expense-batch-summary{grid-template-columns:.78fr 1.08fr 1fr;gap:4px;padding:8px 6px}
+ .expense-batch-summary>div{padding-inline:3px}.expense-batch-summary>div+div{padding-left:6px}
+ .expense-batch-summary small{font-size:.62rem}.expense-batch-summary b{font-size:.75rem}
+ .expense-batch-row{padding:10px}.expense-batch-fields{gap:7px}
+ .expense-batch-field>span{font-size:.66rem}.expense-batch-field input,.expense-batch-field select{padding-inline:8px;font-size:.83rem}
+ .expense-batch-actions{grid-template-columns:.72fr 1.55fr;gap:7px;padding-left:10px;padding-right:10px}
+ .expense-batch-actions>.btn{font-size:.82rem}
+}
+@media(max-height:500px) and (orientation:landscape){body[data-sheet-kind="expenseBatch"] .expense-batch-actions{position:static;margin-top:12px}}
 </style>
 </head>
 <body>
@@ -6674,6 +6724,26 @@ function vQuotePrint(){
    '<div class="stack no-print"><button class="btn pri" data-act="doPrint">พิมพ์ / บันทึก PDF</button><button class="btn" data-act="editQuote" data-id="'+q.id+'">แก้ไขใบเสนอราคา</button></div></div>';
 }
 /* ---------- แผ่นล่าง (sheet) ---------- */
+function expenseBatchTotals(items){
+  var all=Array.isArray(items)?items:[],selected=all.filter(function(x){return !!(x&&x.include);});
+  function amount(x){var n=+((x&&x.amount)||0);return isFinite(n)&&n>0?n:0;}
+  return {count:all.length,selectedCount:selected.length,total:all.reduce(function(n,x){return n+amount(x);},0),selectedTotal:selected.reduce(function(n,x){return n+amount(x);},0)};
+}
+function expenseBatchUpdateUi(){
+  if(!U.sheet||U.sheet.kind!=='expenseBatch')return;
+  var items=U.expenseBatch||[],totals=expenseBatchTotals(items),checks=document.querySelectorAll('[data-exp-batch][data-k="include"]');
+  for(var i=0;i<checks.length;i++){
+    var item=items[+checks[i].dataset.expBatch],row=checks[i].closest('.expense-batch-row');
+    checks[i].checked=!!(item&&item.include);
+    if(row)row.classList.toggle('is-selected',!!(item&&item.include));
+  }
+  var values={expenseBatchSelectedCount:totals.selectedCount+' รายการ',expenseBatchSelectedAmount:fmt(totals.selectedTotal,1),expenseBatchActionCount:totals.selectedCount+' รายการ',expenseBatchActionAmount:fmt(totals.selectedTotal,1),expenseBatchTotalCount:totals.count+' รายการ',expenseBatchTotalAmount:fmt(totals.total,1)};
+  Object.keys(values).forEach(function(id){var node=document.getElementById(id);if(node)node.textContent=values[id];});
+  var save=document.querySelector('[data-act="expenseBatchSave"]');if(save){save.disabled=!!U.expenseBatchBusy||totals.selectedCount===0;save.textContent='บันทึก '+totals.selectedCount+' รายการ';}
+  var allButton=document.querySelector('[data-act="expenseBatchSelectAll"]'),noneButton=document.querySelector('[data-act="expenseBatchSelectNone"]');
+  if(allButton)allButton.disabled=!!U.expenseBatchBusy||totals.selectedCount===totals.count;
+  if(noneButton)noneButton.disabled=!!U.expenseBatchBusy||totals.selectedCount===0;
+}
 function sheetHtml(){
   var sh=U.sheet;if(!sh){U._sk='';return '';}
   var key=sh.kind+(sh.id||''),anim=U._sk!==key;U._sk=key;
@@ -6779,8 +6849,11 @@ function sheetHtml(){
   }else if(sh.kind==='expenseAiConsent'){
     var epf=U.expensePendingFiles||[];b='<h3>เปิด AI Vision สำหรับบิล/ใบเสร็จ</h3><div class="card"><b>แนะนำสำหรับบิลเงินสดและลายมือ</b><p class="muted" style="margin-top:6px">รูปที่เลือกจะถูกส่งผ่าน AREA Ledger Production Gateway ไปยัง AI Vision เพื่ออ่านยอด ร้านค้า วันที่ และรายละเอียด · ระบบจะไม่บันทึกรายจ่ายอัตโนมัติ คุณต้องตรวจข้อมูลก่อนกดบันทึกทุกครั้ง</p><div class="muted">เลือกแล้ว '+epf.length+' รูป · รูปจะเก็บไว้ในหน่วยความจำชั่วคราวระหว่างเปิด AI Vision</div>'+(U.expenseAiConsentStatus?'<div class="role" style="margin-top:8px">'+esc(U.expenseAiConsentStatus)+'</div>':'')+'</div><div class="stack" style="margin-top:12px"><button class="btn pri" data-act="expenseAiConsentRun">เปิด AI Vision และอ่านรูปเดิม</button><button class="btn" data-act="expenseAiLocalRun">ใช้ OCR ในเครื่องครั้งนี้</button><button class="btn" data-act="expenseAiCancel">ยกเลิก</button></div>';
   }else if(sh.kind==='expenseBatch'){
-    var eb=U.expenseBatch||[],ep=Math.max(1,Math.min(100,+U.expenseBatchProgress||1)),ed=+U.expenseBatchDone||0,et=+U.expenseBatchTotal||eb.length,sel=eb.filter(function(x){return x.include;}).length,sum=eb.reduce(function(n,x){return n+(+x.amount||0);},0),tableRows=eb.filter(function(x){return +x.sourceRowCount>1;}).length;
-    b='<h3>ตรวจค่าใช้จ่ายหลายรายการ</h3><p class="muted">'+(U.expenseBatchBusy?'กำลังอ่านรูป '+ed+'/'+et+' · ':'อ่านครบแล้ว · ')+eb.length+' รายการ'+(tableRows?' · AI แยกจากตารางในรูป':'')+' · รวม '+fmt(sum)+' · ตรวจยอด วันที่ โครงการ ช่องทางจ่าย และหมวดก่อนบันทึก</p><div class="expense-scan-status"><b>'+ep+'%</b>'+(U.expenseBatchBusy?' · กำลังประมวลผล':' · พร้อมตรวจ')+'<div class="bar" style="margin-top:7px"><i style="width:'+ep+'%"></i></div></div><div class="stack" style="grid-template-columns:1fr 1fr;margin:10px 0"><button class="btn" data-act="expenseBatchSelectAll">เลือกทั้งหมด</button><button class="btn" data-act="expenseBatchSelectNone">ไม่เลือกทั้งหมด</button></div><div class="expense-batch-list">'+eb.map(function(x,i){var uncertain=(x.ocrUncertainFields||[]).join(', '),samePrev=i>0&&x.sourceGroupId&&eb[i-1].sourceGroupId===x.sourceGroupId,proof=samePrev&&+x.sourceRowCount>1?'<span class="tag">แถว '+(+x.sourceRowIndex||i+1)+'/'+(+x.sourceRowCount||eb.length)+'</span>':'<img src="'+x.photo+'" alt="หลักฐานรายการ">';return '<div class="expense-batch-row"><label class="expense-batch-check"><input type="checkbox" data-exp-batch="'+i+'" data-k="include" '+(x.include?'checked':'')+'>'+proof+'</label><div><small class="muted">'+(x.ocrSource==='ai'?'AI Vision':x.ocrSource==='local'?'OCR ในเครื่อง':'อ่านไม่สำเร็จ')+(+x.sourceRowCount>1?' · แถว '+(+x.sourceRowIndex||i+1)+'/'+x.sourceRowCount:'')+' · '+Math.round((+x.ocrConfidence||0)*100)+'%'+(uncertain?' · ตรวจเพิ่ม: '+esc(uncertain):'')+'</small><input data-exp-batch="'+i+'" data-k="amount" type="number" inputmode="decimal" value="'+(x.amount||'')+'" placeholder="ยอดเงิน"><input data-exp-batch="'+i+'" data-k="date" type="date" value="'+esc(x.date||'')+'"><select data-exp-batch="'+i+'" data-k="pid">'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(x.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select><select data-exp-batch="'+i+'" data-k="pay"><option value="transfer"'+(x.pay==='transfer'?' selected':'')+'>โอน</option><option value="cash"'+(x.pay==='cash'?' selected':'')+'>เงินสด</option></select><select data-exp-batch="'+i+'" data-k="cat">'+CAT_OUT.map(function(c){return '<option'+(x.cat===c?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select><input data-exp-batch="'+i+'" data-k="sub" value="'+esc(x.sub||'')+'" placeholder="รายละเอียด"><input data-exp-batch="'+i+'" data-k="partner" value="'+esc(x.partner||'')+'" placeholder="ร้านค้า/ผู้รับเงิน"></div></div>';}).join('')+'</div><div class="stack"><button class="btn pri" data-act="expenseBatchSave" '+(U.expenseBatchBusy?'disabled':'')+'>บันทึกหลายรายการที่เลือก ('+sel+')</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+    var eb=U.expenseBatch||[],ep=Math.max(1,Math.min(100,+U.expenseBatchProgress||1)),ed=+U.expenseBatchDone||0,et=+U.expenseBatchTotal||eb.length,totals=expenseBatchTotals(eb),sel=totals.selectedCount,tableRows=eb.filter(function(x){return +x.sourceRowCount>1;}).length,busy=!!U.expenseBatchBusy;
+    b='<h3>ตรวจค่าใช้จ่ายหลายรายการ</h3><p class="muted expense-batch-intro">'+(busy?'กำลังอ่านรูป '+ed+'/'+et+' · ':'อ่านครบแล้ว · ')+eb.length+' รายการ'+(tableRows?' · แยกจากตารางในรูป':'')+' · ตรวจข้อมูลก่อนบันทึก</p><div class="expense-scan-status" role="status" aria-live="polite"><b>'+ep+'%</b>'+(busy?' · กำลังประมวลผล':' · พร้อมตรวจ')+'<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+ep+'" style="margin-top:7px"><i style="width:'+ep+'%"></i></div></div><div class="expense-batch-summary" aria-live="polite"><div><small>เลือกบันทึก</small><b id="expenseBatchSelectedCount">'+sel+' รายการ</b></div><div><small>ยอดที่เลือก</small><b id="expenseBatchSelectedAmount">'+fmt(totals.selectedTotal,1)+'</b></div><div><small>รวมทั้งหมด</small><b><span id="expenseBatchTotalCount">'+totals.count+' รายการ</span> · <span id="expenseBatchTotalAmount">'+fmt(totals.total,1)+'</span></b></div></div><div class="expense-batch-tools"><button class="btn" data-act="expenseBatchSelectAll" '+(busy||sel===eb.length?'disabled':'')+'>เลือกทั้งหมด</button><button class="btn" data-act="expenseBatchSelectNone" '+(busy||!sel?'disabled':'')+'>ล้างการเลือก</button></div><div class="expense-batch-list" aria-label="รายการที่อ่านจากบิล">'+eb.map(function(x,i){
+      var uncertain=(x.ocrUncertainFields||[]).join(', '),samePrev=i>0&&x.sourceGroupId&&eb[i-1].sourceGroupId===x.sourceGroupId,proof=samePrev&&+x.sourceRowCount>1?'<span class="expense-batch-source-row">แถว '+(+x.sourceRowIndex||i+1)+'/'+(+x.sourceRowCount||eb.length)+'</span>':'<img src="'+x.photo+'" alt="ภาพหลักฐานรายการ '+(i+1)+'">',source=x.ocrSource==='ai'?'AI Vision':x.ocrSource==='local'?'OCR ในเครื่อง':'อ่านไม่สำเร็จ',rowNo=+x.sourceRowCount>1?'แถว '+(+x.sourceRowIndex||i+1)+'/'+x.sourceRowCount:'รายการ '+(i+1),disabled=busy?' disabled':'';
+      return '<article class="expense-batch-row'+(x.include?' is-selected':'')+'" data-expense-batch-row="'+i+'"><div class="expense-batch-row-head"><label class="expense-batch-check"><input type="checkbox" data-exp-batch="'+i+'" data-k="include" aria-label="เลือก '+rowNo+'" '+(x.include?'checked':'')+disabled+'>'+proof+'</label><div class="expense-batch-meta"><b>'+rowNo+'</b><small>'+source+' · ความมั่นใจ '+Math.round((+x.ocrConfidence||0)*100)+'%</small>'+(uncertain?'<span class="expense-batch-warning">ตรวจเพิ่ม: '+esc(uncertain)+'</span>':'')+'</div></div><div class="expense-batch-fields"><label class="expense-batch-field amount"><span>ยอดเงิน (บาท)</span><input data-exp-batch="'+i+'" data-k="amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="'+(x.amount||'')+'" placeholder="กรอกยอดเงิน" aria-label="ยอดเงิน '+rowNo+'"'+disabled+'></label><label class="expense-batch-field date"><span>วันที่จ่าย</span><input data-exp-batch="'+i+'" data-k="date" type="date" value="'+esc(x.date||'')+'" aria-label="วันที่จ่าย '+rowNo+'"'+disabled+'></label><label class="expense-batch-field"><span>โครงการ</span><select data-exp-batch="'+i+'" data-k="pid" aria-label="โครงการ '+rowNo+'"'+disabled+'>'+S.projects.map(function(p){return '<option value="'+esc(p.id)+'"'+(x.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></label><label class="expense-batch-field"><span>ช่องทางจ่าย</span><select data-exp-batch="'+i+'" data-k="pay" aria-label="ช่องทางจ่าย '+rowNo+'"'+disabled+'><option value="transfer"'+(x.pay==='transfer'?' selected':'')+'>โอน</option><option value="cash"'+(x.pay==='cash'?' selected':'')+'>เงินสด</option></select></label><label class="expense-batch-field"><span>หมวดค่าใช้จ่าย</span><select data-exp-batch="'+i+'" data-k="cat" aria-label="หมวดค่าใช้จ่าย '+rowNo+'"'+disabled+'>'+CAT_OUT.map(function(c){return '<option'+(x.cat===c?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label><label class="expense-batch-field"><span>รายละเอียด</span><input data-exp-batch="'+i+'" data-k="sub" value="'+esc(x.sub||'')+'" placeholder="เพิ่มรายละเอียด" aria-label="รายละเอียด '+rowNo+'"'+disabled+'></label><label class="expense-batch-field full"><span>ร้านค้า / ผู้รับเงิน</span><input data-exp-batch="'+i+'" data-k="partner" value="'+esc(x.partner||'')+'" placeholder="เพิ่มชื่อร้านค้าหรือผู้รับเงิน" aria-label="ร้านค้าหรือผู้รับเงิน '+rowNo+'"'+disabled+'></label></div></article>';
+    }).join('')+'</div><div class="expense-batch-actions"><div class="expense-batch-actions-summary"><span>ยอดที่จะบันทึก</span><b id="expenseBatchActionAmount">'+fmt(totals.selectedTotal,1)+'</b><small id="expenseBatchActionCount">'+sel+' รายการ</small></div><button class="btn" data-act="closeSheet">ยกเลิก</button><button class="btn pri" data-act="expenseBatchSave" '+(busy||!sel?'disabled':'')+'>บันทึก '+sel+' รายการ</button></div>';
 
   }else if(sh.kind==='boqLinkBulkConfirm'){
     var cpid=sh.pid||U.pid,ctx=(S.tx||[]).filter(function(t){return t.pid===cpid&&t.type==='out'&&!t.boqId;}),crows=boqRows(cpid),plan=candLinkPlan(ctx,crows);
@@ -7707,8 +7780,8 @@ document.addEventListener('click',function(e){
   else if(a==='govRiskOpen'){U.sheet={kind:'govRisk',pid:id||U.pid};render();}
   else if(a==='govDraft'){U.sheet={kind:'govDraft',pid:id||U.pid,draftKind:v||'clarify'};render();}
   else if(a==='govDraftCopy'){doCopy('govDraftText',function(){toast('คัดลอกร่างหนังสือแล้ว');});}
-  else if(a==='expenseBatchSelectAll'){(U.expenseBatch||[]).forEach(function(x){if(+x.amount>0)x.include=true;});render();}
-  else if(a==='expenseBatchSelectNone'){(U.expenseBatch||[]).forEach(function(x){x.include=false;});render();}
+  else if(a==='expenseBatchSelectAll'){(U.expenseBatch||[]).forEach(function(x){if(+x.amount>0)x.include=true;});expenseBatchUpdateUi();}
+  else if(a==='expenseBatchSelectNone'){(U.expenseBatch||[]).forEach(function(x){x.include=false;});expenseBatchUpdateUi();}
   else if(a==='expenseBatchSave'){
     if(U.expenseBatchBusy)return;
     var batch=(U.expenseBatch||[]).filter(function(x){return x.include;}),old=S.tx.slice();
@@ -7896,6 +7969,7 @@ document.addEventListener('toggle',function(e){
   if(U.view==='report'&&d.classList.contains('report-focus-fold')){var rk=d.getAttribute('data-report-key');if(!rk)return;U.reportOpen=U.reportOpen&&typeof U.reportOpen==='object'?U.reportOpen:{};U.reportOpen[rk]=!!d.open;saveNavSession();return;}
   if(U.view==='home'&&d.classList.contains('home-fold')){var hk=d.getAttribute('data-home-key');if(!hk)return;U.homeOpen=U.homeOpen&&typeof U.homeOpen==='object'?U.homeOpen:{};U.homeOpen[hk]=!!d.open;saveNavSession();}
 },true);
+document.addEventListener('input',function(e){if(e.target&&e.target.dataset&&e.target.dataset.expBatch!==undefined&&e.target.dataset.k==='amount'){var bx=(U.expenseBatch||[])[+e.target.dataset.expBatch];if(bx){bx.amount=parseFloat(e.target.value)||0;expenseBatchUpdateUi();}}});
 document.addEventListener('change',function(e){
   if(e.target&&e.target.id==='docProjectFilter'){var dpp=e.target.value||'';U.docProjectPid=dpp&&proj(dpp)?dpp:'';U.docQuery='';saveNavSession();render();return;}
   if(e.target&&e.target.id==='guaranteeProjectFilter'){var gp=e.target.value||'';U.guaranteeProjectPid=gp&&proj(gp)?gp:'';U.guaranteeQuery='';saveNavSession();render();return;}
@@ -7906,7 +7980,7 @@ document.addEventListener('change',function(e){
     var rr=new FileReader();rr.onerror=function(){toast('อ่านไฟล์สำรองไม่ได้');};rr.onload=function(){var raw=String(rr.result||''),parsed=restoreParse(raw);if(!parsed.ok){U.restoreInfo='ไฟล์ไม่ผ่าน validation';U.rsText='';U.confirm=null;render();toast('ไฟล์สำรองไม่ถูกต้อง');return;}U.rsText=raw;U.confirm=null;U.restoreInfo='พร้อมกู้คืน · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ · '+parsed.summary.boq+' BOQ'+(parsed.meta.sourceOrigin&&parsed.meta.sourceOrigin!==location.origin?' · ต้นทาง '+parsed.meta.sourceOrigin:'');render();toast('อ่านไฟล์สำรองแล้ว · ตรวจยอดก่อนยืนยัน');};rr.readAsText(rf);return;
   }
   if(e.target&&e.target.id==='govEventPhoto'&&e.target.files&&e.target.files[0]){var gf=e.target.files[0],gr=new FileReader();gr.onload=function(){var gi=new Image();gi.onload=function(){var M=1000,k=Math.min(1,M/Math.max(gi.width,gi.height)),c=document.createElement('canvas');c.width=Math.round(gi.width*k);c.height=Math.round(gi.height*k);c.getContext('2d').drawImage(gi,0,0,c.width,c.height);U.govEventPhoto=c.toDataURL('image/jpeg',.68);toast('แนบรูปหลักฐานแล้ว');};gi.src=gr.result;};gr.readAsDataURL(gf);return;}
-  if(e.target&&e.target.dataset&&e.target.dataset.expBatch!==undefined){var bi=+e.target.dataset.expBatch,bk=e.target.dataset.k,bx=(U.expenseBatch||[])[bi];if(bx){bx[bk]=bk==='include'?e.target.checked:(bk==='amount'?(parseFloat(e.target.value)||0):e.target.value);if(bk==='include')render();}return;}
+  if(e.target&&e.target.dataset&&e.target.dataset.expBatch!==undefined){var bi=+e.target.dataset.expBatch,bk=e.target.dataset.k,bx=(U.expenseBatch||[])[bi];if(bx){bx[bk]=bk==='include'?e.target.checked:(bk==='amount'?(parseFloat(e.target.value)||0):e.target.value);expenseBatchUpdateUi();}return;}
   if(e.target&&e.target.id==='expenseScanIn'&&e.target.files&&e.target.files[0]){expenseBatchScan(e.target.files);return;}
   if(e.target&&e.target.id==='boqCheckSort'){U.boqCheckSort=e.target.value||'boq';render();return;}
   if(e.target&&e.target.id==='boqImportFile'&&e.target.files&&e.target.files[0]){var fs=Array.from(e.target.files),imgs=fs.filter(function(f){return /^image\//.test(f.type||'')||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||'');});if(imgs.length===fs.length)boqQueueImages(imgs,U.sheet&&U.sheet.pid);else boqHandleFile(fs[0],U.sheet&&U.sheet.pid);return;}if(e.target&&e.target.id==='boqMoreImages'&&e.target.files){boqQueueImages(e.target.files,U.sheet&&U.sheet.pid);return;}

@@ -1,5 +1,15 @@
 # AREA Ledger V2 — Master v800
 
+## v1040 Expense Multi-Row Review UX
+
+- Reworks the OCR multi-expense review sheet with labeled amount/date/project/payment/category/detail fields, larger touch targets, row confidence/source context and a selected-row summary.
+- The selected count and selected subtotal now follow checkbox and amount edits in place; changing a row no longer rerenders the whole app or resets the iPhone scroll/focus position.
+- Separates bulk-selection controls from a compact, opaque sticky save bar with safe-area spacing so it does not obscure the current row fields.
+- Keeps the existing explicit human review, duplicate-evidence guard, closed-period checks, batch validation, accounting writes and OCR evidence/audit metadata unchanged.
+- Adds v1040 regression coverage for selected totals, field labels, compact action controls and no-rerender selection behavior.
+- Presentation and interaction only: accounting formulas, OCR extraction/acceptance, storage keys, Cloud Sync, D1/R2 and production cutover gates remain unchanged.
+
+
 Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701, based on GitHub `main` v701
 (`270f7de5b61dcd2a72a1f263a646158c884157ee`).
 
