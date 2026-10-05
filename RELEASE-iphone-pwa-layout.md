@@ -2,7 +2,7 @@
 
 Baseline: main `5dac2923285352bf5be0602b8050a303f0931ae5`. Production at start: v1044 `78fa553cceb17a1f8500f9fad9bc978eb452713f`; production gate absent; /ready healthy. Existing malformed OCR row rejection remains intact.
 
-Follow-up evidence from user-provided iPhone captures exposed a later `max-width:430px` / `380px` override restoring the dashboard expense-status cards to two narrow columns. The original v1044 layout regression now pins the deployed baseline `86b5c5948fba70ee8e839036160fb4d9dcb0a075`, reproduces the split `฿237,711.80` / `฿66,775.00` amounts at 390px, and verifies the corrected one-column, single-line output at 320 / 375 / 390 / 430px. Status cards stack vertically on mobile; all amount digits and decimals remain unchanged.
+Follow-up evidence from user-provided iPhone captures exposed a later `max-width:430px` / `380px` override restoring the dashboard expense-status cards to two narrow columns. The original v1044 layout regression now pins the deployed baseline `86b5c5948fba70ee8e839036160fb4d9dcb0a075`, reproduces the split `฿237,711.80` / `฿66,775.00` amounts at 390px, and verifies the corrected one-column, single-line output at 320 / 375 / 390 / 430px and 844px landscape. Status cards stack vertically through the narrow tablet breakpoint; all amount digits and decimals remain unchanged.
 
 ## Observed in source and Chromium
 
