@@ -14,7 +14,7 @@ async function fixture(page,view,count){
   S.tx=[{id:'t',pid:'p',type:'in',amount:329236.80,paid:true,date:'2026-10-04',cat:'รายรับ',sub:'รายรับทดสอบ',pay:'transfer'}];
   S.boq=[{id:'b',pid:'p',name:'รายการก่อสร้างสำหรับทดสอบรายละเอียดข้อความยาว',qty:10,unit:'ตร.ม.',price:32923.68,cat:'ค่าของ'}];
   U.view=view;U.pid='p';U.boqProjectPid='p';U.sheet=null;render();
-  if(count){U.expenseScanBusy=false;U.expenseBatchBusy=false;U.expenseBatchProgress=100;U.expenseBatchDone=count;U.expenseBatchTotal=count;U.expenseBatch=Array.from({length:count},(_,i)=>({include:true,amount:329236.80,date:'2026-10-04',pid:'p',pay:'transfer',cat:'ค่าของ',sub:'รายละเอียดวัสดุก่อสร้างยาวมาก '.repeat(12),partner:'ร้านค้าทดสอบ',photo:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="56" height="58"><rect width="56" height="58" fill="%23eee"/><text x="4" y="30" font-size="10">TEST</text></svg>',ocrConfidence:.8,ocrSource:'local'}));U.sheet={kind:'expenseBatch'};render();}
+  if(count){U.expenseScanBusy=false;U.expenseBatchBusy=false;U.expenseBatchProgress=100;U.expenseBatchDone=count;U.expenseBatchTotal=count;U.expenseBatch=Array.from({length:count},(_,i)=>({include:true,amount:329236.80,date:'2026-10-04',pid:'p',pay:'transfer',cat:'ค่าของ',sub:'รายละเอียดวัสดุก่อสร้างยาวมาก '.repeat(12),partner:'ร้านค้าทดสอบ',photo:'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="56" height="58"><rect width="56" height="58" fill="#eee"/><text x="4" y="30" font-size="10">TEST</text></svg>'),ocrConfidence:.8,ocrSource:'local'}));U.sheet={kind:'expenseBatch'};render();}
  },{view,count});
 }
 (async()=>{
@@ -52,8 +52,8 @@ async function fixture(page,view,count){
     }
    }
    if(version==='after'){
-    await fixture(page,'projects',0);await page.evaluate(()=>{S.projects=Array.from({length:20},(_,i)=>({...S.projects[0],id:'p'+i}));render();window.scrollTo(0,400);});
-    const y=await page.evaluate(()=>scrollY);await page.evaluate(()=>{U.sheet={kind:'settings'};render();});
+    await fixture(page,'projects',0);await page.evaluate(()=>{S.projects=Array.from({length:20},(_,i)=>({...S.projects[0],id:'p'+i}));render();window.scrollTo({left:0,top:400,behavior:'instant'});});
+    const y=await page.evaluate(()=>scrollY);assert.equal(y,400);await page.evaluate(()=>{U.sheet={kind:'settings'};render();});
     assert.equal(await page.evaluate(()=>sheetScrollLock.y),y);await page.evaluate(()=>{U.sheet=null;render();});assert.equal(await page.evaluate(()=>scrollY),y);
     await fixture(page,'add',11);await page.setViewportSize({width,height:Math.min(height,360)});
     await page.locator('[data-exp-batch="10"][data-k="partner"]').focus();

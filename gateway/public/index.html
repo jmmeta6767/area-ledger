@@ -7478,7 +7478,7 @@ function render(){
   document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();
-  if(sheetRestorePosition)window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);
+  if(sheetRestorePosition){var oldScrollBehavior=document.documentElement.style.scrollBehavior;document.documentElement.style.scrollBehavior='auto';window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);document.documentElement.style.scrollBehavior=oldScrollBehavior;}
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
 
