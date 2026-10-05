@@ -289,6 +289,16 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .expense-status-card:focus-visible{outline:3px solid #b77900;outline-offset:3px}
 @media(max-width:390px){.expense-status-grid{gap:8px}.expense-status-card{min-height:112px;padding:13px;grid-template-columns:38px minmax(0,1fr) 10px;gap:8px}.expense-status-icon{width:38px;height:38px}.expense-status-copy b{font-size:20px}.expense-status-head>span{font-size:10px;padding:5px 7px}}
 @media(prefers-color-scheme:dark){.expense-status-head b{color:#eef1f3}.expense-status-head>span{background:#1a232d;color:#bdc7cf;border-color:#2a3541}.expense-status-card.paid{background:linear-gradient(145deg,#173126,#1a232d);border-color:#244b37}.expense-status-card.pending{background:linear-gradient(145deg,#342b18,#1a232d);border-color:#5d4d24}.expense-status-copy small,.expense-status-copy em{color:#bdc7cf}.expense-status-copy b{color:#f0a071}.expense-status-card.paid .expense-status-icon{background:#214a34;color:#76d6a5}.expense-status-card.pending .expense-status-icon{background:#4b3b18;color:#f0c14b}}
+/* v1045 private loan / debtor-creditor register */
+.profile-loan-hub{margin:14px 0 16px;padding:14px;background:linear-gradient(180deg,#fff,#f8fafb);border:1px solid #dfe5e8;border-radius:20px;box-shadow:0 5px 18px rgba(17,24,39,.045)}
+.profile-loan-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:11px}.profile-loan-head>div{min-width:0}.profile-loan-head small{display:block;font-size:9.5px;font-weight:900;letter-spacing:.12em;color:#8b6b12}.profile-loan-head b{display:block;font-size:17px;margin-top:2px}.profile-loan-head p{margin:3px 0 0;color:#727d85;font-size:10.5px;line-height:1.4}.profile-loan-head>span{flex:0 0 auto;border:1px solid #dfe4e7;border-radius:999px;padding:5px 8px;color:#68737c;font-size:9.5px;font-weight:800}
+.profile-loan-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.profile-loan-card{min-width:0;min-height:128px;border:1px solid #e0e5e8;border-radius:17px;padding:12px;background:#fff;display:grid;grid-template-columns:34px minmax(0,1fr) 10px;gap:8px;text-align:left;align-items:start}.profile-loan-card.payable{background:linear-gradient(145deg,#fff3ee,#fff);border-color:#f0d5ca}.profile-loan-card.receivable{background:linear-gradient(145deg,#edf8f2,#fff);border-color:#d5eadf}
+.profile-loan-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:20px;font-weight:900}.profile-loan-card.payable .profile-loan-icon{background:#f8ddd3;color:#a84632}.profile-loan-card.receivable .profile-loan-icon{background:#dcefe4;color:#24704a}.profile-loan-copy{min-width:0}.profile-loan-copy small,.profile-loan-copy b,.profile-loan-copy em,.profile-loan-copy i{display:block}.profile-loan-copy small{font-size:10.5px;font-weight:800;line-height:1.3}.profile-loan-copy b{font-size:18px;margin:5px 0 3px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.profile-loan-copy em{font-size:9.5px;color:#66727b;font-style:normal;line-height:1.35}.profile-loan-copy i{font-size:9px;color:#879199;font-style:normal;margin-top:5px}.profile-loan-card>strong{align-self:center;color:#98a1a7;font-size:22px}.profile-loan-note{margin-top:10px;padding:8px 10px;border-radius:11px;background:#f2f4f5;color:#68737c;font-size:9.5px;line-height:1.45}
+.loan-sheet-summary,.loan-detail-money{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.loan-sheet-summary>div,.loan-detail-money>div{background:#f4f6f7;border-radius:13px;padding:10px;min-width:0}.loan-sheet-summary small,.loan-detail-money small{display:block;color:#707b84;font-size:9.5px}.loan-sheet-summary b,.loan-detail-money b{display:block;margin-top:3px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loan-register{margin-top:12px}.loan-row{width:100%;border:0;border-top:1px solid #e7ebed;background:transparent;padding:12px 2px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;text-align:left}.loan-row:first-child{border-top:0}.loan-row span{min-width:0}.loan-row b,.loan-row small{display:block}.loan-row span>b{font-size:14px}.loan-row small{font-size:10px;color:#758089;margin:2px 0 5px}.loan-row>strong{font-size:16px;align-self:start;font-variant-numeric:tabular-nums}.loan-row>em{grid-column:1/-1;color:#7d878f;font-size:9.5px;font-style:normal}.loan-status{display:inline-flex;border-radius:999px;padding:3px 7px;font-size:9px;font-weight:800;background:#eef1f3;color:#68737c}.loan-status.overdue{background:#fde6df;color:#a13d2c}.loan-status.near{background:#fff0c4;color:#8b6100}.loan-status.done{background:#e3f3e9;color:#27704a}
+.loan-detail-meta{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 12px}.loan-detail-meta span{background:#f1f4f5;border-radius:999px;padding:5px 8px;font-size:9.5px;color:#66727b}.loan-note{background:#f8fafb;border-left:3px solid #d6dce0;border-radius:8px;padding:9px 10px;font-size:11px;color:#55616b}.loan-history{margin-top:14px}.loan-history-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}.loan-history-head span{font-size:10px;color:#7d878f}.loan-payment-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;border-top:1px solid #e7ebed;padding:10px 0}.loan-payment-row span b,.loan-payment-row span small{display:block}.loan-payment-row span b{font-size:12px}.loan-payment-row span small{font-size:9.5px;color:#7c868d}.loan-payment-row strong{font-size:13px}.loan-payment-row button{border:1px solid #e3e7e9;background:#fff;border-radius:9px;min-height:34px;padding:4px 8px;color:#9d4434;font-weight:800;font-size:9.5px}.loan-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.loan-accounting-note{margin-top:14px;background:#fff4cf;border-radius:12px;padding:9px 10px;font-size:10px;color:#756024;line-height:1.45}
+@media(max-width:380px){.profile-loan-grid{grid-template-columns:1fr}.profile-loan-card{min-height:108px}.loan-form-grid{grid-template-columns:1fr}.loan-sheet-summary,.loan-detail-money{grid-template-columns:1fr 1fr}.loan-sheet-summary>div:first-child,.loan-detail-money>div:first-child{grid-column:1/-1}}
+@media(prefers-color-scheme:dark){.profile-loan-hub{background:#1a232d;border-color:#2e3a45}.profile-loan-head b{color:#eef2f5}.profile-loan-head p,.profile-loan-copy em,.profile-loan-copy i{color:#aeb8c0}.profile-loan-head>span{border-color:#35424e;color:#b9c2c9}.profile-loan-card.payable{background:linear-gradient(145deg,#35231f,#1a232d);border-color:#58352d}.profile-loan-card.receivable{background:linear-gradient(145deg,#183128,#1a232d);border-color:#27503b}.profile-loan-copy small,.profile-loan-copy b{color:#eef2f5}.profile-loan-note,.loan-sheet-summary>div,.loan-detail-money>div,.loan-detail-meta span,.loan-note{background:#26313c;color:#bdc6cd}.loan-row{border-color:#2f3a45}.loan-payment-row{border-color:#2f3a45}.loan-payment-row button{background:#202b36;border-color:#35424e}.loan-accounting-note{background:#3a3016;color:#e2c875}}
 /* v1024 company profile + worksite social feed · release candidate */
 .company-profile{max-width:760px;margin:0 auto;padding-bottom:24px}.profile-hero{overflow:hidden;background:#fff;border:1px solid #e5e9ec;border-radius:22px;box-shadow:0 7px 24px rgba(17,24,39,.06)}.profile-cover{height:108px;background:linear-gradient(135deg,#111d2b,#26394d 62%,#e4ad2e);display:flex;align-items:flex-end;padding:16px;color:#f7c84b;font-size:11px;font-weight:900;letter-spacing:.12em}.profile-main{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:13px;align-items:end;padding:0 16px 12px;margin-top:-34px}.profile-main>img{width:76px;height:76px;border-radius:22px;object-fit:cover;border:4px solid #fff;background:#ffd447;box-shadow:0 4px 12px rgba(17,24,39,.12)}.profile-title{min-width:0;padding-top:35px}.profile-title small{color:#8b6b12;font-weight:800}.profile-title h2{font-size:22px;margin:2px 0 0;line-height:1.15}.profile-title p{color:#68737c;font-size:12px;margin:5px 0 0}.profile-edit-btn{align-self:center;margin-top:30px;border:1px solid #dfe4e7;background:#fff;border-radius:12px;padding:9px 11px;font-weight:800;color:#26313a}.profile-bio{padding:0 16px;margin:2px 0 10px;font-size:13px;line-height:1.6;color:#3f4a54}.profile-contact{padding:0 16px 10px;display:flex;gap:6px;flex-wrap:wrap}.profile-contact span{background:#f1f4f5;border-radius:999px;padding:5px 8px;font-size:10.5px;color:#5a6670}.profile-socials{display:flex;gap:7px;overflow:auto;padding:2px 16px 12px;scrollbar-width:none}.profile-socials::-webkit-scrollbar{display:none}.profile-social-chip{flex:0 0 auto;border:1px solid #dfe4e7;background:#fff;border-radius:12px;padding:7px 9px;text-align:left;max-width:190px}.profile-social-chip b,.profile-social-chip span{display:block}.profile-social-chip b{font-size:10px;color:#17202b}.profile-social-chip span{font-size:9.5px;color:#6d7881;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.profile-social-chip.static{display:inline-block}.profile-stats{border-top:1px solid #edf0f2;display:grid;grid-template-columns:repeat(3,1fr)}.profile-stats>div{text-align:center;padding:11px 5px}.profile-stats>div+div{border-left:1px solid #edf0f2}.profile-stats b{display:block;font-size:19px}.profile-stats small{color:#7a858e;font-size:10px}.profile-compose{margin:12px 0}.profile-compose>button{width:100%;border:0;background:#ffc52f;border-radius:18px;padding:14px 15px;display:grid;grid-template-columns:44px 1fr auto;gap:11px;text-align:left;align-items:center;box-shadow:0 6px 18px rgba(211,156,14,.18)}.profile-compose-plus{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:#17202b;color:#fff;font-size:26px}.profile-compose b,.profile-compose small{display:block}.profile-compose b{font-size:15px}.profile-compose small{font-size:10.5px;margin-top:2px;color:#685014}.profile-compose strong{font-size:25px}.profile-feed-head{display:flex;justify-content:space-between;align-items:end;margin:18px 3px 8px}.profile-feed-head small{font-size:10px;font-weight:900;letter-spacing:.1em;color:#8e6c12}.profile-feed-head h3{margin:2px 0 0}.profile-feed-head>span{font-size:11px;color:#7b858d}.profile-filter{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.profile-filter::-webkit-scrollbar{display:none}.profile-filter button{flex:0 0 auto;border:1px solid #dfe4e7;background:#fff;border-radius:999px;padding:8px 12px;font-weight:800;color:#68737c}.profile-filter button.on{background:#17202b;color:#fff;border-color:#17202b}.profile-post-card{background:#fff;border:1px solid #e4e9ec;border-radius:20px;margin:0 0 12px;overflow:hidden;box-shadow:0 5px 18px rgba(17,24,39,.045)}.profile-post-head{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:13px 14px 8px}.profile-post-head>img{width:42px;height:42px;border-radius:13px;object-fit:cover;background:#ffd447}.profile-post-head b,.profile-post-head small{display:block}.profile-post-head small{font-size:10.5px;color:#77818a;margin-top:2px}.profile-post-more{border:0;background:transparent;font-weight:900;font-size:18px;letter-spacing:1px;color:#53606b}.profile-post-text{padding:5px 14px 12px;font-size:13.5px;line-height:1.65;color:#26313a}.profile-post-photos{display:grid;gap:2px;background:#eef1f2}.profile-post-photos.n1{grid-template-columns:1fr}.profile-post-photos.n2,.profile-post-photos.n4{grid-template-columns:1fr 1fr}.profile-post-photos.n3{grid-template-columns:1.4fr 1fr;grid-template-rows:1fr 1fr}.profile-post-photos.n3 button:first-child{grid-row:1/3}.profile-post-photos button{border:0;padding:0;background:#eef1f2;min-height:160px}.profile-post-photos img{width:100%;height:100%;max-height:360px;object-fit:cover;display:block}.profile-post-actions{display:grid;grid-template-columns:1fr 1fr .7fr;border-top:1px solid #edf0f2}.profile-post-actions button{border:0;background:#fff;padding:11px 6px;font-weight:800;color:#56616b}.profile-post-actions button+button{border-left:1px solid #edf0f2}.profile-post-actions .danger{color:#a54536}.profile-empty{text-align:center;background:#fff;border:1px dashed #d8dee2;border-radius:18px;padding:30px 18px;color:#67727c}.profile-empty p{margin:5px 0 0;font-size:12px}.profile-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 12px}.profile-photo-picker{display:block;border:2px dashed #d9dee1;background:#f8fafb;border-radius:16px;padding:15px;text-align:center;margin:0}.profile-photo-picker.camera{background:#fff8df;border-color:#e2c566}.profile-photo-picker b,.profile-photo-picker small{display:block}.profile-photo-picker small{font-size:10px;color:#7a848c;margin-top:4px}.profile-editor-photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 14px}.profile-editor-photos>div{position:relative;aspect-ratio:1.3/1;overflow:hidden;border-radius:14px;background:#eef1f2}.profile-editor-photos img{width:100%;height:100%;object-fit:cover}.profile-editor-photos button{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;border-radius:999px;background:rgba(17,24,39,.82);color:#fff;font-size:20px}.profile-post-meta-grid{display:grid;grid-template-columns:1.3fr .9fr;gap:9px}
 @media(max-width:420px){.profile-photo-actions{grid-template-columns:1fr}.profile-main{grid-template-columns:68px minmax(0,1fr);align-items:end}.profile-main>img{width:68px;height:68px}.profile-edit-btn{grid-column:1/-1;margin:0;width:100%}.profile-title{padding-top:30px}.profile-post-meta-grid{grid-template-columns:1fr}.profile-post-photos button{min-height:135px}}
@@ -3469,7 +3479,7 @@ function boqEnsureWorkSection(x){
 
 function migrate(o){
   if(!o||typeof o!=='object')o=emptyState();
-  ['projects','tx','boq','guarantees','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'].forEach(function(k){if(o[k]!==undefined&&(!Array.isArray(o[k])||o[k].some(function(x){return !x||typeof x!=='object'||Array.isArray(x);})))throw new Error('Invalid collection: '+k);});
+  ['projects','tx','boq','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'].forEach(function(k){if(o[k]!==undefined&&(!Array.isArray(o[k])||o[k].some(function(x){return !x||typeof x!=='object'||Array.isArray(x);})))throw new Error('Invalid collection: '+k);});
   o=JSON.parse(JSON.stringify(o)); /* Migrate a copy; preserve the source snapshot. */
   if(!Array.isArray(o.projects))o.projects=[];
   if(!Array.isArray(o.tx))o.tx=[];
@@ -3498,6 +3508,25 @@ function migrate(o){
   ['tagline','bio','lineId','website','facebook','instagram','tiktok'].forEach(function(k){if(o.business[k]===undefined)o.business[k]='';else o.business[k]=String(o.business[k]||'').slice(0,k==='bio'?1200:300);});['profileAvatar','profileCover'].forEach(function(k){var v=String(o.business[k]||'');o.business[k]=/^data:image\/(?:jpeg|png|webp);base64,/i.test(v)?v:'';});['profileAvatarRef','profileCoverRef'].forEach(function(k){o.business[k]=String(o.business[k]||'').slice(0,240);});o.business.publicProfileId=/^[0-9a-f]{32}$/.test(String(o.business.publicProfileId||''))?String(o.business.publicProfileId):'';o.business.publicProfileEnabled=!!o.business.publicProfileEnabled;o.business.publicProfilePublishedAt=String(o.business.publicProfilePublishedAt||'').slice(0,40);
   if(!Array.isArray(o.profilePosts))o.profilePosts=[];
   o.profilePosts=o.profilePosts.map(function(p){p=p&&typeof p==='object'?p:{};if(!p.id)p.id=uid();if(!validIsoDate(p.date))p.date=today();p.type=['site','portfolio','delivery','announce'].indexOf(p.type)>=0?p.type:'site';p.pid=(o.projects||[]).some(function(x){return x.id===p.pid;})?p.pid:'';p.text=String(p.text||'').slice(0,2000);p.pinned=!!p.pinned;p.publicVisible=!!p.publicVisible;p.createdAt=Math.max(0,+p.createdAt||Date.now());if(!Array.isArray(p.photos))p.photos=[];p.photos=p.photos.slice(0,4).map(function(ph){ph=ph&&typeof ph==='object'?ph:{};return {ref:String(ph.ref||''),data:/^data:image\//i.test(String(ph.data||''))?String(ph.data):'',thumb:/^data:image\//i.test(String(ph.thumb||''))?String(ph.thumb):'',mime:String(ph.mime||'image/jpeg').slice(0,80),name:String(ph.name||'worksite.jpg').slice(0,160)};});return p;});
+  if(!Array.isArray(o.loans))o.loans=[];
+  o.loans=o.loans.map(function(l){
+    l=l&&typeof l==='object'?l:{};
+    if(!l.id)l.id=uid();
+    l.kind=l.kind==='receivable'?'receivable':'payable';
+    l.party=String(l.party||'').trim().slice(0,240);
+    l.principal=Math.max(0,Math.round((+l.principal||0)*100)/100);
+    l.date=validIsoDate(l.date)?l.date:'';
+    l.dueDate=validIsoDate(l.dueDate)?l.dueDate:'';
+    l.interestRate=Math.max(0,Math.min(100,+l.interestRate||0));
+    l.note=String(l.note||'').slice(0,1200);
+    l.createdAt=Math.max(0,+l.createdAt||Date.now());
+    if(!Array.isArray(l.payments))l.payments=[];
+    l.payments=l.payments.map(function(p){
+      p=p&&typeof p==='object'?p:{};
+      return {id:String(p.id||uid()),date:validIsoDate(p.date)?p.date:today(),amount:Math.max(0,Math.round((+p.amount||0)*100)/100),method:['transfer','cash','other'].indexOf(p.method)>=0?p.method:'transfer',note:String(p.note||'').slice(0,500),createdAt:Math.max(0,+p.createdAt||Date.now())};
+    }).filter(function(p){return p.amount>0;});
+    return l;
+  });
   if(!Array.isArray(o.materialApprovals))o.materialApprovals=[];
   if(!Array.isArray(o.siteEvents))o.siteEvents=[];
   if(!Array.isArray(o.contractChanges))o.contractChanges=[];
@@ -3655,9 +3684,9 @@ function defaultChartAccounts(){return[
 ];}
 
 
-function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1044,"sha":"","environment":"source"};
+var APP_BUILD={"version":1045,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -3878,10 +3907,10 @@ async function cloudSyncRestorePrevious(){
 }
 function loadRecovery(){try{var raw=localStorage.getItem(BACKUP_KEY);if(raw){var o=JSON.parse(raw);if(o&&Array.isArray(o.tx)&&Array.isArray(o.projects))return migrate(o);U.storageReadBlocked=true;}}catch(e){U.storageReadBlocked=true;}return null;}
 function stateHealth(o){
-  o=o||S;var issues=[],maps={},keys=['projects','boq','tx','guarantees','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals'];
+  o=o||S;var issues=[],maps={},keys=['projects','boq','tx','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals'];
   o=Object.assign({},o);keys.forEach(function(k){if(!Array.isArray(o[k])){issues.push(k+' ไม่ใช่รายการข้อมูล');o[k]=[];}});
   keys.forEach(function(k){var ids=Object.create(null);maps[k]=ids;if(!Array.isArray(o[k])){issues.push(k+' ไม่ใช่รายการข้อมูล');return;}(o[k]||[]).forEach(function(x){if(!x||!x.id){issues.push(k+' ไม่มี ID');return;}if(ids[x.id])issues.push(k+' ID ซ้ำ: '+x.id);else ids[x.id]=x;});});
-  keys.filter(function(k){return k!=='projects';}).forEach(function(k){var optionalPid=['quotes','bills','receipts','accountingPeriods','bankReconciliations','auditLog','manualJournals'].includes(k);(Array.isArray(o[k])?o[k]:[]).forEach(function(x){if(!x)return;if(x.pid&&!maps.projects[x.pid])issues.push(k+' ไม่พบโครงการ: '+x.id);else if(!x.pid&&!optionalPid)issues.push(k+' ไม่พบโครงการ: '+x.id);});});
+  keys.filter(function(k){return k!=='projects';}).forEach(function(k){var optionalPid=['loans','quotes','bills','receipts','accountingPeriods','bankReconciliations','auditLog','manualJournals'].includes(k);(Array.isArray(o[k])?o[k]:[]).forEach(function(x){if(!x)return;if(x.pid&&!maps.projects[x.pid])issues.push(k+' ไม่พบโครงการ: '+x.id);else if(!x.pid&&!optionalPid)issues.push(k+' ไม่พบโครงการ: '+x.id);});});
   (o.boq||[]).forEach(function(x){if(x&&(!isFinite(+x.qty)||+x.qty<0||!isFinite(+x.unitPrice)||+x.unitPrice<0))issues.push('BOQ จำนวน/ราคาผิดรูปแบบ');});
   (o.tx||[]).forEach(function(t){if(!t)return;if(!isFinite(+t.amount)||+t.amount<0)issues.push('จำนวนเงินผิดรูปแบบ');if(t.boqId){var bx=maps.boq[t.boqId];if(!bx)issues.push('รายการบัญชีอ้าง BOQ ที่ไม่มี');else if(bx.pid!==t.pid)issues.push('รายจ่ายผูก BOQ คนละโครงการ');if(t.type!=='out')issues.push('รายรับผูก BOQ');}
     [['billId','bills'],['receiptId','receipts']].forEach(function(pair){if(t[pair[0]]){var d=maps[pair[1]][t[pair[0]]];if(!d)issues.push('รายการบัญชีอ้างเอกสารที่ไม่พบ');else if(d.pid!==t.pid)issues.push('รายการบัญชี/เอกสารคนละโครงการ');}});
@@ -3890,6 +3919,20 @@ function stateHealth(o){
   (o.siteEvents||[]).forEach(function(e){if(e){var err=letterStateError(e);if(err)issues.push('Timeline: '+err);}});
   ['contractChanges','timeExtensions'].forEach(function(k){(o[k]||[]).forEach(function(x){if(!x)return;if(['draft','submitted','approved','rejected'].indexOf(x.status)<0)issues.push(k+' สถานะผิดรูปแบบ');if(k==='timeExtensions'?(!Number.isInteger(+x.days)||+x.days<=0):!isFinite(+x.amount))issues.push(k+' จำนวนผิดรูปแบบ');if(x.status==='approved'&&!x.ref)issues.push(k+' ไม่มีคำสั่งอนุมัติ');var eid=x.eventId||x.siteEventId||x.timelineId;if(eid&&(!maps.siteEvents[eid]||maps.siteEvents[eid].pid!==x.pid))issues.push(k+' อ้าง Timeline ที่ไม่มีหรือคนละโครงการ');});});
   (o.guarantees||[]).forEach(function(g){if(!g)return;if(!isFinite(+g.amount)||+g.amount<0)issues.push('หลักประกันยอดผิดรูปแบบ');if(g.returned&&!g.returnedDate)issues.push('หลักประกันรับคืนแต่ไม่มีวันที่');});
+  (o.loans||[]).forEach(function(l){
+    if(!l)return;
+    if(['payable','receivable'].indexOf(l.kind)<0)issues.push('เงินกู้ประเภทผิดรูปแบบ');
+    if(!(l.principal>0)||!isFinite(+l.principal))issues.push('เงินกู้เงินต้นผิดรูปแบบ');
+    if(l.date&&!validIsoDate(l.date))issues.push('เงินกู้วันที่เริ่มผิดรูปแบบ');
+    if(l.dueDate&&!validIsoDate(l.dueDate))issues.push('เงินกู้วันครบกำหนดผิดรูปแบบ');
+    var seen=Object.create(null),paid=0;
+    (l.payments||[]).forEach(function(p){
+      if(!p||!p.id||seen[p.id])issues.push('เงินกู้รายการชำระ ID ซ้ำ/ไม่มี ID '+(l.id||''));else seen[p.id]=1;
+      if(!validIsoDate(p.date)||!(+p.amount>0)||['cash','transfer','other'].indexOf(p.method)<0)issues.push('เงินกู้รายการชำระผิดรูปแบบ '+(l.id||''));
+      paid+=Math.max(0,+p.amount||0);
+    });
+    if(paid-(+l.principal||0)>.011)issues.push('เงินกู้ชำระเกินเงินต้น '+(l.id||''));
+  });
   (o.tx||[]).forEach(function(t){if(!t||!Array.isArray(t.payments))return;var ps=Object.create(null),sum=0;t.payments.forEach(function(p){if(!p||!p.id||ps[p.id])issues.push('การชำระเจ้าหนี้ ID ซ้ำ/ไม่มี ID '+(t.id||''));else ps[p.id]=1;if(!validIsoDate(p.date)||!(+p.amount>0)||['cash','transfer'].indexOf(p.pay)<0)issues.push('การชำระเจ้าหนี้ผิดรูปแบบ '+(t.id||''));sum+=Math.max(0,+p.amount||0);});if(['in','out'].indexOf(t.type)<0)issues.push('รายการที่มี AR/AP payment มีประเภทไม่ถูกต้อง '+(t.id||''));if(sum-net(t)>.011)issues.push('ชำระเจ้าหนี้เกินยอด '+(t.id||''));});
   (o.accountingPeriods||[]).forEach(function(x){if(!x||!/^[0-9]{4}-[0-9]{2}$/.test(x.period||'')||['open','closed'].indexOf(x.status)<0)issues.push('งวดบัญชีผิดรูปแบบ');});
   var periodSeen=Object.create(null);(o.accountingPeriods||[]).forEach(function(x){if(!x||!x.period)return;var k=x.period+'|'+x.status;if(periodSeen[k])issues.push('งวดบัญชีสถานะซ้ำ '+x.period);periodSeen[k]=1;});
@@ -6465,7 +6508,7 @@ function backupEnvelope(){
 function backupJson(){return JSON.stringify(backupEnvelope(),null,2);}
 function hostMigrationReadiness(){
   var h=stateHealth(S),rev=Math.max(0,+S.dataRevision||0),backupRev=Number.isInteger(+S.lastBackupRevision)?+S.lastBackupRevision:-1;
-  var hasData=!!((S.projects||[]).length||(S.tx||[]).length||(S.boq||[]).length||(S.quotes||[]).length||(S.bills||[]).length||(S.receipts||[]).length);
+  var hasData=!!((S.projects||[]).length||(S.tx||[]).length||(S.boq||[]).length||(S.loans||[]).length||(S.quotes||[]).length||(S.bills||[]).length||(S.receipts||[]).length);
   var backupFresh=!hasData||((+S.lastBackup||0)>0&&backupRev===rev);
   var storageOk=!U.storageReadBlocked&&!U.storageConflict&&!U.storageMirrorBad;
   return {ok:h.ok&&backupFresh&&storageOk,health:h,hasData:hasData,backupFresh:backupFresh,storageOk:storageOk,revision:rev,backupRevision:backupRev,lastBackup:+S.lastBackup||0};
@@ -6476,15 +6519,15 @@ function restoreParse(text){
   if(!o||typeof o!=='object'||!Array.isArray(o.projects)||!Array.isArray(o.tx))return {ok:false,error:'BACKUP_SHAPE'};
   try{
     var state=migrate(o);
-    return {ok:true,state:state,meta:meta,summary:{projects:state.projects.length,tx:state.tx.length,boq:(state.boq||[]).length,quotes:(state.quotes||[]).length,bills:(state.bills||[]).length,receipts:(state.receipts||[]).length}};
+    return {ok:true,state:state,meta:meta,summary:{projects:state.projects.length,tx:state.tx.length,boq:(state.boq||[]).length,loans:(state.loans||[]).length,quotes:(state.quotes||[]).length,bills:(state.bills||[]).length,receipts:(state.receipts||[]).length}};
   }catch(_){return {ok:false,error:'BACKUP_MIGRATION'};}
 }
 function restoreFingerprint(parsed){if(!parsed||!parsed.state)return '';return String(parsed.meta&&parsed.meta.stateChecksum||backupStateChecksum(parsed.state));}
-function migrationCoreSnapshot(o){o=o||{};var keys=['projects','tx','boq','guarantees','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'];var x={};keys.forEach(function(k){x[k]=Array.isArray(o[k])?o[k]:[];});x.business=o.business||{};x.opening=+o.opening||0;x.openCash=+o.openCash||0;x.bank=String(o.bank||'');x.docSeq=o.docSeq||{};x.customSubs=o.customSubs||{};return x;}
+function migrationCoreSnapshot(o){o=o||{};var keys=['projects','tx','boq','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'];var x={};keys.forEach(function(k){x[k]=Array.isArray(o[k])?o[k]:[];});x.business=o.business||{};x.opening=+o.opening||0;x.openCash=+o.openCash||0;x.bank=String(o.bank||'');x.docSeq=o.docSeq||{};x.customSubs=o.customSubs||{};return x;}
 function migrationBusinessDigest(o){return backupChecksumText(JSON.stringify(migrationCoreSnapshot(o)));}
 function migrationDrill(parsed){if(!parsed||!parsed.ok||!parsed.state)return {ok:false,error:'PARSE'};var h=stateHealth(parsed.state),digest=migrationBusinessDigest(parsed.state),sm=parsed.summary||{};return {ok:h.ok,digest:digest,health:h,sourceOrigin:String(parsed.meta&&parsed.meta.sourceOrigin||''),sourceRevision:+(parsed.meta&&parsed.meta.dataRevision)||0,summary:{projects:+sm.projects||0,tx:+sm.tx||0,boq:+sm.boq||0,quotes:+sm.quotes||0,bills:+sm.bills||0,receipts:+sm.receipts||0}};}
 function migrationAcceptanceCertificate(){
-  var m=S.ops&&S.ops.lastMigration||null,current=migrationBusinessDigest(S),counts={projects:(S.projects||[]).length,tx:(S.tx||[]).length,boq:(S.boq||[]).length,quotes:(S.quotes||[]).length,bills:(S.bills||[]).length,receipts:(S.receipts||[]).length,guarantees:(S.guarantees||[]).length,journals:(S.manualJournals||[]).length,periods:(S.accountingPeriods||[]).length};
+  var m=S.ops&&S.ops.lastMigration||null,current=migrationBusinessDigest(S),counts={projects:(S.projects||[]).length,tx:(S.tx||[]).length,boq:(S.boq||[]).length,loans:(S.loans||[]).length,quotes:(S.quotes||[]).length,bills:(S.bills||[]).length,receipts:(S.receipts||[]).length,guarantees:(S.guarantees||[]).length,journals:(S.manualJournals||[]).length,periods:(S.accountingPeriods||[]).length};
   return {ok:!!(m&&m.matched&&m.targetDigest===current),at:m&&m.at||0,sourceOrigin:m&&m.sourceOrigin||'',sourceRevision:+(m&&m.sourceRevision)||0,sourceDigest:m&&m.sourceDigest||'',targetDigest:m&&m.targetDigest||'',currentDigest:current,matched:!!(m&&m.matched),summary:m&&m.summary||null,counts:counts,targetOrigin:String(location.origin||''),dataRevision:+S.dataRevision||0};
 }
 function scopeTx(){var pid=U.exportPid||'';return S.tx.filter(function(t){return !pid||t.pid===pid;}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
@@ -6861,6 +6904,27 @@ function sheetHtml(){
       '<div class="stack"><button class="btn pri" data-act="saveDueTx" data-id="'+dt.id+'">บันทึกวันครบกำหนด</button>'+
       (dt.due?'<button class="btn" data-act="clearDueTx" data-id="'+dt.id+'">ปิดวันครบกำหนด</button>':'')+
       '<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+  }else if(sh.kind==='loanList'){
+    b=loanListHtml(sh.loanKind);
+  }else if(sh.kind==='loanEdit'){
+    var le=sh.id?(S.loans||[]).find(function(x){return x.id===sh.id;}):null,lk=le?le.kind:(sh.loanKind==='receivable'?'receivable':'payable'),settled=le?loanPaidAmount(le):0;
+    b='<div class="loan-sheet"><div class="doc-editor-head"><div><small>PRIVATE FINANCE</small><h3>'+(le?'แก้ไข ':'เพิ่ม ')+esc(loanKindLabel(lk))+'</h3></div></div>'+
+      '<div class="field"><label for="loanParty">'+(lk==='receivable'?'ชื่อลูกหนี้':'ชื่อเจ้าหนี้ / ผู้ให้กู้')+'</label><input id="loanParty" maxlength="240" value="'+esc(le?le.party:'')+'" placeholder="'+(lk==='receivable'?'ผู้ยืมเงินจากบริษัท':'บุคคล / ธนาคาร / ผู้ให้กู้')+'"></div>'+
+      '<div class="field"><label for="loanPrincipal">เงินต้น</label><input id="loanPrincipal" type="number" inputmode="decimal" min="'+(settled||0)+'" step="0.01" value="'+(le?le.principal:'')+'">'+(settled?'<small class="muted">ห้ามต่ำกว่า '+fmt(settled,1)+' เพราะมีการชำระแล้ว</small>':'')+'</div>'+
+      '<div class="loan-form-grid"><div class="field"><label for="loanDate">วันที่เริ่ม</label><input id="loanDate" type="date" value="'+esc(le&&le.date?le.date:today())+'"></div><div class="field"><label for="loanDue">วันครบกำหนด</label><input id="loanDue" type="date" value="'+esc(le&&le.dueDate?le.dueDate:'')+'"></div></div>'+
+      '<div class="field"><label for="loanRate">ดอกเบี้ย % ต่อปี (ถ้ามี)</label><input id="loanRate" type="number" inputmode="decimal" min="0" max="100" step="0.01" value="'+(le?le.interestRate||'':'')+'" placeholder="0"></div>'+
+      '<div class="field"><label for="loanNote">หมายเหตุ</label><textarea id="loanNote" rows="3" maxlength="1200">'+esc(le?le.note:'')+'</textarea></div>'+
+      '<div class="loan-accounting-note">ทะเบียนนี้ติดตามเงินต้นและยอดคงค้าง โดยไม่ลงเป็นรายได้/ค่าใช้จ่ายของโครงการอัตโนมัติ</div>'+
+      '<div class="stack"><button class="btn pri" data-act="profileLoanSave" data-id="'+esc(le?le.id:'')+'" data-v="'+lk+'">บันทึก</button><button class="btn" data-act="'+(le?'profileLoanDetail':'profileLoanOpen')+'" '+(le?'data-id="'+esc(le.id)+'"':'data-v="'+lk+'"')+'>ยกเลิก</button></div></div>';
+  }else if(sh.kind==='loanDetail'){
+    b=loanDetailHtml((S.loans||[]).find(function(x){return x.id===sh.id;}));
+  }else if(sh.kind==='loanPayment'){
+    var lp=(S.loans||[]).find(function(x){return x.id===sh.id;});if(!lp){U.sheet=null;return '';}var lr=loanRemaining(lp);
+    b='<div class="loan-sheet"><div class="doc-editor-head"><div><small>'+esc(loanKindLabel(lp.kind))+'</small><h3>'+esc(loanActionLabel(lp.kind))+'</h3></div><span class="doc-status pend">คงเหลือ '+fmt(lr,1)+'</span></div>'+
+      '<div class="field"><label for="loanPayAmount">จำนวนเงิน</label><input id="loanPayAmount" type="number" inputmode="decimal" min="0.01" max="'+lr+'" step="0.01" value="'+lr+'"></div>'+
+      '<div class="loan-form-grid"><div class="field"><label for="loanPayDate">วันที่</label><input id="loanPayDate" type="date" value="'+today()+'"></div><div class="field"><label for="loanPayMethod">ช่องทาง</label><select id="loanPayMethod"><option value="transfer">โอน</option><option value="cash">เงินสด</option><option value="other">อื่นๆ</option></select></div></div>'+
+      '<div class="field"><label for="loanPayNote">หมายเหตุ</label><input id="loanPayNote" maxlength="500" placeholder="เลขอ้างอิง / รายละเอียด" value=""></div>'+
+      '<div class="stack"><button class="btn pri" data-act="profileLoanPaymentSave" data-id="'+esc(lp.id)+'">'+esc(loanActionLabel(lp.kind))+'</button><button class="btn" data-act="profileLoanDetail" data-id="'+esc(lp.id)+'">ยกเลิก</button></div></div>';
   }else if(sh.kind==='profileEdit'){
     var pb=S.business||{},pc=profileCompleteness(),pa=pb.profileAvatar||'area-logo-header.jpg';b='<div class="profile-editor"><div class="doc-editor-head"><div><small>COMPANY PROFILE</small><h3>แก้ไขโปรไฟล์บริษัท</h3></div><span class="doc-status pend">'+pc.pct+'%</span></div><div class="profile-identity-editor"><div class="profile-cover-edit">'+(pb.profileCover?'<img src="'+esc(pb.profileCover)+'" alt="รูปปก">':'<span>รูปปกบริษัท</span>')+'<label for="profileCoverInput">เปลี่ยนรูปปก</label>'+(pb.profileCover?'<button data-act="profileIdentityRemove" data-v="cover">ลบ</button>':'')+'</div><div class="profile-avatar-edit"><img src="'+esc(pa)+'" alt="รูปโปรไฟล์"><label for="profileAvatarInput">เปลี่ยนรูปโปรไฟล์</label>'+(pb.profileAvatar?'<button data-act="profileIdentityRemove" data-v="avatar">ใช้โลโก้เดิม</button>':'')+'</div></div><input id="profileCoverInput" type="file" accept="image/*,.heic,.heif" style="display:none"><input id="profileAvatarInput" type="file" accept="image/*,.heic,.heif" style="display:none">'+(U.profileIdentityBusy?'<div class="profile-saving">กำลังปรับขนาดและบันทึกรูป…</div>':'')+
       '<div class="field"><label for="profileBrand">ชื่อที่แสดง</label><input id="profileBrand" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
@@ -7365,6 +7429,65 @@ async function profileSavePost(){
 }
 function profileOpenPost(id,pid){var p=(S.profilePosts||[]).find(function(x){return x.id===id;});U.profilePostDraft=p?{id:p.id,type:p.type,pid:p.pid||'',date:p.date||today(),text:p.text||'',publicVisible:!!p.publicVisible}:{id:'',type:'site',pid:(pid&&proj(pid)?pid:''),date:today(),text:'',publicVisible:false};U.profilePostImages=p?(p.photos||[]).map(function(x){return Object.assign({},x);}):[];U.profilePostSaving=false;U.profilePhotoBusy=false;U.sheet={kind:'profilePost',id:p?p.id:''};render();}
 function profileSocialChip(label,value){var v=String(value||'').trim();if(!v)return '';var u=profileSafeUrl(v,label);return u?'<button class="profile-social-chip" data-act="profileOpenLink" data-url="'+esc(u)+'"><b>'+esc(label)+'</b><span>'+esc(v.replace(/^https?:\/\//i,'').replace(/\/$/,''))+'</span></button>':'<span class="profile-social-chip static"><b>'+esc(label)+'</b><span>'+esc(v)+'</span></span>';}
+function loanKindLabel(kind){return kind==='receivable'?'เงินให้กู้ยืม (ลูกหนี้)':'เงินกู้ยืม (เจ้าหนี้)';}
+function loanActionLabel(kind){return kind==='receivable'?'รับชำระคืน':'ชำระคืนเจ้าหนี้';}
+function loanPaidAmount(l){return (l&&Array.isArray(l.payments)?l.payments:[]).reduce(function(n,p){return n+Math.max(0,+p.amount||0);},0);}
+function loanRemaining(l){return Math.max(0,Math.round(((+l.principal||0)-loanPaidAmount(l))*100)/100);}
+function loanStatus(l){
+  var remain=loanRemaining(l);
+  if(remain<=.01)return {key:'done',label:'ปิดยอดแล้ว',days:null};
+  if(!l.dueDate)return {key:'open',label:'ยังไม่ระบุครบกำหนด',days:null};
+  var d=dd(today(),l.dueDate);
+  if(d<0)return {key:'overdue',label:'เลยกำหนด '+(-d)+' วัน',days:d};
+  if(d===0)return {key:'due',label:'ครบกำหนดวันนี้',days:0};
+  if(d<=30)return {key:'near',label:'เหลือ '+d+' วัน',days:d};
+  return {key:'open',label:'เหลือ '+d+' วัน',days:d};
+}
+function loanRows(kind){
+  return (S.loans||[]).filter(function(l){return !kind||l.kind===kind;}).slice().sort(function(a,b){
+    var sa=loanStatus(a),sb=loanStatus(b),rank={overdue:0,due:1,near:2,open:3,done:4},ra=rank[sa.key],rb=rank[sb.key];
+    if(ra!==rb)return ra-rb;
+    var ad=a.dueDate||'9999-12-31',bd=b.dueDate||'9999-12-31';
+    return ad.localeCompare(bd)||(+b.createdAt||0)-(+a.createdAt||0);
+  });
+}
+function loanSummary(kind){
+  var rows=loanRows(kind),open=rows.filter(function(l){return loanRemaining(l)>.01;}),total=open.reduce(function(n,l){return n+loanRemaining(l);},0),overdue=open.filter(function(l){return loanStatus(l).key==='overdue';}).length,near=open.filter(function(l){var k=loanStatus(l).key;return k==='due'||k==='near';}).length;
+  return {rows:rows,count:open.length,total:Math.round(total*100)/100,overdue:overdue,near:near};
+}
+function loanStatusHtml(l){
+  var s=loanStatus(l),cls=s.key==='overdue'?'overdue':s.key==='done'?'done':(s.key==='due'||s.key==='near'?'near':'open');
+  return '<span class="loan-status '+cls+'">'+esc(s.label)+'</span>';
+}
+function loanDashboardCard(kind){
+  var x=loanSummary(kind),payable=kind==='payable',title=loanKindLabel(kind),sub=payable?'บริษัทเป็นผู้กู้ · ยอดเงินต้นที่ต้องคืน':'บริษัทเป็นผู้ให้กู้ · ยอดเงินต้นที่ต้องรับคืน';
+  return '<button class="profile-loan-card '+kind+'" data-act="profileLoanOpen" data-v="'+kind+'"><span class="profile-loan-icon">'+(payable?'↓':'↑')+'</span><span class="profile-loan-copy"><small>'+esc(title)+'</small><b>'+fmt(x.total,1)+'</b><em>'+x.count+' รายการคงค้าง'+(x.overdue?' · เลยกำหนด '+x.overdue:'')+(x.near?' · ≤30 วัน '+x.near:'')+'</em><i>'+esc(sub)+'</i></span><strong>›</strong></button>';
+}
+function profileLoanDashboardHtml(){
+  return '<section class="profile-loan-hub"><div class="profile-loan-head"><div><small>PRIVATE FINANCE</small><b>เงินกู้ / เงินให้กู้ยืม</b><p>ข้อมูลภายในบริษัทเท่านั้น · ไม่เผยแพร่ใน Portfolio ลูกค้า</p></div><span>ทะเบียนยอดคงค้าง</span></div><div class="profile-loan-grid">'+loanDashboardCard('payable')+loanDashboardCard('receivable')+'</div><div class="profile-loan-note">ติดตามเงินต้นและการชำระคืนแยกจากรายได้/ค่าใช้จ่ายโครงการ เพื่อไม่ให้กำไรโครงการเพี้ยน</div></section>';
+}
+function loanListHtml(kind){
+  kind=kind==='receivable'?'receivable':'payable';
+  var x=loanSummary(kind),rows=x.rows,title=loanKindLabel(kind);
+  var h='<div class="loan-sheet"><div class="doc-editor-head"><div><small>PRIVATE FINANCE</small><h3>'+esc(title)+'</h3></div><span class="doc-status '+(x.overdue?'late':'pend')+'">'+x.count+' คงค้าง</span></div><div class="loan-sheet-summary"><div><small>ยอดคงค้าง</small><b>'+fmt(x.total,1)+'</b></div><div><small>เลยกำหนด</small><b class="'+(x.overdue?'out':'')+'">'+x.overdue+'</b></div><div><small>ใกล้ครบ ≤30 วัน</small><b>'+x.near+'</b></div></div><button class="btn pri" data-act="profileLoanNew" data-v="'+kind+'">＋ เพิ่ม'+esc(title)+'</button><div class="loan-register">';
+  if(!rows.length)h+='<div class="profile-empty"><b>ยังไม่มีรายการ</b><p>เพิ่มคู่สัญญา เงินต้น และวันครบกำหนดเพื่อเริ่มติดตาม</p></div>';
+  rows.forEach(function(l){
+    h+='<button class="loan-row" data-act="profileLoanDetail" data-id="'+esc(l.id)+'"><span><b>'+esc(l.party||'ไม่ระบุชื่อ')+'</b><small>'+esc(dmyFull(l.date||''))+(l.dueDate?' · ครบ '+esc(dmyFull(l.dueDate)):'')+'</small>'+loanStatusHtml(l)+'</span><strong>'+fmt(loanRemaining(l),1)+'</strong><em>จากเงินต้น '+fmt(l.principal,1)+' · '+loanActionLabel(kind)+'แล้ว '+fmt(loanPaidAmount(l),1)+'</em></button>';
+  });
+  return h+'</div><div class="stack"><button class="btn" data-act="closeSheet">ปิด</button></div></div>';
+}
+function loanDetailHtml(l){
+  if(!l)return '<div class="empty">ไม่พบรายการ</div>';
+  var paid=loanPaidAmount(l),remain=loanRemaining(l),rows=(l.payments||[]).slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))||(+b.createdAt||0)-(+a.createdAt||0);});
+  var h='<div class="loan-sheet"><div class="doc-editor-head"><div><small>'+esc(loanKindLabel(l.kind))+'</small><h3>'+esc(l.party||'ไม่ระบุชื่อ')+'</h3></div>'+loanStatusHtml(l)+'</div><div class="loan-detail-money"><div><small>เงินต้น</small><b>'+fmt(l.principal,1)+'</b></div><div><small>'+esc(loanActionLabel(l.kind))+'แล้ว</small><b>'+fmt(paid,1)+'</b></div><div><small>คงเหลือ</small><b class="'+(remain>.01?'out':'in')+'">'+fmt(remain,1)+'</b></div></div><div class="loan-detail-meta"><span>เริ่ม '+esc(dmyFull(l.date||''))+'</span><span>'+(l.dueDate?'ครบ '+esc(dmyFull(l.dueDate)):'ยังไม่ระบุวันครบกำหนด')+'</span>'+(l.interestRate?'<span>ดอกเบี้ย '+(+l.interestRate).toFixed(2).replace(/\.00$/,'')+'%/ปี</span>':'')+'</div>'+(l.note?'<p class="loan-note">'+esc(l.note).replace(/\n/g,'<br>')+'</p>':'');
+  if(remain>.01)h+='<button class="btn pri" data-act="profileLoanPayment" data-id="'+esc(l.id)+'">'+esc(loanActionLabel(l.kind))+'</button>';
+  h+='<button class="btn" data-act="profileLoanEdit" data-id="'+esc(l.id)+'">แก้ไขข้อมูล</button><div class="loan-history"><div class="loan-history-head"><b>ประวัติ'+esc(loanActionLabel(l.kind))+'</b><span>'+rows.length+' รายการ</span></div>';
+  if(!rows.length)h+='<div class="empty compact">ยังไม่มีรายการชำระคืน</div>';
+  rows.forEach(function(p){
+    h+='<div class="loan-payment-row"><span><b>'+esc(dmyFull(p.date))+'</b><small>'+(p.method==='cash'?'เงินสด':p.method==='other'?'อื่นๆ':'โอน')+(p.note?' · '+esc(p.note):'')+'</small></span><strong>'+fmt(p.amount,1)+'</strong><button data-act="profileLoanPaymentDelete" data-id="'+esc(l.id)+'" data-v="'+esc(p.id)+'">'+(U.confirm==='loanPay:'+l.id+':'+p.id?'ยืนยัน':'ลบ')+'</button></div>';
+  });
+  return h+'</div><div class="stack"><button class="btn dng" data-act="profileLoanDelete" data-id="'+esc(l.id)+'">'+(U.confirm==='loan:'+l.id?'ยืนยันลบรายการ':'ลบรายการ')+'</button><button class="btn" data-act="profileLoanOpen" data-v="'+esc(l.kind)+'">กลับทะเบียน</button></div></div>';
+}
 function vProfile(){
   U.profileFilter=['all','site','portfolio','delivery','announce'].indexOf(U.profileFilter)>=0?U.profileFilter:'all';
   if(U.profileProjectPid&&!proj(U.profileProjectPid))U.profileProjectPid='';
@@ -7377,6 +7500,7 @@ function vProfile(){
     '<div class="profile-contact">'+(b.phone?'<span>☎ '+esc(b.phone)+'</span>':'')+(b.email?'<span>✉ '+esc(b.email)+'</span>':'')+(b.address?'<span>⌖ '+esc(b.address)+'</span>':'')+'</div>'+(socials?'<div class="profile-socials">'+socials+'</div>':'')+
     '<div class="profile-stats"><div><b>'+active.length+'</b><small>โครงการกำลังทำ</small></div><div><b>'+done.length+'</b><small>ส่งมอบ/ปิดแล้ว</small></div><div><b>'+posts.length+'</b><small>โพสต์หน้างาน</small></div></div></div>'+
     '<div class="profile-compose"><button data-act="profilePostNew"><span class="profile-compose-plus">＋</span><span><b>โพสต์อัปเดตหน้างาน</b><small>รูปงาน · ความคืบหน้า · ผลงาน · จัดส่ง</small></span><strong>›</strong></button></div><section class="profile-public-card '+(publicLive?'live':'')+'"><div><small>CLIENT PORTFOLIO</small><b>'+(publicLive?'Portfolio ลูกค้าเผยแพร่แล้ว':'สร้างลิงก์ Portfolio สำหรับลูกค้า')+'</b><p>เฉพาะ '+publicCount+' โพสต์ที่เปิด “แสดงใน Portfolio ลูกค้า” · ไม่รวม BOQ รายรับ รายจ่าย หรืองานบัญชี</p></div><div class="profile-public-actions">'+(publicLive?'<button data-act="profilePublicOpen">เปิด</button><button data-act="profilePublicShare">แชร์ลิงก์</button><button data-act="profilePublicPublish">อัปเดต</button><button class="danger" data-act="profilePublicRevoke">ปิดสาธารณะ</button>':'<button class="primary" data-act="profilePublicPublish">เผยแพร่ Portfolio</button>')+'</div>'+(U.profilePublicBusy?'<em>กำลังอัปโหลดและสร้างลิงก์…</em>':'')+'</section>';
+  if(S.role==='owner')h+=profileLoanDashboardHtml();
   if(pinned.length){
     h+='<section class="profile-featured"><div class="profile-section-head"><span><small>FEATURED WORK</small><b>ผลงานปักหมุด</b></span><em>'+pinned.length+' โพสต์</em></div><div class="profile-featured-grid">'+pinned.map(function(p){var pn=profileProjectName(p.pid),ph=(p.photos||[])[0],im=ph&&(ph.thumb||ph.data||'');return '<button class="profile-featured-card" data-act="profilePostEdit" data-id="'+p.id+'">'+(im?'<img src="'+esc(im)+'" alt="ผลงานปักหมุด">':'<span class="profile-featured-placeholder">AREA</span>')+'<span><small>★ '+esc(profilePostTypeLabel(p.type))+'</small><b>'+esc((p.text||pn||'ผลงานเด่น').slice(0,70))+'</b><em>'+(pn?esc(pn)+' · ':'')+esc(dmyFull(p.date))+'</em></span></button>';}).join('')+'</div></section>';
   }
@@ -7545,6 +7669,91 @@ function directAction(el){
   if(a==='profileEdit'){U.appMenu=false;U.sheet={kind:'profileEdit'};render();return true;}
   if(a==='profileShareCompany'){profileShareCompany();return true;}
   if(a==='profileIdentityRemove'){profileRemoveIdentity(v);return true;}
+  if(a==='profileLoanOpen'){
+    if(S.role!=='owner')return true;
+    U.confirm=null;U.sheet={kind:'loanList',loanKind:v==='receivable'?'receivable':'payable'};render();return true;
+  }
+  if(a==='profileLoanNew'){
+    if(S.role!=='owner')return true;
+    U.confirm=null;U.sheet={kind:'loanEdit',id:'',loanKind:v==='receivable'?'receivable':'payable'};render();return true;
+  }
+  if(a==='profileLoanDetail'){
+    if(S.role!=='owner')return true;
+    var ld=(S.loans||[]).find(function(x){return x.id===id;});
+    if(!ld){toast('ไม่พบรายการเงินกู้');return true;}
+    U.confirm=null;U.sheet={kind:'loanDetail',id:id};render();return true;
+  }
+  if(a==='profileLoanEdit'){
+    if(S.role!=='owner')return true;
+    var le=(S.loans||[]).find(function(x){return x.id===id;});
+    if(!le){toast('ไม่พบรายการเงินกู้');return true;}
+    U.confirm=null;U.sheet={kind:'loanEdit',id:id,loanKind:le.kind};render();return true;
+  }
+  if(a==='profileLoanSave'){
+    if(S.role!=='owner')return true;
+    var existing=id?(S.loans||[]).find(function(x){return x.id===id;}):null,kind=existing?existing.kind:(v==='receivable'?'receivable':'payable');
+    var party=String((document.getElementById('loanParty')||{}).value||'').trim().slice(0,240),principal=Math.round((parseFloat((document.getElementById('loanPrincipal')||{}).value)||0)*100)/100,date=String((document.getElementById('loanDate')||{}).value||''),due=String((document.getElementById('loanDue')||{}).value||''),rate=Math.max(0,Math.min(100,parseFloat((document.getElementById('loanRate')||{}).value)||0)),note=String((document.getElementById('loanNote')||{}).value||'').trim().slice(0,1200);
+    if(!party){toast(kind==='receivable'?'กรอกชื่อลูกหนี้':'กรอกชื่อเจ้าหนี้ / ผู้ให้กู้');return true;}
+    if(!(principal>0)){toast('กรอกเงินต้นมากกว่า 0');return true;}
+    if(!validIsoDate(date)){toast('ตรวจวันที่เริ่ม');return true;}
+    if(due&&!validIsoDate(due)){toast('ตรวจวันครบกำหนด');return true;}
+    if(due&&due<date){toast('วันครบกำหนดต้องไม่ก่อนวันที่เริ่ม');return true;}
+    var paid=existing?loanPaidAmount(existing):0;
+    if(principal+0.001<paid){toast('เงินต้นใหม่ต่ำกว่ายอดที่ชำระแล้ว '+fmt(paid,1));return true;}
+    var before=existing?JSON.parse(JSON.stringify(existing)):null,snap=JSON.parse(JSON.stringify(S)),row=existing||{id:uid(),kind:kind,payments:[],createdAt:Date.now()};
+    row.kind=kind;row.party=party;row.principal=principal;row.date=date;row.dueDate=due;row.interestRate=rate;row.note=note;
+    if(!existing)S.loans.push(row);
+    accountingAudit(existing?'loan-edit':'loan-create','loan',row.id,before,row,'ทะเบียนเงินกู้/ลูกหนี้');
+    if(!persist()){S=snap;toast('บันทึกเงินกู้ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return true;}
+    U.sheet={kind:'loanDetail',id:row.id};render();toast('บันทึก '+loanKindLabel(kind)+' แล้ว');return true;
+  }
+  if(a==='profileLoanPayment'){
+    if(S.role!=='owner')return true;
+    var lp=(S.loans||[]).find(function(x){return x.id===id;});
+    if(!lp||loanRemaining(lp)<=.01){toast('รายการนี้ปิดยอดแล้ว');return true;}
+    U.confirm=null;U.sheet={kind:'loanPayment',id:id};render();return true;
+  }
+  if(a==='profileLoanPaymentSave'){
+    if(S.role!=='owner')return true;
+    var lp=(S.loans||[]).find(function(x){return x.id===id;});
+    if(!lp){toast('ไม่พบรายการเงินกู้');return true;}
+    var amt=Math.round((parseFloat((document.getElementById('loanPayAmount')||{}).value)||0)*100)/100,dt=String((document.getElementById('loanPayDate')||{}).value||''),method=String((document.getElementById('loanPayMethod')||{}).value||'transfer'),note=String((document.getElementById('loanPayNote')||{}).value||'').trim().slice(0,500),remain=loanRemaining(lp);
+    if(!(amt>0)){toast('กรอกจำนวนเงินที่ชำระ');return true;}
+    if(amt-remain>.011){toast('ยอดชำระเกินยอดคงเหลือ '+fmt(remain,1));return true;}
+    if(!validIsoDate(dt)){toast('ตรวจวันที่ชำระ');return true;}
+    if(['transfer','cash','other'].indexOf(method)<0)method='transfer';
+    var snap=JSON.parse(JSON.stringify(S)),pay={id:uid(),date:dt,amount:amt,method:method,note:note,createdAt:Date.now()};
+    lp.payments=Array.isArray(lp.payments)?lp.payments:[];lp.payments.push(pay);
+    accountingAudit('loan-payment','loan',lp.id,null,pay,loanActionLabel(lp.kind));
+    if(!persist()){S=snap;toast('บันทึกการชำระไม่สำเร็จ');return true;}
+    U.sheet={kind:'loanDetail',id:lp.id};render();toast('บันทึก '+loanActionLabel(lp.kind)+' แล้ว');return true;
+  }
+  if(a==='profileLoanPaymentDelete'){
+    if(S.role!=='owner')return true;
+    var lp=(S.loans||[]).find(function(x){return x.id===id;}),payId=String(v||'');
+    if(!lp)return true;
+    var pay=(lp.payments||[]).find(function(p){return p.id===payId;});
+    if(!pay)return true;
+    var ck='loanPay:'+id+':'+payId;
+    if(U.confirm!==ck){U.confirm=ck;render();toast('แตะ “ยืนยัน” อีกครั้งเพื่อลบรายการชำระ');return true;}
+    var snap=JSON.parse(JSON.stringify(S));
+    lp.payments=(lp.payments||[]).filter(function(p){return p.id!==payId;});
+    accountingAudit('loan-payment-delete','loan',lp.id,pay,null,'ลบรายการชำระคืน');
+    if(!persist()){S=snap;return true;}
+    U.confirm=null;U.sheet={kind:'loanDetail',id:lp.id};render();toast('ลบรายการชำระแล้ว');return true;
+  }
+  if(a==='profileLoanDelete'){
+    if(S.role!=='owner')return true;
+    var lx=(S.loans||[]).find(function(x){return x.id===id;});
+    if(!lx)return true;
+    var ck='loan:'+id;
+    if(U.confirm!==ck){U.confirm=ck;render();toast('แตะ “ยืนยันลบรายการ” อีกครั้ง');return true;}
+    var snap=JSON.parse(JSON.stringify(S));
+    S.loans=(S.loans||[]).filter(function(x){return x.id!==id;});
+    accountingAudit('loan-delete','loan',id,lx,null,'ลบทะเบียนเงินกู้/ลูกหนี้');
+    if(!persist()){S=snap;return true;}
+    U.confirm=null;U.sheet={kind:'loanList',loanKind:lx.kind};render();toast('ลบรายการแล้ว');return true;
+  }
   if(a==='profilePostNew'){profileOpenPost('',id&&proj(id)?id:'');return true;}
   if(a==='profilePostEdit'){profileOpenPost(id);return true;}
   if(a==='profileFilter'){U.profileFilter=['all','site','portfolio','delivery','announce'].indexOf(v)>=0?v:'all';saveNavSession();render();return true;}
@@ -8176,7 +8385,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1042',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1045',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();

@@ -22,6 +22,17 @@ Business Stable 1.0 Source Candidate / live-staging acceptance layered over v701
 
 Standalone/PWA accounting and construction project control.
 
+
+## v1045 Private Loan / Debtor-Creditor Register
+
+- Extends Company Profile with a private finance section for **เงินกู้ยืม (เจ้าหนี้)** and **เงินให้กู้ยืม (ลูกหนี้)**.
+- Tracks counterparty, principal, start date, due date, optional annual interest rate, notes, partial repayments/collections, outstanding balance, and overdue/near-due status.
+- Supports add, edit, partial settlement, settlement-history deletion, and guarded record deletion with audit-log entries.
+- Loan principal remains separate from project revenue/expense and does **not** change project P&L automatically, preventing borrowed money from being treated as income or money lent from being treated as construction cost.
+- Loan records are owner-only UI, remain inside private backup/Cloud Sync/D1 mirror, and are explicitly excluded from customer-facing Portfolio snapshots and company sharing.
+- Preserves `site-ledger-v1`, `site-ledger-db`, accounting transaction schema, and existing project/BOQ data.
+
+
 ## v1039 Local OCR Page Provenance
 
 - Local OCR now preserves `sourcePage`, `sourceFile`, and `sourceKind` for every BOQ row from multi-image and scanned-PDF imports.
