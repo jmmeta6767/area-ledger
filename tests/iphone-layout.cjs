@@ -38,8 +38,9 @@ async function fixture(page,view,count){
     if(version==='after'){
      assert(result.scrollWidth<=result.width+1,JSON.stringify(evidence.at(-1)));
      if(view==='home'){
-      const finance=await page.evaluate(()=>({innerWidth,media:matchMedia('(max-width:600px)').matches,view:document.body.dataset.view,columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>({text:e.textContent,whiteSpace:getComputedStyle(e).whiteSpace,rects:(()=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})()}))}));
+      const finance=await page.evaluate(()=>({innerWidth,media:matchMedia('(max-width:600px)').matches,view:document.body.dataset.view,columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,labels:[...document.querySelectorAll('.expense-status-copy small')].map(e=>e.textContent.trim()),amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>({text:e.textContent,whiteSpace:getComputedStyle(e).whiteSpace,rects:(()=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})()}))}));
       if(width<=960)assert.equal(finance.columns.split(' ').length,1,JSON.stringify(finance));
+      assert.deepEqual(finance.labels,['จ่ายแล้ว','ค้างจ่าย']);
       assert.deepEqual(finance.amounts.map(x=>x.text),['฿237,711.80','฿66,775.00']);
       assert(finance.amounts.every(x=>(width>960||x.whiteSpace==='nowrap')&&x.rects===1),JSON.stringify(finance));
      }
