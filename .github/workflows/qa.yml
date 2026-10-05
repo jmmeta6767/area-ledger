@@ -15,6 +15,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  iphone-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser test runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/layout-runtime" playwright@1.62.1
+          "$RUNNER_TEMP/layout-runtime/node_modules/.bin/playwright" install --with-deps chromium
+      - name: iPhone layout and scroll regression
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/layout-runtime/node_modules/playwright
+          LAYOUT_OUTPUT: layout-evidence
+        run: node tests/iphone-layout.cjs
+      - name: Upload before and after layout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iphone-layout-evidence
+          path: layout-evidence
   regression:
     runs-on: ubuntu-latest
     timeout-minutes: 10

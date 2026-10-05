@@ -3368,6 +3368,44 @@ body[data-sheet-kind="expenseBatch"] .master-sheet>h3{padding-top:5px}
  .expense-batch-actions>.btn{font-size:.82rem}
 }
 @media(max-height:500px) and (orientation:landscape){body[data-sheet-kind="expenseBatch"] .expense-batch-actions{position:static;margin-top:12px}}
+/* iPhone PWA layout: safe area belongs to the header/nav, not the root. */
+@media screen{
+ html{padding:0;overflow-x:visible}body{overflow-x:visible}
+ #app,main{min-width:0;width:100%;box-sizing:border-box}
+ .hd{top:0!important;padding-top:env(safe-area-inset-top,0px)}
+ .master-sheet:before{content:none!important;display:none!important}
+ .master-scrim,.master-sheet{touch-action:auto!important}
+ .master-sheet{max-height:calc(var(--ledger-vvh,100vh) - max(12px,env(safe-area-inset-top,0px)))!important}
+ @supports(height:100dvh){.master-sheet{max-height:calc(var(--ledger-vvh,100dvh) - max(12px,env(safe-area-inset-top,0px)))!important}}
+ body.sheet-open{position:fixed;left:0;right:0;overflow-y:hidden}
+ .master-sheet :where(input,select,textarea){min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+ .master-sheet input[type="date"]{appearance:none;-webkit-appearance:none;display:block;width:100%!important}
+ .master-sheet input[type="date"]::-webkit-date-and-time-value{min-width:0;text-align:left}
+ .project-hub-glance{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+ .project-hub-glance>span{border-left:0!important;padding:8px!important;min-width:0}
+ body[data-view="projects"] .project-hub-actions.project-list-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .project-hub-actions button{min-width:0;min-height:44px!important}
+ .project-hub-top>div{min-width:0}.project-hub-top b{overflow-wrap:anywhere}
+ :is(.project-finance-kpis,.project-hub-glance,.expense-batch-summary,.boq-summary-grid,.cc-grid) b,
+ .expense-batch-actions-summary b{white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;font-variant-numeric:tabular-nums}
+ body[data-sheet-kind="expenseBatch"] .master-sheet{padding-bottom:env(safe-area-inset-bottom,0px)!important;scroll-padding-bottom:24px}
+ body[data-sheet-kind="expenseBatch"] .master-sheet>h3{position:static!important}
+ .expense-batch-summary{grid-template-columns:minmax(0,1fr)!important}
+ .expense-batch-summary>div+div{border-left:0;border-top:1px solid var(--line);padding:8px 5px 0}
+ .expense-batch-list{overflow:visible!important;min-width:0}
+ .expense-batch-actions{position:static!important;bottom:auto;margin:12px 0 0;padding:12px 0 10px;box-shadow:none}
+ .expense-batch-actions-summary{flex-wrap:wrap}
+}
+@media screen and (max-width:600px){
+ input,select,textarea,.master-sheet :where(input,select,textarea),.expense-batch-field :where(input,select){font-size:16px!important}
+ .project-finance-kpis{grid-template-columns:minmax(0,1fr)!important}
+ .project-finance-kpis>div{display:flex!important;flex-direction:column;align-items:flex-start}
+ .project-finance-kpis b{font-size:clamp(16px,5vw,22px)!important;text-align:left!important}
+ body[data-view="projects"] .project-hub-glance{grid-template-columns:minmax(0,1fr)!important}
+ .project-hub-glance>span:first-child{grid-column:auto!important}
+ .boq-summary-grid,.cc-grid{grid-template-columns:minmax(0,1fr)!important}
+ body[data-sheet-kind="expenseBatch"] .expense-batch-fields{grid-template-columns:minmax(0,1fr)}
+}
 </style>
 </head>
 <body>
@@ -7387,6 +7425,12 @@ function appMenuHtml(){
     '</aside></div>';
 }
 
+var sheetScrollLock=null;
+function syncSheetScrollLock(open){
+ if(open&&sheetScrollLock===null){sheetScrollLock={x:window.scrollX||0,y:window.scrollY||0};document.body.style.top=-sheetScrollLock.y+'px';}
+ document.body.classList.toggle('sheet-open',!!open);
+ if(!open&&sheetScrollLock!==null){var position=sheetScrollLock;sheetScrollLock=null;document.body.style.top='';return position;}
+}
 function render(){
   var runtimeStart=runtimeNow(),runtimeState=runtimeDiag();
   var mode=(S.ui&&S.ui.viewMode==='desktop')?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',mode);
@@ -7431,9 +7475,11 @@ function render(){
   document.body.classList.toggle('view-due',v==='due');
   document.body.setAttribute('data-view',v);
   document.body.setAttribute('data-sheet-kind',U.sheet&&U.sheet.kind?String(U.sheet.kind):'');
+  var sheetRestorePosition=syncSheetScrollLock(!!U.sheet);
   document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
   document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();
+  if(sheetRestorePosition){var oldScrollBehavior=document.documentElement.style.scrollBehavior;document.documentElement.style.scrollBehavior='auto';window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);document.documentElement.style.scrollBehavior=oldScrollBehavior;}
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
 
