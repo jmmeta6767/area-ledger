@@ -58,6 +58,11 @@ async function fixture(page,view,count){
     await fixture(page,'add',11);await page.setViewportSize({width,height:Math.min(height,360)});
     await page.locator('[data-exp-batch="10"][data-k="partner"]').focus();
     assert(await page.evaluate(()=>document.querySelector('.master-sheet').getBoundingClientRect().height<=visualViewport.height));
+    assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.master-sheet')).touchAction),'auto');
+    const draft=await page.evaluate(()=>JSON.stringify(U.expenseBatch));
+    await page.setViewportSize({width:height,height:width});
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));
+    await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>JSON.stringify(U.expenseBatch)),draft);
    }
    await context.close();
   }
