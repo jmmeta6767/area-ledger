@@ -2,6 +2,8 @@
 
 Baseline: main `5dac2923285352bf5be0602b8050a303f0931ae5`. Production at start: v1044 `78fa553cceb17a1f8500f9fad9bc978eb452713f`; production gate absent; /ready healthy. Existing malformed OCR row rejection remains intact.
 
+Follow-up evidence from user-provided iPhone captures exposed a later `max-width:430px` / `380px` override restoring the dashboard expense-status cards to two narrow columns. The original v1044 layout regression now pins the deployed baseline `86b5c5948fba70ee8e839036160fb4d9dcb0a075`, reproduces the split `฿237,711.80` / `฿66,775.00` amounts at 390px, and verifies the corrected one-column, single-line output at 320 / 375 / 390 / 430px and 844px landscape. Status cards stack vertically through the narrow tablet breakpoint; all amount digits and decimals remain unchanged.
+
 ## Observed in source and Chromium
 
 - Money styles allowed arbitrary mid-number wrapping. Mobile KPI and summary grids now allocate a full row and preserve unbroken currency text.
@@ -21,4 +23,4 @@ Baseline: main `5dac2923285352bf5be0602b8050a303f0931ae5`. Production at start: 
 
 ## Limits
 
-Chromium mobile emulation and CSS inset substitution are not physical Safari/PWA tests. Native iOS date controls, real keyboard behavior, standalone launch/rotation, rubber-band gestures and VoiceOver still require an iPhone. IMG_7205.png, IMG_7204.jpeg and IMG_7210.png were not available as attachments or in the workspace, so this change does not claim a comparison against their pixels. There was no root horizontal overflow in the synthetic baseline; the native iOS overflow cause remains a hypothesis rather than a reproduced device finding.
+The supplied iPhone screenshots were inspected; the Dashboard split-amount defect was reproduced in Chromium at 390 CSS px and corrected. Other screenshot details were already covered by the earlier v1044 layout work, but native iOS date controls, real keyboard behavior, standalone launch/rotation, rubber-band gestures and VoiceOver were not exercised on a physical iPhone in this run. The browser test is Chromium emulation with CSS safe-area substitution, not Safari/PWA certification. It also does not establish a device-specific horizontal-overflow cause beyond the reproduced dashboard wrapping override.
