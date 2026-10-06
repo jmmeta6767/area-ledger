@@ -33,7 +33,9 @@ jobs:
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/layout-runtime/node_modules/playwright
           LAYOUT_OUTPUT: layout-evidence
-        run: node tests/iphone-layout.cjs
+        run: |
+          node tests/iphone-layout.cjs
+          node tests/iphone-card-keyboard.cjs
       - name: Upload before and after layout evidence
         if: always()
         uses: actions/upload-artifact@v4
