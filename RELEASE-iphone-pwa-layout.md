@@ -21,6 +21,14 @@ Follow-up evidence from user-provided iPhone captures exposed a later `max-width
 - Checks document width, date bounds, unbroken money styles, 44px actions, final-action reachability, retained edits/selection, viewport shrink and modal scroll restoration. Before/after PNGs and JSON measurements are emitted as CI artifacts.
 - No accounting formula, amount formatting, BOQ values, OCR extraction/validation, save handlers, storage key, migration or production workflow change.
 
+## Follow-up: iPhone project editor and BOQ utilization
+
+Inspection of main `0762cc88` found that `budgetPct` divided project costs by the editable `p.budget` field. When that field was zero or differed from the BOQ total, the Projects screen reported 0% or a misleading ratio despite recorded expenses. The derived indicator now uses the existing BOQ summary: expense base divided by the sum of BOQ quantity × unit price; it stays at 0% when no BOQ budget exists. Displayed expense amounts, accounting calculations, and stored records are unchanged.
+
+The project editor scrim previously followed VisualViewport height and top offset only. It now follows VisualViewport width and horizontal offset when Safari changes the visible viewport (including zoom/keyboard presentation). The editor sheet and fields have bounded min-widths, and the save bar stays inside the sheet. Chromium measured the previous save bar extending 2 CSS px past the sheet at 430px (sheet: 0–430px, save bar: −2–432px); the regression verifies that this is gone.
+
+`tests/project-mobile-budget.cjs` checks a 25% result from a synthetic 100,000 expense against a 400,000 BOQ, zero BOQ behavior, 320/375/390/430px portrait, 640×360 and 844×390 landscape, and a simulated 300px VisualViewport shifted 90px horizontally. It asserts sheet, fields, footer and document bounds and emits after screenshots for the project card and editor. These are Chromium viewport simulations; they are not physical iPhone Safari or standalone-PWA acceptance.
+
 ## Limits
 
 The supplied iPhone screenshots were inspected; the Dashboard split-amount defect was reproduced in Chromium at 390 CSS px and corrected. Other screenshot details were already covered by the earlier v1044 layout work, but native iOS date controls, real keyboard behavior, standalone launch/rotation, rubber-band gestures and VoiceOver were not exercised on a physical iPhone in this run. The browser test is Chromium emulation with CSS safe-area substitution, not Safari/PWA certification. It also does not establish a device-specific horizontal-overflow cause beyond the reproduced dashboard wrapping override.

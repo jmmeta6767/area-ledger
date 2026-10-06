@@ -3430,7 +3430,30 @@ body[data-sheet-kind="expenseBatch"] .master-sheet>h3{padding-top:5px}
  .boq-summary-grid,.cc-grid{grid-template-columns:minmax(0,1fr)!important}
  body[data-sheet-kind="expenseBatch"] .expense-batch-fields{grid-template-columns:minmax(0,1fr)}
 }
+<style>
+/* Project editor follows Safari's visible viewport, including keyboard/pinch offsets. */
+.project-edit-scrim{
+  left:var(--ledger-vvleft,0px)!important;right:auto!important;
+  width:var(--ledger-vvw,100vw)!important;max-width:var(--ledger-vvw,100vw)!important;
+  overflow-x:clip!important;
+}
+.project-edit-scrim>.project-sheet{
+  flex:0 1 520px;width:min(100%,520px)!important;max-width:100%!important;min-width:0!important;
+  margin:0 auto!important;box-sizing:border-box!important;overflow-x:clip!important;
+}
+body[data-sheet-kind="proj"].sheet-open{overflow-x:clip!important}
+.project-sheet :where(.project-form-head,.project-form-section,.pf-field,.pf-money,.project-form-savebar){min-width:0;max-width:100%;box-sizing:border-box}
+.project-sheet .project-form-section{grid-template-columns:repeat(2,minmax(0,1fr))}
+.project-sheet .project-form-savebar{
+  width:100%!important;max-width:100%!important;margin:10px 0 0!important;
+  padding-left:0!important;padding-right:0!important;box-sizing:border-box!important;
+}
+.project-sheet .pf-field :is(input,select){width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.project-sheet .pf-money{width:100%;min-width:0;max-width:100%}
+.project-sheet .pf-money input{flex:1 1 0;width:0;min-width:0;max-width:100%;box-sizing:border-box}
+@media(max-width:700px){.project-sheet .project-form-section{grid-template-columns:minmax(0,1fr)}}
 </style>
+</head>
 </head>
 <body>
 <div id="app"></div>
@@ -4615,7 +4638,7 @@ function boqAmount(x){return Math.max(0,+x.qty||0)*Math.max(0,+x.unitPrice||0);}
 function boqActual(id){var matches=S.boq.filter(function(b){return b.id===id;});if(matches.length!==1)return 0;return S.tx.filter(function(t){return t.type==='out'&&t.boqId===id&&t.pid===matches[0].pid;}).reduce(function(a,t){return a+base(t);},0);}
 function boqBatches(pid){var m={};boqRows(pid).forEach(function(x){if(!x.importBatch)return;var k=x.importBatch,g=m[k]||(m[k]={id:k,file:x.importFile||'ไฟล์นำเข้า',at:+x.importedAt||0,rows:[],amount:0,linked:0});g.rows.push(x);g.amount+=boqAmount(x);g.linked+=boqActual(x.id);if((+x.importedAt||0)>g.at)g.at=+x.importedAt||0;});return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.at-a.at;});}
 function boqSummary(pid){var rows=boqRows(pid),budget=rows.reduce(function(a,x){return a+boqAmount(x);},0),linked=0;rows.forEach(function(x){linked+=boqActual(x.id);});var actual=stats(pid).outB;return {rows:rows,budget:budget,linkedActual:linked,actual:actual,unlinkedActual:Math.max(0,actual-linked),variance:budget-actual,pct:budget>0?actual/budget:0};}
-function budgetPct(p){var c=projectCostWithGuarantees(p.id),b=(+p.budget||0);return b>0?c.total/b:0;}
+function budgetPct(p){return boqSummary(p.id).pct;}
 function barCls(x){return x>=1?'over':x>=.85?'warn':'';}
 function dueInfo(t){
   if(txOutstandingNet(t)<=.01||!t.due)return null;
@@ -7276,7 +7299,7 @@ function sheetHtml(){
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
-  return '<div class="scrim master-scrim" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='proj'?' project-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
+  return '<div class="scrim master-scrim'+(sh.kind==='proj'?' project-edit-scrim':'')+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='proj'?' project-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
 }
 function csvText(){
   var rows=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
@@ -8410,7 +8433,7 @@ function keepProjectFieldVisible(){
 }
 function scheduleProjectFieldVisibility(){requestAnimationFrame(function(){requestAnimationFrame(keepProjectFieldVisible);});}
 document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet')){scheduleProjectFieldVisibility();setTimeout(keepProjectFieldVisible,180);}});
-if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');scheduleProjectFieldVisibility();};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
+if(window.visualViewport){var syncViewport=function(){var vv=window.visualViewport;document.documentElement.style.setProperty('--ledger-vvh',(vv.height||window.innerHeight)+'px');document.documentElement.style.setProperty('--ledger-vvtop',(vv.offsetTop||0)+'px');document.documentElement.style.setProperty('--ledger-vvw',(vv.width||window.innerWidth)+'px');document.documentElement.style.setProperty('--ledger-vvleft',(vv.offsetLeft||0)+'px');scheduleProjectFieldVisibility();};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
 </script>
 </body>
