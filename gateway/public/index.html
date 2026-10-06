@@ -1935,8 +1935,8 @@ textarea{resize:vertical}
 :root[data-view-mode="desktop"] main{max-width:1180px!important}
 /* UX QA hardening */
 #app{min-height:100dvh}
-.master-scrim,.app-drawer-wrap{min-height:100dvh}
-@supports not (height:100dvh){#app,.master-scrim,.app-drawer-wrap{min-height:100vh}}
+.app-drawer-wrap{min-height:100dvh}
+@supports not (height:100dvh){#app,.app-drawer-wrap{min-height:100vh}}
 :root[data-view-mode="mobile"] #app{max-width:560px!important}
 :root[data-view-mode="mobile"] main{max-width:560px!important}
 
@@ -2064,7 +2064,7 @@ input,select,textarea{max-width:100%;min-width:0}
 .manual-journal-lines{display:grid;gap:7px;margin:10px 0}.mj-line{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.7fr) minmax(0,.7fr);gap:6px}.acct-table{max-height:48vh;overflow:auto;-webkit-overflow-scrolling:touch;margin:10px 0;overscroll-behavior:contain}.acct-table .kv{min-width:0}.acct-table .kv span{min-width:0;overflow-wrap:anywhere}@media(max-width:430px){.mj-line{grid-template-columns:1fr 1fr}.mj-line select{grid-column:1/-1}.acct-grid{grid-template-columns:1fr 1fr}.acct-table{max-height:42vh}}.acct-table .kv{gap:8px}
 .accounting-control{margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}.acct-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.acct-grid>div{padding:10px;border-radius:10px;background:var(--bar);min-width:0}.acct-grid small,.acct-grid b{display:block}.acct-grid small{font-size:.65rem;color:var(--muted)}
 /* v226: safe-area and keyboard-aware sheet; inputs avoid Safari auto zoom. */
-.master-scrim{height:var(--ledger-vvh,100dvh);top:var(--ledger-vvtop,0px);bottom:auto}
+.master-scrim{min-height:0;height:var(--ledger-vvh,100vh);top:var(--ledger-vvtop,0px);bottom:auto}
 .master-sheet{max-height:calc(var(--ledger-vvh,100dvh) - 12px)!important;min-width:0;touch-action:pan-y}
 .master-sheet input,.master-sheet select,.master-sheet textarea{font-size:16px!important;min-width:0}
 .master-sheet input[type=checkbox]{width:24px!important;min-height:24px!important}
@@ -3229,8 +3229,14 @@ body[data-view="quoteprint"] :where(.quote-paper,.rd-paper){margin-inline:auto}
   /* Guarantees */
   body[data-view="guarantees"] .guarantee-mobile-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   body[data-view="guarantees"] .guarantee-action-head{align-items:flex-start!important;gap:8px!important}
-  body[data-view="guarantees"] .guarantee-mobile-row{grid-template-columns:minmax(0,1fr) auto!important;gap:9px!important}
-  body[data-view="guarantees"] .gm-side{max-width:42%;white-space:normal;text-align:right}
+  body[data-view="guarantees"] .guarantee-command>div{min-width:0;flex:1}
+  body[data-view="guarantees"] .guarantee-command .btn{width:auto!important;flex:0 0 auto;min-height:44px}
+  body[data-view="guarantees"] .guarantee-mobile-row{grid-template-columns:minmax(0,1fr)!important;gap:9px!important;padding:12px!important}
+  body[data-view="guarantees"] .gm-main small{white-space:normal;overflow:visible;text-overflow:clip}
+  body[data-view="guarantees"] .gm-side{max-width:none;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;white-space:normal;text-align:left}
+  body[data-view="guarantees"] .gm-side strong{white-space:nowrap;overflow-wrap:normal;word-break:normal;font-size:18px}
+  body[data-view="guarantees"] .gm-side small{flex-basis:100%}
+  body[data-view="guarantees"] .gm-account{position:static;font-size:12px}
 
   /* Reports */
   body[data-view="report"] :where(.owner-report-command,.report-cash-command,.report-booked-summary){
@@ -3388,8 +3394,8 @@ body[data-sheet-kind="expenseBatch"] .master-sheet>h3{padding-top:5px}
  .hd{top:0!important;padding-top:env(safe-area-inset-top,0px)}
  .master-sheet:before{content:none!important;display:none!important}
  .master-scrim,.master-sheet{touch-action:auto!important}
- .master-sheet{max-height:calc(var(--ledger-vvh,100vh) - max(12px,env(safe-area-inset-top,0px)))!important}
- @supports(height:100dvh){.master-sheet{max-height:calc(var(--ledger-vvh,100dvh) - max(12px,env(safe-area-inset-top,0px)))!important}}
+ body.sheet-open .master-scrim>.master-sheet{max-height:calc(var(--ledger-vvh,100vh) - max(12px,env(safe-area-inset-top,0px)))!important}
+ @supports(height:100dvh){body.sheet-open .master-scrim>.master-sheet{max-height:calc(var(--ledger-vvh,100dvh) - max(12px,env(safe-area-inset-top,0px)))!important}}
  body.sheet-open{position:fixed;left:0;right:0;overflow-y:hidden}
  .master-sheet :where(input,select,textarea){min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
  .master-sheet input[type="date"]{appearance:none;-webkit-appearance:none;display:block;width:100%!important}
@@ -3414,8 +3420,11 @@ body[data-sheet-kind="expenseBatch"] .master-sheet>h3{padding-top:5px}
  .project-finance-kpis{grid-template-columns:minmax(0,1fr)!important}
  .project-finance-kpis>div{display:flex!important;flex-direction:column;align-items:flex-start}
  .project-finance-kpis b{font-size:clamp(16px,5vw,22px)!important;text-align:left!important}
- body[data-view="projects"] .project-hub-glance{grid-template-columns:minmax(0,1fr)!important}
- .project-hub-glance>span:first-child{grid-column:auto!important}
+ body[data-view="projects"] .project-hub-glance{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))!important;gap:8px!important}
+ body[data-view="projects"] .project-hub-glance>span{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 8px;padding:8px!important}
+ body[data-view="projects"] .project-hub-glance>span:first-child{grid-column:1/-1!important}
+ body[data-view="projects"] .project-hub-glance small{font-size:12px!important}
+ body[data-view="projects"] .project-hub-glance b{font-size:clamp(14px,3.8vw,17px)!important;overflow:visible;text-overflow:clip;margin-top:0}
  .boq-summary-grid,.cc-grid{grid-template-columns:minmax(0,1fr)!important}
  body[data-sheet-kind="expenseBatch"] .expense-batch-fields{grid-template-columns:minmax(0,1fr)}
 }
