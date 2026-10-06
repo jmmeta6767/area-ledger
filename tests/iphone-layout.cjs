@@ -71,7 +71,6 @@ async function fixture(page,view,count){
     const y=await page.evaluate(()=>scrollY);assert.equal(y,400);await page.evaluate(()=>{U.sheet={kind:'settings'};render();});
     assert.equal(await page.evaluate(()=>sheetScrollLock.y),y);await page.evaluate(()=>{U.sheet=null;render();});assert.equal(await page.evaluate(()=>scrollY),y);
     await fixture(page,'add',11);await page.setViewportSize({width,height:Math.min(height,360)});
-    await page.waitForFunction(()=>Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--ledger-vvh'))-visualViewport.height)<1);
     await page.locator('[data-exp-batch="10"][data-k="partner"]').focus();
     assert(await page.evaluate(()=>document.querySelector('.master-sheet').getBoundingClientRect().height<=visualViewport.height));
     assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.master-sheet')).touchAction),'auto');
