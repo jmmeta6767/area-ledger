@@ -2766,6 +2766,8 @@ body.view-add .add-mobile-focus{padding-bottom:10px!important}
   scroll-padding-top:64px!important;
   scroll-padding-bottom:120px!important;
 }
+.project-sheet .pf-field :is(input,select),.project-sheet .pf-money input{scroll-margin-block:84px 150px}
+.project-sheet .pf-field:focus-within,.project-sheet .pf-money:focus-within{position:relative;z-index:2}
 .master-sheet .field:focus-within{
   box-shadow:0 0 0 2px rgba(232,169,30,.18)!important;
 }
@@ -8396,7 +8398,19 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
   });
   navigator.serviceWorker.register('sw.js?v=800&source=1045',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
-if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
+function keepProjectFieldVisible(){
+  var field=document.activeElement;if(!field||!field.matches('input:not([type="file"]):not([type="checkbox"]),textarea,select'))return;
+  var sheet=field.closest('.master-sheet.project-sheet');if(!sheet)return;
+  var vv=window.visualViewport,viewTop=vv?vv.offsetTop:0,viewBottom=viewTop+(vv?vv.height:window.innerHeight),sr=sheet.getBoundingClientRect();
+  var head=sheet.querySelector('.project-form-head'),save=sheet.querySelector('.project-form-savebar');
+  var safeTop=Math.max(sr.top,viewTop)+(head?head.getBoundingClientRect().height:0)+8;
+  var safeBottom=Math.min(sr.bottom,viewBottom)-(save?save.getBoundingClientRect().height:0)-16,fr=field.getBoundingClientRect(),delta=0;
+  if(fr.bottom>safeBottom)delta=fr.bottom-safeBottom;else if(fr.top<safeTop)delta=fr.top-safeTop;
+  if(Math.abs(delta)>1)sheet.scrollTop+=delta;
+}
+function scheduleProjectFieldVisibility(){requestAnimationFrame(function(){requestAnimationFrame(keepProjectFieldVisible);});}
+document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet')){scheduleProjectFieldVisibility();setTimeout(keepProjectFieldVisible,180);}});
+if(window.visualViewport){var syncViewport=function(){document.documentElement.style.setProperty('--ledger-vvh',window.visualViewport.height+'px');document.documentElement.style.setProperty('--ledger-vvtop',window.visualViewport.offsetTop+'px');scheduleProjectFieldVisibility();};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
 boot();
 </script>
 </body>
