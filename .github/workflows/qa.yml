@@ -37,6 +37,7 @@ jobs:
           node tests/iphone-layout.cjs
           node tests/iphone-card-keyboard.cjs
           node tests/iphone-project-keyboard.cjs
+          node tests/iphone-project-create-keyboard.cjs
           node tests/project-mobile-budget.cjs
       - name: Upload before and after layout evidence
         if: always()

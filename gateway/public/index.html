@@ -3432,26 +3432,29 @@ body[data-sheet-kind="expenseBatch"] .master-sheet>h3{padding-top:5px}
 }
 /* Project editor follows Safari's visible viewport, including keyboard/pinch offsets. */
 .project-edit-scrim{
-  left:var(--ledger-vvleft,0px)!important;right:auto!important;
+  left:var(--ledger-vvleft,0px)!important;right:auto!important;top:var(--ledger-vvtop,0px)!important;bottom:auto!important;
+  height:var(--ledger-vvh,100vh)!important;max-height:var(--ledger-vvh,100vh)!important;
   width:var(--ledger-vvw,100vw)!important;max-width:var(--ledger-vvw,100vw)!important;
   overflow-x:clip!important;
 }
 .project-edit-scrim>.project-sheet{
-  flex:0 1 520px;width:min(100%,520px)!important;max-width:100%!important;min-width:0!important;
-  margin:0 auto!important;box-sizing:border-box!important;overflow-x:clip!important;
+  flex:0 1 520px;width:min(100%,520px)!important;max-width:100%!important;min-width:0!important;min-height:0!important;
+  max-height:calc(var(--ledger-vvh,100vh) - 12px)!important;margin:0 auto!important;box-sizing:border-box!important;
+  overflow-x:clip!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  scroll-padding-top:84px;scroll-padding-bottom:150px;
 }
 body[data-sheet-kind="proj"].sheet-open{overflow-x:clip!important}
+body[data-sheet-kind="proj"].project-keyboard-focus .project-sheet{padding-bottom:12px!important}
 .project-sheet :where(.project-form-head,.project-form-section,.pf-field,.pf-money,.project-form-savebar){min-width:0;max-width:100%;box-sizing:border-box}
 .project-sheet .project-form-section{grid-template-columns:repeat(2,minmax(0,1fr))}
 .project-sheet .project-form-savebar{
-  width:100%!important;max-width:100%!important;margin:10px 0 0!important;
+  position:sticky;bottom:0!important;width:100%!important;max-width:100%!important;margin:10px 0 0!important;
   padding-left:0!important;padding-right:0!important;box-sizing:border-box!important;
 }
 .project-sheet .pf-field :is(input,select){width:100%;min-width:0;max-width:100%;box-sizing:border-box}
 .project-sheet .pf-money{width:100%;min-width:0;max-width:100%}
 .project-sheet .pf-money input{flex:1 1 0;width:0;min-width:0;max-width:100%;box-sizing:border-box}
-@media(max-width:700px){.project-sheet .project-form-section{grid-template-columns:minmax(0,1fr)}}
-</style>
+@media(max-width:700px){.project-sheet .project-form-section{grid-template-columns:minmax(0,1fr)}}</style>
 </head>
 <body>
 <div id="app"></div>
@@ -8417,21 +8420,43 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1045',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1045&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+}
+var projectStableViewportHeight=0,projectStableViewportWidth=0;
+function projectFieldFocused(){var f=document.activeElement;return !!(f&&f.matches&&f.matches('input:not([type="file"]):not([type="checkbox"]),textarea,select')&&f.closest&&f.closest('.master-sheet.project-sheet'));}
+function projectStandaloneMode(){return !!(navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
+function syncProjectViewport(){
+  var vv=window.visualViewport,width=(vv&&vv.width)||window.innerWidth,height=(vv&&vv.height)||window.innerHeight,top=(vv&&vv.offsetTop)||0,focused=projectFieldFocused();
+  if(!projectStableViewportHeight||!projectStableViewportWidth||!focused||Math.abs(width-projectStableViewportWidth)>80){projectStableViewportHeight=height;projectStableViewportWidth=width;}
+  document.body.classList.toggle('project-keyboard-focus',focused);
+  /* Some installed iOS web apps keep VisualViewport at the full screen height while
+     the native keyboard covers its lower portion. Reserve a conservative keyboard
+     area only in standalone mode; Safari's measured visual viewport always wins. */
+  if(focused&&projectStandaloneMode()&&height>projectStableViewportHeight-120){
+    var keyboard=Math.min(330,Math.max(156,Math.round(projectStableViewportHeight*.36)));
+    height=Math.max(190,projectStableViewportHeight-keyboard);
+  }
+  document.documentElement.style.setProperty('--ledger-vvh',height+'px');
+  document.documentElement.style.setProperty('--ledger-vvtop',top+'px');
+  document.documentElement.style.setProperty('--ledger-vvw',width+'px');
+  document.documentElement.style.setProperty('--ledger-vvleft',((vv&&vv.offsetLeft)||0)+'px');
+  scheduleProjectFieldVisibility();
 }
 function keepProjectFieldVisible(){
   var field=document.activeElement;if(!field||!field.matches('input:not([type="file"]):not([type="checkbox"]),textarea,select'))return;
   var sheet=field.closest('.master-sheet.project-sheet');if(!sheet)return;
-  var vv=window.visualViewport,viewTop=vv?vv.offsetTop:0,viewBottom=viewTop+(vv?vv.height:window.innerHeight),sr=sheet.getBoundingClientRect();
+  var scrim=sheet.closest('.project-edit-scrim'),view=scrim?scrim.getBoundingClientRect():null,viewTop=view?view.top:((window.visualViewport&&window.visualViewport.offsetTop)||0),viewBottom=view?view.bottom:viewTop+((window.visualViewport&&window.visualViewport.height)||window.innerHeight),sr=sheet.getBoundingClientRect();
   var head=sheet.querySelector('.project-form-head'),save=sheet.querySelector('.project-form-savebar');
   var safeTop=Math.max(sr.top,viewTop)+(head?head.getBoundingClientRect().height:0)+8;
   var safeBottom=Math.min(sr.bottom,viewBottom)-(save?save.getBoundingClientRect().height:0)-16,fr=field.getBoundingClientRect(),delta=0;
   if(fr.bottom>safeBottom)delta=fr.bottom-safeBottom;else if(fr.top<safeTop)delta=fr.top-safeTop;
   if(Math.abs(delta)>1)sheet.scrollTop+=delta;
 }
-function scheduleProjectFieldVisibility(){requestAnimationFrame(function(){requestAnimationFrame(keepProjectFieldVisible);});}
-document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet')){scheduleProjectFieldVisibility();setTimeout(keepProjectFieldVisible,180);}});
-if(window.visualViewport){var syncViewport=function(){var vv=window.visualViewport;document.documentElement.style.setProperty('--ledger-vvh',(vv.height||window.innerHeight)+'px');document.documentElement.style.setProperty('--ledger-vvtop',(vv.offsetTop||0)+'px');document.documentElement.style.setProperty('--ledger-vvw',(vv.width||window.innerWidth)+'px');document.documentElement.style.setProperty('--ledger-vvleft',(vv.offsetLeft||0)+'px');scheduleProjectFieldVisibility();};window.visualViewport.addEventListener('resize',syncViewport);window.visualViewport.addEventListener('scroll',syncViewport);syncViewport();}
+function scheduleProjectFieldVisibility(){if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){requestAnimationFrame(keepProjectFieldVisible);});else if(typeof setTimeout==='function')setTimeout(keepProjectFieldVisible,0);}
+document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet')){syncProjectViewport();[100,260,420].forEach(function(ms){setTimeout(function(){syncProjectViewport();},ms);});}});
+document.addEventListener('focusout',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet'))setTimeout(syncProjectViewport,0);});
+if(window.visualViewport){window.visualViewport.addEventListener('resize',syncProjectViewport);window.visualViewport.addEventListener('scroll',syncProjectViewport);}
+window.addEventListener('resize',syncProjectViewport);syncProjectViewport();
 boot();
 </script>
 </body>
