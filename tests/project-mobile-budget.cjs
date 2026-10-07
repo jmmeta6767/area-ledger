@@ -77,7 +77,7 @@ fs.mkdirSync(output,{recursive:true});
         await page.evaluate(()=>{U.sheet={kind:'profileEdit'};render();});
         const profileMetrics=await page.evaluate(()=>{const sheet=document.querySelector('.profile-editor-sheet'),footer=sheet.querySelector('.profile-editor>.stack').getBoundingClientRect(),sr=sheet.getBoundingClientRect();return{width:sheet.clientWidth,scrollWidth:sheet.scrollWidth,left:sr.left,right:sr.right,footerBottom:footer.bottom,viewportHeight:visualViewport.height,documentWidth:document.documentElement.clientWidth,documentScrollWidth:document.documentElement.scrollWidth,inputs:[...sheet.querySelectorAll('input:not([type=file]),textarea')].map(x=>{const r=x.getBoundingClientRect();return{left:r.left,right:r.right};})};});
         await page.screenshot({path:path.join(output,'profile-edit-after-390.png'),fullPage:false});
-        assert(profileMetrics.width>=389&&profileMetrics.scrollWidth<=profileMetrics.width+1,'profile editor should use a single full-width scroll surface');
+        assert(profileMetrics.width>=389&&profileMetrics.scrollWidth<=profileMetrics.width+1,`profile editor should use a single full-width scroll surface: ${JSON.stringify(profileMetrics)}`);
         assert(profileMetrics.inputs.every(x=>x.left>=profileMetrics.left-1&&x.right<=profileMetrics.right+1),'profile edit fields must stay inside the sheet');
         assert(profileMetrics.footerBottom<=profileMetrics.viewportHeight+1,'profile save actions should remain reachable');
         assert(profileMetrics.documentScrollWidth<=profileMetrics.documentWidth+1,'profile editor should not create document overflow');
