@@ -41,6 +41,8 @@ const html=fs.readFileSync(path.join(root,'gateway/public/index.html'),'utf8').r
    assert(first.documentWidth<=first.clientWidth+1,JSON.stringify(first));
    assert(first.saveButtons.every(b=>b.width>=44&&b.height>=44),JSON.stringify(first));
    if(width===390)await page.screenshot({path:path.join(root,'layout-evidence','project-create-keyboard-after-390.png')});
+   await page.locator('#pstatus').focus();await page.waitForTimeout(100);
+   assert.equal(await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ledger-vvh'))),fullHeight,'native select controls should not reserve a software keyboard');
    await page.locator('#ploc').focus();await page.waitForTimeout(450);
    assertVisible(await page.evaluate(()=>readGeometry(document.activeElement)));
    await page.evaluate(()=>{document.querySelectorAll('.project-form-fold').forEach(d=>d.open=true);});

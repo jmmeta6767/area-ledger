@@ -3454,7 +3454,8 @@ body[data-sheet-kind="proj"].project-keyboard-focus .project-sheet{padding-botto
 .project-sheet .pf-field :is(input,select){width:100%;min-width:0;max-width:100%;box-sizing:border-box}
 .project-sheet .pf-money{width:100%;min-width:0;max-width:100%}
 .project-sheet .pf-money input{flex:1 1 0;width:0;min-width:0;max-width:100%;box-sizing:border-box}
-@media(max-width:700px){.project-sheet .project-form-section{grid-template-columns:minmax(0,1fr)}}</style>
+@media(max-width:700px){.project-sheet .project-form-section{grid-template-columns:minmax(0,1fr)}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -8423,7 +8424,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
   navigator.serviceWorker.register('sw.js?v=800&source=1045&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
-function projectFieldFocused(){var f=document.activeElement;return !!(f&&f.matches&&f.matches('input:not([type="file"]):not([type="checkbox"]),textarea,select')&&f.closest&&f.closest('.master-sheet.project-sheet'));}
+function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
 function projectStandaloneMode(){return !!(navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
 function syncProjectViewport(){
   var vv=window.visualViewport,width=(vv&&vv.width)||window.innerWidth,height=(vv&&vv.height)||window.innerHeight,top=(vv&&vv.offsetTop)||0,focused=projectFieldFocused();
