@@ -65,6 +65,8 @@ jobs:
         run: node --check sw.js
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
+      - name: Native store package contract
+        run: node tests/mobile-store-contract.cjs
       - name: Regression QA
         run: node tests/qa.cjs
       - name: BOQ provenance regression

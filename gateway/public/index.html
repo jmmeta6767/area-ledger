@@ -2179,7 +2179,7 @@ input,select,textarea{max-width:100%;min-width:0}
 .project-form-head{position:sticky;top:-12px;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 -2px 8px;padding:7px 2px 8px;background:var(--bg)}
 .project-form-head small{display:block;color:var(--muted);font-size:.56rem;font-weight:800;letter-spacing:.08em}
 .project-form-head h3{margin:1px 0 0;font-size:1.05rem}
-.project-form-head>button{width:36px;height:36px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:1.25rem;line-height:1}
+.project-form-head>button{width:44px;height:44px;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:1.25rem;line-height:1}
 .project-form-section{display:grid;grid-template-columns:1fr 1fr;gap:9px 10px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
 .project-form-main{margin-bottom:9px}
 .pf-field{min-width:0}.pf-field.span-2{grid-column:1/-1}
@@ -3431,13 +3431,13 @@ body[data-sheet-kind="expenseBatch"] .master-sheet>h3{padding-top:5px}
  body[data-sheet-kind="expenseBatch"] .expense-batch-fields{grid-template-columns:minmax(0,1fr)}
 }
 /* Project editor follows Safari's visible viewport, including keyboard/pinch offsets. */
-.project-edit-scrim{
+.project-edit-scrim,.mobile-editor-scrim{
   left:var(--ledger-vvleft,0px)!important;right:auto!important;top:var(--ledger-vvtop,0px)!important;bottom:auto!important;
   height:var(--ledger-vvh,100vh)!important;max-height:var(--ledger-vvh,100vh)!important;
   width:var(--ledger-vvw,100vw)!important;max-width:var(--ledger-vvw,100vw)!important;
   overflow-x:clip!important;
 }
-.project-edit-scrim>.project-sheet{
+.project-edit-scrim>.project-sheet,.mobile-editor-scrim>.profile-editor-sheet{
   flex:0 1 520px;width:min(100%,520px)!important;max-width:100%!important;min-width:0!important;min-height:0!important;
   max-height:calc(var(--ledger-vvh,100vh) - 12px)!important;margin:0 auto!important;box-sizing:border-box!important;
   overflow-x:clip!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
@@ -3455,6 +3455,29 @@ body[data-sheet-kind="proj"].project-keyboard-focus .project-sheet{padding-botto
 .project-sheet .pf-money{width:100%;min-width:0;max-width:100%}
 .project-sheet .pf-money input{flex:1 1 0;width:0;min-width:0;max-width:100%;box-sizing:border-box}
 @media(max-width:700px){.project-sheet .project-form-section{grid-template-columns:minmax(0,1fr)}}
+.project-budget-glance{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:baseline!important;gap:2px 8px!important}
+.project-budget-glance em{grid-column:1/-1;color:var(--muted);font-size:.72rem;font-style:normal;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.project-boq-usage-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.project-boq-usage-values{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.88rem;font-variant-numeric:tabular-nums}
+.settings-feedback-entry{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px;margin:0 0 12px;padding:10px 13px;border:1px solid #e4d08e;border-radius:14px;background:#fff8df;color:#17202b;text-align:left;font:inherit}
+.settings-feedback-entry span{min-width:0}.settings-feedback-entry b,.settings-feedback-entry small{display:block}.settings-feedback-entry small{margin-top:2px;color:#68737c;font-size:.76rem}.settings-feedback-entry strong{font-size:1.4rem}
+.feedback-close{width:44px;height:44px;flex:0 0 44px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:1.25rem}
+.feedback-privacy{margin:8px 2px;padding:10px 12px;border-radius:12px;background:#eef6ef;color:#3f674c;font-size:.78rem;line-height:1.5}
+.profile-editor-sheet .profile-editor{padding-bottom:8px}
+.profile-editor-sheet .doc-editor-head{position:sticky;top:-10px;z-index:6;margin:0 -2px 8px;padding:8px 2px;background:var(--bg)}
+.profile-editor-sheet .profile-editor>.stack{position:sticky;bottom:calc(-8px - env(safe-area-inset-bottom,0px));z-index:7;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px -14px 0;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.feedback-editor-sheet .doc-editor-head{position:sticky;top:-10px;z-index:6;margin:0 -2px 8px;padding:8px 2px;background:var(--bg)}
+.feedback-editor-sheet>.feedback-editor>.stack{position:sticky;bottom:calc(-8px - env(safe-area-inset-bottom,0px));z-index:7;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px -14px 0;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.mobile-editor-scrim{align-items:flex-end!important}
+@media screen and (max-width:600px){
+ .mobile-editor-scrim{align-items:stretch!important}
+ .mobile-editor-scrim>.project-sheet,.mobile-editor-scrim>.profile-editor-sheet,.mobile-editor-scrim>.feedback-editor-sheet{flex:1 1 auto;width:100%!important;max-width:none!important;min-height:0!important;height:var(--ledger-vvh,100vh)!important;max-height:var(--ledger-vvh,100vh)!important;margin:0!important;border-radius:18px 18px 0 0!important;overflow-x:clip!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch}
+ .project-sheet,.profile-editor-sheet,.feedback-editor-sheet{padding-top:max(10px,env(safe-area-inset-top,0px))!important;padding-bottom:env(safe-area-inset-bottom,0px)!important}
+ .profile-editor-sheet .profile-editor>.stack{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
+ .project-sheet .project-form-savebar,.profile-editor-sheet .profile-editor>.stack,.feedback-editor-sheet>.feedback-editor>.stack{bottom:0!important}
+}
+@media(max-width:380px){.project-boq-usage-values{display:grid;grid-template-columns:1fr}.project-budget-glance em{font-size:.68rem}}
+@media(prefers-reduced-motion:reduce){.settings-feedback-entry,.feedback-close{scroll-behavior:auto;transition:none!important}}
 </style>
 </head>
 <body>
@@ -3765,7 +3788,7 @@ async function cloudGateway(method,path,body){
   var headers=cloudHeaders();if(!headers)return {ok:false,status:401,data:{error:'LEDGER_KEY_MISSING'}};
   var opt={method:method,headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'};
   if(body!==undefined)opt.body=JSON.stringify(body);
-  try{var r=await fetch(path,opt),d=null;try{d=await r.json();}catch(_){d={error:'LEDGER_RESPONSE_INVALID'};}return {ok:r.ok,status:r.status,data:d||{}};}catch(e){return {ok:false,status:0,data:{error:'LEDGER_NETWORK'}};}
+  try{var r=await fetch(gatewayApiUrl(path),opt),d=null;try{d=await r.json();}catch(_){d={error:'LEDGER_RESPONSE_INVALID'};}return {ok:r.ok,status:r.status,data:d||{}};}catch(e){return {ok:false,status:0,data:{error:'LEDGER_NETWORK'}};}
 }
 async function cloudFullAcceptance(){
   if(!cloudSyncEnabled()||!cloudLedgerKey(false))return {ok:false,error:'SYNC_DISABLED'};
@@ -3796,7 +3819,7 @@ async function cloudFileDelete(key){if(!key)return false;var x=await cloudGatewa
 async function cloudFileUpload(dataUrl,entityType,entityId,name){return cloudGateway('POST','/v1/files/upload',{dataUrl:dataUrl,entityType:entityType||'attachment',entityId:entityId||'',name:name||'attachment'});}
 async function cloudFileOpen(key,mime){
   if(!key||!cloudLedgerKey(false))return false;var headers=cloudHeaders();if(!headers)return false;delete headers['Content-Type'];
-  try{var r=await fetch('/v1/files/object?key='+encodeURIComponent(key),{method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});if(!r.ok)return false;var b=await r.blob(),u=URL.createObjectURL(b);runtimeReleaseCloudPhoto();U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};render();return true;}catch(_){return false;}
+  try{var r=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(key)),{method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});if(!r.ok)return false;var b=await r.blob(),u=URL.createObjectURL(b);runtimeReleaseCloudPhoto();U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};render();return true;}catch(_){return false;}
 }
 function cloudPhotoThumb(dataUrl){
   return new Promise(function(resolve){
@@ -3831,6 +3854,7 @@ async function googleWorkspaceRefresh(pid){
   if(U.sheet&&U.sheet.kind==='googleWorkspace')render();return st;
 }
 async function googleWorkspaceConnect(pid){
+  if(isNativeStoreApp()){toast('การเชื่อม Google ต้องกลับมาได้อย่างปลอดภัยในแอป · ฟังก์ชันนี้ยังไม่พร้อม');return false;}
   cloudLedgerKey(true);var returnUrl=location.origin+location.pathname,st=googleWorkspaceState();st.loading=true;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
   var r=await cloudGateway('POST','/v1/google/oauth/start',{returnUrl:returnUrl});st.loading=false;
   if(!r.ok||!r.data||!r.data.authorizationUrl){st.error=String(r.data&&r.data.error||'GOOGLE_CONNECT_FAILED');render();toast(st.error==='GOOGLE_NOT_CONFIGURED'?'Google OAuth ยังไม่ได้ตั้งค่าบน Server':'เริ่มเชื่อม Google ไม่สำเร็จ');return false;}
@@ -5312,10 +5336,10 @@ function vProjects(){
   h+='<div class="project-hub-result" id="projectHubResult">'+visible+' / '+S.projects.length+' โครงการ</div>';
   h+='<div class="empty project-hub-empty" id="projectHubEmpty" style="'+(visible?'display:none':'')+'">ไม่พบโครงการในตัวกรองนี้</div>';
   ordered.forEach(function(p){
-    var st=stats(p.id),x=budgetPct(p),statusText=projectHubStatusText(p),key=projectHubStatusKey(p),alerts=projectHubAttention(p,st),show=projectHubMatch(p,query,status);
+    var st=stats(p.id),budget=boqSummary(p.id),x=budget.pct,statusText=projectHubStatusText(p),key=projectHubStatusKey(p),alerts=projectHubAttention(p,st),show=projectHubMatch(p,query,status);
     h+='<article class="project-hub-card project-list-card" data-project-status="'+key+'" data-project-search="'+esc(projectHubSearchText(p))+'" style="'+(show?'':'display:none')+'"><button class="project-hub-main" data-act="openProj" data-id="'+p.id+'"><div class="project-hub-top"><div><b>'+esc(p.name)+'</b><small>'+esc(p.location||p.client||'ไม่ระบุสถานที่')+'</small></div><span class="mini-status">'+esc(statusText)+'</span></div>'+
       '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
-      '<div class="project-hub-glance"><span><small>ใช้งบ</small><b>'+Math.round(x*100)+'%</b></span><span><small>รับแล้ว</small><b class="in">'+fmt(st.recd)+'</b></span><span><small>จ่ายแล้ว</small><b class="out">'+fmt(st.paidOut)+'</b></span></div>'+
+      '<div class="project-hub-glance"><span class="project-budget-glance"><small>ใช้งบ BOQ</small><b>'+(budget.budget>0?Math.round(x*100)+'%':'—')+'</b><em>'+(budget.budget>0?fmt(budget.actual)+' / '+fmt(budget.budget):'เพิ่มรายการ BOQ เพื่อคำนวณ')+'</em></span><span><small>รับแล้ว</small><b class="in">'+fmt(st.recd)+'</b></span><span><small>จ่ายแล้ว</small><b class="out">'+fmt(st.paidOut)+'</b></span></div>'+
       (alerts.length?'<div class="project-hub-alerts">'+alerts.map(function(a){return '<span class="'+a.tone+'">'+esc(a.text)+'</span>';}).join('')+'</div>':'')+
       '</button><div class="project-hub-actions project-list-actions"><button class="primary" data-act="boqOpenProject" data-id="'+p.id+'">BOQ</button><button data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button data-act="editProj" data-id="'+p.id+'">แก้ไข</button></div></article>';
   });
@@ -5343,7 +5367,9 @@ function aiGatewayNormalizeBase(raw){
   }catch(_){return '';}
 }
 function aiGatewayEnvironment(base){base=aiGatewayNormalizeBase(base);if(!base)return 'none';try{var h=new URL(base).hostname.toLowerCase();if(h==='localhost')return 'local';if(/-staging\./.test(h))return 'staging';if(/\.workers\.dev$/.test(h))return 'production';return 'external';}catch(_){return 'invalid';}}
-function appDeploymentEnvironment(){try{var h=String(location.hostname||'').toLowerCase();if(h==='localhost')return 'local';if(/-staging\./.test(h))return 'staging';if(/\.workers\.dev$/.test(h))return 'production';return 'external';}catch(_){return 'external';}}
+function isNativeStoreApp(){try{return !!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==='function'&&window.Capacitor.isNativePlatform());}catch(_){return false;}}
+function gatewayApiUrl(path){try{return new URL(String(path||''),isNativeStoreApp()?aiGatewayProductionBase():location.origin).toString();}catch(_){return String(path||'');}}
+function appDeploymentEnvironment(){try{if(isNativeStoreApp())return 'production';var h=String(location.hostname||'').toLowerCase();if(h==='localhost')return 'local';if(/-staging\./.test(h))return 'staging';if(/\.workers\.dev$/.test(h))return 'production';return 'external';}catch(_){return 'external';}}
 function aiGatewayStagingBase(){return 'https://area-ledger-ai-gateway-staging.areamaibab.workers.dev';}
 function aiGatewayProductionBase(){return 'https://area-ledger-ai-gateway.areamaibab.workers.dev';}
 function aiGatewayConfig(){
@@ -5354,6 +5380,7 @@ function aiGatewayBase(){return aiGatewayNormalizeBase(aiGatewayConfig().endpoin
 function aiGatewayRevokeConsent(){S.ai=S.ai||{};S.ai.remoteOcrConsent=false;S.ai.remoteOcrConsentBase='';}
 function aiGatewaySuggestedBase(){
   try{
+    if(isNativeStoreApp())return aiGatewayProductionBase();
     var host=String(location.hostname||'').toLowerCase();
     if(location.protocol==='https:'&&/-staging\./.test(host))return aiGatewayStagingBase();
     if(location.protocol==='https:'&&/\.workers\.dev$/.test(host))return aiGatewayProductionBase();
@@ -6227,7 +6254,7 @@ function govLetterAlerts(pid){var now=today(),ev=(S.siteEvents||[]).filter(funct
 function govWorkAdvice(p){if(!p)return null;var end=p.endDate||'',days=validIsoDate(end)?dd(today(),end):null,active=(p.status||'active')!=='delivered'&&(p.status||'active')!=='closed',expired=active&&days!==null&&days<0;return{active:active,days:active?days:null,urgent:active&&days!==null&&days>=0&&days<=30,expired:expired};}
 function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
-  var s=stats(p.id),pcost=projectCostWithGuarantees(p.id),x=budgetPct(p),left=p.budget-pcost.total,actualCost=pcost.total,forecastProfit=approvedContractValue(p.id)-actualCost;
+  var s=stats(p.id),pcost=projectCostWithGuarantees(p.id),boqUse=boqSummary(p.id),x=boqUse.pct,boqRemaining=boqUse.budget-boqUse.actual,actualCost=pcost.total,forecastProfit=approvedContractValue(p.id)-actualCost;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div><div class="workflow-section-head"><span>งานประจำวัน</span><small>BOQ · เพิ่มรายการ · แก้ไขโครงการ</small></div>';
   var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid project-command-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button class="btn" data-act="accountingProjectCost" data-id="'+p.id+'">ต้นทุนบัญชี</button><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+p.id+'">เอกสาร</button><button class="btn" data-act="projectGuarantees" data-id="'+p.id+'">หลักประกัน</button><button class="btn" data-act="govRiskOpen" data-id="'+p.id+'">สัญญา / หนังสือ</button><button class="btn" data-act="profilePostNew" data-id="'+p.id+'">โพสต์หน้างาน</button></div></div>';
 
@@ -6249,8 +6276,7 @@ function vProject(){
 
   h+='<div class="workflow-section-head"><span>การเงินและต้นทุน</span><small>งบ · รับจ่าย · กำไร · หลักประกัน</small></div>';
   var ppc=projectProfitControl(p.id);h+='<div class="project-profit-control '+esc(ppc.risk)+'"><div><small>PROJECT PROFIT CONTROL</small><b>กำไรคาดการณ์ '+fmt(ppc.forecastProfit)+'</b></div><div><span>Cash margin <b class="'+(ppc.cashMargin>=0?'in':'out')+'">'+fmt(ppc.cashMargin)+'</b></span><span>EAC <b>'+fmt(ppc.eac)+'</b></span><span>กำไรปลายงาน <b class="'+(ppc.profitAtCompletion>=0?'in':'out')+'">'+fmt(ppc.profitAtCompletion)+'</b></span><span>AR / AP <b>'+fmt(ppc.ar)+' / '+fmt(ppc.ap)+'</b></span></div></div>';
-  h+='<div class="sec master-detail-card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span>ใช้งบไปแล้ว</span><b class="num">'+Math.round(x*100)+'%</b></div><div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
-    '<div class="muted" style="font-size:.9rem">ต้นทุนรวมเงินประกันรอคืน '+fmt(actualCost)+' · เงินประกันรอคืน '+fmt(pcost.pendingGuarantee)+' · งบประมาณ '+fmt(p.budget)+(left>=0?' · งบคงเหลือ <b class="num">'+fmt(left)+'</b>':' · เกินงบ <b class="num out">'+fmt(-left)+'</b>')+'</div></div>';
+  h+='<div class="sec master-detail-card project-boq-usage" style="margin-top:14px"><div class="project-boq-usage-head"><span>ใช้งบ BOQ</span><b class="num">'+(boqUse.budget>0?Math.round(x*100)+'%':'—')+'</b></div>'+(boqUse.budget>0?'<div class="bar '+barCls(x)+'" style="margin:8px 0"><i style="width:'+Math.min(100,x*100)+'%"></i></div><div class="project-boq-usage-values"><span>ใช้ไป '+fmt(boqUse.actual)+'</span><span>งบ BOQ '+fmt(boqUse.budget)+'</span></div><div class="muted" style="font-size:.9rem">'+(boqRemaining>=0?'คงเหลือ '+fmt(boqRemaining):'เกินงบ '+fmt(-boqRemaining))+'</div>':'<div class="muted" style="font-size:.9rem">ยังไม่มีงบ BOQ · เพิ่มรายการ BOQ เพื่อคำนวณเปอร์เซ็นต์</div>')+'<div class="muted" style="font-size:.82rem;margin-top:5px">คำนวณจากยอดรายจ่ายโครงการ ÷ ยอดรวม BOQ</div></div>';
   h+='<div class="grid4 master-detail-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(p.contract)+'</b></div><div><small>รับเงินแล้ว</small><b class="in">'+fmt(s.recd)+'</b></div>'+
     '<div><small>ค้างรับ</small><b>'+fmt(s.recPend)+'</b></div><div><small>ค้างจ่าย</small><b class="out">'+fmt(s.payPend)+'</b></div>'+
     '<div><small>กำไรคาดการณ์ (มูลค่างาน − ต้นทุนรวมประกัน)</small><b class="'+(forecastProfit>=0?'in':'out')+'">'+fmt(forecastProfit)+'</b></div><div><small>'+(s.recd>0?(s.recd-actualCost>=0?'กำไรสุทธิ':'ขาดทุนสุทธิ'):'กำไร/ขาดทุนสุทธิ')+'</small>'+(s.recd>0?'<b class="'+(s.recd-actualCost>=0?'in':'out')+'">'+fmt(s.recd-actualCost)+'</b>':'<b>รอรับรายได้</b>')+'</div></div>';
@@ -6930,6 +6956,8 @@ function sheetHtml(){
     if(owner&&!txLocked){b+='<button class="btn" data-act="editTx" data-id="'+t.id+'">แก้ไขรายการ</button><button class="btn dng'+(U.confirm==='tx'+t.id?' sure':'')+'" data-act="delTx" data-id="'+t.id+'">'+(U.confirm==='tx'+t.id?'แตะอีกครั้งเพื่อยืนยันลบ':'ลบรายการ')+'</button>';}
     if(!t.paid&&!txLocked)b+='<button class="btn" data-act="editDueTx" data-id="'+t.id+'">'+(t.due?'แก้ไขวันครบกำหนด':'เพิ่มวันครบกำหนด')+'</button>'+(t.due?'<button class="btn" data-act="clearDueTx" data-id="'+t.id+'">ปิดวันครบกำหนด</button>':'');
     b+='<button class="btn" data-act="closeSheet">ปิด</button></div>';
+  }else if(sh.kind==='feedback'){
+    b='<div class="feedback-editor"><div class="doc-editor-head"><div><small>AREA LEDGER</small><h3>ส่งความคิดเห็น / แจ้งปัญหา</h3></div><button type="button" class="feedback-close" data-act="closeSheet" aria-label="ปิด">×</button></div><p class="muted">ข้อความและข้อมูลรุ่นจะแสดงให้ตรวจอีกครั้งก่อนเลือกส่งผ่านแอปในเครื่อง</p><div class="field"><label for="feedbackKind">หัวข้อ</label><select id="feedbackKind"><option>ใช้งานไม่สะดวก</option><option>พบข้อผิดพลาด</option><option>ตัวเลขหรือข้อมูลไม่ชัดเจน</option><option>ข้อเสนอแนะ</option></select></div><div class="field"><label for="feedbackText">รายละเอียด</label><textarea id="feedbackText" rows="6" maxlength="1000" placeholder="บอกขั้นตอนที่ทำและสิ่งที่อยากให้เกิดขึ้น"></textarea></div><div class="feedback-privacy">แนบเฉพาะข้อความที่คุณพิมพ์ รุ่นแอป และชนิดอุปกรณ์ ระบบไม่แนบยอดเงิน BOQ รายการบัญชี หรือรูปภาพ</div><div class="stack"><button class="btn pri" data-act="feedbackShare">ตรวจและส่งความคิดเห็น</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div></div>';
   }else if(sh.kind==='cloudPhoto'){var cu=String(sh.url||''),ct=String(sh.title||'รูปจาก Cloudflare R2');b='<h3>'+esc(ct)+'</h3>'+(cu?'<div class="photo"><img src="'+esc(cu)+'" alt="'+esc(ct)+'"></div>':'<div class="muted">เปิดไฟล์ไม่สำเร็จ</div>')+'<div class="stack"><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='dueEdit'){
     var dt=S.tx.find(function(x){return x.id===sh.id;});if(!dt){U.sheet=null;return '';}
@@ -7190,7 +7218,7 @@ function sheetHtml(){
     var ownerSettings=S.role==='owner';
     b='<h3 class="settings-title"><span>ตั้งค่า / ระบบ</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3>'+
       '<p class="muted" data-build-info>'+esc(appBuildLabel())+'</p>'+
-      '<p class="settings-intro">จัดหมวดตามงานที่ใช้จริง · หัวข้อที่ไม่ใช้ทุกวันพับเก็บไว้เพื่อลดความรก</p>'+
+      '<p class="settings-intro">จัดหมวดตามงานที่ใช้จริง · หัวข้อที่ไม่ใช้ทุกวันพับเก็บไว้เพื่อลดความรก</p><button class="settings-feedback-entry" data-act="feedbackOpen"><span><b>ส่งความคิดเห็น / แจ้งปัญหา</b><small>ช่วยให้เราปรับปรุงจากการใช้งานจริง</small></span><strong>›</strong></button>'+
       '<details class="settings-group" open><summary><span><b>ทั่วไปและหน้าจอ</b><small>รูปแบบการแสดงผล · สิทธิ์ผู้ใช้ · พื้นหลัง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
         '<div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">สลับได้ทันทีโดยไม่กระทบข้อมูล</small></div>'+
         '<div class="field"><span class="lbl">ผู้ใช้งาน</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div><div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
@@ -7301,7 +7329,7 @@ function sheetHtml(){
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
-  return '<div class="scrim master-scrim'+(sh.kind==='proj'?' project-edit-scrim':'')+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='proj'?' project-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
+  return '<div class="scrim master-scrim'+(sh.kind==='proj'?' project-edit-scrim mobile-editor-scrim':((sh.kind==='profileEdit'||sh.kind==='feedback')?' mobile-editor-scrim':''))+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='proj'?' project-sheet':'')+(sh.kind==='profileEdit'?' profile-editor-sheet':'')+(sh.kind==='feedback'?' feedback-editor-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
 }
 function csvText(){
   var rows=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
@@ -7650,6 +7678,15 @@ function render(){
 function directAction(el){
   if(!el)return false;
   var a=el.getAttribute('data-act'),v=el.getAttribute('data-v'),id=el.getAttribute('data-id');
+  if(a==='feedbackOpen'){U.sheet={kind:'feedback'};render();return true;}
+  if(a==='feedbackShare'){
+    var feedbackNote=String((document.getElementById('feedbackText')||{}).value||'').trim(),feedbackKind=String((document.getElementById('feedbackKind')||{}).value||'ข้อเสนอแนะ');
+    if(!feedbackNote){toast('กรอกรายละเอียดก่อนส่งความคิดเห็น');var feedbackInput=document.getElementById('feedbackText');if(feedbackInput)feedbackInput.focus();return true;}
+    var feedbackStandalone=navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches),feedbackPlatform=/iPhone|iPad|iPod/i.test(navigator.userAgent)?'iPhone/iPad':/Android/i.test(navigator.userAgent)?'Android':navigator.userAgent.indexOf('Win')>=0?'Windows':'อุปกรณ์อื่น',feedbackText='AREA Ledger · '+feedbackKind+'\n\n'+feedbackNote+'\n\nรุ่น: '+appBuildLabel()+'\nอุปกรณ์: '+feedbackPlatform+' · '+(feedbackStandalone?'ติดตั้งบนหน้าจอโฮม':'เปิดผ่านเบราว์เซอร์')+'\nหน้าที่พบ: '+String(U.view||'ไม่ระบุ');
+    if(navigator.share){navigator.share({title:'ความคิดเห็น AREA Ledger',text:feedbackText}).then(function(){U.sheet=null;render();toast('เปิดเมนูแชร์แล้ว · เลือกช่องทางส่งความคิดเห็น');}).catch(function(err){if(!err||err.name!=='AbortError')toast('เปิดเมนูแชร์ไม่สำเร็จ');});return true;}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(feedbackText).then(function(){U.sheet=null;render();toast('คัดลอกความคิดเห็นแล้ว · วางส่งให้ทีมพัฒนาได้');},function(){toast('คัดลอกไม่สำเร็จ · กรุณาลองอีกครั้ง');});return true;}
+    toast('อุปกรณ์นี้ยังไม่รองรับการแชร์ข้อความ');return true;
+  }
   if(a==='bottomBoq'){var bp=bottomBoqProject();U.appMenu=false;U.sheet=null;if(bp){if(U.boqProjectPid!==bp){U.boqQuery='';U.boqAnchorId='';U.boqScroll=0;}U.boqProjectPid=bp;U.pid=bp;go('boq',{pid:bp,boqProjectPid:bp,boqQuery:U.boqQuery||'',boqAnchorId:U.boqAnchorId||'',boqScroll:U.boqScroll||0});}else{U.boqProjectPid='';U.boqQuery='';U.boqAnchorId='';U.boqScroll=0;go('boq',{boqProjectPid:'',boqQuery:'',boqAnchorId:'',boqScroll:0});}return true;}
   if(a==='googleWorkspaceOpen'){U.sheet={kind:'googleWorkspace',pid:id||U.boqProjectPid||''};googleWorkspaceState();render();googleWorkspaceRefresh(U.sheet.pid);return true;}
   if(a==='googleWorkspaceConnect'){googleWorkspaceConnect(id||U.boqProjectPid||'');return true;}
@@ -8424,12 +8461,13 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
   navigator.serviceWorker.register('sw.js?v=800&source=1045&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
-function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
+function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
 function projectStandaloneMode(){return !!(navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
 function syncProjectViewport(){
   var vv=window.visualViewport,width=(vv&&vv.width)||window.innerWidth,height=(vv&&vv.height)||window.innerHeight,top=(vv&&vv.offsetTop)||0,focused=projectFieldFocused();
   if(!projectStableViewportHeight||!projectStableViewportWidth||!focused||Math.abs(width-projectStableViewportWidth)>80){projectStableViewportHeight=height;projectStableViewportWidth=width;}
   document.body.classList.toggle('project-keyboard-focus',focused);
+  document.body.classList.toggle('profile-keyboard-focus',focused&&!!(document.activeElement.closest&&document.activeElement.closest('.master-sheet.profile-editor-sheet')));
   /* Some installed iOS web apps keep VisualViewport at the full screen height while
      the native keyboard covers its lower portion. Reserve a conservative keyboard
      area only in standalone mode; Safari's measured visual viewport always wins. */
@@ -8445,17 +8483,17 @@ function syncProjectViewport(){
 }
 function keepProjectFieldVisible(){
   var field=document.activeElement;if(!field||!field.matches('input:not([type="file"]):not([type="checkbox"]),textarea,select'))return;
-  var sheet=field.closest('.master-sheet.project-sheet');if(!sheet)return;
-  var scrim=sheet.closest('.project-edit-scrim'),view=scrim?scrim.getBoundingClientRect():null,viewTop=view?view.top:((window.visualViewport&&window.visualViewport.offsetTop)||0),viewBottom=view?view.bottom:viewTop+((window.visualViewport&&window.visualViewport.height)||window.innerHeight),sr=sheet.getBoundingClientRect();
-  var head=sheet.querySelector('.project-form-head'),save=sheet.querySelector('.project-form-savebar');
+  var sheet=field.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet');if(!sheet)return;
+  var scrim=sheet.closest('.mobile-editor-scrim'),view=scrim?scrim.getBoundingClientRect():null,viewTop=view?view.top:((window.visualViewport&&window.visualViewport.offsetTop)||0),viewBottom=view?view.bottom:viewTop+((window.visualViewport&&window.visualViewport.height)||window.innerHeight),sr=sheet.getBoundingClientRect();
+  var head=sheet.querySelector('.project-form-head,.profile-editor>.doc-editor-head,.feedback-editor>.doc-editor-head'),save=sheet.querySelector('.project-form-savebar,.profile-editor>.stack,.feedback-editor>.stack');
   var safeTop=Math.max(sr.top,viewTop)+(head?head.getBoundingClientRect().height:0)+8;
   var safeBottom=Math.min(sr.bottom,viewBottom)-(save?save.getBoundingClientRect().height:0)-16,fr=field.getBoundingClientRect(),delta=0;
   if(fr.bottom>safeBottom)delta=fr.bottom-safeBottom;else if(fr.top<safeTop)delta=fr.top-safeTop;
   if(Math.abs(delta)>1)sheet.scrollTop+=delta;
 }
 function scheduleProjectFieldVisibility(){if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){requestAnimationFrame(keepProjectFieldVisible);});else if(typeof setTimeout==='function')setTimeout(keepProjectFieldVisible,0);}
-document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet')){syncProjectViewport();[100,260,420].forEach(function(ms){setTimeout(function(){syncProjectViewport();},ms);});}});
-document.addEventListener('focusout',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet'))setTimeout(syncProjectViewport,0);});
+document.addEventListener('focusin',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet')){syncProjectViewport();[100,260,420].forEach(function(ms){setTimeout(function(){syncProjectViewport();},ms);});}});
+document.addEventListener('focusout',function(e){if(e.target&&e.target.closest&&e.target.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet'))setTimeout(syncProjectViewport,0);});
 if(window.visualViewport){window.visualViewport.addEventListener('resize',syncProjectViewport);window.visualViewport.addEventListener('scroll',syncProjectViewport);}
 window.addEventListener('resize',syncProjectViewport);syncProjectViewport();
 boot();

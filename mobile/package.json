@@ -1,0 +1,21 @@
+{
+  "name": "area-ledger-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "description": "Native iOS and Android container for the bundled AREA Ledger app",
+  "scripts": {
+    "test:contract": "node ../tests/mobile-store-contract.cjs",
+    "cap:add:android": "cap add android",
+    "cap:add:ios": "cap add ios",
+    "cap:sync": "cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2"
+  }
+}

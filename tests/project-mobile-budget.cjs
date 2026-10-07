@@ -34,7 +34,8 @@ fs.mkdirSync(output,{recursive:true});
       });
       const amountCheck=await page.evaluate(()=>({budget:boqSummary('mobile-budget').budget,used:boqSummary('mobile-budget').actual,pct:budgetPct(proj('mobile-budget')),noBoqPct:budgetPct({id:'missing-boq'})}));
       const shown=await page.locator('.project-list-card .project-hub-glance b').first().textContent();
-      percentResults.push({...amountCheck,shown});
+      const usageCopy=await page.locator('.project-list-card .project-budget-glance').innerText();
+      percentResults.push({...amountCheck,shown,usageCopy});
       if(width===390&&height===844)await page.screenshot({path:path.join(output,'project-budget-boq-after-390.png'),fullPage:false});
 
       await page.evaluate(()=>{document.body.style.minHeight='1500px';window.scrollTo(0,0);U.sheet={kind:'proj',id:'mobile-budget'};render();});
@@ -72,10 +73,37 @@ fs.mkdirSync(output,{recursive:true});
       await page.evaluate(()=>{U.sheet=null;render();});
       assert.equal(await page.locator('.project-sheet').count(),0);
       assert.equal(await page.evaluate(()=>JSON.stringify(S.tx[0])),JSON.stringify({id:'out-a',pid:'mobile-budget',type:'out',cat:'ค่าของ',sub:'วัสดุทดสอบ',amount:100000,date:'2026-10-06'}),'opening and closing the editor must not alter ledger entries');
+      if(width===390&&height===844){
+        await page.evaluate(()=>{U.sheet={kind:'profileEdit'};render();});
+        const profileMetrics=await page.evaluate(()=>{const sheet=document.querySelector('.profile-editor-sheet'),footer=sheet.querySelector('.profile-editor>.stack').getBoundingClientRect(),sr=sheet.getBoundingClientRect();return{width:sheet.clientWidth,scrollWidth:sheet.scrollWidth,left:sr.left,right:sr.right,footerBottom:footer.bottom,viewportHeight:visualViewport.height,documentWidth:document.documentElement.clientWidth,documentScrollWidth:document.documentElement.scrollWidth,inputs:[...sheet.querySelectorAll('input:not([type=file]),textarea')].map(x=>{const r=x.getBoundingClientRect();return{left:r.left,right:r.right};})};});
+        await page.screenshot({path:path.join(output,'profile-edit-after-390.png'),fullPage:false});
+        assert(profileMetrics.width>=389&&profileMetrics.scrollWidth<=profileMetrics.width+1,'profile editor should use a single full-width scroll surface');
+        assert(profileMetrics.inputs.every(x=>x.left>=profileMetrics.left-1&&x.right<=profileMetrics.right+1),'profile edit fields must stay inside the sheet');
+        assert(profileMetrics.footerBottom<=profileMetrics.viewportHeight+1,'profile save actions should remain reachable');
+        assert(profileMetrics.documentScrollWidth<=profileMetrics.documentWidth+1,'profile editor should not create document overflow');
+        await page.locator('#profileTikTok').focus();
+        await page.evaluate(()=>{visualViewport.height=420;visualViewport.dispatchEvent(new Event('resize'));syncProjectViewport();});
+        const profileKeyboard=await page.evaluate(()=>{const sheet=document.querySelector('.profile-editor-sheet'),field=document.activeElement.getBoundingClientRect(),head=sheet.querySelector('.doc-editor-head').getBoundingClientRect(),footer=sheet.querySelector('.profile-editor>.stack').getBoundingClientRect();return{fieldTop:field.top,fieldBottom:field.bottom,headBottom:head.bottom,footerTop:footer.top,footerBottom:footer.bottom,viewportHeight:visualViewport.height,scrollTop:sheet.scrollTop,documentWidth:document.documentElement.clientWidth,documentScrollWidth:document.documentElement.scrollWidth};});
+        await page.screenshot({path:path.join(output,'profile-edit-keyboard-simulated-390.png'),fullPage:false});
+        assert(profileKeyboard.fieldTop>=profileKeyboard.headBottom-1&&profileKeyboard.fieldBottom<=profileKeyboard.footerTop+1,`focused profile field must fit between header and save bar with simulated keyboard: ${JSON.stringify(profileKeyboard)}`);
+        assert(profileKeyboard.footerBottom<=profileKeyboard.viewportHeight+1,'profile save bar must stay above the simulated keyboard');
+        assert(profileKeyboard.documentScrollWidth<=profileKeyboard.documentWidth+1,'profile keyboard viewport should not cause horizontal overflow');
+        await page.evaluate(()=>{U.sheet={kind:'feedback'};render();});
+        await page.screenshot({path:path.join(output,'feedback-after-390.png'),fullPage:false});
+        assert.equal(await page.locator('.feedback-editor-sheet').count(),1);
+        assert((await page.locator('.feedback-privacy').innerText()).includes('ไม่แนบยอดเงิน BOQ'));
+        await page.locator('#feedbackText').focus();
+        await page.evaluate(()=>{visualViewport.height=420;visualViewport.dispatchEvent(new Event('resize'));syncProjectViewport();});
+        const feedbackKeyboard=await page.evaluate(()=>{const sheet=document.querySelector('.feedback-editor-sheet'),field=document.activeElement.getBoundingClientRect(),footer=sheet.querySelector('.feedback-editor>.stack').getBoundingClientRect();return{fieldTop:field.top,fieldBottom:field.bottom,footerTop:footer.top,footerBottom:footer.bottom,viewportHeight:visualViewport.height,documentWidth:document.documentElement.clientWidth,documentScrollWidth:document.documentElement.scrollWidth};});
+        await page.screenshot({path:path.join(output,'feedback-keyboard-simulated-390.png'),fullPage:false});
+        assert(feedbackKeyboard.fieldBottom<=feedbackKeyboard.footerTop+1,`feedback details must remain above its save bar: ${JSON.stringify(feedbackKeyboard)}`);
+        assert(feedbackKeyboard.footerBottom<=feedbackKeyboard.viewportHeight+1,'feedback actions must stay above the simulated keyboard');
+        assert(feedbackKeyboard.documentScrollWidth<=feedbackKeyboard.documentWidth+1,'feedback keyboard viewport should not cause horizontal overflow');
+      }
       await page.close();
     }
-    assert(percentResults.every(x=>x.budget===400000&&x.used===100000&&x.pct===0.25&&x.noBoqPct===0&&x.shown==='25%'),`utilization must be based on expense base / BOQ total and zero without BOQ: ${JSON.stringify(percentResults)}`);
-    console.log('PASS project utilization equals expense base / summed BOQ amount (25%); edit sheet and fields fit portrait 320/375/390/430 and landscape 640x360/844x390 CSS px, including a simulated zoomed visual viewport.');
+    assert(percentResults.every(x=>x.budget===400000&&x.used===100000&&x.pct===0.25&&x.noBoqPct===0&&x.shown==='25%'&&x.usageCopy.includes('100,000')&&x.usageCopy.includes('400,000')),`utilization must show expense / BOQ values using the same base: ${JSON.stringify(percentResults)}`);
+    console.log('PASS project utilization shows expense / BOQ denominator (25%); project and profile edit sheets fit portrait 320/375/390/430 and landscape 640x360/844x390, including simulated keyboard and zoomed visual viewports. Feedback fields remain visible above simulated keyboard.');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
 

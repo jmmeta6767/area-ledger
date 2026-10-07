@@ -1,0 +1,13 @@
+{
+  "appId": "com.areamaibab.arealedger",
+  "appName": "AREA Ledger",
+  "webDir": "../gateway/public",
+  "backgroundColor": "#EDEEE9",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost"
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}
