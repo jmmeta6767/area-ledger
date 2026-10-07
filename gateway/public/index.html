@@ -333,6 +333,9 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
 .tx-audit-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:5px}.tx-date-chip,.tx-cat-chip,.tx-review-chip{display:inline-flex;align-items:center;min-height:21px;padding:2px 7px;border-radius:7px;font-size:10.5px;font-weight:700;line-height:1.3}.tx-date-chip{background:#edf2f5;color:#47545f;font-variant-numeric:tabular-nums}.tx-cat-chip.material{background:#e7f6ed;color:#197548}.tx-cat-chip.labor{background:#fff0da;color:#a65a00}.tx-cat-chip.other{background:#eef0f3;color:#59636d}.tx-review-chip{background:#fff0bf;color:#8a5c00;border:1px solid #e7bd47}.tx-needs-review{box-shadow:inset 3px 0 0 #e7bd47!important}.list-audit-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.list-audit-summary>div{min-width:0;background:#fff;border:1px solid #e5e9ec;border-radius:12px;padding:10px 11px}.list-audit-summary small{display:block;color:#6b7580;font-size:11px}.list-audit-summary b{display:block;margin-top:3px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.list-audit-summary .warn{background:#fff8df;border-color:#e7bd47}.list-audit-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:8px 0 12px}.list-audit-tabs button{min-height:38px;border:1px solid #dfe4e7;border-radius:10px;background:#fff;color:#59636d;font:700 11px "Noto Sans Thai",system-ui,sans-serif;padding:5px}.list-audit-tabs button.on{background:#17202b;color:#fff;border-color:#17202b}.list-audit-tabs button.warn:not(.on){background:#fff8df;color:#8a5c00;border-color:#e7bd47}
 @media(max-width:390px){.list-audit-tabs{grid-template-columns:repeat(3,1fr)}.tx-audit-meta{gap:4px}.tx-date-chip,.tx-cat-chip,.tx-review-chip{font-size:10px}}
 @media(prefers-color-scheme:dark){.tx-date-chip,.tx-cat-chip.other{background:#26313c;color:#bdc7cf}.tx-cat-chip.material{background:#173b2b;color:#71d4a3}.tx-cat-chip.labor{background:#3a3016;color:#f0c14b}.tx-review-chip,.list-audit-summary .warn,.list-audit-tabs button.warn:not(.on){background:#3a3016;color:#f0c14b;border-color:#6f5922}.list-audit-summary>div,.list-audit-tabs button{background:#1a232d;border-color:#2a3541;color:#cbd2d8}.list-audit-tabs button.on{background:#eef1f3;color:#17202b}}
+/* Legacy OCR headings stay in the edit form but are not presented as transaction names. */
+.tx-ocr-review-chip{display:inline-flex;align-items:center;min-height:21px;padding:2px 7px;border-radius:7px;background:#fff0bf;color:#8a5c00;border:1px solid #e7bd47;font-size:10.5px;font-weight:700;line-height:1.3}
+@media(prefers-color-scheme:dark){.tx-ocr-review-chip{background:#3a3016;color:#f0c14b;border-color:#6f5922}}
 /* Dashboard 2.0 — reference-led executive summary */
 .mdash-balance{padding:20px!important}.mdash-balance-top{display:flex!important;align-items:center!important;gap:14px!important}.mdash-balance-top>div{min-width:0}.mdash-balance-top>div>span{display:block;color:#6b7580;font-size:15px}.mdash-balance-top>div>b{display:block;font-size:38px;line-height:1.15;margin-top:2px}.mdash-money-icon{width:48px;height:48px;flex:0 0 48px;border-radius:14px;background:#fff4cf;color:#e8a91e;display:grid;place-items:center}.mdash-money-icon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.mdash-month{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:0!important;margin-top:18px!important;padding-top:14px!important;border-top:1px solid #e6e9e8!important}.mdash-month i{padding:0 12px!important;border-right:1px solid #e6e9e8!important;min-width:0}.mdash-month i:first-child{padding-left:0!important}.mdash-month i:last-child{border-right:0!important}.mdash-month i,.mdash-month strong{display:block!important}.mdash-month i{font-style:normal;color:#6b7580;font-size:12.5px}.mdash-month strong{font-size:16px;margin-top:4px;color:#17202b;white-space:nowrap}.mdash-note{display:block;color:#8b939b;font-size:10.5px;margin-top:13px}
 .mdash-stats button{position:relative;min-height:152px!important;padding:15px!important}.mdash-stat-icon{width:39px;height:39px;border-radius:11px;display:grid!important;place-items:center!important;margin-bottom:10px}.mdash-stat-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.mdash-stat-icon.blue{background:#e6f7fc;color:#169bc0}.mdash-stat-icon.pink{background:#fdebf2;color:#df4f86}.mdash-stat-icon.amber{background:#fff3d8;color:#d99513}.mdash-stat-icon.teal{background:#e5f6f2;color:#168b78}.mdash-stats button>b{font-size:23px!important}
@@ -3156,11 +3159,31 @@ body[data-view] :where(.project-hub-main small,.boq-title,.boq-meta,.gm-main sma
   text-overflow:clip!important;
 }
 
-/* document/report views retain fidelity but get an explicit scroll container on small screens */
+/* Wide document tables keep their own horizontal scroll, while transaction reports
+   switch to readable cards on phones instead of making the page itself pan sideways. */
 body[data-view="print"] main,
 body[data-view="quoteprint"] main{overflow-x:auto;-webkit-overflow-scrolling:touch}
 body[data-view="print"] :where(.pv,.sec,.grid4),
 body[data-view="quoteprint"] :where(.quote-paper,.rd-paper){margin-inline:auto}
+.pv{min-width:0;max-width:100%}.pv .sec{min-width:0}.pv .wrapx{width:100%;max-width:100%;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
+@media(max-width:900px){
+  .pv .tx-report-table{display:block;width:100%;min-width:0;table-layout:fixed}
+  .pv .tx-report-table thead{display:none}
+  .pv .tx-report-table tbody{display:grid;gap:10px}
+  .pv .tx-report-table tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px 12px;width:100%;box-sizing:border-box;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;page-break-inside:avoid}
+  .pv .tx-report-table td{display:block;min-width:0;max-width:100%;padding:0;border:0;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere;line-height:1.45}
+  .pv .tx-report-table td:before{display:block;content:attr(data-label);margin-bottom:2px;color:var(--muted);font-size:.7rem;font-weight:600}
+  .pv .tx-report-table .tx-report-date{grid-column:1;grid-row:1;white-space:nowrap!important;font-weight:700;font-variant-numeric:tabular-nums}
+  .pv .tx-report-table .tx-report-status{grid-column:2;grid-row:1;text-align:right!important}
+  .pv .tx-report-table .tx-report-item,.pv .tx-report-table .tx-report-project{grid-column:1/-1}
+  .pv .tx-report-table .tx-report-item>b,.pv .tx-report-table .tx-report-item>span{display:block;min-width:0;overflow-wrap:anywhere}
+  .pv .tx-report-table .tx-report-income:not(.tx-report-empty),
+  .pv .tx-report-table .tx-report-paid:not(.tx-report-empty){grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:6px}
+  .pv .tx-report-table .tx-report-income:not(.tx-report-empty):before,
+  .pv .tx-report-table .tx-report-paid:not(.tx-report-empty):before{margin:0}
+  .pv .tx-report-table .tx-report-empty{display:none!important}
+  .pv .tx-report-ocr-warning{display:block;margin-top:4px;color:#825a00;font-size:.76rem;line-height:1.35}
+}
 
 /* every-page iPhone layout */
 @media(max-width:600px){
@@ -3753,7 +3776,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1046,"sha":"","environment":"source"};
+var APP_BUILD={"version":1047,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4850,15 +4873,15 @@ function txNeedsCategoryReview(t){var s=txCategorySuggestion(t);return !!(t&&t.t
 function txAuditGroup(t){if(!t||t.type!=='out')return 'other';if(t.cat==='ค่าของ')return 'material';if(t.cat==='ค่าแรง')return 'labor';return 'other';}
 function txAuditClass(t){var g=txAuditGroup(t);return g==='material'?'material':g==='labor'?'labor':'other';}
 function rowTx(t,showProj,opts){
-  opts=opts||{};var d=dueInfo(t),tags='',label=t.sub||t.partner||t.cat,pst=txPaymentState(t),outstanding=pst.remain>.01,suggest=txCategorySuggestion(t),needsReview=txNeedsCategoryReview(t);
+  opts=opts||{};var d=dueInfo(t),tags='',description=expenseOcrCleanDescriptionForProject(t.sub,t.pid),partner=expenseOcrCleanPartnerForProject(t.partner,t.pid),badOcrText=!!(t.sub&&!description||t.partner&&!partner),label=description||partner||t.cat,pst=txPaymentState(t),outstanding=pst.remain>.01,suggest=txCategorySuggestion(t),needsReview=txNeedsCategoryReview(t);
   if(t.vat)tags+='<span class="tag">VAT</span>';
   if(t.wht)tags+='<span class="tag">หัก 3%</span>';
   if(t.paid&&t.pay==='cash')tags+='<span class="tag">เงินสด</span>';
   if(opts.outstanding&&pst.partial)tags+='<span class="tag">'+(t.type==='in'?'รับบางส่วน':'จ่ายบางส่วน')+'</span>';
   if(outstanding){if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';}
   var shown=opts.outstanding?pst.remain:t.amount,sign=opts.outstanding?'':(t.type==='in'?'+':'−'),catText=t.type==='out'?(t.cat||'ยังไม่จัดหมวด'):(t.cat||'รายรับ');
-  var audit='<div class="tx-audit-meta"><span class="tx-date-chip">'+esc(dmyFull(t.date))+'</span><span class="tx-cat-chip '+txAuditClass(t)+'">'+esc(catText)+'</span>'+(needsReview?'<span class="tx-review-chip">ควรเป็น '+esc(suggest)+'</span>':'')+'</div>';
-  return '<button class="row tx-modern'+(needsReview?' tx-needs-review':'')+'" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+audit+(t.partner?'<small>'+esc(t.partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+sign+fmt(shown).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
+  var audit='<div class="tx-audit-meta"><span class="tx-date-chip">'+esc(dmyFull(t.date))+'</span><span class="tx-cat-chip '+txAuditClass(t)+'">'+esc(catText)+'</span>'+(needsReview?'<span class="tx-review-chip">ควรเป็น '+esc(suggest)+'</span>':'')+(badOcrText?'<span class="tx-ocr-review-chip">ตรวจสอบข้อความ OCR</span>':'')+'</div>';
+  return '<button class="row tx-modern'+(needsReview?' tx-needs-review':'')+'" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income':'')+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+audit+(partner?'<small>'+esc(partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+sign+fmt(shown).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
 }
 function timelineRows(list){
   var groups={};list.forEach(function(t){var k=t.date||'undated';(groups[k]||(groups[k]=[])).push(t);});
@@ -5129,11 +5152,15 @@ function expenseOcrAmount(text){
   }
   return Math.max.apply(Math,nums);
 }
+function expenseOcrCleanDescription(value){var sub=String(value||'').replace(/\s+/g,' ').trim().slice(0,160);if(!sub)return '';var signals=[/ว\s*\/\s*ด\s*\/\s*ป/i,/วันที่/i,/รายการ\s*\/\s*(?:ค่า)?(?:แรง|ของ)/i,/จำนวน(?:\s*เงิน)?/i,/ราคา\s*\/\s*หน่วย/i,/หมายเหตุ/i],hits=signals.reduce(function(n,re){return n+(re.test(sub)?1:0);},0),compact=sub.toLowerCase().replace(/[\s/|,;:：.·()_\-–]+/g,'');if(hits>=3||['ว/ด/ป','วันที่','รายการ','รายการค่าแรง','รายการค่าของ','จำนวน','จำนวนเงิน','ราคาหน่วย','หมายเหตุ'].map(function(x){return x.replace(/[\s/|,;:：.·()_\-–]+/g,'');}).indexOf(compact)>=0)return '';return sub;}
 function expenseOcrCleanPartner(value){var partner=String(value||'').replace(/\s+/g,' ').trim().slice(0,160);if(!partner)return '';var signals=[/ว\s*\/\s*ด\s*\/\s*ป/i,/วันที่/i,/รายการ/i,/ค่าของ|ค่าแรง/,/จำนวน/,/ราคา\s*\/\s*หน่วย/i,/รวม/,/หมายเหตุ/],hits=signals.reduce(function(n,re){return n+(re.test(partner)?1:0);},0),compact=partner.toLowerCase().replace(/[\s/|,;:：.·()_\-–]+/g,'');if(hits>=3||['ร้านค้า','ผู้รับเงิน','ร้านค้าผู้รับเงิน','ผู้รับเงินร้านค้า','ชื่อร้านค้า','ชื่อผู้รับเงิน','วดป','วันที่','รายการ','รายการค่าแรง','รายการค่าของ','ค่าแรง','ค่าของ','จำนวน','ราคาหน่วย','รวม','หมายเหตุ'].indexOf(compact)>=0)return '';return partner;}
+function expenseOcrProjectEcho(value,pid){var raw=String(value||'').replace(/\s+/g,' ').trim(),project=proj(pid),name=String(project&&project.name||'').replace(/\s+/g,' ').trim();if(!raw||!name)return false;var a=raw.toLowerCase(),b=name.toLowerCase();return a===b||(a.indexOf(b)===0&&/(?:ว\s*\/\s*ด\s*\/\s*ป|จำนวน|ราคา\s*\/\s*หน่วย|หมายเหตุ|รายการ\s*\/\s*(?:ค่า)?(?:แรง|ของ))/i.test(raw.slice(name.length)));}
+function expenseOcrCleanDescriptionForProject(value,pid){return expenseOcrProjectEcho(value,pid)?'':expenseOcrCleanDescription(value);}
+function expenseOcrCleanPartnerForProject(value,pid){return expenseOcrProjectEcho(value,pid)?'':expenseOcrCleanPartner(value);}
 function expenseOcrPartner(text){var ls=String(text||'').split(/\n+/).map(function(x){return x.trim();}).filter(function(x){return x.length>2&&!/^\d/.test(x);});return expenseOcrCleanPartner((ls[0]||'').slice(0,80));}
 function expenseOcrAssessment(res){res=res||{};var text=String(res.text||''),score=0,reasons=[],provider=Math.max(0,Math.min(1,+res.confidence||0));if(+res.amount>0){score+=.45;reasons.push('amount');}if(/รวมสุทธิ|ยอดสุทธิ|grand total|total|รวมทั้งสิ้น|จำนวนเงินรวม|รวมเงิน/i.test(text)){score+=.25;reasons.push('total-label');}if(String(res.partner||'').trim()){score+=.15;reasons.push('partner');}if(String(res.sub||'').trim()){score+=.10;reasons.push('category-detail');}if(text.length>=20){score+=.05;reasons.push('text');}if(res.source==='ai'&&+res.amount>0&&provider>=.65){score=Math.max(score,provider);reasons.push('vision-confidence');}score=Math.min(1,Math.round(score*100)/100);return {score:score,accepted:score>=.65,label:score>=.85?'high':score>=.65?'medium':'low',reasons:reasons};}
-function expenseOcrReviewSummary(res){
- var qa=expenseOcrAssessment(res),uncertain=[];res=res||{};if(!(+res.amount>0))uncertain.push('ยอดเงิน');if(!String(res.partner||'').trim())uncertain.push('ร้านค้า/ผู้รับเงิน');if(!String(res.sub||'').trim())uncertain.push('รายการ/รายละเอียด');if(!validIsoDate(String(res.date||'')))uncertain.push('วันที่');if(!String(res.cat||'').trim())uncertain.push('หมวด');
+function expenseOcrReviewSummary(res,pid){
+ var qa=expenseOcrAssessment(res),uncertain=[];res=res||{};if(!(+res.amount>0))uncertain.push('ยอดเงิน');if(!expenseOcrCleanPartnerForProject(res.partner,pid))uncertain.push('ร้านค้า/ผู้รับเงิน');if(!expenseOcrCleanDescriptionForProject(res.sub,pid))uncertain.push('รายการ/รายละเอียด');if(!validIsoDate(String(res.date||'')))uncertain.push('วันที่');if(!String(res.cat||'').trim())uncertain.push('หมวด');
  return {ok:qa.accepted&&uncertain.indexOf('ยอดเงิน')<0,score:qa.score,label:qa.label,uncertainFields:uncertain,requiresHumanReview:true};
 }
 function expensePhotoFingerprint(photo){photo=String(photo||'');return photo?backupChecksumText(photo):'';}
@@ -5141,7 +5168,7 @@ function expensePhotoDuplicate(photo,excludeId){var fp=expensePhotoFingerprint(p
 function expenseBatchItemsFromResult(res,photo,fileName,pid,defaultPay,groupId){
   res=res||{};var rows=Array.isArray(res.rows)?res.rows:[],multi=rows.length>1,src=multi?rows:[{amount:+res.amount||0,date:res.date||'',cat:res.cat||'ค่าของ',sub:res.sub||'',partner:res.partner||'',confidence:+res.confidence||0}],count=src.length||1;
   return src.map(function(r,i){
-    var amount=+r.amount||0,date=validIsoDate(String(r.date||''))?String(r.date):'',sub=String(r.sub||'').trim(),partner=expenseOcrCleanPartner(r.partner)||expenseOcrCleanPartner(res.partner),cat=CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):expenseGuess(sub).cat,confidence=Math.max(0,Math.min(1,+r.confidence||+res.confidence||0)),uncertain=[];
+    var amount=+r.amount||0,date=validIsoDate(String(r.date||''))?String(r.date):'',sub=expenseOcrCleanDescriptionForProject(r.sub,pid),partner=expenseOcrCleanPartnerForProject(r.partner,pid)||expenseOcrCleanPartnerForProject(res.partner,pid),cat=CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):expenseGuess(sub).cat,confidence=Math.max(0,Math.min(1,+r.confidence||+res.confidence||0)),uncertain=[];
     if(!(amount>0))uncertain.push('ยอดเงิน');if(!date)uncertain.push('วันที่');if(!sub)uncertain.push('รายการ/รายละเอียด');if(!partner)uncertain.push('ร้านค้า/ผู้รับเงิน');
     return {id:uid(),file:fileName||'',photo:photo||'',amount:amount,cat:cat||'ค่าของ',sub:sub,partner:partner,date:date,pid:pid,pay:defaultPay||'transfer',include:multi&&amount>0,ocrConfidence:confidence,ocrSource:res.source||'ai',ocrUncertainFields:uncertain,sourceGroupId:groupId||uid(),sourceRowIndex:i+1,sourceRowCount:count,sourceKind:multi?'table':'receipt'};
   });
@@ -5163,9 +5190,9 @@ function expenseBatchScan(files){
       try{
         data=await new Promise(function(resolve,reject){var r=new FileReader(),im=null;r.onload=function(){im=new Image();im.onload=function(){try{var M=1100,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);var photo=c.toDataURL('image/jpeg',.65);runtimeReleaseImage(im);r.onload=null;r.onerror=null;resolve({canvas:c,photo:photo});}catch(e){runtimeReleaseImage(im);reject(e);}};im.onerror=function(e){runtimeReleaseImage(im);reject(e);};im.src=r.result;};r.onerror=reject;r.readAsDataURL(file);});
         var res;try{res=await expenseOcrRecognize(data.canvas);}finally{runtimeReleaseCanvas(data&&data.canvas);if(data)data.canvas=null;}
-        var qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res),items;
+        var qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res,pid),items;
         if(Array.isArray(res.rows)&&res.rows.length>1)items=expenseBatchItemsFromResult(res,data.photo,file.name,pid,defaultPay,groupId);
-        else items=[{id:uid(),file:file.name,photo:data.photo,amount:+res.amount||0,cat:res.cat||'ค่าของ',sub:res.sub||'',partner:res.partner||'',date:validIsoDate(String(res.date||''))?String(res.date):today(),pid:pid,pay:defaultPay,include:false,ocrConfidence:qa.score,ocrSource:res.source||'local',ocrUncertainFields:review.uncertainFields.slice(),sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'}];
+        else items=[{id:uid(),file:file.name,photo:data.photo,amount:+res.amount||0,cat:res.cat||'ค่าของ',sub:expenseOcrCleanDescriptionForProject(res.sub,pid),partner:expenseOcrCleanPartnerForProject(res.partner,pid),date:validIsoDate(String(res.date||''))?String(res.date):today(),pid:pid,pay:defaultPay,include:false,ocrConfidence:qa.score,ocrSource:res.source||'local',ocrUncertainFields:review.uncertainFields.slice(),sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'}];
         if(U.expenseBatch!==batchToken||!U.sheet||U.sheet.kind!=='expenseBatch')break;
         Array.prototype.push.apply(U.expenseBatch,items);
       }catch(e){
@@ -5211,11 +5238,11 @@ function expenseScanImage(file){
             var pid=draft.pid||U.pid||'',pay=(S.last&&S.last.pay)||draft.pay||'transfer',items=expenseBatchItemsFromResult(res,draft.photo,file&&file.name||'',pid,pay,'expense-table-'+uid());
             U.expenseBatch=items;U.expenseBatchDone=1;U.expenseBatchTotal=1;U.expenseBatchProgress=100;U.expenseBatchBusy=false;U.expenseScanBusy=false;U.expenseScanProgress=100;U.expenseScanStage='พบ '+items.length+' รายการ';U.expenseScanMsg='AI พบตาราง '+items.length+' รายการ · ตรวจแต่ละแถวก่อนบันทึก';U.sheet={kind:'expenseBatch',source:'table'};render();return;
           }
-          var amt=+res.amount||0,qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res);
+          var pid=draft.pid||U.pid||'',amt=+res.amount||0,qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res,pid);
           if(!(amt>0)||!isFinite(amt)){var dg=S.ops&&S.ops.ocrDiagnostic||{};done((res&&res.source==='ai'?'AI Vision ยังไม่พบยอด':'OCR ยังไม่พบยอด')+(dg&&dg.errorCode?' · '+dg.errorCode:'')+' · ไม่บันทึกอัตโนมัติ กรุณากรอกและตรวจเอง','ต้องตรวจเอง');return;}
           if(!qa.accepted){done('OCR confidence '+Math.round(qa.score*100)+'% · ยังไม่เติมยอดอัตโนมัติ กรุณาตรวจและกรอกเอง','ความมั่นใจต่ำ');return;}
           expenseScanProgressSet(96,'กรอกข้อมูลให้ตรวจ');
-          draft.cat=res.cat||'ค่าของ';if(res.sub)draft.sub=res.sub;draft.amount=String(amt);if(res.partner)draft.partner=res.partner;if(validIsoDate(String(res.date||'')))draft.date=res.date;draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
+          draft.cat=res.cat||'ค่าของ';var cleanSub=expenseOcrCleanDescriptionForProject(res.sub,pid),cleanPartner=expenseOcrCleanPartnerForProject(res.partner,pid);if(cleanSub)draft.sub=cleanSub;draft.amount=String(amt);if(cleanPartner)draft.partner=cleanPartner;if(validIsoDate(String(res.date||'')))draft.date=res.date;draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
           done((res.source==='ai'?'AI อ่านบิลและกรอกข้อมูลแล้ว':'OCR ในเครื่องกรอกข้อมูลแล้ว')+' · '+(review.uncertainFields.length?'ควรตรวจเพิ่ม: '+review.uncertainFields.join(', ')+' · ':'')+'กรุณาตรวจรูปกับยอด ร้านค้า รายการ หมวด วันที่ และโครงการ แล้วกดบันทึก','เสร็จแล้ว');
         }).catch(function(){cleanup();done('OCR ใช้งานไม่ได้ · แนบรูปไว้แล้ว กรุณากรอกเอง','OCR ไม่สำเร็จ');});
       }catch(e){cleanup();done('เตรียมรูปไม่สำเร็จ กรุณาเลือกรูปใหม่','เตรียมรูปไม่สำเร็จ');}
@@ -5490,8 +5517,8 @@ function expenseOcrResult(text){
   return {text:text,amount:amt,cat:g.cat,sub:g.sub,partner:expenseOcrPartner(text),source:'local'};
 }
 function expenseOcrNormalizeRemote(x){
-  x=x&&typeof x==='object'?x:{};var text=String(x.text||''),local=expenseOcrResult(text),amount=+x.amount||0,rows=Array.isArray(x.rows)?x.rows.slice(0,80).map(function(r){return{amount:+r.amount||0,date:/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?String(r.date):'',cat:CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):'ค่าของ',sub:String(r.sub||'').slice(0,160),partner:expenseOcrCleanPartner(r.partner),confidence:Math.max(0,Math.min(1,+r.confidence||0))};}):[];
-  return {text:text,amount:rows.length>1?0:(amount>0&&isFinite(amount)?amount:local.amount),cat:String(x.cat||local.cat||'ค่าของ'),sub:String(x.sub||local.sub||''),partner:expenseOcrCleanPartner(x.partner)||expenseOcrCleanPartner(local.partner),date:/^\d{4}-\d{2}-\d{2}$/.test(String(x.date||''))?String(x.date):'',confidence:Math.max(0,Math.min(1,+x.confidence||0)),rows:rows,source:'ai'};
+  x=x&&typeof x==='object'?x:{};var text=String(x.text||''),local=expenseOcrResult(text),amount=+x.amount||0,rows=Array.isArray(x.rows)?x.rows.slice(0,80).map(function(r){return{amount:+r.amount||0,date:/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?String(r.date):'',cat:CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):'ค่าของ',sub:expenseOcrCleanDescription(r.sub),partner:expenseOcrCleanPartner(r.partner),confidence:Math.max(0,Math.min(1,+r.confidence||0))};}):[];
+  return {text:text,amount:rows.length>1?0:(amount>0&&isFinite(amount)?amount:local.amount),cat:String(x.cat||local.cat||'ค่าของ'),sub:expenseOcrCleanDescription(x.sub||local.sub),partner:expenseOcrCleanPartner(x.partner)||expenseOcrCleanPartner(local.partner),date:/^\d{4}-\d{2}-\d{2}$/.test(String(x.date||''))?String(x.date):'',confidence:Math.max(0,Math.min(1,+x.confidence||0)),rows:rows,source:'ai'};
 }
 function expenseOcrLocal(canvas){
   return new Promise(function(resolve,reject){loadTesseract(function(ok){if(!ok){reject(new Error('Local OCR unavailable'));return;}Tesseract.recognize(canvas,'tha+eng').then(function(res){resolve(expenseOcrResult(res.data&&res.data.text||''));}).catch(reject);});});
@@ -6649,18 +6676,19 @@ function vPrint(){
   h+='<div class="pv"><h2 style="font-family:var(--display);margin:20px 0 2px;font-size:1.35rem">รายงานรายรับรายจ่าย</h2><div class="muted" style="font-size:.9rem">'+esc(pid?pname(pid):'ทุกโครงการ')+' &nbsp; พิมพ์เมื่อ '+dstr(today())+'</div>';
   if(pid){var pj=proj(pid);if(pj&&contractText(pj))h+='<div style="font-size:.9rem;margin-top:4px">'+esc(contractText(pj))+'</div>';}
   h+='<div class="grid4"><div><small>รายรับ (ก่อน VAT)</small><b class="in">'+fmt(i)+'</b></div><div><small>รายจ่าย (ก่อน VAT)</small><b class="out">'+fmt(o)+'</b></div><div><small>ส่วนต่างรายรับ/รายจ่ายที่บันทึก</small><b>'+fmt(i-o)+'</b></div><div><small>ค้างรับ / ค้างจ่าย</small><b>'+fmt(rv)+' / '+fmt(pv)+'</b></div></div>';
-  h+='<div class="sec"><h2>สรุปรายโครงการ</h2><table><tr><th>โครงการ</th><th>มูลค่าสัญญา</th><th>งบ</th><th>รับเงินจริง</th><th>ต้นทุนจริง</th><th>กำไรคาดการณ์</th></tr>';
+  h+='<div class="sec"><h2>สรุปรายโครงการ</h2><div class="wrapx"><table><tr><th>โครงการ</th><th>มูลค่าสัญญา</th><th>งบ</th><th>รับเงินจริง</th><th>ต้นทุนจริง</th><th>กำไรคาดการณ์</th></tr>';
   pr.forEach(function(p){var s=stats(p.id),retInfo=p.retAmt?'<br><span class="muted">เงินประกันจ่ายแล้ว '+fmt(p.retAmt)+(p.retPaidDate?' · จ่าย '+dstr(p.retPaidDate):'')+(p.deliveryDate?' · ส่งมอบ '+dstr(p.deliveryDate):'')+(p.retDue?' · รับคืนได้ '+dstr(p.retDue):'')+'</span>':'';h+='<tr><td>'+esc(p.name)+(contractText(p)?'<br><span class="muted">'+esc(contractText(p))+'</span>':'')+retInfo+'</td><td class="num">'+fmt(p.contract)+'</td><td class="num">'+fmt(p.budget)+'</td><td class="num">'+fmt(s.recd)+'</td><td class="num">'+fmt(s.outB)+'</td><td class="num"><b>'+fmt((+p.contract||0)-s.outB)+'</b></td></tr>';});
-  h+='</table></div>';
-  if(pid){var pboq=boqRows(pid),pbs=boqSummary(pid);if(pboq.length){h+='<div class="sec"><h2>BOQ เทียบต้นทุนจริง</h2><div class="muted" style="margin-bottom:8px">งบ BOQ '+fmt(pbs.budget)+' · ใช้จริง '+fmt(pbs.actual)+' · '+(pbs.variance>=0?'คงเหลือ ':'เกินงบ ')+fmt(Math.abs(pbs.variance))+'</div><table><tr><th>รายการ</th><th>ปริมาณ</th><th>งบ</th><th>ใช้จริง</th><th>คงเหลือ/เกิน</th></tr>';pboq.forEach(function(x){var ba=boqAmount(x),aa=boqActual(x.id),vr=ba-aa;h+='<tr><td>'+esc(x.name)+'<br><span class="muted">'+esc(x.category||'')+'</span></td><td class="num">'+(+x.qty||0)+' '+esc(x.unit||'')+'</td><td class="num">'+fmt(ba)+'</td><td class="num">'+fmt(aa)+'</td><td class="num">'+(vr>=0?fmt(vr):'-'+fmt(Math.abs(vr)))+'</td></tr>';});h+='</table></div>';}}
+  h+='</table></div></div>';
+  if(pid){var pboq=boqRows(pid),pbs=boqSummary(pid);if(pboq.length){h+='<div class="sec"><h2>BOQ เทียบต้นทุนจริง</h2><div class="muted" style="margin-bottom:8px">งบ BOQ '+fmt(pbs.budget)+' · ใช้จริง '+fmt(pbs.actual)+' · '+(pbs.variance>=0?'คงเหลือ ':'เกินงบ ')+fmt(Math.abs(pbs.variance))+'</div><div class="wrapx"><table><tr><th>รายการ</th><th>ปริมาณ</th><th>งบ</th><th>ใช้จริง</th><th>คงเหลือ/เกิน</th></tr>';pboq.forEach(function(x){var ba=boqAmount(x),aa=boqActual(x.id),vr=ba-aa;h+='<tr><td>'+esc(x.name)+'<br><span class="muted">'+esc(x.category||'')+'</span></td><td class="num">'+(+x.qty||0)+' '+esc(x.unit||'')+'</td><td class="num">'+fmt(ba)+'</td><td class="num">'+fmt(aa)+'</td><td class="num">'+(vr>=0?fmt(vr):'-'+fmt(Math.abs(vr)))+'</td></tr>';});h+='</table></div></div>';}}
   var cs=Object.keys(cat).sort(function(a,b){return cat[b]-cat[a];});
   if(cs.length)h+='<div class="sec"><h2>รายจ่ายตามหมวด</h2>'+catRows(cs,cat,sub,o)+'</div>';
-  h+='<div class="sec"><h2>รายการทั้งหมด ('+list.length+')</h2><table><tr><th>วันที่</th><th>รายการ</th>'+(pid?'':'<th>โครงการ</th>')+'<th>รับ</th><th>จ่าย</th><th>สถานะ</th></tr>';
+  h+='<div class="sec"><h2>รายการทั้งหมด ('+list.length+')</h2><table class="tx-report-table"><thead><tr><th>วันที่</th><th>รายการ</th>'+(pid?'':'<th>โครงการ</th>')+'<th>รับ</th><th>จ่าย</th><th>สถานะ</th></tr></thead><tbody>';
   list.forEach(function(t){
-    h+='<tr><td>'+dstr(t.date)+'</td><td>'+esc(t.partner||t.cat)+'<br><span class="muted">'+esc(t.cat+(t.sub?': '+t.sub:''))+'</span></td>'+(pid?'':'<td>'+esc(pname(t.pid))+'</td>')+
-      '<td class="num">'+(t.type==='in'?fmt(t.amount):'')+'</td><td class="num">'+(t.type==='out'?fmt(t.amount):'')+'</td><td>'+(t.paid?'ชำระแล้ว':'ค้าง')+'</td></tr>';
+    var badPartner=!!t.partner&&!expenseOcrCleanPartnerForProject(t.partner,t.pid),badSub=!!t.sub&&!expenseOcrCleanDescriptionForProject(t.sub,t.pid);
+    h+='<tr><td class="tx-report-date" data-label="วันที่">'+dstr(t.date)+'</td><td class="tx-report-item" data-label="รายการ"><b>'+esc(t.partner||t.cat)+'</b><span class="muted">'+esc(t.cat+(t.sub?': '+t.sub:''))+'</span>'+(badPartner||badSub?'<small class="tx-report-ocr-warning">ข้อความผู้รับเงินหรือรายละเอียดจาก OCR ควรตรวจสอบในรายการนี้</small>':'')+'</td>'+(pid?'':'<td class="tx-report-project" data-label="โครงการ">'+esc(pname(t.pid))+'</td>')+
+      '<td class="num tx-report-income'+(t.type==='in'?'':' tx-report-empty')+'" data-label="รับ">'+(t.type==='in'?fmt(t.amount):'')+'</td><td class="num tx-report-paid'+(t.type==='out'?'':' tx-report-empty')+'" data-label="จ่าย">'+(t.type==='out'?fmt(t.amount):'')+'</td><td class="tx-report-status" data-label="สถานะ">'+(t.paid?'ชำระแล้ว':'ค้าง')+'</td></tr>';
   });
-  return h+'</table></div></div>';
+  return h+'</tbody></table></div></div>';
 }
 function docKindLabel(kind){return kind==='bill'?'ใบวางบิล':kind==='receipt'?'ใบเสร็จรับเงิน':'ใบเสนอราคา';}
 function docKindList(kind){return (kind==='bill'?S.bills:kind==='receipt'?S.receipts:S.quotes)||[];}
@@ -8471,7 +8499,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1046&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1047&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}

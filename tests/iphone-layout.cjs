@@ -14,6 +14,7 @@ async function fixture(page,view,count){
   S.tx=[{id:'t',pid:'p',type:'in',amount:329236.80,paid:true,date:'2026-10-04',cat:'รายรับ',sub:'รายรับทดสอบ',pay:'transfer'},{id:'paid-fixture',pid:'p',type:'out',amount:237711.80,paid:true,date:'2026-10-04',cat:'ค่าของ',sub:'ทดสอบยอดจ่ายแล้ว',pay:'transfer'},{id:'pending-fixture',pid:'p',type:'out',amount:66775.00,paid:false,date:'2026-10-04',cat:'ค่าของ',sub:'ทดสอบยอดค้างจ่าย',pay:'transfer'}];
   S.boq=[{id:'b',pid:'p',name:'รายการก่อสร้างสำหรับทดสอบรายละเอียดข้อความยาว',qty:10,unit:'ตร.ม.',price:32923.68,cat:'ค่าของ'}];
   U.view=view;U.pid='p';U.boqProjectPid='p';U.sheet=null;render();
+  if(view==='print'){const header='ว/ด/ป รายการ / ค่าแรง จำนวน ราคา/หน่วย รวม หมายเหตุ';S.tx=Array.from({length:17},(_,i)=>({id:'report-'+i,pid:'p',type:'out',amount:54600+i*125.50,paid:i%2===0,date:'2026-09-'+String(15+i).padStart(2,'0'),cat:'ค่าประกัน/ค่างาน',sub:i===0?header:'รายละเอียดรายการวัสดุก่อสร้างที่มีข้อความยาวเพื่อยืนยันว่าการ์ดไม่ล้นขอบจอ',partner:i===0?header:'ร้านวัสดุก่อสร้างทดสอบชื่อยาว',pay:'transfer'}));U.exportPid='';render();}
   if(count){U.expenseScanBusy=false;U.expenseBatchBusy=false;U.expenseBatchProgress=100;U.expenseBatchDone=count;U.expenseBatchTotal=count;U.expenseBatch=Array.from({length:count},(_,i)=>({include:true,amount:329236.80,date:'2026-10-04',pid:'p',pay:'transfer',cat:'ค่าของ',sub:'รายละเอียดวัสดุก่อสร้างยาวมาก '.repeat(12),partner:'ร้านค้าทดสอบ',photo:'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="56" height="58"><rect width="56" height="58" fill="#eee"/><text x="4" y="30" font-size="10">TEST</text></svg>'),ocrConfidence:.8,ocrSource:'local'}));U.sheet={kind:'expenseBatch'};render();}
  },{view,count});
 }
@@ -27,7 +28,7 @@ async function fixture(page,view,count){
    const page=await context.newPage();await page.route('**/*',r=>r.abort());let html=prepare(version==='before'?before:current);
    if(mode==='safe-area-simulation')html=html.replace(/env\(safe-area-inset-top(?:,\s*0px)?\)/g,'44px').replace(/env\(safe-area-inset-bottom(?:,\s*0px)?\)/g,'34px');
    await page.setContent(html);
-   for(const [view,count] of [['home',0],['projects',0],['boq',0],['add',1],['add',11],['add',60]]){
+   for(const [view,count] of [['home',0],['projects',0],['boq',0],['print',0],['add',1],['add',11],['add',60]]){
     await fixture(page,view,count);
     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&!e.closest('.wrapx,.acct-table');}).slice(0,12).map(e=>e.className),handles:document.querySelectorAll('.master-sheet-handle').length}));
     evidence.push({version,mode,width,height,view,count,...result});
@@ -43,6 +44,10 @@ async function fixture(page,view,count){
       assert.deepEqual(finance.labels,['จ่ายแล้ว','ค้างจ่าย']);
       assert.deepEqual(finance.amounts.map(x=>x.text),['฿237,711.80','฿66,775.00']);
       assert(finance.amounts.every(x=>(width>960||x.whiteSpace==='nowrap')&&x.rects===1),JSON.stringify(finance));
+     }
+     if(view==='print'&&width<=900){
+      const report=await page.evaluate(()=>{const table=document.querySelector('.tx-report-table'),rows=table?[...table.querySelectorAll('tbody tr')]:[],first=rows[0],date=first&&first.querySelector('.tx-report-date'),item=first&&first.querySelector('.tx-report-item'),amount=first&&first.querySelector('.tx-report-paid:not(.tx-report-empty)'),textRects=el=>{const r=document.createRange();r.selectNodeContents(el);return r.getClientRects().length};return {tableExists:!!table,tableWidth:table?.getBoundingClientRect().width,appWidth:document.querySelector('#app')?.getBoundingClientRect().width,columns:first?getComputedStyle(first).gridTemplateColumns.split(' ').length:0,rows:rows.length,dateLines:date?textRects(date):0,dateWhiteSpace:date?getComputedStyle(date).whiteSpace:'',itemFits:!!item&&item.getBoundingClientRect().right<=first.getBoundingClientRect().right+1,amountFits:!!amount&&amount.getBoundingClientRect().right<=first.getBoundingClientRect().right+1,warning:document.querySelector('.tx-report-ocr-warning')?.textContent||''};});
+      assert.equal(report.rows,17);assert(report.tableWidth<=report.appWidth+1,JSON.stringify(report));assert.equal(report.columns,2);assert.equal(report.dateLines,1);assert.equal(report.dateWhiteSpace,'nowrap');assert(report.itemFits&&report.amountFits,JSON.stringify(report));assert(report.warning.includes('ควรตรวจสอบ'));
      }
      if(view==='projects')assert(await page.evaluate(()=>[...document.querySelectorAll('.project-hub-actions button')].every(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;})));
      assert(await page.evaluate(()=>[...document.querySelectorAll('.project-finance-kpis b,.project-hub-glance b,.expense-batch-summary b,.expense-batch-actions-summary b')].every(e=>!e.textContent.includes('฿')||getComputedStyle(e).whiteSpace==='nowrap')));
@@ -63,6 +68,7 @@ async function fixture(page,view,count){
     }
     if(width===390||width===320){
      if(count){await page.evaluate(()=>document.querySelector('.master-sheet').scrollTop=0);await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}-top.png`)});await page.evaluate(()=>{const s=document.querySelector('.master-sheet');s.scrollTop=s.scrollHeight;});}
+     if(view==='print'){await page.evaluate(()=>{const table=document.querySelector('.tx-report-table')||[...document.querySelectorAll('.pv table')].at(-1);if(table)table.scrollIntoView({block:'start'});});await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-print-list-viewport.png`)});}
      await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}.png`),fullPage:!count});
     }
    }
