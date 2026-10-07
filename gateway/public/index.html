@@ -3753,7 +3753,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1045,"sha":"","environment":"source"};
+var APP_BUILD={"version":1046,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5129,7 +5129,8 @@ function expenseOcrAmount(text){
   }
   return Math.max.apply(Math,nums);
 }
-function expenseOcrPartner(text){var ls=String(text||'').split(/\n+/).map(function(x){return x.trim();}).filter(function(x){return x.length>2&&!/^\d/.test(x);});return (ls[0]||'').slice(0,80);}
+function expenseOcrCleanPartner(value){var partner=String(value||'').replace(/\s+/g,' ').trim().slice(0,160);if(!partner)return '';var signals=[/ว\s*\/\s*ด\s*\/\s*ป/i,/วันที่/i,/รายการ/i,/ค่าของ|ค่าแรง/,/จำนวน/,/ราคา\s*\/\s*หน่วย/i,/รวม/,/หมายเหตุ/],hits=signals.reduce(function(n,re){return n+(re.test(partner)?1:0);},0),compact=partner.toLowerCase().replace(/[\s/|,;:：.·()_\-–]+/g,'');if(hits>=3||['ร้านค้า','ผู้รับเงิน','ร้านค้าผู้รับเงิน','ผู้รับเงินร้านค้า','ชื่อร้านค้า','ชื่อผู้รับเงิน','วดป','วันที่','รายการ','รายการค่าแรง','รายการค่าของ','ค่าแรง','ค่าของ','จำนวน','ราคาหน่วย','รวม','หมายเหตุ'].indexOf(compact)>=0)return '';return partner;}
+function expenseOcrPartner(text){var ls=String(text||'').split(/\n+/).map(function(x){return x.trim();}).filter(function(x){return x.length>2&&!/^\d/.test(x);});return expenseOcrCleanPartner((ls[0]||'').slice(0,80));}
 function expenseOcrAssessment(res){res=res||{};var text=String(res.text||''),score=0,reasons=[],provider=Math.max(0,Math.min(1,+res.confidence||0));if(+res.amount>0){score+=.45;reasons.push('amount');}if(/รวมสุทธิ|ยอดสุทธิ|grand total|total|รวมทั้งสิ้น|จำนวนเงินรวม|รวมเงิน/i.test(text)){score+=.25;reasons.push('total-label');}if(String(res.partner||'').trim()){score+=.15;reasons.push('partner');}if(String(res.sub||'').trim()){score+=.10;reasons.push('category-detail');}if(text.length>=20){score+=.05;reasons.push('text');}if(res.source==='ai'&&+res.amount>0&&provider>=.65){score=Math.max(score,provider);reasons.push('vision-confidence');}score=Math.min(1,Math.round(score*100)/100);return {score:score,accepted:score>=.65,label:score>=.85?'high':score>=.65?'medium':'low',reasons:reasons};}
 function expenseOcrReviewSummary(res){
  var qa=expenseOcrAssessment(res),uncertain=[];res=res||{};if(!(+res.amount>0))uncertain.push('ยอดเงิน');if(!String(res.partner||'').trim())uncertain.push('ร้านค้า/ผู้รับเงิน');if(!String(res.sub||'').trim())uncertain.push('รายการ/รายละเอียด');if(!validIsoDate(String(res.date||'')))uncertain.push('วันที่');if(!String(res.cat||'').trim())uncertain.push('หมวด');
@@ -5140,7 +5141,7 @@ function expensePhotoDuplicate(photo,excludeId){var fp=expensePhotoFingerprint(p
 function expenseBatchItemsFromResult(res,photo,fileName,pid,defaultPay,groupId){
   res=res||{};var rows=Array.isArray(res.rows)?res.rows:[],multi=rows.length>1,src=multi?rows:[{amount:+res.amount||0,date:res.date||'',cat:res.cat||'ค่าของ',sub:res.sub||'',partner:res.partner||'',confidence:+res.confidence||0}],count=src.length||1;
   return src.map(function(r,i){
-    var amount=+r.amount||0,date=validIsoDate(String(r.date||''))?String(r.date):'',sub=String(r.sub||'').trim(),partner=String(r.partner||res.partner||'').trim(),cat=CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):expenseGuess(sub).cat,confidence=Math.max(0,Math.min(1,+r.confidence||+res.confidence||0)),uncertain=[];
+    var amount=+r.amount||0,date=validIsoDate(String(r.date||''))?String(r.date):'',sub=String(r.sub||'').trim(),partner=expenseOcrCleanPartner(r.partner)||expenseOcrCleanPartner(res.partner),cat=CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):expenseGuess(sub).cat,confidence=Math.max(0,Math.min(1,+r.confidence||+res.confidence||0)),uncertain=[];
     if(!(amount>0))uncertain.push('ยอดเงิน');if(!date)uncertain.push('วันที่');if(!sub)uncertain.push('รายการ/รายละเอียด');if(!partner)uncertain.push('ร้านค้า/ผู้รับเงิน');
     return {id:uid(),file:fileName||'',photo:photo||'',amount:amount,cat:cat||'ค่าของ',sub:sub,partner:partner,date:date,pid:pid,pay:defaultPay||'transfer',include:multi&&amount>0,ocrConfidence:confidence,ocrSource:res.source||'ai',ocrUncertainFields:uncertain,sourceGroupId:groupId||uid(),sourceRowIndex:i+1,sourceRowCount:count,sourceKind:multi?'table':'receipt'};
   });
@@ -5489,8 +5490,8 @@ function expenseOcrResult(text){
   return {text:text,amount:amt,cat:g.cat,sub:g.sub,partner:expenseOcrPartner(text),source:'local'};
 }
 function expenseOcrNormalizeRemote(x){
-  x=x&&typeof x==='object'?x:{};var text=String(x.text||''),local=expenseOcrResult(text),amount=+x.amount||0,rows=Array.isArray(x.rows)?x.rows.slice(0,80).map(function(r){return{amount:+r.amount||0,date:/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?String(r.date):'',cat:CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):'ค่าของ',sub:String(r.sub||'').slice(0,160),partner:String(r.partner||'').slice(0,160),confidence:Math.max(0,Math.min(1,+r.confidence||0))};}):[];
-  return {text:text,amount:rows.length>1?0:(amount>0&&isFinite(amount)?amount:local.amount),cat:String(x.cat||local.cat||'ค่าของ'),sub:String(x.sub||local.sub||''),partner:String(x.partner||local.partner||''),date:/^\d{4}-\d{2}-\d{2}$/.test(String(x.date||''))?String(x.date):'',confidence:Math.max(0,Math.min(1,+x.confidence||0)),rows:rows,source:'ai'};
+  x=x&&typeof x==='object'?x:{};var text=String(x.text||''),local=expenseOcrResult(text),amount=+x.amount||0,rows=Array.isArray(x.rows)?x.rows.slice(0,80).map(function(r){return{amount:+r.amount||0,date:/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?String(r.date):'',cat:CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):'ค่าของ',sub:String(r.sub||'').slice(0,160),partner:expenseOcrCleanPartner(r.partner),confidence:Math.max(0,Math.min(1,+r.confidence||0))};}):[];
+  return {text:text,amount:rows.length>1?0:(amount>0&&isFinite(amount)?amount:local.amount),cat:String(x.cat||local.cat||'ค่าของ'),sub:String(x.sub||local.sub||''),partner:expenseOcrCleanPartner(x.partner)||expenseOcrCleanPartner(local.partner),date:/^\d{4}-\d{2}-\d{2}$/.test(String(x.date||''))?String(x.date):'',confidence:Math.max(0,Math.min(1,+x.confidence||0)),rows:rows,source:'ai'};
 }
 function expenseOcrLocal(canvas){
   return new Promise(function(resolve,reject){loadTesseract(function(ok){if(!ok){reject(new Error('Local OCR unavailable'));return;}Tesseract.recognize(canvas,'tha+eng').then(function(res){resolve(expenseOcrResult(res.data&&res.data.text||''));}).catch(reject);});});
@@ -7680,7 +7681,7 @@ function render(){
   var sheetRestorePosition=syncSheetScrollLock(!!U.sheet);
   document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();
+  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
   if(sheetRestorePosition){var oldScrollBehavior=document.documentElement.style.scrollBehavior;document.documentElement.style.scrollBehavior='auto';window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);document.documentElement.style.scrollBehavior=oldScrollBehavior;}
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
@@ -8470,7 +8471,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1045&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1046&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
