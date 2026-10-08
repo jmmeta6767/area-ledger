@@ -420,6 +420,11 @@ export class GatewayState {
 }
 export default{async fetch(request,env){
   const started=Date.now(),url=new URL(request.url),rid=requestId(request),origin=corsOrigin(request,env),sentOrigin=request.headers.get('Origin')||'';
+  if((url.pathname==='/'||url.pathname==='/index.html')&&(request.method==='GET'||request.method==='HEAD')){
+    if(!env.ASSETS||typeof env.ASSETS.fetch!=='function')return json({error:'APP_SHELL_UNAVAILABLE'},503,'',rid);
+    const shell=await env.ASSETS.fetch(request),headers=new Headers(shell.headers);headers.set('Cache-Control','no-store');headers.set('Pragma','no-cache');
+    return new Response(shell.body,{status:shell.status,statusText:shell.statusText,headers});
+  }
   if(url.pathname==='/health'&&request.method==='GET'){if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);const c=await productionPlatformStatus(env);return json({ok:true,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured:c.providerConfigured,durableState:c.durableState,cloudLedger:c.durableState,cloudLedgerBackup:c.durableState,d1Ledger:c.d1Ledger,d1Schema:c.d1Schema,r2Files:c.r2Files,productionReady:c.ready,auditSink:!!env.GATEWAY_AUDIT},200,origin,rid);}
   if(url.pathname==='/ready'&&request.method==='GET'){if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);const providerConfigured=providerReady(env),durableState=!!env.GATEWAY_STATE,allowedOriginCount=allowedOrigins(env).length,ready=providerConfigured&&durableState;return json({ok:ready,service:'area-ledger-ai-gateway',protocol:PROTOCOL_VERSION,providerConfigured,durableState,cloudLedger:durableState,d1Ledger:d1Ready(env),r2Files:r2Ready(env),sameOriginAllowed:true,allowedOriginCount,auditSink:!!env.GATEWAY_AUDIT},ready?200:503,origin,rid);}
   if(url.pathname==='/v1/public/profile'&&request.method==='GET'){

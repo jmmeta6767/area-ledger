@@ -12,6 +12,8 @@ assert(cloud.includes("APP_RELEASE=800"),'Cloudflare app release must be v481');
 assert(cloud.includes("sw.js?v=800"),'Cloudflare app must register v490 SW');
 assert(cloudSw.includes("site-ledger-v800-business-stable-1-source-candidate"),'Cloudflare cache must be v481');
 assert(wrangler.includes('directory = "./public"'),'Wrangler must serve gateway/public');
+assert(wrangler.includes('run_worker_first = ["/", "/index.html"'),'app shell must pass through the Worker before asset caching');
+assert(fs.readFileSync('gateway/src/worker.js','utf8').includes("headers.set('Cache-Control','no-store')"),'app shell responses must not be cached at the edge');
 assert(wrangler.includes('name = "area-ledger-ai-gateway-staging"'),'Cloudflare staging environment missing');
 
 assert.notEqual(legacy,cloud,'root and Cloudflare runtime must be intentionally separated');
