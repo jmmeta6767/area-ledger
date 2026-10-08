@@ -20,6 +20,12 @@ function gatewayPath(pathname){
 export default {
   async fetch(request,env){
     const url=new URL(request.url);
+    if((url.pathname==='/'||url.pathname==='/index.html')&&(request.method==='GET'||request.method==='HEAD')){
+      const shell=await env.ASSETS.fetch(request),headers=new Headers(shell.headers);
+      headers.set('Cache-Control','no-store');
+      headers.set('Pragma','no-cache');
+      return new Response(shell.body,{status:shell.status,statusText:shell.statusText,headers});
+    }
     if(url.pathname==='/legacy-health'){
       return json({ok:true,service:'area-ledger-legacy-app',protocol:'1',clientContract:CLIENT_CONTRACT,canonicalGateway:CANONICAL_GATEWAY});
     }

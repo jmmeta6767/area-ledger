@@ -1,11 +1,11 @@
-const fs=require('node:fs'),assert=require('node:assert/strict');
+const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('node:vm');
 const cfg=fs.readFileSync('legacy-app/wrangler.toml','utf8');
 const worker=fs.readFileSync('legacy-app/src/worker.js','utf8');
 const html=fs.readFileSync('gateway/public/index.html','utf8');
 assert(cfg.includes('name = "g"'));
 assert(cfg.includes('directory = "../gateway/public"'));
 assert(cfg.includes('binding = "ASSETS"'));
-assert(cfg.includes('run_worker_first = ["/legacy-health", "/health", "/ready", "/v1/*"]'));
+assert(cfg.includes('run_worker_first = ["/", "/index.html", "/legacy-health", "/health", "/ready", "/v1/*"]'));
 assert(!/OCR_API_KEY|GEMINI|LEDGER_DB|LEDGER_FILES|durable_objects|r2_buckets|d1_databases/.test(cfg));
 assert(cfg.includes('[[services]]'));
 assert(cfg.includes('binding = "GATEWAY"'));
@@ -14,8 +14,33 @@ assert(worker.includes("const CANONICAL_GATEWAY='https://area-ledger-ai-gateway.
 assert(worker.includes("pathname==='/health'"));
 assert(worker.includes("pathname==='/ready'"));
 assert(worker.includes("pathname.startsWith('/v1/')"));
+assert(worker.includes("url.pathname==='/'||url.pathname==='/index.html'"));
+assert(worker.includes("headers.set('Cache-Control','no-store')"));
+assert(worker.includes("headers.set('Pragma','no-cache')"));
 assert(worker.includes('return env.GATEWAY.fetch(new Request('));
 assert(worker.includes('return env.ASSETS.fetch(request)'));
 assert(!/api[_-]?key|secret put|GEMINI_API_KEY/i.test(worker));
 assert(html.includes('<meta name="area-ledger-client-contract" content="v1005-canonical-gateway">'));
-console.log('PASS legacy g app shell contract');
+const runtime={URL,Request,Response,Headers};
+vm.createContext(runtime);
+vm.runInContext(worker.replace('export default','globalThis.worker='),runtime);
+(async()=>{
+  let assetCalls=0;
+  const shell='<html><body>latest shell</body></html>';
+  const assets={fetch:async request=>{assetCalls++;assert(['/','/index.html'].includes(new URL(request.url).pathname));return new Response(shell,{headers:{'Content-Type':'text/html','Cache-Control':'public, must-revalidate, max-age=0'}});}};
+  for(const path of ['/','/index.html']){
+    const response=await runtime.worker.fetch(new Request('https://g.test'+path),{ASSETS:assets});
+    assert.equal(response.status,200);
+    assert.equal(await response.text(),shell);
+    assert.equal(response.headers.get('Cache-Control'),'no-store');
+    assert.equal(response.headers.get('Pragma'),'no-cache');
+  }
+  assert.equal(assetCalls,2);
+  let gatewayTarget='';
+  const gateway={fetch:async request=>{gatewayTarget=request.url;assert.equal(request.headers.get('X-AREA-Legacy-App'),'g');return new Response('gateway');}};
+  const proxied=await runtime.worker.fetch(new Request('https://g.test/v1/health'),{GATEWAY:gateway,ASSETS:assets});
+  assert.equal(await proxied.text(),'gateway');
+  assert.equal(new URL(gatewayTarget).origin,'https://area-ledger-ai-gateway.areamaibab.workers.dev');
+  assert.equal(assetCalls,2);
+  console.log('PASS legacy g app shell and no-store runtime contract');
+})().catch(error=>{console.error(error);process.exitCode=1;});
