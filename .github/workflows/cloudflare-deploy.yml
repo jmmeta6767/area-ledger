@@ -58,6 +58,7 @@ jobs:
           node --check sw.js
           node tests/cloudflare-only.cjs
           node tests/qa.cjs
+          node tests/reliability-v1048.cjs
           node tests/gateway-contract.cjs
           node tests/gateway-runtime.cjs
           node tests/cloud-ledger-sync.cjs
@@ -76,6 +77,9 @@ jobs:
           node --check tests/capture-production-bindings.mjs
           node tests/gateway-preflight.cjs
           node tests/legacy-app.cjs
+
+      - name: Stamp deployment identity
+        run: node tests/stamp-build.mjs ${{ github.sha }} ${{ inputs.target }}
 
       - name: Deploy staging and auto-provision bindings
         if: ${{ inputs.target == 'staging' }}
