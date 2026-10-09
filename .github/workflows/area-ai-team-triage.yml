@@ -35,6 +35,33 @@ jobs:
       - name: Validate issue intake without side effects
         run: node tests/area-ai-team-triage.cjs
 
+  dry-run-sprint-138:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate intake contract
+        run: node tests/area-ai-team-triage.cjs
+      - name: Run read-only triage against actual Sprint Issue 138
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {planIssue,renderComment}=require('./tools/area-ai-team/triage.cjs');
+            const {owner,repo}=context.repo;
+            const response=await github.rest.issues.get({owner,repo,issue_number:138});
+            const plan=planIssue(response.data);
+            const summary=renderComment(plan);
+            core.summary.addHeading('AREA AI Team - real Issue #138 dry-run');
+            core.summary.addRaw(summary+'\n\nNo Issue was changed; Codex was not invoked; no merge or deploy occurred.');
+            await core.summary.write();
+            if(!plan.implementers.includes('AI-03')||!plan.implementers.includes('AI-04')){
+              core.setFailed('Expected OCR + accounting specialists for Issue #138');
+            }
+
   plan-issue:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'area-ai-task')
     runs-on: ubuntu-latest
