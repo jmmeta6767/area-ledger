@@ -55,8 +55,9 @@ async function fixture(page,view,count){
       const checks=await page.evaluate(()=>{
        const sheet=document.querySelector('.master-sheet'),last=document.querySelectorAll('.expense-batch-row');sheet.scrollTop=sheet.scrollHeight;
        const action=document.querySelector('.expense-batch-actions'),date=last[last.length-1].querySelector('[type=date]'),row=date.closest('.expense-batch-row');
-       return {dateFits:date.getBoundingClientRect().right<=row.getBoundingClientRect().right,actionFits:action.getBoundingClientRect().bottom<=sheet.getBoundingClientRect().bottom+1,oneHandle:getComputedStyle(sheet,'::before').display==='none',font:parseFloat(getComputedStyle(date).fontSize)};
-      });assert(checks.dateFits&&checks.actionFits&&checks.oneHandle&&checks.font>=16,JSON.stringify(checks));
+       const evidence=[...sheet.querySelectorAll('.expense-batch-evidence')];
+       return {dateFits:date.getBoundingClientRect().right<=row.getBoundingClientRect().right,actionFits:action.getBoundingClientRect().bottom<=sheet.getBoundingClientRect().bottom+1,oneHandle:getComputedStyle(sheet,'::before').display==='none',font:parseFloat(getComputedStyle(date).fontSize),evidenceCount:evidence.length,evidenceImages:evidence.every(x=>x.querySelector('img')?.src.startsWith('data:image/')),evidenceTargets:evidence.every(x=>x.querySelector('summary').getBoundingClientRect().height>=44)};
+      });assert(checks.dateFits&&checks.actionFits&&checks.oneHandle&&checks.font>=16&&checks.evidenceCount===count&&checks.evidenceImages&&checks.evidenceTargets,JSON.stringify(checks));
       await page.locator('[data-exp-batch="0"][data-k="sub"]').fill('แก้ไขรายละเอียด');
       await page.locator('[data-exp-batch="0"][data-k="include"]').uncheck();
       assert.equal(await page.evaluate(()=>U.expenseBatch[0].sub),'แก้ไขรายละเอียด');assert.equal(await page.evaluate(()=>U.expenseBatch[0].include),false);
@@ -68,6 +69,7 @@ async function fixture(page,view,count){
     }
     if(width===390||width===320){
      if(count){await page.evaluate(()=>document.querySelector('.master-sheet').scrollTop=0);await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}-top.png`)});await page.evaluate(()=>{const s=document.querySelector('.master-sheet');s.scrollTop=s.scrollHeight;});}
+     if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&count===11){const summary=page.locator('.expense-batch-evidence summary').first();await summary.click();const image=page.locator('.expense-batch-evidence img').first();assert(await image.isVisible());assert(await image.evaluate(el=>el.src.startsWith('data:image/')));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await page.screenshot({path:path.join(out,'after-browser-390-add-11-evidence-open.png')});await summary.click();}
      if(view==='print'){await page.evaluate(()=>{const table=document.querySelector('.tx-report-table')||[...document.querySelectorAll('.pv table')].at(-1);if(table)table.scrollIntoView({block:'start'});});await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-print-list-viewport.png`)});}
      await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}.png`),fullPage:!count});
     }

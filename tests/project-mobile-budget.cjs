@@ -34,7 +34,7 @@ fs.mkdirSync(output,{recursive:true});
       });
       const amountCheck=await page.evaluate(()=>({budget:boqSummary('mobile-budget').budget,used:boqSummary('mobile-budget').actual,pct:budgetPct(proj('mobile-budget')),noBoqPct:budgetPct({id:'missing-boq'})}));
       const shown=await page.locator('.project-list-card .project-hub-glance b').first().textContent();
-      const usageCopy=await page.locator('.project-list-card .project-budget-glance').innerText();
+      const usageCopy=await page.locator('.project-list-card .project-budget-glance').textContent();
       percentResults.push({...amountCheck,shown,usageCopy});
       if(width===390&&height===844)await page.screenshot({path:path.join(output,'project-budget-boq-after-390.png'),fullPage:false});
 
