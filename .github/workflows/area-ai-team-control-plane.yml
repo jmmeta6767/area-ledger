@@ -1,0 +1,80 @@
+name: AREA AI Team Control Plane
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/area-ai-team/control-plane.cjs'
+      - 'tests/area-ai-team-control-plane.cjs'
+      - '.github/workflows/area-ai-team-control-plane.yml'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Open PR to inspect without deploying or merging'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Control plane validation
+        run: node --test tests/area-ai-team-control-plane.cjs
+
+  inspect:
+    if: github.event_name == 'workflow_dispatch'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate read-only PR risk and release dashboard
+        uses: actions/github-script@v7
+        env:
+          TARGET_PR: ${{ inputs.pr_number }}
+        with:
+          script: |
+            const {reviewPullRequest,releaseDecision}=require('./tools/area-ai-team/control-plane.cjs');
+            const {owner,repo}=context.repo;
+            const number=Number(process.env.TARGET_PR);
+            if(!Number.isSafeInteger(number)||number<1)throw Error('Invalid PR number');
+            const [prData,mainData]=await Promise.all([
+              github.rest.pulls.get({owner,repo,pull_number:number}),
+              github.rest.repos.getBranch({owner,repo,branch:'main'})
+            ]);
+            const files=await github.paginate(github.rest.pulls.listFiles,{owner,repo,pull_number:number,per_page:100});
+            const checks=await github.paginate(github.rest.checks.listForRef,{
+              owner,repo,ref:prData.data.head.sha,per_page:100
+            },response=>response.data.check_runs);
+            const report=reviewPullRequest(prData.data,files,checks,mainData.data.commit.sha);
+            const release=releaseDecision(report,null,false);
+            core.summary.addHeading('AREA AI Team — Read-only PR dashboard');
+            core.summary.addRaw('PR #'+number+' | main '+mainData.data.commit.sha+'\n\n');
+            core.summary.addTable([
+              [{data:'Field',header:true},{data:'Value',header:true}],
+              ['Gate',report.gate],
+              ['Regression',report.checkStatus.regression],
+              ['iPhone layout',report.checkStatus['iphone-layout']],
+              ['External Workers Build',report.cloudflareStatus],
+              ['Runtime touched',String(report.runtimeTouched)],
+              ['Production authorized','NO']
+            ]);
+            core.summary.addHeading('Blockers',3);
+            core.summary.addList(report.blockers.length?report.blockers:['No automated blocker; independent review required']);
+            core.summary.addHeading('Release decision',3);
+            core.summary.addList(release.issues);
+            core.summary.addRaw('\nNo Codex execution, merge, financial record write or production deploy occurred.');
+            await core.summary.write();
+            if(report.gate==='BLOCKED')core.setFailed('PR blocked by QA/release checks; do not merge.');
