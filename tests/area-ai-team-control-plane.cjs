@@ -34,7 +34,7 @@ test('Missing criteria and priority require triage',()=>{
 });
 test('Missing or pending checks block PR merge readiness',()=>{
   assert.equal(checkStatus([], 'regression'),'missing');
-  assert.equal(checkStatus([{name:'regression',status:'queued'}],'regression'),'missing'); // wrong lookup must be missing
+  assert.equal(checkStatus([{name:'regression',status:'queued'}],'regression'),'pending');
   const r=reviewPullRequest(basic,['docs/README.md'],[],sha);
   assert(r.blockers.some(s=>s.includes('regression')));
   assert.equal(r.mergeAuthorization,'NOT_GRANTED');
