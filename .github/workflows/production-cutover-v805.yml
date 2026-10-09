@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           AUTHORIZED=false
-          if [ -f .github/production-cutover-v805 ] && [ "$(tr -d '\r\n' < .github/production-cutover-v805)" = "DEPLOY_PRODUCTION" ]; then
+          if [ -f .github/production-cutover-v805 ] && [ "$(tr -d '\n' < .github/production-cutover-v805)" = "DEPLOY_PRODUCTION" ]; then
             AUTHORIZED=true
           fi
           SOURCE_SHA="${{ github.event.workflow_run.head_sha }}"
@@ -65,7 +65,7 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "${{ needs.authorize.outputs.source_sha }}"
           test -f .github/production-cutover-v805
-          test "$(tr -d '\r\n' < .github/production-cutover-v805)" = "DEPLOY_PRODUCTION"
+          test "$(tr -d '\n' < .github/production-cutover-v805)" = "DEPLOY_PRODUCTION"
 
       - name: Production secret preflight
         env:

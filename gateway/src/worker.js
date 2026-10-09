@@ -111,14 +111,14 @@ async function googleSyncProject(env,ledgerHash,body){
 }
 
 function parseGoogleUploadDataUrl(value){
-  const m=/^data:(application\/pdf|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|application\/vnd\.ms-excel|text\/csv|image\/(?:jpeg|png|webp|heic|heif));base64,([A-Za-z0-9+/=\r\n]+)$/i.exec(String(value||''));if(!m)throw Error('GOOGLE_FILE_TYPE_UNSUPPORTED');
+  const m=/^data:(application\/pdf|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|application\/vnd\.ms-excel|text\/csv|image\/(?:jpeg|png|webp|heic|heif));base64,([A-Za-z0-9+/=\n]+)$/i.exec(String(value||''));if(!m)throw Error('GOOGLE_FILE_TYPE_UNSUPPORTED');
   let bin;try{bin=atob(m[2].replace(/\s+/g,''));}catch(_){throw Error('GOOGLE_FILE_BASE64_INVALID');}
   if(bin.length<1||bin.length>8*1024*1024)throw Error(bin.length>8*1024*1024?'GOOGLE_FILE_TOO_LARGE':'GOOGLE_FILE_EMPTY');
   const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return {mime:m[1].toLowerCase(),bytes:out};
 }
 async function googleUploadProjectFile(env,ledgerHash,body){
   const project=googleCleanProject({project:body&&body.project,rows:[]}),name=cleanFileMeta(body&&body.name,180)||'BOQ-source',parsed=parseGoogleUploadDataUrl(body&&body.dataUrl),token=await googleAccessToken(env,ledgerHash),asset=await googleEnsureProjectAssets(env,ledgerHash,project,token),boundary='area_'+randomHex(12);
-  const meta={name,parents:[asset.folderId],appProperties:{areaLedger:'1',projectId:project.id}},head='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(meta)+'\r\n--'+boundary+'\r\nContent-Type: '+parsed.mime+'\r\n\r\n',tail='\r\n--'+boundary+'--';
+  const meta={name,parents:[asset.folderId],appProperties:{areaLedger:'1',projectId:project.id}},head='--'+boundary+'\nContent-Type: application/json; charset=UTF-8\n\n'+JSON.stringify(meta)+'\n--'+boundary+'\nContent-Type: '+parsed.mime+'\n\n',tail='\n--'+boundary+'--';
   const blob=new Blob([head,parsed.bytes,tail],{type:'multipart/related; boundary='+boundary}),d=await googleJson('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id%2Cname%2CmimeType%2Csize%2CwebViewLink',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary='+boundary},body:blob}),now=new Date().toISOString(),view=String(d.webViewLink||('https://drive.google.com/file/d/'+d.id+'/view'));
   await env.LEDGER_DB.prepare('INSERT INTO google_drive_files (ledger_hash,project_id,drive_file_id,file_name,mime,size_bytes,web_view_link,created_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(ledger_hash,project_id,drive_file_id) DO UPDATE SET file_name=excluded.file_name,mime=excluded.mime,size_bytes=excluded.size_bytes,web_view_link=excluded.web_view_link').bind(ledgerHash,project.id,String(d.id||''),name,String(d.mimeType||parsed.mime),Math.max(0,+d.size||parsed.bytes.byteLength),view,now).run();
   return {ok:true,projectId:project.id,file:{id:String(d.id||''),name:name,mime:String(d.mimeType||parsed.mime),size:Math.max(0,+d.size||parsed.bytes.byteLength),webViewLink:view,createdAt:now},driveUrl:asset.driveUrl,sheetUrl:asset.sheetUrl};
@@ -135,7 +135,7 @@ function cleanFileMeta(v,max){return String(v||'').replace(/[\u0000-\u001f\u007f
 function randomHex(bytes){const a=new Uint8Array(bytes||16);crypto.getRandomValues(a);return Array.from(a).map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function sha256Bytes(bytes){const h=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 function parseFileDataUrl(value){
-  const m=/^data:(image\/(?:jpeg|png|webp)|application\/pdf);base64,([A-Za-z0-9+/=\r\n]+)$/i.exec(String(value||''));if(!m)throw Error('FILE_TYPE_UNSUPPORTED');
+  const m=/^data:(image\/(?:jpeg|png|webp)|application\/pdf);base64,([A-Za-z0-9+/=\n]+)$/i.exec(String(value||''));if(!m)throw Error('FILE_TYPE_UNSUPPORTED');
   let bin;try{bin=atob(m[2].replace(/\s+/g,''));}catch(_){throw Error('FILE_BASE64_INVALID');}
   if(bin.length<1||bin.length>MAX_FILE_BYTES)throw Error(bin.length>MAX_FILE_BYTES?'FILE_TOO_LARGE':'FILE_EMPTY');
   const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return {mime:m[1].toLowerCase(),bytes:out};
