@@ -90,7 +90,7 @@ function reviewPullRequest(pr,files,checkRuns,latestMainSha){
 function releaseDecision(review,stagingEvidence,ownerAuthorized){
   const issues=Array.isArray(review&&review.blockers)?review.blockers.slice():['PR review required'];
   if(!review||review.gate!=='REQUIRES_INDEPENDENT_QA_SIGNOFF')issues.push('Independent QA signoff not complete');
-  if(!stagingEvidence||stagingEvidence.accepted!==true||!SHA_RE.test(String(stagingEvidence.sha||''))||stagingEvidence.sha!==review.headSha){
+  if(!stagingEvidence||stagingEvidence.accepted!==true||!SHA_RE.test(String(stagingEvidence.sha||''))||stagingEvidence.sha!==(review&&review.headSha)){
     issues.push('Exact-source staging acceptance missing');
   }
   if(!ownerAuthorized)issues.push('Owner production authorization missing');
