@@ -39,6 +39,7 @@ jobs:
           node tests/iphone-project-keyboard.cjs
           node tests/iphone-project-create-keyboard.cjs
           node tests/project-mobile-budget.cjs
+          node tests/reliability-mobile.cjs
       - name: Upload before and after layout evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -68,7 +69,9 @@ jobs:
       - name: Native store package contract
         run: node tests/mobile-store-contract.cjs
       - name: Regression QA
-        run: node tests/qa.cjs
+        run: |
+          node tests/qa.cjs
+          node tests/reliability-v1048.cjs
       - name: BOQ provenance regression
         run: node tests/boq-quality-provenance.cjs
       - name: Real document quality verifier regression

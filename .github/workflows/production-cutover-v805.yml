@@ -108,6 +108,7 @@ jobs:
           node --check sw.js
           node tests/cloudflare-only.cjs
           node tests/qa.cjs
+          node tests/reliability-v1048.cjs
           node tests/boq-quality-provenance.cjs
           node tests/boq-quality-contract.mjs
           node tests/gateway-contract.cjs

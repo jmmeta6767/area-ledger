@@ -3,6 +3,9 @@ main = "src/worker.js"
 compatibility_date = "2026-09-30"
 keep_vars = true
 
+[build]
+command = "node ../tests/assert-deploy-identity.cjs"
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
