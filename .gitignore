@@ -3,3 +3,6 @@ gateway/.env
 gateway/.env.*
 !gateway/.env.example
 node_modules/
+/layout-evidence/*
+!/layout-evidence/v1052/
+!/layout-evidence/v1052/*.png
