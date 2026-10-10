@@ -2748,15 +2748,18 @@ button,input,select,textarea{min-width:0}
 .add-core-card>.field:last-child{margin-bottom:0}
 .add-amount{
   padding:12px!important;border-radius:15px!important;
-  background:linear-gradient(145deg,#fffaf0,#fff)!important;
-  border:1px solid #efd889!important;
+  background:var(--surface)!important;
+  border:1px solid var(--line)!important;
+  border-left:3px solid #d7b64c!important;
 }
 .add-amount .amt{
-  border:1.5px solid #d7b64c!important;background:#fff!important;
-  border-radius:14px!important;padding:5px 12px!important;
+  min-height:64px;border:1px solid var(--line)!important;background:#fff!important;
+  border-radius:13px!important;padding:4px 11px!important;
+  transition:border-color .16s ease,background-color .16s ease;
 }
-.add-amount .amt:focus-within{border-color:#b77900!important;box-shadow:0 0 0 3px rgba(232,169,30,.16)}
-.add-amount .amt input{min-width:0!important;width:100%!important;font-size:clamp(1.65rem,8vw,2.15rem)!important}
+body[data-view="add"] .add-amount .amt:focus-within{border:2px solid #9a6b00!important;outline:none!important;box-shadow:none!important}
+body[data-view="add"] .add-amount .amt input:focus-visible{outline:none!important;box-shadow:none!important}
+.add-amount .amt input{min-width:0!important;width:100%!important;min-height:48px!important;line-height:1.2!important;padding:0!important;font-size:clamp(1.45rem,7vw,1.9rem)!important}
 .add-amount .amt span{font-size:1.45rem!important}
 .add-core-card .field:focus-within>label,.add-payment-card:focus-within>.lbl{color:#8b6500!important}
 .add-quick-chips{
@@ -3230,7 +3233,7 @@ body[data-view="quoteprint"] :where(.quote-paper,.rd-paper){margin-inline:auto}
 
   /* Add transaction */
   body[data-view="add"] :where(.add-core-card,.add-payment-card,.expense-scan-card){padding:12px!important}
-  body[data-view="add"] .add-amount input{font-size:clamp(1.55rem,8vw,2.2rem)!important}
+  body[data-view="add"] .add-amount input{font-size:clamp(1.45rem,7vw,1.9rem)!important}
   body[data-view="add"] .due-mobile-row{grid-template-columns:1fr!important}
   body[data-view="add"] .add-pay-method{grid-template-columns:1fr 1fr!important}
   body[data-view="add"] .chips{gap:7px!important}
@@ -3789,7 +3792,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1053,"sha":"","environment":"source"};
+var APP_BUILD={"version":1054,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -8602,7 +8605,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1053&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1054&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
