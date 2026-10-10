@@ -28,7 +28,7 @@ async function fixture(page,view,count){
    const page=await context.newPage();await page.route('**/*',r=>r.abort());let html=prepare(version==='before'?before:current);
    if(mode==='safe-area-simulation')html=html.replace(/env\(safe-area-inset-top(?:,\s*0px)?\)/g,'44px').replace(/env\(safe-area-inset-bottom(?:,\s*0px)?\)/g,'34px');
    await page.setContent(html);
-   for(const [view,count] of [['home',0],['projects',0],['boq',0],['print',0],['add',1],['add',11],['add',60]]){
+   for(const [view,count] of [['home',0],['projects',0],['boq',0],['print',0],['add',0],['add',1],['add',11],['add',60]]){
     await fixture(page,view,count);
     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&!e.closest('.wrapx,.acct-table');}).slice(0,12).map(e=>e.className),handles:document.querySelectorAll('.master-sheet-handle').length}));
     evidence.push({version,mode,width,height,view,count,...result});
@@ -38,6 +38,10 @@ async function fixture(page,view,count){
     }
     if(version==='after'){
      assert(result.scrollWidth<=result.width+1,JSON.stringify(evidence.at(-1)));
+     if(view==='add'&&!count){
+      const amount=await page.locator('.add-amount .amt').evaluate(el=>{const s=getComputedStyle(el),i=getComputedStyle(el.querySelector('input')),r=el.getBoundingClientRect();return {height:r.height,outlineStyle:s.outlineStyle,borderWidth:s.borderTopWidth,boxShadow:s.boxShadow,inputOutlineStyle:i.outlineStyle,inputBoxShadow:i.boxShadow};});
+      assert(amount.height<=72&&amount.outlineStyle==='none'&&amount.borderWidth==='2px'&&amount.boxShadow==='none'&&amount.inputOutlineStyle==='none'&&amount.inputBoxShadow==='none',JSON.stringify(amount));
+     }
      if(view==='home'){
       const finance=await page.evaluate(()=>({innerWidth,media:matchMedia('(max-width:600px)').matches,view:document.body.dataset.view,columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,labels:[...document.querySelectorAll('.expense-status-copy small')].map(e=>e.textContent.trim()),amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>({text:e.textContent,whiteSpace:getComputedStyle(e).whiteSpace,rects:(()=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})()}))}));
       if(width<=960)assert.equal(finance.columns.split(' ').length,1,JSON.stringify(finance));
@@ -68,6 +72,7 @@ async function fixture(page,view,count){
      await page.locator('.expense-status-overview').screenshot({animations:'disabled',path:path.join(out,`${version}-${mode}-dashboard-expenses-390.png`)});
     }
     if(width===390||width===320){
+     if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&!count)await page.screenshot({path:path.join(out,'after-browser-390-add-amount.png'),fullPage:true});
      if(count){await page.evaluate(()=>document.querySelector('.master-sheet').scrollTop=0);await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}-top.png`)});await page.evaluate(()=>{const s=document.querySelector('.master-sheet');s.scrollTop=s.scrollHeight;});}
      if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&count===11){const summary=page.locator('.expense-batch-evidence summary').first();await summary.click();const image=page.locator('.expense-batch-evidence img').first();assert(await image.isVisible());assert(await image.evaluate(el=>el.src.startsWith('data:image/')));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await page.screenshot({path:path.join(out,'after-browser-390-add-11-evidence-open.png')});await summary.click();}
      if(view==='print'){await page.evaluate(()=>{const table=document.querySelector('.tx-report-table')||[...document.querySelectorAll('.pv table')].at(-1);if(table)table.scrollIntoView({block:'start'});});await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-print-list-viewport.png`)});}
