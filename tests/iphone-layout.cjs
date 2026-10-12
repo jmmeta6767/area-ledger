@@ -80,6 +80,15 @@ async function fixture(page,view,count){
     }
    }
    if(version==='after'){
+    if(width===390&&mode==='browser'){
+     await fixture(page,'add',2);
+     await page.evaluate(()=>{U.expenseBatch.forEach((x,i)=>{x.sourceGroupId='reconcile-fixture';x.sourceRowCount=2;x.sourceRowIndex=i+1;x.ocrDocumentTotal=10000;x.amount=i?4500:4500;x.include=true;});render();expenseBatchUpdateUi();});
+     assert(await page.locator('.expense-reconcile-row.mismatch').isVisible());assert(!(await page.locator('[data-act="expenseBatchSave"]').isEnabled()));
+     await page.locator('[data-act="expenseBatchTotalReview"]').check();assert(await page.locator('[data-act="expenseBatchSave"]').isEnabled());
+     await page.screenshot({path:path.join(out,'after-browser-390-ocr-total-review.png')});
+     await page.locator('[data-act="expenseOcrFeedback"]').click();assert(await page.locator('#feedbackKind').inputValue()==='OCR อ่านข้อมูลผิด');
+     const privacy=await page.locator('.feedback-privacy').innerText();assert(!privacy.includes('฿')&&!privacy.includes('data:image'));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));
+    }
     await fixture(page,'projects',0);await page.evaluate(()=>{S.projects=Array.from({length:20},(_,i)=>({...S.projects[0],id:'p'+i}));render();window.scrollTo({left:0,top:400,behavior:'instant'});});
     const y=await page.evaluate(()=>scrollY);assert.equal(y,400);await page.evaluate(()=>{U.sheet={kind:'settings'};render();});
     assert.equal(await page.evaluate(()=>sheetScrollLock.y),y);await page.evaluate(()=>{U.sheet=null;render();});assert.equal(await page.evaluate(()=>scrollY),y);
