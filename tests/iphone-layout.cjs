@@ -79,6 +79,26 @@ async function fixture(page,view,count){
    }
    if(version==='after'){
     if(width===390&&mode==='browser'){
+     await page.evaluate(()=>{S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'p',name:'โครงการทดสอบ A'},{id:'p2',name:'โครงการทดสอบ B'}];S.bank='บัญชีทดสอบจริง';S.tx=[];U.view='add';U.pid='p';U.from='home';U.draft=newDraft('out','p');render();if(!persist())throw Error('Could not seed isolated browser fixture');});
+     await page.locator('#pid').selectOption('p2');
+     await page.locator('#amt').fill('1234.56');await page.locator('#subc').fill('เหล็กเส้นทดสอบ');await page.locator('#par').fill('ร้านทดสอบ');await page.locator('#dt').fill('2026-10-13');
+     await page.locator('[data-act="cat"][data-v="ค่าแรง"]').click();
+     await page.locator('.add-advanced summary').click();
+     await page.locator('[data-act="tog"][data-v="vat"]').click();await page.locator('[data-act="tog"][data-v="wht"]').click();
+     await page.locator('[data-act="paid"][data-v="1"]').click();
+     assert((await page.locator('[data-act="pay"][data-v="transfer"]').innerText()).includes('บัญชีทดสอบจริง'));
+     await page.locator('[data-act="pay"][data-v="transfer"]').click();await page.locator('[data-act="saveMore"]').click();
+     const expense=await page.evaluate(()=>({rows:S.tx.length,stored:JSON.parse(localStorage.getItem(KEY)).tx.length,tx:S.tx[0],draft:U.draft}));
+     assert.equal(expense.rows,1);assert.equal(expense.stored,1);assert.equal(expense.tx.pid,'p2');assert.equal(expense.tx.type,'out');assert.equal(expense.tx.amount,1234.56);assert.equal(expense.tx.cat,'ค่าแรง');assert.equal(expense.tx.sub,'เหล็กเส้นทดสอบ');assert.equal(expense.tx.partner,'ร้านทดสอบ');assert.equal(expense.tx.date,'2026-10-13');assert.equal(expense.tx.pay,'transfer');assert.equal(expense.tx.paid,true);assert.equal(expense.tx.vat,true);assert.equal(expense.tx.wht,true);assert.equal(expense.draft.type,'out');assert.equal(expense.draft.pid,'p2');assert.equal(expense.draft.cat,'ค่าแรง');assert.equal(expense.draft.date,'2026-10-13');
+     await page.locator('[data-act="setType"][data-v="in"]').click();await page.locator('#amt').fill('2500');await page.locator('#par').fill('ลูกค้าทดสอบ');await page.locator('#dt').fill('2026-10-14');
+     await page.locator('[data-act="cat"][data-v="เงินประกันผลงาน"]').click();await page.locator('[data-act="paid"][data-v="0"]').click();
+     assert.equal(await page.locator('[data-act="paid"][data-v="0"]').getAttribute('aria-pressed'),'true');assert(await page.locator('#due').count());
+     await page.locator('[data-act="save"]').click();
+     const final=await page.evaluate(()=>({rows:S.tx.length,stored:JSON.parse(localStorage.getItem(KEY)).tx.length,expense:S.tx.find(t=>t.type==='out'),income:S.tx.find(t=>t.type==='in'),outstanding:stats('p2').payPend}));
+     assert.equal(final.rows,2);assert.equal(final.stored,2);assert.equal(final.expense.amount,1234.56);assert.equal(final.income.amount,2500);assert.equal(final.income.pid,'p2');assert.equal(final.income.cat,'เงินประกันผลงาน');assert.equal(final.income.partner,'ลูกค้าทดสอบ');assert.equal(final.income.date,'2026-10-14');assert.equal(final.income.paid,false);assert.equal(final.income.pay,'');assert.equal(final.outstanding,1234.56);
+     evidence.push({version,mode,width,height,view:'add-interaction',count:2,storedRows:final.stored,expense:final.expense.amount,income:final.income.amount,unpaidExpense:final.outstanding});
+    }
+    if(width===390&&mode==='browser'){
      await fixture(page,'add',2);
      await page.evaluate(()=>{U.expenseBatch.forEach((x,i)=>{x.sourceGroupId='reconcile-fixture';x.sourceRowCount=2;x.sourceRowIndex=i+1;x.ocrDocumentTotal=10000;x.amount=i?4500:4500;x.include=true;});render();expenseBatchUpdateUi();});
      assert(await page.locator('.expense-reconcile-row.mismatch').isVisible());assert(!(await page.locator('[data-act="expenseBatchSave"]').isEnabled()));
