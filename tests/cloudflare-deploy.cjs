@@ -53,6 +53,7 @@ assert(y.includes("test \"$GITHUB_REF\" = \"refs/heads/main\""),'manual producti
 assert(y.includes('test -f .github/production-cutover-v805'),'manual production must require one-time marker');
 assert(y.includes('staging-auto-deploy.yml/runs?branch=main&head_sha=${GITHUB_SHA}'),'manual production must verify exact SHA staging run');
 assert(y.includes('any(.workflow_runs[]; .head_sha == $sha and .conclusion == "success" and .event == "push")'),'manual production must demand successful staging acceptance');
+assert(y.includes("actions/workflows/qa.yml/runs?branch=main&head_sha=${GITHUB_SHA}"),'manual production requires exact SHA release QA pass');
 assert(y.includes('Recheck staging runtime and BOQ provider before production'),'manual production must verify live staging build and OCR quality');
 assert(y.includes('node tests/boq-document-quality.mjs'),'manual production must revalidate actual document quality');
 assert(y.includes("area-ledger-${{ inputs.target == 'production' && 'production-release' || 'staging-auto' }}"),'manual and automatic deployments must share locks');
