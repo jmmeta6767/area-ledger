@@ -945,6 +945,87 @@ reset();test('v1058 voice shortcut shows an accessible listening state, fills on
 reset();test('v1058 voice stop aborts recognition, ignores late results, and retains unsaved draft/account data',()=>{let instance=null,aborted=0;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{aborted++;};};c.U.draft=c.newDraft('out','p');c.U.draft.amount='321';const draftBefore=JSON.stringify(c.U.draft),accountBefore=JSON.stringify(c.S),transcriptBefore=c.U.expenseVoiceTranscript;assert.equal(c.expenseVoiceStart(),true);assert.equal(c.U.expenseVoiceState,'listening');const lateResult=instance.onresult;assert.equal(c.expenseVoiceStart(),true);assert.equal(aborted,1);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceState,'');lateResult({results:[[{transcript:'จ่าย 990 บาท ร้านทดสอบ'}]]});assert.equal(JSON.stringify(c.U.draft),draftBefore);assert.equal(c.U.expenseVoiceTranscript,transcriptBefore);assert.equal(JSON.stringify(c.S),accountBefore);});
 test('v1060 voice control is a compact icon-only mic button with hidden assistive status',()=>{const start=html.indexOf('.expense-voice-card{'),css=html.slice(start,start+1700),markup=c.vAdd(),voice=markup.slice(markup.indexOf('class="expense-voice-card'),markup.indexOf('<div class="add-core-card'));assert(start>=0);assert.match(css,/\.expense-voice-button\{[^}]*flex:0 0 48px[^}]*width:48px[^}]*height:48px/);assert.match(css,/\.expense-voice-sr\{position:absolute!important/);assert(voice.includes('<svg'));assert(voice.includes('aria-live="polite"'));assert(voice.includes('aria-label="สั่งงานด้วยเสียง"'));assert(!voice.includes('สั่งงานด้วยเสียง</span>'));assert(!voice.includes('เริ่มฟังด้วยเสียง'));c.U.expenseVoiceState='listening';const listening=c.vAdd().slice(c.vAdd().indexOf('class="expense-voice-card'),c.vAdd().indexOf('<div class="add-core-card'));assert(listening.includes('class="expense-voice-card listening"'));assert(listening.includes('aria-pressed="true"'));assert(listening.includes('กำลังฟังอยู่'));});
 reset();test('v1060 scan and voice actions share an icon-only row while OCR image selection stays active',()=>{c.U.expenseVoiceState='';c.U.draft=c.newDraft('out','p');const markup=c.vAdd(),start=markup.indexOf('<div class="expense-action-tools"'),end=markup.indexOf('<div class="add-core-card',start),row=markup.slice(start,end);assert(start>=0);assert(!markup.includes('expense-flow'));assert(!row.includes('PHOTO EXPENSE'));assert(!row.includes('ลงค่าใช้จ่ายจากรูป'));assert(row.includes('aria-label="สแกนหรือเลือกรูปใบเสร็จ"'));assert(row.includes('aria-label="สั่งงานด้วยเสียง"'));assert(row.indexOf('expense-scan-card')<row.indexOf('expense-voice-card'));assert(markup.includes('id="expenseScanIn" type="file" accept="image/*" multiple'));assert(code.includes('expenseBatchScan(e.target.files)'));assert(code.includes("e.target.id==='expenseScanIn'"));});reset();test('v1058 unsupported speech recognition gives a keyboard fallback without touching account data',()=>{delete c.window.SpeechRecognition;delete c.window.webkitSpeechRecognition;c.U.expenseVoiceState='';c.U.draft=c.newDraft('out','p');const before=JSON.stringify(c.S);assert.equal(c.expenseVoiceStart(),false);assert(toasts.some(x=>x.includes('กรอกข้อมูลในฟอร์มได้ตามปกติ')));assert.equal(JSON.stringify(c.S),before);assert.equal(c.S.tx.length,0);assert(c.vAdd().includes('data-act="expenseVoiceStart"'));assert(c.vAdd().includes('ตรวจทานก่อนบันทึก'));assert(c.vAdd().includes('เสียงอาจถูกประมวลผล'));});
+
+reset();test('v1062 contractor agreement records one project-scoped AP liability, not a cash payment',()=>{
+  c.U.pid='p';const before=JSON.stringify(c.S),markup=c.vProject();
+  assert(markup.includes('ค่าเหมาช่าง / เบิกค่างวด'));
+  assert(markup.includes('data-act="contractorNew"'));
+  action('contractorNew','p');
+  assert.equal(c.U.sheet.kind,'contractor');
+  action('contractorSave','p',{contractorName:'ทีมช่างโครงสร้าง',contractorScope:'เหมาโครงสร้าง',contractorAmount:'50000',contractorDate:'2026-10-10',contractorDue:''});
+  assert.equal(c.S.tx.length,1);
+  const t=c.S.tx[0],totals=c.contractorSummary('p');
+  assert.equal(t.contractorCommitment,true);assert.equal(t.pid,'p');assert.equal(t.cat,'ค่าแรง');
+  assert.equal(t.paid,false);assert.equal(t.due,'');assert.equal(t.payments.length,0);
+  assert.equal(totals.agreed,50000);assert.equal(totals.paid,0);assert.equal(totals.remaining,50000);
+  assert.equal(c.txOutstandingNet(t),50000);assert.equal(c.cashSplit().bank,0);assert.equal(c.stats('p').payPend,50000);
+  assert.equal(c.contractorSummary('q').agreed,0);
+  assert.notEqual(JSON.stringify(c.S),before);
+});
+reset();test('v1062 contractor draw 30000 against 50000 leaves 20000 without double-expensing',()=>{
+  c.U.pid='p';
+  action('contractorNew','p');
+  action('contractorSave','p',{contractorName:'ทีมช่างโครงสร้าง',contractorScope:'เหมาโครงสร้าง',contractorAmount:'50000',contractorDate:'2026-10-10',contractorDue:''});
+  const id=c.S.tx[0].id;
+  action('contractorDrawOpen',id);
+  assert.equal(c.U.sheet.kind,'apPay');
+  assert(c.sheetHtml().includes('เบิกเงินค่างวดช่าง'));
+  action('apPaySave',id,{apPayAmount:'30000',apPayDate:'2026-10-13',apPayMethod:'transfer'});
+  const t=c.S.tx[0],total=c.contractorSummary('p');
+  assert.equal(c.S.tx.length,1,'partial draw must not add another expense transaction');
+  assert.equal(t.amount,50000);assert.equal(t.payments.length,1);assert.equal(t.payments[0].amount,30000);
+  assert.equal(total.agreed,50000);assert.equal(total.paid,30000);assert.equal(total.remaining,20000);
+  assert.equal(c.cashSplit().bank,-30000);assert.equal(c.stats('p').outB,50000);
+  assert(c.vProject().includes('เบิกเงิน'));
+  assert(c.vProject().includes('20,000'));
+  assert(c.S.auditLog.some(x=>x.action==='ap-payment'&&x.entityId===id));
+});
+reset();test('v1062 contractor rejects duplicate, invalid amount and cross-project contamination',()=>{
+  c.U.pid='p';action('contractorNew','p');
+  action('contractorSave','p',{contractorName:'ช่าง A',contractorScope:'โครงสร้าง',contractorAmount:'50000',contractorDate:'2026-10-10',contractorDue:''});
+  assert.equal(c.S.tx.length,1);
+  action('contractorNew','p');
+  action('contractorSave','p',{contractorName:'ช่าง A',contractorScope:'โครงสร้าง',contractorAmount:'50000',contractorDate:'2026-10-10',contractorDue:''});
+  assert.equal(c.S.tx.length,1,'identical contractor+scope+amount must be rejected');
+  action('contractorSave','p',{contractorName:'ช่าง B',contractorScope:'หลังคา',contractorAmount:'0',contractorDate:'2026-10-10',contractorDue:''});
+  assert.equal(c.S.tx.length,1,'zero commitment must be rejected');
+  action('contractorSave','p',{contractorName:'ช่าง B',contractorScope:'หลังคา',contractorAmount:'1.234',contractorDate:'2026-10-10',contractorDue:''});
+  assert.equal(c.S.tx.length,1,'more than 2 decimal places must be rejected');
+  action('contractorSave','p',{contractorName:'ช่าง B',contractorScope:'หลังคา',contractorAmount:'100',contractorDate:'2026-02-31',contractorDue:''});
+  assert.equal(c.S.tx.length,1,'invalid date must be rejected');
+});
+reset();test('v1062 contractor blocks overpayment and editing paid work via generic transaction actions',()=>{
+  c.U.pid='p';action('contractorNew','p');
+  action('contractorSave','p',{contractorName:'ช่าง C',contractorScope:'โครงสร้าง',contractorAmount:'50000',contractorDate:'2026-10-10',contractorDue:''});
+  const id=c.S.tx[0].id;action('contractorDrawOpen',id);
+  action('apPaySave',id,{apPayAmount:'50001',apPayDate:'2026-10-13',apPayMethod:'transfer'});
+  assert.equal(c.S.tx[0].payments.length,0,'overpayment must not be persisted');
+  action('apPaySave',id,{apPayAmount:'30000',apPayDate:'2026-10-13',apPayMethod:'transfer'});
+  assert.equal(c.S.tx[0].payments.length,1);
+  action('editTx',id);assert(!c.U.draft||c.U.draft.id!==id,'generic expense editor must not modify contractor commitment');
+  action('delTx',id);assert.equal(c.S.tx.length,1,'generic transaction delete blocked');
+  action('contractorDelete',id);assert.equal(c.S.tx.length,1,'paid commitment may not be deleted');
+  action('contractorEdit',id);assert.equal(c.S.tx[0].amount,50000);
+  assert.equal(c.contractorSummary('p').remaining,20000);
+});
+reset();test('v1062 contractor honors closed payment period and zero remaining on final draw',()=>{
+  c.U.pid='p';action('contractorNew','p');
+  action('contractorSave','p',{contractorName:'ช่าง D',contractorScope:'โครงสร้าง',contractorAmount:'50000',contractorDate:'2026-09-10',contractorDue:''});
+  const id=c.S.tx[0].id;
+  c.S.accountingPeriods=[{period:'2026-10',status:'closed'}];
+  action('contractorDrawOpen',id);
+  action('apPaySave',id,{apPayAmount:'30000',apPayDate:'2026-10-13',apPayMethod:'transfer'});
+  assert.equal(c.S.tx[0].payments.length,0,'closed period must not accept payment');
+  c.S.accountingPeriods=[];
+  action('apPaySave',id,{apPayAmount:'30000',apPayDate:'2026-10-13',apPayMethod:'transfer'});
+  assert.equal(c.S.tx[0].payments.length,1);
+  action('contractorDrawOpen',id);
+  action('apPaySave',id,{apPayAmount:'20000',apPayDate:'2026-10-14',apPayMethod:'cash'});
+  const st=c.contractorSummary('p');
+  assert.equal(st.paid,50000);assert.equal(st.remaining,0);assert.equal(c.S.tx.length,1);
+  assert.equal(c.S.tx[0].payments.length,2);assert.equal(c.S.tx[0].paid,true);
+  assert.equal(c.cashSplit().bank,-30000);assert.equal(c.cashSplit().cash,-20000);
+});
 console.log(`PASS ${checks} QA groups`);
 })().catch(e=>{console.error(e);process.exitCode=1});
 
