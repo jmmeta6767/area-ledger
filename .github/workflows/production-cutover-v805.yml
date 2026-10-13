@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: area-ledger-production-cutover
+  group: area-ledger-production-release
   cancel-in-progress: false
 
 jobs:
