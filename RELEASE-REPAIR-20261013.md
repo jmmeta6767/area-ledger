@@ -6,9 +6,10 @@ Base: GitHub main `d3924babe308a64ce2875b277d994050bd914b10`. This patch changes
 
 1. Render legacy recovery links to `https://g.areamaibab.workers.dev/` (production) instead of staging. No backup is uploaded or restored automatically.
 2. Production Cloudflare web-app response headers permit `microphone=(self)` for Thai voice draft entry, while recovery-only Render headers continue to disable microphone. Access still requires the browser/device to allow voice recognition; no audio is stored by AREA Ledger.
-3. Manual production deployment now fails closed unless it is launched from `main`, carries the exact one-time `DEPLOY_PRODUCTION` marker, and GitHub reports a **successful** staging-auto workflow for the **same commit SHA** (successful after BOQ quality verification). Immediately before production it also verifies the actual staging build SHA, Cloudflare/D1/R2 acceptance and live BOQ document quality. Explicit user confirmation is still required.
-4. Manual production, automatic one-time cutover, and staging workflows use matching concurrency locks to avoid two repository workflows deploying to the same target simultaneously.
-5. Regression tests pin these invariants.
+3. Manual production deployment now fails closed unless it is launched from `main`, carries the exact one-time `DEPLOY_PRODUCTION` marker, and GitHub reports a **successful** staging-auto workflow and successful **Release QA** workflow for the **same commit SHA** (successful after BOQ quality verification). Immediately before production it also verifies the actual staging build SHA, Cloudflare/D1/R2 acceptance and live BOQ document quality. Explicit user confirmation is still required.
+4. Automatic one-time production cutover also requires a successful Release QA run on the exact staging-tested SHA; if QA is still running, it fails closed and needs a newly authorized attempt once QA is green.
+5. Manual production, automatic one-time cutover, and staging workflows use matching concurrency locks to avoid two repository workflows deploying to the same target simultaneously.
+6. Regression tests pin these invariants.
 
 ## Outside repository control / remaining blockers
 
