@@ -32,6 +32,7 @@ async function fixture(page,view,count){
     await fixture(page,view,count);
     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&!e.closest('.wrapx,.acct-table');}).slice(0,12).map(e=>e.className),handles:document.querySelectorAll('.master-sheet-handle').length}));
     evidence.push({version,mode,width,height,view,count,...result});
+    if(version==='after'&&width===320&&mode==='browser'&&view==='home'&&!count){fs.writeFileSync(path.join(out,'after-320-home-debug.json'),JSON.stringify(evidence.at(-1),null,2));await page.screenshot({path:path.join(out,'after-320-home-debug.png'),fullPage:true});}
     if(version==='after'&&view==='add'&&!count&&width===320){fs.writeFileSync(path.join(out,'add-form-debug.json'),JSON.stringify(evidence.at(-1),null,2));await page.screenshot({path:path.join(out,'add-form-debug-320.png'),fullPage:true});}
     if(view==='home'&&width===390&&version==='before'){
      const baseline=await page.evaluate(()=>({columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})}));
