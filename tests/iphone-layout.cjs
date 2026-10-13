@@ -29,6 +29,7 @@ async function fixture(page,view,count){
    if(mode==='safe-area-simulation')html=html.replace(/env\(safe-area-inset-top(?:,\s*0px)?\)/g,'44px').replace(/env\(safe-area-inset-bottom(?:,\s*0px)?\)/g,'34px');
    await page.setContent(html);
    for(const [view,count] of [['home',0],['projects',0],['boq',0],['print',0],['add',0],['add',1],['add',11],['add',60]]){
+    if(version==='after'&&mode==='browser'&&width===320)fs.writeFileSync(path.join(out,'current-layout-case.json'),JSON.stringify({version,mode,width,height,view,count}));
     await fixture(page,view,count);
     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&!e.closest('.wrapx,.acct-table');}).slice(0,12).map(e=>e.className),handles:document.querySelectorAll('.master-sheet-handle').length}));
     evidence.push({version,mode,width,height,view,count,...result});
