@@ -6,7 +6,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..'),out=path.resolve(process.env.LAYOUT_OUTPUT||path.join(root,'layout-evidence'));
 fs.mkdirSync(out,{recursive:true});
 const current=fs.readFileSync(path.join(root,'gateway/public/index.html'),'utf8');
-const before=cp.execFileSync('git',['show','86b5c5948fba70ee8e839036160fb4d9dcb0a075:gateway/public/index.html'],{cwd:root,encoding:'utf8',maxBuffer:8e6});
+const before=cp.execFileSync('git',['show','86af4a50134191618ecc63eec2a14e95c01c33fd:gateway/public/index.html'],{cwd:root,encoding:'utf8',maxBuffer:8e6});
 const prepare=html=>html.replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n');
 async function fixture(page,view,count){
  await page.evaluate(({view,count})=>{
@@ -23,7 +23,7 @@ async function fixture(page,view,count){
  const evidence=[];
  try{
  for(const version of ['before','after']){
-  for(const mode of ['browser','safe-area-simulation'])for(const [width,height] of [[320,640],[375,812],[390,844],[430,932],[844,390]]){
+  for(const mode of ['browser','safe-area-simulation'])for(const [width,height] of [[320,640],[375,812],[390,844],[430,932],[768,1024],[844,390]]){
    const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,deviceScaleFactor:1,serviceWorkers:'block'});
    const page=await context.newPage();await page.route('**/*',r=>r.abort());let html=prepare(version==='before'?before:current);
    if(mode==='safe-area-simulation')html=html.replace(/env\(safe-area-inset-top(?:,\s*0px)?\)/g,'44px').replace(/env\(safe-area-inset-bottom(?:,\s*0px)?\)/g,'34px');
@@ -41,6 +41,8 @@ async function fixture(page,view,count){
      if(view==='add'&&!count){
       const amount=await page.locator('.add-amount .amt').evaluate(el=>{const s=getComputedStyle(el),i=getComputedStyle(el.querySelector('input')),r=el.getBoundingClientRect();return {height:r.height,outlineStyle:s.outlineStyle,borderWidth:s.borderTopWidth,boxShadow:s.boxShadow,inputOutlineStyle:i.outlineStyle,inputBoxShadow:i.boxShadow};});
       assert(amount.height<=72&&amount.outlineStyle==='none'&&amount.borderWidth==='2px'&&amount.boxShadow==='none'&&amount.inputOutlineStyle==='none'&&amount.inputBoxShadow==='none',JSON.stringify(amount));
+      const entry=await page.evaluate(()=>({title:document.querySelector('.add-form-head h1')?.textContent.trim(),actions:[...document.querySelectorAll('.expense-scan-card label,.expense-voice-button')].map(e=>({text:e.innerText.trim(),width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})),categoryColumns:getComputedStyle(document.querySelector('.add-core-card .grp')).gridTemplateColumns.split(' ').length,savePosition:getComputedStyle(document.querySelector('.add-savebar')).position,amountFont:parseFloat(getComputedStyle(document.querySelector('.add-amount .amt input')).fontSize),typePressed:[...document.querySelectorAll('.add-type-seg button')].map(x=>x.getAttribute('aria-pressed'))}));
+      assert.equal(entry.title,'เพิ่มรายการ');assert.deepEqual(entry.actions.map(x=>x.text).filter(Boolean),['สแกนบิล','พูดรายการ']);assert(entry.actions.every(x=>x.width>=44&&x.height>=44));assert.equal(entry.categoryColumns,2);assert.equal(entry.savePosition,'static');assert(entry.amountFont>=32&&entry.amountFont<=40);assert.deepEqual(entry.typePressed,['true','false']);
      }
      if(view==='home'){
       const finance=await page.evaluate(()=>({innerWidth,media:matchMedia('(max-width:600px)').matches,view:document.body.dataset.view,columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,labels:[...document.querySelectorAll('.expense-status-copy small')].map(e=>e.textContent.trim()),amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>({text:e.textContent,whiteSpace:getComputedStyle(e).whiteSpace,rects:(()=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})()}))}));
@@ -72,7 +74,7 @@ async function fixture(page,view,count){
      await page.locator('.expense-status-overview').screenshot({animations:'disabled',path:path.join(out,`${version}-${mode}-dashboard-expenses-390.png`)});
     }
     if(width===390||width===320){
-     if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&!count)await page.screenshot({path:path.join(out,'after-browser-390-add-amount.png'),fullPage:true});
+     if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&!count){await page.screenshot({path:path.join(out,'after-browser-390-add-amount.png'),fullPage:true});await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(out,'after-browser-390-add-form-top.png')});await page.locator('.add-savebar').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'after-browser-390-add-form-bottom.png')});}
      if(count){await page.evaluate(()=>document.querySelector('.master-sheet').scrollTop=0);await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}-top.png`)});await page.evaluate(()=>{const s=document.querySelector('.master-sheet');s.scrollTop=s.scrollHeight;});}
      if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&count===11){const summary=page.locator('.expense-batch-evidence summary').first();await summary.click();const image=page.locator('.expense-batch-evidence img').first();assert(await image.isVisible());assert(await image.evaluate(el=>el.src.startsWith('data:image/')));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await page.screenshot({path:path.join(out,'after-browser-390-add-11-evidence-open.png')});await summary.click();}
      if(view==='print'){await page.evaluate(()=>{const table=document.querySelector('.tx-report-table')||[...document.querySelectorAll('.pv table')].at(-1);if(table)table.scrollIntoView({block:'start'});});await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-print-list-viewport.png`)});}
