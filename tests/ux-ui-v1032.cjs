@@ -3,6 +3,7 @@ const src=fs.readFileSync('gateway/public/index.html','utf8').replace(/\r\n/g,'\
 
 assert(src.includes('v1032 mobile command hierarchy · dashboard/project/form/sheet'),'missing v1032 UX layer');
 assert(src.includes("document.body.classList.toggle('view-add',v==='add')"),'view-add scope missing');
+assert(src.includes('body.view-add .hd{display:none!important}'),'redundant add-entry top bar should be hidden while bottom navigation remains');
 assert(src.includes("document.body.classList.toggle('view-project',v==='project')"),'view-project scope missing');
 assert(src.includes('.project-command-grid>.btn:first-child{grid-column:1/-1!important'),'project primary command hierarchy missing');
 assert(src.includes('.add-quick-chips{'),'quick-chip mobile reachability missing');
