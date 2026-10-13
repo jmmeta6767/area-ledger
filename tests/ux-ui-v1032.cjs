@@ -11,8 +11,7 @@ assert(src.includes('body.view-add .add-savebar{'),'scoped add save bar missing'
 assert(src.includes('bottom:calc(72px + env(safe-area-inset-bottom,0px))!important'),'save bar must clear bottom navigation');
 assert(src.includes('scroll-padding-bottom:120px!important'),'sheet keyboard scroll padding missing');
 assert(src.includes('.master-sheet .field:focus-within'),'sheet focus feedback missing');
-assert(src.includes('.expense-scan-card{\n    display:grid!important;grid-template-columns:1fr!important'),'photo expense mobile reflow missing');
-assert(src.includes('.project-finance-kpis{\n    grid-template-columns:repeat(2,minmax(0,1fr))!important'),'dashboard 2x2 finance grid missing');
+assert(src.includes('.expense-action-tools{display:flex;justify-content:flex-end;align-items:center;gap:10px'),'compact scan and voice action row missing');assert(src.includes('aria-label="สแกนหรือเลือกรูปใบเสร็จ"'),'icon-only scan control missing its accessible label');assert(src.includes('.project-finance-kpis{\n    grid-template-columns:repeat(2,minmax(0,1fr))!important'),'dashboard 2x2 finance grid missing');
 assert(src.includes('@media(max-height:560px) and (orientation:landscape)'),'landscape savebar fallback missing');
 assert(src.includes("['home','home','ภาพรวม'],['boq','documents','BOQ'],['add','plus',''],['projects','build','โครงการ'],['profile','profile','โปรไฟล์']"),'bottom navigation order changed');
 assert(src.includes("KEY='site-ledger-v1'")||src.includes("const KEY='site-ledger-v1'"),'storage key contract missing');
