@@ -77,8 +77,9 @@ async function fixture(page,view,count){
      await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}.png`),fullPage:!count});
     }
    }
-   if(version==='after'){
+    if(version==='after'){
     if(width===390&&mode==='browser'){
+     await page.unroute('**/*');await page.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({status:200,contentType:'text/html',body:prepare(current)}):r.abort());await page.goto('http://area-ledger.test/');
      await page.evaluate(()=>{S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'p',name:'โครงการทดสอบ A'},{id:'p2',name:'โครงการทดสอบ B'}];S.bank='บัญชีทดสอบจริง';S.tx=[];U.storageReadBlocked=false;U.view='add';U.pid='p';U.from='home';U.draft=newDraft('out','p');render();committedState=JSON.stringify(S);localStorage.setItem(KEY,committedState);});
      await page.locator('#pid').selectOption('p2');
      await page.locator('#amt').fill('1234.56');await page.locator('#subc').fill('เหล็กเส้นทดสอบ');await page.locator('#par').fill('ร้านทดสอบ');await page.locator('#dt').fill('2026-10-13');
