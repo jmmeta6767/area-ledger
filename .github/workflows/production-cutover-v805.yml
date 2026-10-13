@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: area-ledger-production-release
@@ -44,6 +45,18 @@ jobs:
           else
             echo "Production cutover authorization marker absent; production deploy will stay skipped."
           fi
+
+      - name: Require passing release QA for authorized source
+        if: ${{ steps.gate.outputs.authorized == 'true' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.gate.outputs.source_sha }}
+        run: |
+          set -euo pipefail
+          qa_runs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/qa.yml/runs?branch=main&head_sha=${SOURCE_SHA}&per_page=30")"
+          echo "$qa_runs" | jq -e --arg sha "$SOURCE_SHA" 'any(.workflow_runs[]; .head_sha == $sha and .conclusion == "success" and .event == "push")' >/dev/null
+          echo "Release QA passed for the staging-tested production source $SOURCE_SHA"
 
   deploy-production:
     needs: authorize
