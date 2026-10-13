@@ -3531,6 +3531,14 @@ body.project-keyboard-focus .project-sheet .project-form-savebar{grid-template-c
 }
 @media(max-width:380px){.project-boq-usage-values{display:grid;grid-template-columns:1fr}.project-budget-glance em{font-size:.68rem}}
 @media(prefers-reduced-motion:reduce){.settings-feedback-entry,.feedback-close{scroll-behavior:auto;transition:none!important}}
+
+/* HOME MENU — floating over the wallpaper for a cleaner dashboard */
+.home-floating-header{position:relative!important;height:64px!important;min-height:64px!important;padding:0!important;gap:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;pointer-events:none!important;z-index:1002!important}
+.home-floating-header:after{display:none!important}
+.home-floating-menu{position:fixed!important;left:max(14px,env(safe-area-inset-left))!important;top:calc(env(safe-area-inset-top) + 14px)!important;transform:none!important;display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;height:48px!important;flex:0 0 48px!important;padding:12px!important;border:1px solid rgba(255,255,255,.52)!important;border-radius:50%!important;background:rgba(23,32,43,.46)!important;backdrop-filter:blur(14px) saturate(1.2)!important;-webkit-backdrop-filter:blur(14px) saturate(1.2)!important;box-shadow:0 5px 18px rgba(15,23,32,.2)!important;pointer-events:auto!important;touch-action:manipulation}
+.home-floating-menu span{width:22px!important;height:2.5px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.38)}
+.home-floating-menu:focus-visible{outline:3px solid #ffc333!important;outline-offset:3px!important}
+.home-floating-menu:active{transform:scale(.96)!important}
 </style>
 </head>
 <body>
@@ -3799,7 +3807,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1061,"sha":"","environment":"source"};
+var APP_BUILD={"version":1062,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4908,7 +4916,7 @@ function homeUrgentAlert(allMode,active,all){
 
 function header(title,back){
   var menu='<button class="app-menu-btn" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button>';
-  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header"><div class="mlogo master-ref-logo">AREA</div><div class="master-ref-brand"><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><div class="home-top-actions"><button data-act="settings" aria-label="ตั้งค่า">'+ic('settings')+'</button><button data-act="appMenu" aria-label="เมนูเพิ่มเติม">•••</button></div></div>';
+  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header home-floating-header"><button class="app-menu-btn home-floating-menu" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button></div>';
   return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="navBack" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1>'+(back?'<button class="header-home" data-act="navHome" aria-label="กลับหน้าหลัก">'+ic('home')+'</button>':'')+'</div><div class="stripe"></div></div>';
 }
 
@@ -8668,7 +8676,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1061&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1062&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
