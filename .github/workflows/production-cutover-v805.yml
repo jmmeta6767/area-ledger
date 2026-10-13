@@ -107,6 +107,7 @@ jobs:
           node --check tests/live-cloudflare-acceptance.mjs
           node --check sw.js
           node tests/cloudflare-only.cjs
+          node tests/subcontractor-payments.cjs
           node tests/qa.cjs
           node tests/reliability-v1048.cjs
           node tests/boq-quality-provenance.cjs
