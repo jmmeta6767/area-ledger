@@ -9,7 +9,7 @@ function fn(name,next){
 const source=fn('contractorRows','contractorTotals')+fn('contractorTotals','contractorCard')+fn('contractorCard','contractorCreate')+fn('contractorCreate','txPayments');
 const state={projects:[{id:'p',name:'Project'}],tx:[]};
 let seq=0,persistOK=true,closed=false;
-const cx={S:state,uid:()=>String(++seq),today:()=> '2026-10-13',validIsoDate:x=>/^\\d{4}-\\d{2}-\\d{2}$/.test(x),isPeriodClosed:()=>closed,proj:id=>state.projects.find(x=>x.id===id),persist:()=>persistOK,net:t=>t.amount,txPayments:t=>t.payments||[],txPaidNet:t=>(t.payments||[]).reduce((a,p)=>a+p.amount,0),txOutstandingNet:t=>Math.max(0,t.amount-(t.payments||[]).reduce((a,p)=>a+p.amount,0)),txPaymentState:t=>({paid:(t.payments||[]).reduce((a,p)=>a+p.amount,0),remain:Math.max(0,t.amount-(t.payments||[]).reduce((a,p)=>a+p.amount,0))}),fmt:n=>'฿'+Number(n).toLocaleString('en-US'),esc:s=>String(s)};
+const cx={S:state,uid:()=>String(++seq),today:()=> '2026-10-13',validIsoDate:x=>/^\d{4}-\d{2}-\d{2}$/.test(x),isPeriodClosed:()=>closed,proj:id=>state.projects.find(x=>x.id===id),persist:()=>persistOK,net:t=>t.amount,txPayments:t=>t.payments||[],txPaidNet:t=>(t.payments||[]).reduce((a,p)=>a+p.amount,0),txOutstandingNet:t=>Math.max(0,t.amount-(t.payments||[]).reduce((a,p)=>a+p.amount,0)),txPaymentState:t=>({paid:(t.payments||[]).reduce((a,p)=>a+p.amount,0),remain:Math.max(0,t.amount-(t.payments||[]).reduce((a,p)=>a+p.amount,0))}),fmt:n=>'฿'+Number(n).toLocaleString('en-US'),esc:s=>String(s)};
 vm.createContext(cx);vm.runInContext(source,cx);
 state.role='owner';
 let t=cx.contractorCreate('p','ช่างสมชาย','เหมาโครงสร้าง','50000','จ่ายเมื่อจบโครงการ','');
