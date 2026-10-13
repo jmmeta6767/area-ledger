@@ -82,8 +82,9 @@ async function fixture(page,view,count){
      await page.unroute('**/*');await page.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({status:200,contentType:'text/html',body:prepare(current)}):r.abort());await page.goto('http://area-ledger.test/');
      await page.evaluate(()=>{S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'p',name:'โครงการทดสอบ A'},{id:'p2',name:'โครงการทดสอบ B'}];S.bank='บัญชีทดสอบจริง';S.tx=[];U.storageReadBlocked=false;U.view='add';U.pid='p';U.from='home';U.draft=newDraft('out','p');render();committedState=JSON.stringify(S);localStorage.setItem(KEY,committedState);});
      await page.locator('#pid').selectOption('p2');
-     await page.locator('#amt').fill('1234.56');await page.locator('#subc').fill('เหล็กเส้นทดสอบ');await page.locator('#par').fill('ร้านทดสอบ');await page.locator('#dt').fill('2026-10-13');
+     await page.locator('#amt').fill('1234.56');await page.locator('#par').fill('ร้านทดสอบ');await page.locator('#dt').fill('2026-10-13');
      await page.locator('[data-act="cat"][data-v="ค่าแรง"]').click();
+     await page.locator('#subc').fill('เหล็กเส้นทดสอบ');
      await page.locator('.add-advanced summary').click();
      await page.locator('[data-act="tog"][data-v="vat"]').click();await page.locator('[data-act="tog"][data-v="wht"]').click();
      await page.locator('[data-act="paid"][data-v="1"]').click();
