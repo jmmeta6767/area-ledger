@@ -3756,12 +3756,13 @@ function runtimeScheduleRender(){
 }
 function runtimeActionSignature(a){
   function val(id){var x=document.getElementById(id);return x&&x.value!==undefined?String(x.value):'';}
-  if(a==='apPaySave')return [val('apPayAmount'),val('apPayDate'),val('apPayMethod')].join('|');
+  if(a==='apPaySave')return [val('apPayAmount'),val('apPayDate'),val('apPayMethod'),val('subcontractPaymentNote')].join('|');
+  if(a==='subcontractSave')return [val('subcontractName'),val('subcontractScope'),val('subcontractAmount'),val('subcontractDate')].join('|');
   if(a==='saveBillPayment')return [val('payAmount'),val('payDate'),val('payMethod')].join('|');
   return '';
 }
 function runtimeActionDuplicate(el){
-  var a=el&&el.getAttribute?el.getAttribute('data-act'):'',groups={save:'tx-save',saveMore:'tx-save',saveBillPayment:'bill-payment',apPaySave:'ap-payment',saveBizDoc:'bizdoc-save',saveQuote:'quote-save',manualJournalSave:'journal-save',bankReconcile:'bank-reconcile',periodClose:'period-close'},g=groups[a];
+  var a=el&&el.getAttribute?el.getAttribute('data-act'):'',groups={save:'tx-save',saveMore:'tx-save',saveBillPayment:'bill-payment',apPaySave:'ap-payment',subcontractSave:'subcontract-create',saveBizDoc:'bizdoc-save',saveQuote:'quote-save',manualJournalSave:'journal-save',bankReconcile:'bank-reconcile',periodClose:'period-close'},g=groups[a];
   var d=runtimeDiag();d.actions++;
   if(!g)return false;
   var id=el.getAttribute('data-id')||'',sig=runtimeActionSignature(a),key=g+'|'+id+'|'+sig,now=Date.now(),last=+U.runtimeActionStamps[key]||0;U.runtimeActionStamps[key]=now;
@@ -6404,12 +6405,80 @@ function contractControl(pid){var p=proj(pid),st=stats(pid),pc=projectCostWithGu
 function contractActionQueue(pid){var c=contractControl(pid),a=[];if(c.project&&c.project.status!=='delivered'&&c.project.status!=='closed'&&c.days===null)a.push({level:'watch',text:'ยังไม่ระบุวันสิ้นสุดสัญญา'});if(c.project&&(c.project.status||'active')!=='delivered'&&(c.project.status||'active')!=='closed'&&c.days!==null&&c.days<=30){var dl=c.days<0?'พ้นกำหนด':c.days<=1?'D-1':c.days<=3?'D-3':c.days<=7?'D-7':c.days<=14?'D-14':'D-30';a.push({level:c.days<=7?'critical':'urgent',text:c.days<0?'สัญญาพ้นกำหนด '+Math.abs(c.days)+' วัน':dl+' · สัญญาเหลือ '+c.days+' วัน'});}if(c.pendingLetters)a.push({level:'urgent',text:'เหตุการณ์ยังไม่มีสถานะหนังสือ '+c.pendingLetters+' เรื่อง'});if(c.pendingReplies)a.push({level:'watch',text:'หนังสือรอคำตอบ '+c.pendingReplies+' เรื่อง'});if(c.boq.unlinkedActual>0)a.push({level:'watch',text:'ค่าใช้จ่ายยังไม่ผูก BOQ '+fmt(c.boq.unlinkedActual)});if(c.changes.some(function(x){return x.status!=='approved'&&x.status!=='rejected';}))a.push({level:'urgent',text:'งานเปลี่ยนแปลงรอพิจารณา '+fmt(c.pendingChange)});var eotSubmitted=c.extensions.filter(function(x){return x.status==='submitted';}),eotDraft=c.extensions.filter(function(x){return x.status==='draft';});if(eotSubmitted.length)a.push({level:'urgent',text:'คำขอขยายเวลารอพิจารณา '+eotSubmitted.length+' เรื่อง'});if(eotDraft.length)a.push({level:'watch',text:'ร่างคำขอขยายเวลาที่ยังไม่ยื่น '+eotDraft.length+' เรื่อง'});return a;}
 function govLetterAlerts(pid){var now=today(),ev=(S.siteEvents||[]).filter(function(e){return e.pid===pid;}),out=[];ev.forEach(function(e){var age=e.date?dd(e.date,now):0,sentAge=e.sentDate?dd(e.sentDate,now):0;if(e.letterStatus==='none'&&e.type!=='ประชุมหน้างาน'&&age>=3)out.push({level:age>=7?'critical':'warn',event:e,label:'ยังไม่มีสถานะหนังสือ '+age+' วัน'});else if(e.letterStatus==='sent'&&!e.replyDate&&sentAge>=7)out.push({level:sentAge>=14?'critical':'warn',event:e,label:'ส่งหนังสือแล้ว '+sentAge+' วัน · ยังไม่บันทึกคำตอบ'});});return out.sort(function(x,y){return (y.level==='critical'?2:1)-(x.level==='critical'?2:1);});}
 function govWorkAdvice(p){if(!p)return null;var end=p.endDate||'',days=validIsoDate(end)?dd(today(),end):null,active=(p.status||'active')!=='delivered'&&(p.status||'active')!=='closed',expired=active&&days!==null&&days<0;return{active:active,days:active?days:null,urgent:active&&days!==null&&days>=0&&days<=30,expired:expired};}
+/* Subcontractor progress payments · one AP expense, many recorded advances · source v1061+ */
+function subcontractRows(pid){
+  return (S.tx||[]).filter(function(t){return t&&t.subcontract===true&&t.type==='out'&&(!pid||t.pid===pid);});
+}
+function subcontractSummary(pid){
+  var rows=subcontractRows(pid),agreed=0,paid=0,remaining=0;
+  rows.forEach(function(t){agreed+=Math.max(0,+t.amount||0);paid+=txPaidNet(t);remaining+=txOutstandingNet(t);});
+  return{rows:rows,count:rows.length,agreed:Math.round(agreed*100)/100,paid:Math.round(paid*100)/100,remaining:Math.round(remaining*100)/100};
+}
+function subcontractCreateRecord(pid,name,scope,rawAmount,date,note){
+  name=String(name||'').trim();scope=String(scope||'').trim();note=String(note||'').trim();var amount=Number(rawAmount);
+  if(!proj(pid))throw Error('ไม่พบโครงการ');
+  if(!name||name.length>120)throw Error('กรอกชื่อช่างหรือทีมช่างให้ถูกต้อง');
+  if(!scope||scope.length>160)throw Error('กรอกประเภทงานเหมา เช่น งานโครงสร้าง');
+  if(!isFinite(amount)||amount<=0||amount>1000000000||Math.round(amount*100)/100!==amount)throw Error('ยอดค่าเหมาต้องมากกว่า 0 และมีทศนิยมไม่เกิน 2 ตำแหน่ง');
+  if(!validIsoDate(date))throw Error('วันที่ตั้งค่าเหมาไม่ถูกต้อง');
+  if(note.length>500)throw Error('หมายเหตุยาวเกิน 500 ตัวอักษร');
+  return{id:uid(),pid:pid,date:date,type:'out',amount:amount,cat:'ค่าแรง',sub:'เหมาทีมช่าง · '+scope,partner:name,vat:false,wht:false,paid:false,pay:'',due:'',boqId:'',payments:[],subcontract:true,subcontractScope:scope,subcontractDueMode:'completion',note:note,createdAt:Date.now()};
+}
+function subcontractCommit(t){
+  if(S.role!=='owner'||!t||!proj(t.pid)||t.type!=='out'||t.subcontract!==true){toast('ไม่มีสิทธิ์ตั้งค่าเหมาหรือโครงการไม่ถูกต้อง');return false;}
+  if(isPeriodClosed(t.date)){toast('งวด '+periodKey(t.date)+' ปิดบัญชีแล้ว');return false;}
+  if((S.tx||[]).some(function(x){return x.subcontract===true&&x.pid===t.pid&&x.partner===t.partner&&x.subcontractScope===t.subcontractScope&&x.amount===t.amount&&x.date===t.date&&Date.now()-(+x.createdAt||0)<60000;})){toast('พบข้อตกลงค่าเหมาเดียวกันที่เพิ่งบันทึก กรุณาตรวจรายการซ้ำ');return false;}
+  if(U.saveLock)return false;U.saveLock=true;
+  var oldTx=S.tx.slice(),oldAudit=(S.auditLog||[]).slice();
+  try{
+    S.tx.push(t);
+    accountingAudit('subcontract-create','tx',t.id,null,t,'ตั้งค่าเหมาช่าง · '+t.partner+' · '+t.subcontractScope);
+    if(!persist()){S.tx=oldTx;S.auditLog=oldAudit;return false;}
+    return true;
+  }finally{U.saveLock=false;}
+}
+function subcontractPaymentDraft(t,rawAmount,date,pay,note){
+  if(!t||t.subcontract!==true||t.type!=='out')throw Error('ไม่พบรายการค่าเหมาช่าง');
+  var amount=Number(rawAmount),remaining=txOutstandingNet(t);note=String(note||'').trim();
+  if(!isFinite(amount)||amount<=0||amount>remaining+.001||Math.round(amount*100)/100!==amount)throw Error('ยอดเบิกต้องมากกว่า 0 และไม่เกินยอดค้างจ่าย');
+  if(!validIsoDate(date))throw Error('วันที่เบิกเงินไม่ถูกต้อง');
+  if(pay!=='transfer'&&pay!=='cash')throw Error('เลือกช่องทางจ่ายเงิน');
+  if(note.length>240)throw Error('หมายเหตุการเบิกยาวเกิน 240 ตัวอักษร');
+  return{id:uid(),date:date,amount:amount,pay:pay,note:note,createdAt:Date.now()};
+}
+function subcontractProjectSection(pid){
+  if(S.role!=='owner')return '';
+  var sum=subcontractSummary(pid),h='<div class="workflow-section-head"><span>ค่าเหมาช่าง / เบิกเงินค่างวด</span><small>บันทึกต้นทุนครั้งเดียว · เบิกหักยอดค้างจ่าย</small></div>';
+  h+='<section class="sec master-detail-card" aria-label="บัญชีค่าเหมาช่าง"><div class="project-focus-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">'+
+    '<div><small>ยอดค่าเหมารวม</small><b style="display:block">'+fmt(sum.agreed,1)+'</b></div>'+
+    '<div><small>ช่างเบิกแล้ว</small><b style="display:block">'+fmt(sum.paid,1)+'</b></div>'+
+    '<div><small>ยอดค้างจ่ายช่าง</small><b class="out" style="display:block">'+fmt(sum.remaining,1)+'</b></div></div>'+
+    '<div style="margin-top:12px"><button class="btn pri" data-act="subcontractNew" data-id="'+esc(pid)+'">+ เพิ่มข้อตกลงค่าเหมาช่าง</button></div>'+
+    '<p class="muted" style="font-size:.82rem">หนึ่งข้อตกลงเป็นรายจ่ายค้างจ่าย 1 รายการ การเบิกแต่ละครั้งบันทึกเป็นการชำระเจ้าหนี้ ไม่เพิ่มต้นทุนซ้ำ</p>';
+  if(!sum.count)h+='<p class="muted">ยังไม่มีข้อตกลงค่าเหมาช่างในโครงการนี้</p>';
+  sum.rows.forEach(function(t){
+    var due=txOutstandingNet(t),paid=txPaidNet(t),history=txPayments(t);
+    h+='<div style="padding:12px 0;border-top:1px solid var(--line,#dfe3e5)"><b>'+esc(t.partner||'ทีมช่าง')+'</b><div class="muted">'+esc(t.subcontractScope||t.sub||'ค่าเหมาช่าง')+' · '+(due<=.01?'ชำระครบแล้ว':'ชำระส่วนที่เหลือเมื่อจบโครงการ')+'</div>'+
+    '<div class="kv"><span>ค่าเหมาตกลง</span><b>'+fmt(+t.amount||0,1)+'</b></div>'+
+    '<div class="kv"><span>เบิกแล้ว</span><b>'+fmt(paid,1)+'</b></div>'+
+    '<div class="kv"><span>ค้างจ่าย</span><b class="out">'+fmt(due,1)+'</b></div>'+
+    (t.note?'<p class="muted">'+esc(t.note)+'</p>':'')+
+    (due>.01?'<button class="btn pri" data-act="apPayOpen" data-id="'+esc(t.id)+'">+ บันทึกเบิกเงินช่าง</button>':'')+
+    '<button class="btn" data-act="openTx" data-id="'+esc(t.id)+'">ดูรายการบัญชี</button>';
+    if(history.length){h+='<details style="margin-top:8px"><summary>ประวัติการเบิก '+history.length+' ครั้ง</summary>';
+      history.forEach(function(p,i){h+='<div class="kv"><span>ครั้งที่ '+(i+1)+' · '+esc(p.date||'')+' · '+(p.pay==='cash'?'เงินสด':'โอน')+(p.note?' · '+esc(p.note):'')+'</span><b>'+fmt(+p.amount||0,1)+'</b></div>';});
+      h+='</details>';}
+    h+='</div>';
+  });
+  return h+'</section>';
+}
 function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
   var s=stats(p.id),pcost=projectCostWithGuarantees(p.id),boqUse=boqSummary(p.id),x=boqUse.pct,boqRemaining=boqUse.budget-boqUse.actual,actualCost=pcost.total,forecastProfit=approvedContractValue(p.id)-actualCost;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div><div class="workflow-section-head"><span>งานประจำวัน</span><small>BOQ · เพิ่มรายการ · แก้ไขโครงการ</small></div>';
   var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid project-command-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button class="btn" data-act="accountingProjectCost" data-id="'+p.id+'">ต้นทุนบัญชี</button><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+p.id+'">เอกสาร</button><button class="btn" data-act="projectGuarantees" data-id="'+p.id+'">หลักประกัน</button><button class="btn" data-act="govRiskOpen" data-id="'+p.id+'">สัญญา / หนังสือ</button><button class="btn" data-act="profilePostNew" data-id="'+p.id+'">โพสต์หน้างาน</button></div></div>';
 
+  h+=subcontractProjectSection(p.id);
   var cc=contractControl(p.id),cq=contractActionQueue(p.id);
   h+='<div class="workflow-section-head"><span>สัญญาและความเสี่ยง</span><small>กำหนดงาน · Variation · หนังสือ · เหตุการณ์</small></div>';
   h+='<div class="contract-center '+cc.risk+'"><div class="cc-head"><div><small>CONTRACT CONTROL CENTER</small><b>'+esc(({normal:'ปกติ',watch:'เฝ้าระวัง',urgent:'เร่งดำเนินการ',critical:'วิกฤต'})[cc.risk])+'</b></div><span>'+(p.status==='delivered'?'ส่งมอบแล้ว':p.status==='closed'?'ปิดโครงการแล้ว':cc.days===null?'ไม่ระบุวันสิ้นสุด':cc.days>=0?'เหลือ '+cc.days+' วัน':'พ้น '+Math.abs(cc.days)+' วัน')+'</span></div><div class="cc-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(+p.contract||0)+'</b></div><div><small>ต้นทุนรวมเงินประกัน</small><b>'+fmt(cc.cost.total)+'</b></div><div><small>Forecast หลัง Variation</small><b>'+fmt(cc.forecast)+'</b></div><div><small>หนังสือค้าง</small><b>'+cc.pendingLetters+' / รอตอบ '+cc.pendingReplies+'</b></div></div>'+(cq.length?'<div class="cc-queue">'+cq.slice(0,5).map(function(q){return '<p class="'+q.level+'">'+esc(q.text)+'</p>';}).join('')+'</div>':'<div class="cc-ok">ไม่พบ Action Queue สำคัญจากข้อมูลที่บันทึก</div>')+'<div class="cc-actions"><button class="btn" data-act="contractChangeNew" data-id="'+p.id+'">+ เพิ่ม/ลดงาน</button><button class="btn" data-act="timeExtensionNew" data-id="'+p.id+'">+ ขอขยายเวลา</button></div></div>';
@@ -7107,10 +7176,31 @@ function sheetHtml(){
     b=legacyRetentionImportSheetHtml(sh);
   }else if(sh.kind==='leaveAdd'){
     b='<h3>ออกจากรายการนี้?</h3><p class="muted">ข้อมูลที่ยังไม่ได้บันทึกจะหาย</p><div class="stack"><button class="btn dng" data-act="confirmLeaveAdd">ออกโดยไม่บันทึก</button><button class="btn" data-act="closeSheet">กรอกต่อ</button></div>';
+  }else if(sh.kind==='subcontractCreate'){
+    var sp=proj(sh.pid);if(!sp||S.role!=='owner'){U.sheet=null;return '';}
+    b='<h3>เพิ่มข้อตกลงค่าเหมาช่าง</h3><p class="muted">โครงการ '+esc(sp.name||'')+' · ตั้งยอดค้างจ่ายก่อน แล้วค่อยบันทึกเงินเบิกแต่ละครั้ง</p>'+
+      '<div class="field"><label for="subcontractName">ชื่อช่าง / ทีมรับเหมา</label><input id="subcontractName" maxlength="120" autocomplete="off" placeholder="เช่น ทีมช่างสมชาย"></div>'+
+      '<div class="field"><label for="subcontractScope">ประเภทงานเหมา</label><input id="subcontractScope" maxlength="160" autocomplete="off" placeholder="เช่น เหมาโครงสร้าง"></div>'+
+      '<div class="field"><label for="subcontractAmount">ยอดค่าเหมาทั้งหมด (บาท)</label><input id="subcontractAmount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="50000"></div>'+
+      '<div class="field"><label for="subcontractDate">วันที่ตั้งข้อตกลง</label><input id="subcontractDate" type="date" value="'+today()+'"></div>'+
+      '<div class="field"><label for="subcontractNote">หมายเหตุ / เงื่อนไขเพิ่มเติม</label><textarea id="subcontractNote" maxlength="500" rows="2" placeholder="เช่น จ่ายยอดคงเหลือหลังตรวจรับงาน"></textarea></div>'+
+      '<p class="muted">เงื่อนไข: ยอดคงเหลือจ่ายเมื่อจบโครงการ · เบิกก่อนจบงานได้ · ไม่คิด VAT หรือหัก ณ ที่จ่ายโดยอัตโนมัติ กรุณาตรวจเอกสารภาษีตามจริง</p>'+
+      '<div class="stack"><button class="btn pri" data-act="subcontractSave" data-id="'+esc(sp.id)+'">บันทึกยอดค่าเหมา</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='billPay'){
     var bp=(S.bills||[]).find(function(x){return x.id===sh.id;});if(!bp){U.sheet=null;return '';}var bps=billPaymentSummary(bp);
     b='<div class="bill-pay-editor"><div class="doc-editor-head"><div><small>RECEIVE PAYMENT</small><h3>รับเงินตามใบวางบิล</h3></div></div><div class="bill-pay-ref">'+esc(bp.no||'')+' · '+esc(bp.customer||'')+'</div><div class="bill-pay-summary"><div><small>ยอดใบวางบิล</small><b>'+fmt(bps.total,1)+'</b></div><div><small>รับแล้ว</small><b class="in">'+fmt(bps.paid,1)+'</b></div><div><small>คงเหลือ</small><b class="out">'+fmt(bps.remain,1)+'</b></div></div><div class="bill-pay-grid"><div class="field span-2"><label>จำนวนเงินที่รับครั้งนี้</label><input id="payAmount" type="number" inputmode="decimal" min="0.01" step="0.01" max="'+bps.remain+'" value="'+bps.remain+'"><small class="muted">รับได้สูงสุด '+fmt(bps.remain,1)+'</small></div><div class="field"><label>วันที่รับเงิน</label><input id="payDate" type="date" value="'+today()+'"></div><div class="field"><label>ช่องทาง</label><select id="payMethod"><option value="transfer">โอน</option><option value="cash">เงินสด</option></select></div></div><div class="doc-editor-save"><button type="button" data-act="closeSheet">ยกเลิก</button><button class="primary" data-act="saveBillPayment" data-id="'+bp.id+'">รับเงิน + ออกใบเสร็จ</button></div></div>';
-}else if(sh.kind==='apPay'){var apt=(S.tx||[]).find(function(x){return x.id===sh.id&&x.type==='out';});if(!apt){U.sheet=null;return '';}var aps=txPaymentState(apt);b='<h3>ชำระเจ้าหนี้</h3><div class="muted">'+esc(apt.partner||apt.sub||apt.cat||'')+'</div><div class="kv"><span>ยอดสุทธิ</span><b>'+fmt(net(apt),1)+'</b></div><div class="kv"><span>จ่ายแล้ว</span><b>'+fmt(aps.paid,1)+'</b></div><div class="kv"><span>คงเหลือ</span><b class="out">'+fmt(aps.remain,1)+'</b></div><div class="field"><label>จำนวนที่จ่ายครั้งนี้</label><input id="apPayAmount" type="number" inputmode="decimal" min="0.01" step="0.01" max="'+aps.remain+'" value="'+aps.remain+'"></div><div class="field"><label>วันที่จ่าย</label><input id="apPayDate" type="date" value="'+today()+'"></div><div class="field"><label>ช่องทาง</label><select id="apPayMethod"><option value="transfer">โอน</option><option value="cash">เงินสด</option></select></div><div class="stack"><button class="btn pri" data-act="apPaySave" data-id="'+apt.id+'">บันทึกการชำระ</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+}else if(sh.kind==='apPay'){
+    var apt=(S.tx||[]).find(function(x){return x.id===sh.id&&x.type==='out';});if(!apt){U.sheet=null;return '';}
+    var aps=txPaymentState(apt),subcontract=apt.subcontract===true;
+    b='<h3>'+(subcontract?'เบิกเงินค่าเหมาช่าง':'ชำระเจ้าหนี้')+'</h3><div class="muted">'+esc(apt.partner||apt.sub||apt.cat||'')+(subcontract?' · '+esc(apt.subcontractScope||''):'')+'</div>'+
+      '<div class="kv"><span>ยอดสุทธิ</span><b>'+fmt(net(apt),1)+'</b></div>'+
+      '<div class="kv"><span>จ่ายแล้ว</span><b>'+fmt(aps.paid,1)+'</b></div>'+
+      '<div class="kv"><span>ค้างจ่าย</span><b class="out">'+fmt(aps.remain,1)+'</b></div>'+
+      '<div class="field"><label>จำนวนที่จ่ายครั้งนี้</label><input id="apPayAmount" type="number" inputmode="decimal" min="0.01" step="0.01" max="'+aps.remain+'" value="'+(subcontract?'':aps.remain)+'" placeholder="'+(subcontract?'กรอกยอดเบิก เช่น 30000':'')+'"></div>'+
+      '<div class="field"><label>วันที่จ่าย</label><input id="apPayDate" type="date" value="'+today()+'"></div>'+
+      '<div class="field"><label>ช่องทาง</label><select id="apPayMethod"><option value="transfer">โอน</option><option value="cash">เงินสด</option></select></div>'+
+      (subcontract?'<div class="field"><label>หมายเหตุการเบิก</label><input id="subcontractPaymentNote" maxlength="240" placeholder="เช่น เบิกค่าช่างงวดที่ 1"></div><p class="muted">บันทึกเป็นการจ่ายหนี้ของค่าเหมาเดิม ไม่เพิ่มรายจ่ายใหม่</p>':'')+
+      '<div class="stack"><button class="btn pri" data-act="apPaySave" data-id="'+esc(apt.id)+'">'+(subcontract?'บันทึกเงินเบิก':'บันทึกการชำระ')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='tx'){
     var t=S.tx.find(function(x){return x.id===sh.id;});if(!t){U.sheet=null;return '';}
     var owner=S.role==='owner',d=dueInfo(t);
@@ -8160,6 +8250,15 @@ document.addEventListener('click',function(e){
   else if(a==='back'&&U.view==='report'){go('home');}
   else if(a==='back'){U.draft=null;go(U.pid&&U.view==='add'&&U.from==='project'?'project':(U.from||(S.role==='foreman'?'list':'home')));}
   else if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',quickEntryProject()||null);go('add');focusAmt();}
+  else if(a==='subcontractNew'){if(S.role!=='owner'||!proj(id)){toast('ไม่พบโครงการหรือไม่มีสิทธิ์');return;}U.sheet={kind:'subcontractCreate',pid:id};render();}
+  else if(a==='subcontractSave'){
+    if(S.role!=='owner'){toast('เฉพาะเจ้าของบัญชี');return;}
+    var field=function(k){return (document.getElementById(k)||{}).value||'';},st;
+    try{st=subcontractCreateRecord(id,field('subcontractName'),field('subcontractScope'),field('subcontractAmount'),field('subcontractDate'),field('subcontractNote'));}
+    catch(err){toast(err.message||'ข้อมูลค่าเหมาไม่ถูกต้อง');return;}
+    if(!subcontractCommit(st))return;
+    U.sheet=null;render();toast('บันทึกค่าเหมา '+fmt(st.amount)+' · ยอดค้างจ่ายทั้งหมด');
+  }
   else if(a==='addToProj'){U.from='project';U.draft=newDraft('out',id);go('add');focusAmt();}
   else if(a==='setType'){U.draft.type=v;U.draft.cat=v==='in'?CAT_IN[1]:CAT_OUT[0];U.draft.sub='';U.draft.subCustom='';render();}
   else if(a==='cat'){U.draft.cat=v;U.draft.sub='';U.draft.subCustom='';render();}
@@ -8204,17 +8303,48 @@ document.addEventListener('click',function(e){
   else if(a==='boqCancelImport'){var cp=U.sheet&&U.sheet.pid||U.boqProjectPid||'';boqCancelImport();U.sheet={kind:'boqImportFile',pid:cp};render();toast('หยุดการอ่าน BOQ แล้ว · รูปที่เลือกยังอยู่');}
   else if(a==='closeSheet'){if(U.boqImportBusy&&U.sheet&&U.sheet.kind==='boqImportFile')boqCancelImport();var wasBoq=U.sheet&&U.sheet.kind==='boq'&&U.view==='boq';runtimeReleaseCloudPhoto();U.sheet=null;U.confirm=null;if(wasBoq)saveNavSession();render();pwaApplyPendingUpdate();}
   else if(a==='apPayOpen'){var apt0=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt0)return;if(txOutstandingNet(apt0)<=.01){toast('รายการนี้ชำระครบแล้ว');return;}U.sheet={kind:'apPay',id:id};render();}
-  else if(a==='apPaySave'){var apt1=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt1){toast('ไม่พบเจ้าหนี้');return;}var amtAP=Math.round((+(document.getElementById('apPayAmount')||{}).value||0)*100)/100,dateAP=(document.getElementById('apPayDate')||{}).value||today(),payAP=(document.getElementById('apPayMethod')||{}).value||'transfer',remainAP=txOutstandingNet(apt1);if(!(amtAP>0)||amtAP-remainAP>.01){toast('จำนวนชำระต้องมากกว่า 0 และไม่เกินยอดคงเหลือ');return;}if(accountingPeriodLocked(dateAP,'การชำระเจ้าหนี้'))return;var snapAP=JSON.parse(JSON.stringify(apt1)),pmt={id:uid(),date:dateAP,amount:amtAP,pay:payAP,createdAt:Date.now()};apt1.payments=txPayments(apt1).slice();apt1.payments.push(pmt);var stAP=txPaymentState(apt1);apt1.paid=stAP.settled;apt1.pay=stAP.settled&&apt1.payments.length===1?payAP:(apt1.pay||'');if(stAP.settled)apt1.due='';accountingAudit('ap-payment','tx',apt1.id,snapAP,apt1,'ชำระเจ้าหนี้ '+fmt(amtAP));if(!persist()){Object.keys(apt1).forEach(function(k){delete apt1[k];});Object.assign(apt1,snapAP);toast('บันทึกชำระไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast(stAP.settled?'ชำระเจ้าหนี้ครบแล้ว':'บันทึกจ่ายบางส่วนแล้ว · เหลือ '+fmt(stAP.remain));}
-  else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(!t){toast('ไม่พบรายการ');return;}if(accountingPeriodLocked(t.date,'รายการบัญชี'))return;if(t.paid){U.sheet=null;render();toast('รายการนี้ชำระแล้ว');return;}var prevPaid=t.paid,prevDue=t.due,prevPay=t.pay;t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';if(!persist()){t.paid=prevPaid;t.due=prevDue;t.pay=prevPay;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}
+  else if(a==='apPaySave'){
+    var apt1=S.tx.find(function(x){return x.id===id&&x.type==='out';});
+    if(!apt1){toast('ไม่พบเจ้าหนี้');return;}
+    if(apt1.subcontract&&S.role!=='owner'){toast('เฉพาะเจ้าของบัญชีจึงจะบันทึกเบิกช่างได้');return;}
+    var amtAP=Math.round((+(document.getElementById('apPayAmount')||{}).value||0)*100)/100,
+        dateAP=(document.getElementById('apPayDate')||{}).value||today(),
+        payAP=(document.getElementById('apPayMethod')||{}).value||'transfer',
+        noteAP=(document.getElementById('subcontractPaymentNote')||{}).value||'',
+        remainAP=txOutstandingNet(apt1),pmt;
+    if(!validIsoDate(dateAP)){toast('วันที่ชำระไม่ถูกต้อง');return;}
+    if(apt1.subcontract){
+      try{pmt=subcontractPaymentDraft(apt1,amtAP,dateAP,payAP,noteAP);}
+      catch(err){toast(err.message||'ยอดเบิกไม่ถูกต้อง');return;}
+    }else{
+      if(!(amtAP>0)||amtAP-remainAP>.01){toast('จำนวนชำระต้องมากกว่า 0 และไม่เกินยอดคงเหลือ');return;}
+      pmt={id:uid(),date:dateAP,amount:amtAP,pay:payAP,createdAt:Date.now()};
+    }
+    if(accountingPeriodLocked(dateAP,apt1.subcontract?'การเบิกค่าเหมาช่าง':'การชำระเจ้าหนี้'))return;
+    var snapAP=JSON.parse(JSON.stringify(apt1)),auditCount=(S.auditLog||[]).length;
+    apt1.payments=txPayments(apt1).slice();apt1.payments.push(pmt);
+    var stAP=txPaymentState(apt1);
+    apt1.paid=stAP.settled;
+    apt1.pay=stAP.settled&&apt1.payments.length===1?payAP:(apt1.pay||'');
+    if(stAP.settled)apt1.due='';
+    accountingAudit('ap-payment','tx',apt1.id,snapAP,apt1,(apt1.subcontract?'เบิกค่าเหมาช่าง ':'ชำระเจ้าหนี้ ')+fmt(amtAP));
+    if(!persist()){
+      Object.keys(apt1).forEach(function(k){delete apt1[k];});Object.assign(apt1,snapAP);
+      if(S.auditLog)S.auditLog.length=Math.min(S.auditLog.length,auditCount);
+      toast('บันทึกชำระไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;
+    }
+    U.sheet=null;render();toast(stAP.settled?'ชำระค่าเหมาครบแล้ว':'บันทึกเบิกแล้ว · เหลือ '+fmt(stAP.remain));
+  }
+  else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(!t){toast('ไม่พบรายการ');return;}if(t.subcontract){toast('ค่าเหมาช่างต้องบันทึกผ่านเมนูเบิกเงิน');return;}if(accountingPeriodLocked(t.date,'รายการบัญชี'))return;if(t.paid){U.sheet=null;render();toast('รายการนี้ชำระแล้ว');return;}var prevPaid=t.paid,prevDue=t.due,prevPay=t.pay;t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';if(!persist()){t.paid=prevPaid;t.due=prevDue;t.pay=prevPay;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}
   else if(a==='editTx'){
-    var t2=S.tx.find(function(x){return x.id===id;});if(!t2)return;if(accountingPeriodLocked(t2.date,'รายการบัญชี'))return;
+    var t2=S.tx.find(function(x){return x.id===id;});if(!t2)return;if(t2.subcontract){toast('ค่าเหมาช่างจัดการจากแผงค่าเหมาภายในโครงการ เพื่อรักษาประวัติการเบิก');return;}if(accountingPeriodLocked(t2.date,'รายการบัญชี'))return;
     U.draft=JSON.parse(JSON.stringify(t2));U.draft.amount=String(t2.amount);
     if(U.draft.paid&&!U.draft.pay)U.draft.pay='transfer';
     if(t2.paid){U.draft.dueEnabled=true;if(!U.draft.due)U.draft.due=addDays(7);}
     else{U.draft.dueEnabled=!!t2.due;if(!U.draft.dueEnabled)U.draft.due='';}
     U.from=U.view;go('add');
   }
-  else if(a==='delTx'){var dtx=S.tx.find(function(x){return x.id===id;});if(!dtx)return;if(accountingPeriodLocked(dtx.date,'รายการบัญชี'))return;if(U.confirm==='tx'+id){var oldTx=S.tx.slice();S.tx=S.tx.filter(function(x){return x.id!==id;});if(!persist()){S.tx=oldTx;toast('ลบไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
+  else if(a==='delTx'){var dtx=S.tx.find(function(x){return x.id===id;});if(!dtx)return;if(dtx.subcontract&&txPayments(dtx).length){toast('ค่าเหมาช่างมีประวัติการเบิกแล้ว ห้ามลบรายการหลัก');return;}if(accountingPeriodLocked(dtx.date,'รายการบัญชี'))return;if(U.confirm==='tx'+id){var oldTx=S.tx.slice();S.tx=S.tx.filter(function(x){return x.id!==id;});if(!persist()){S.tx=oldTx;toast('ลบไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
   else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',status:'paid',paidOnly:false,q:''};go('list');}
   else if(a==='homePending'){var hpr=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v||'in',pid:hpr?hpr.id:'',cat:'',sub:'',status:'pending',paidOnly:false,q:''};go('list');}
   else if(a==='homeExpense'){var hpe=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:'out',pid:hpe?hpe.id:'',cat:'',sub:'',status:'all',paidOnly:false,q:''};go('list');}
@@ -8587,7 +8717,7 @@ function txFingerprint(t){return [t.type,t.pid,t.date,Math.round((+t.amount||0)*
 function likelyDuplicateTx(t,windowMs){var now=Date.now(),fp=txFingerprint(t);return (S.tx||[]).some(function(x){if(x.id===t.id)return false;if(txFingerprint(x)!==fp)return false;var ct=+x.createdAt||0;return !ct||now-ct<(windowMs||120000);});}
 function saveTx(more){
   if(U.saveLock){toast('กำลังบันทึก กรุณารอสักครู่');return;}
-  if(U.expenseScanBusy){toast('รอ OCR เสร็จก่อนบันทึก');return;}var d=U.draft;if(!d)return;syncDraftProjectFromForm();var a=Number(d.amount);
+  if(U.expenseScanBusy){toast('รอ OCR เสร็จก่อนบันทึก');return;}var d=U.draft;if(!d)return;if(d.id&&(S.tx||[]).some(function(x){return x.id===d.id&&x.subcontract===true;})){toast('รายการค่าเหมาช่างต้องจัดการผ่านหน้าโครงการ เพื่อคงประวัติการเบิก');return;}syncDraftProjectFromForm();var a=Number(d.amount);
   if(!isFinite(a)||!(a>0)){toast('กรอกจำนวนเงินก่อน');var el=document.getElementById('amt');if(el)el.focus();return;}
   if(!proj(d.pid)){toast('เลือกโครงการก่อน');return;}if(!validIsoDate(d.date)){toast('ตรวจวันที่รายการ');return;}if(isPeriodClosed(d.date)){toast('งวด '+periodKey(d.date)+' ปิดบัญชีแล้ว · เปิดงวดก่อนแก้ไขรายการ');return;}if(d.boqId&&!S.boq.some(function(x){return x.id===d.boqId&&x.pid===d.pid;})){toast('BOQ ไม่อยู่ในโครงการนี้');return;}
   if(d.ocrSource&&!d.id&&(!expensePaymentStatus(d.ocrPaymentStatus)||(d.paid&&['cash','transfer'].indexOf(d.pay)<0))){toast('ยืนยันสถานะชำระเงินและช่องทางจ่ายจากรูปก่อนบันทึก');return;}

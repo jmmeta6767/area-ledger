@@ -72,6 +72,8 @@ jobs:
         run: |
           node tests/qa.cjs
           node tests/reliability-v1048.cjs
+      - name: Subcontractor withdrawals and accounting safety regression
+        run: node tests/subcontractor-payments.cjs
       - name: BOQ provenance regression
         run: node tests/boq-quality-provenance.cjs
       - name: Real document quality verifier regression
