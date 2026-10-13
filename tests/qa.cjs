@@ -17,6 +17,50 @@ function action(a,id='p',fields={}){for(const [k,v] of Object.entries(fields))el
 (async()=>{
 test('JS syntax',()=>assert(scripts.length));
 test('storage keys remain unchanged',()=>{assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db')});
+reset();test('contractor package 50000 advance 30000 leaves 20000 without duplicate expense',()=>{
+  assert(c.vProject().includes('ค่าเหมาช่าง / เบิกเงินค่างวด'));
+  action('contractorPackageNew','p');
+  assert.equal(c.U.sheet.kind,'contractorPackageNew');
+  assert(c.sheetHtml().includes('contractorAmount'));
+  action('contractorPackageSave','p',{contractorName:'ทีมช่างสมชาย',contractorScope:'งานโครงสร้าง',contractorAmount:'50000'});
+  const tx=c.S.tx.find(x=>x.contractorPackage===true);
+  assert(tx,'contractor payable was not created');
+  assert.equal(tx.amount,50000);
+  assert.equal(tx.cat,'ค่าแรง');
+  assert.equal(tx.paid,false);
+  assert.equal(c.contractorPackageSummary('p').remaining,50000);
+  assert.equal(c.stats('p').outB,50000);
+  assert(c.vProject().includes('50,000'));
+  action('apPayOpen',tx.id);
+  assert.equal(c.U.sheet.kind,'apPay');
+  action('apPaySave',tx.id,{apPayAmount:'30000',apPayDate:'2026-10-14',apPayMethod:'transfer'});
+  assert.equal(c.txPaidNet(tx),30000);
+  assert.equal(c.txOutstandingNet(tx),20000);
+  assert.equal(c.contractorPackageSummary('p').paid,30000);
+  assert.equal(c.contractorPackageSummary('p').remaining,20000);
+  assert.equal(c.stats('p').outB,50000,'advance must never be recorded as a second expense');
+  assert.equal(c.S.tx.filter(x=>x.contractorPackage===true).length,1);
+  assert.equal(tx.payments.length,1);
+  assert(c.contractorPackageHtml('p').includes('ประวัติการเบิก 1 ครั้ง'));
+  action('apPayOpen',tx.id);
+  action('apPaySave',tx.id,{apPayAmount:'30000',apPayDate:'2026-10-14',apPayMethod:'transfer'});
+  assert.equal(c.txOutstandingNet(tx),20000,'over-claim must be rejected');
+  assert.equal(tx.payments.length,1,'over-claim must not be written');
+  const persisted=JSON.parse(storage.get(c.KEY));
+  assert.equal(persisted.tx.filter(x=>x.contractorPackage===true).length,1);
+  assert.equal(persisted.tx.find(x=>x.id===tx.id).payments[0].amount,30000);
+});
+reset();test('contractor package rejects duplicate and invalid amounts',()=>{
+  action('contractorPackageNew','p');
+  action('contractorPackageSave','p',{contractorName:'ทีม A',contractorScope:'คาน',contractorAmount:'50000'});
+  assert.equal(c.S.tx.length,1);
+  action('contractorPackageNew','p');
+  action('contractorPackageSave','p',{contractorName:'ทีม A',contractorScope:'คาน',contractorAmount:'50000'});
+  assert.equal(c.S.tx.length,1,'duplicate contract must be blocked');
+  action('contractorPackageNew','p');
+  action('contractorPackageSave','p',{contractorName:'ทีม B',contractorScope:'โครงสร้าง',contractorAmount:'-1'});
+  assert.equal(c.S.tx.length,1,'invalid amount must be rejected');
+});
 reset();test('v815 Safari first save accepts exact raw localStorage baseline after migration',()=>{
   const raw=JSON.stringify({projects:[],tx:[],role:'owner',opening:0});
   storage.set(c.KEY,raw);
