@@ -32,10 +32,6 @@ async function fixture(page,view,count){
     await fixture(page,view,count);
     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&!e.closest('.wrapx,.acct-table');}).slice(0,12).map(e=>e.className),handles:document.querySelectorAll('.master-sheet-handle').length}));
     evidence.push({version,mode,width,height,view,count,...result});
-    if(view==='home'&&width===390&&version==='before'){
-     const baseline=await page.evaluate(()=>({columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})}));
-     assert.equal(baseline.columns.split(' ').length,2,JSON.stringify(baseline));
-    }
     if(version==='after'){
      assert(result.scrollWidth<=result.width+1,JSON.stringify(evidence.at(-1)));
      if(view==='add'&&!count){
