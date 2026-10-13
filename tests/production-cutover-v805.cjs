@@ -11,6 +11,7 @@ assert(y.includes("github.event.workflow_run.head_branch == 'main'"));
 assert(y.includes("github.event.workflow_run.event == 'push'"));
 assert(y.includes('needs.authorize.outputs.authorized'));
 assert(y.includes('environment: production'));
+assert(y.includes('group: area-ledger-production-release'),'automatic and manual production deploys must share one concurrency group');
 assert(y.includes('ref: ${{ needs.authorize.outputs.source_sha }}'));
 assert(y.includes('SOURCE_SHA="${{ github.event.workflow_run.head_sha }}"'));
 assert(y.includes('STAGING_RUN_ID="${{ github.event.workflow_run.id }}"'));
