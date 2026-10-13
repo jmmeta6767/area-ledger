@@ -100,6 +100,8 @@ for(const contract of [
 ])assert(html.includes(contract),'missing subcontract UI or safety guard '+contract);
 assert(html.includes("subcontractProjectSection(p.id)"),'project page must render payable records');
 assert(html.includes("if(accountingPeriodLocked(dateAP"),'advance must respect closed accounting periods');
+assert(html.includes("value=\"'+(subcontract?'':aps.remain)+'\""),'progress advance must require explicit amount, no auto-full-pay');
+assert(html.includes("if(d.id&&(S.tx||[]).some(function(x){return x.id===d.id&&x.subcontract===true;}))"),'generic transaction save must not edit subcontract payables');
 assert.equal(html.includes("var KEY='site-ledger-v1'"),true,'localStorage schema must remain frozen');
 assert.equal(html.includes("'site-ledger-db'"),true,'IndexedDB schema must remain frozen');
 console.log('PASS subcontractor commitments, progress withdrawals, balance, anti-duplication, role and storage safety');
