@@ -1017,10 +1017,11 @@ reset();test('v1062 contractor honors closed payment period and zero remaining o
   action('apPaySave',id,{apPayAmount:'30000',apPayDate:'2026-10-13',apPayMethod:'transfer'});
   assert.equal(c.S.tx[0].payments.length,0,'closed period must not accept payment');
   c.S.accountingPeriods=[];
-  action('apPaySave',id,{apPayAmount:'30000',apPayDate:'2026-10-13',apPayMethod:'transfer'});
+  // A corrected payment date is a new user action and must not be mistaken for an identical rapid double-click.
+  action('apPaySave',id,{apPayAmount:'30000',apPayDate:'2026-10-14',apPayMethod:'transfer'});
   assert.equal(c.S.tx[0].payments.length,1);
   action('contractorDrawOpen',id);
-  action('apPaySave',id,{apPayAmount:'20000',apPayDate:'2026-10-14',apPayMethod:'cash'});
+  action('apPaySave',id,{apPayAmount:'20000',apPayDate:'2026-10-15',apPayMethod:'cash'});
   const st=c.contractorSummary('p');
   assert.equal(st.paid,50000);assert.equal(st.remaining,0);assert.equal(c.S.tx.length,1);
   assert.equal(c.S.tx[0].payments.length,2);assert.equal(c.S.tx[0].paid,true);
