@@ -1,6 +1,3 @@
-Warning: fs8 was declared with const; use let for reassignable variables.
-Warning: xx was declared with const; use let for reassignable variables.
-Warning: cr was declared with const; use let for reassignable variables.
 const C='site-ledger-v800-business-stable-1-source-candidate-1063';
 const CORE=['./','index.html','icon-180.png','icon-192.png','icon-512.png','manifest.webmanifest','area-logo-header.jpg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});

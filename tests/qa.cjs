@@ -1,6 +1,3 @@
-Warning: fs8 was declared with const; use let for reassignable variables.
-Warning: xx was declared with const; use let for reassignable variables.
-Warning: cr was declared with const; use let for reassignable variables.
 /* Run with node tests/qa.cjs. No external dependencies, real app functions in VM. */
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=fs.readFileSync('gateway/public/index.html','utf8'),scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map(x=>x[1]).filter(Boolean);
