@@ -96,9 +96,9 @@ async function fixture(page,view,count){
      await page.locator('[data-act="cat"][data-v="เงินประกันผลงาน"]').click();await page.locator('[data-act="paid"][data-v="0"]').click();
      assert.equal(await page.locator('[data-act="paid"][data-v="0"]').getAttribute('aria-pressed'),'true');assert(await page.locator('#due').count());
      await page.locator('[data-act="save"]').click();
-     const final=await page.evaluate(()=>({rows:S.tx.length,stored:JSON.parse(localStorage.getItem(KEY)).tx.length,expense:S.tx.find(t=>t.type==='out'),income:S.tx.find(t=>t.type==='in'),outstanding:stats('p2').payPend}));
-     assert.equal(final.rows,2);assert.equal(final.stored,2);assert.equal(final.expense.amount,1234.56);assert.equal(final.income.amount,2500);assert.equal(final.income.pid,'p2');assert.equal(final.income.cat,'เงินประกันผลงาน');assert.equal(final.income.partner,'ลูกค้าทดสอบ');assert.equal(final.income.date,'2026-10-14');assert.equal(final.income.paid,false);assert.equal(final.income.pay,'');assert.equal(final.outstanding,1234.56);
-     evidence.push({version,mode,width,height,view:'add-interaction',count:2,storedRows:final.stored,expense:final.expense.amount,income:final.income.amount,unpaidExpense:final.outstanding});
+     const final=await page.evaluate(()=>({rows:S.tx.length,stored:JSON.parse(localStorage.getItem(KEY)).tx.length,expense:S.tx.find(t=>t.type==='out'),income:S.tx.find(t=>t.type==='in'),pendingReceivable:stats('p2').recPend}));
+     assert.equal(final.rows,2);assert.equal(final.stored,2);assert.equal(final.expense.amount,1234.56);assert.equal(final.income.amount,2500);assert.equal(final.income.pid,'p2');assert.equal(final.income.cat,'เงินประกันผลงาน');assert.equal(final.income.partner,'ลูกค้าทดสอบ');assert.equal(final.income.date,'2026-10-14');assert.equal(final.income.paid,false);assert.equal(final.income.pay,'');assert.equal(final.pendingReceivable,2500);
+     evidence.push({version,mode,width,height,view:'add-interaction',count:2,storedRows:final.stored,expense:final.expense.amount,income:final.income.amount,pendingReceivable:final.pendingReceivable});
     }
     if(width===390&&mode==='browser'){
      await fixture(page,'add',2);
