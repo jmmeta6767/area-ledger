@@ -55,7 +55,9 @@ jobs:
           test "$(tr -d '\r\n' < .github/production-cutover-v805)" = "DEPLOY_PRODUCTION"
           runs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/staging-auto-deploy.yml/runs?branch=main&head_sha=${GITHUB_SHA}&per_page=30")"
           echo "$runs" | jq -e --arg sha "$GITHUB_SHA" 'any(.workflow_runs[]; .head_sha == $sha and .conclusion == "success" and .event == "push")' >/dev/null
-          echo "Exact main SHA has successful staging acceptance: $GITHUB_SHA"
+          qa_runs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/qa.yml/runs?branch=main&head_sha=${GITHUB_SHA}&per_page=30")"
+          echo "$qa_runs" | jq -e --arg sha "$GITHUB_SHA" 'any(.workflow_runs[]; .head_sha == $sha and .conclusion == "success" and .event == "push")' >/dev/null
+          echo "Exact main SHA has successful staging and Release QA acceptance: $GITHUB_SHA"
 
       - name: Recheck staging runtime and BOQ provider before production
         if: ${{ inputs.target == 'production' }}
