@@ -3807,7 +3807,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1063,"sha":"","environment":"source"};
+var APP_BUILD={"version":1064,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -8668,7 +8668,7 @@ async function pwaCheckUpdate(){
  try{var response=await fetch('./index.html',{cache:'no-store',credentials:'same-origin',signal:controller?controller.signal:undefined});if(!response.ok)throw Error('network');var html=await response.text(),match=html.match(/var APP_BUILD=(\{[^\n]+\});/);if(!match)throw Error('identity');var build=JSON.parse(match[1]);if(!/^[a-f0-9]{40}$/.test(build.sha||'')||build.environment!==APP_BUILD.environment)throw Error('identity');message(build.sha===APP_BUILD.sha?'กำลังใช้เวอร์ชันล่าสุด v'+build.version:'มีเวอร์ชันพร้อมใช้ v'+build.version+' · '+build.sha.slice(0,7)+' · ปิดงานที่กำลังแก้ก่อนโหลดใหม่');if(navigator.serviceWorker){var registration=await navigator.serviceWorker.getRegistration();if(registration)await registration.update();}}
  catch(e){message('ยังตรวจเวอร์ชันไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่ ข้อมูลเดิมยังอยู่');}finally{clearTimeout(timer);U.pwaCheckBusy=false;}
 }
-function pwaCanReload(){return !U.saveLock&&!U.draft&&!U.boqImportBusy&&!U.expenseScanBusy&&!U.expenseBatchBusy&&!U.cloudSyncBusy&&!U.profilePostSaving&&!U.profilePhotoBusy&&!U.sheet;}
+function pwaCanReload(){var cleanAddDraft=!!U.draft&&U.view==='add'&&!draftDirty();return !U.saveLock&&(!U.draft||cleanAddDraft)&&!U.boqImportBusy&&!U.expenseScanBusy&&!U.expenseBatchBusy&&!U.cloudSyncBusy&&!U.profilePostSaving&&!U.profilePhotoBusy&&!U.sheet;}
 function pwaApplyPendingUpdate(){if(!U.pwaUpdatePending||!pwaCanReload())return false;U.pwaUpdatePending=false;location.reload();return true;}
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
   var pwaController=navigator.serviceWorker.controller;
@@ -8676,7 +8676,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1063&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1064&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
