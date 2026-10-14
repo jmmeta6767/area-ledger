@@ -68,6 +68,8 @@ jobs:
         run: node tests/cloudflare-only.cjs
       - name: Native store package contract
         run: node tests/mobile-store-contract.cjs
+      - name: Contractor claim / outstanding payments regression
+        run: node tests/contractor-claims.cjs
       - name: Regression QA
         run: |
           node tests/qa.cjs
