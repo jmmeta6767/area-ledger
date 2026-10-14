@@ -5,7 +5,7 @@ assert(start>0&&end>start,'contractor summary must precede project renderer');
 const payments=t=>Array.isArray(t.payments)?t.payments:[];
 const paid=t=>Math.min(Number(t.amount)||0,payments(t).reduce((v,p)=>v+Math.max(0,Number(p.amount)||0),0));
 const remain=t=>Math.round(Math.max(0,(Number(t.amount)||0)-paid(t))*100)/100;
-const env={S:{tx:[]},net:t=>Number(t.amount)||0,txPaidNet:paid,txOutstandingNet:remain,fmt:x=>'฿'+Number(x).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),esc:String,dstr:String,payLabel:String,role:'owner'};
+const env={S:{tx:[]},net:t=>Number(t.amount)||0,txPaidNet:paid,txOutstandingNet:remain,txPayments:payments,fmt:x=>'฿'+Number(x).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),esc:String,dstr:String,payLabel:String,role:'owner'};
 vm.createContext(env);vm.runInContext(html.slice(start,end),env);
 const t={id:'contractor-1',pid:'p1',type:'out',date:'2026-10-14',partner:'ช่างเอ',sub:'งานโครงสร้าง',cat:'ค่าแรง',contractorPackage:true,amount:50000,paid:false,pay:'',payments:[]};
 env.S.tx=[t,{id:'other',pid:'p1',type:'out',amount:1000,payments:[]},{id:'otherproject',pid:'p2',type:'out',amount:8000,contractorPackage:true,payments:[]}];
