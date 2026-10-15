@@ -31,7 +31,9 @@ export function verifyPr4(data){
 if(process.argv[1]&&new URL(import.meta.url).pathname.endsWith(process.argv[1].replace(/\\/g,'/').split('/').pop())){
   const evidence={base,sourceSha:process.env.AREA_LEDGER_ACCEPTANCE_SHA||null,workflowRun:process.env.AREA_LEDGER_ACCEPTANCE_RUN||null,at:new Date().toISOString(),fixture:'boq-pr4-field.jpeg'};
   try{
-    const shell=await fetch(base+'/',{signal:AbortSignal.timeout(20000),cache:'no-store'});
+    // Match live acceptance's source-pinned URL to avoid a stale root response during edge propagation.
+    const shellUrl=base+'/?build='+encodeURIComponent(evidence.sourceSha||evidence.at);
+    const shell=await fetch(shellUrl,{signal:AbortSignal.timeout(20000),cache:'no-store'});
     assert(shell.ok,'app shell unavailable');
     const match=(await shell.text()).match(/var APP_BUILD=(\{[^;]+\});/);
     assert(match,'missing deployed build identity');
