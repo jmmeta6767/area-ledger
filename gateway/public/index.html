@@ -3968,7 +3968,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1073,"sha":"","environment":"source"};
+var APP_BUILD={"version":1074,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5608,7 +5608,8 @@ function vAdd(){
   h+='<div class="prev" id="prev">'+prevText(d)+'</div>';
   h+='<div class="field"><span class="lbl">รูปใบเสร็จ</span>'+(d.photo?'<div class="photo"><img src="'+d.photo+'" alt="รูปใบเสร็จ"></div><div class="stack" style="margin-top:10px"><button class="btn" data-act="rmphoto">ลบรูป</button></div>':d.photoRef?'<div class="photo">'+(d.photoThumb?'<img src="'+d.photoThumb+'" alt="รูปใบเสร็จย่อ">':'')+'</div><div class="stack" style="margin-top:10px"><button class="btn" data-act="cloudPhotoOpen" data-key="'+esc(d.photoRef)+'" data-mime="'+esc(d.photoMime||'image/jpeg')+'">เปิดรูปต้นฉบับจาก R2</button><button class="btn" data-act="rmphoto">ลบรูปออกจากรายการ</button></div>':'<label class="btn" for="photoIn">'+ic('cam')+'ถ่ายรูปหรือเลือกรูป</label>')+'<input id="photoIn" type="file" accept="image/*" capture="environment"></div>';
   h+='<div class="field"><label for="note">หมายเหตุ</label><input id="note" data-f="note" type="text" placeholder="ไม่บังคับ" value="'+esc(d.note)+'"></div></div></details>';
-  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save">'+(d.id?'บันทึกการแก้ไข':'บันทึกรายการ')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore">บันทึกและเพิ่มอีก</button>')+'</div>';
+  if(U.txSaveErrorDraft===d&&U.txSaveError)h+='<div class="expense-scan-result" role="alert">'+esc(U.txSaveError)+'</div>';
+  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save"'+(U.saveLock?' disabled aria-busy="true"':'')+'>'+(d.id?'บันทึกการแก้ไข':'บันทึกรายการ')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore"'+(U.saveLock?' disabled':'')+'>บันทึกและเพิ่มอีก</button>')+'</div>';
   return h+'</section>';
 }
 function prevText(d){
@@ -7306,29 +7307,32 @@ function expenseBatchMarkUncertain(){
  var names={amount:'ยอดเงิน',date:'วันที่',sub:'รายการ/รายละเอียด',partner:'ร้านค้า/ผู้รับเงิน'};
  document.querySelectorAll('[data-exp-batch][data-k]').forEach(function(el){var x=(U.expenseBatch||[])[+el.dataset.expBatch],label=el.closest('.expense-batch-field');if(!x||!label)return;var uncertain=(x.ocrUncertainFields||[]).indexOf(names[el.dataset.k])>=0;label.classList.toggle('ocr-uncertain',uncertain);if(uncertain)el.setAttribute('title','AI อ่านช่องนี้ไม่ชัด โปรดตรวจเทียบต้นฉบับ');});
 }
-/* v1073: preserve the reviewed draft and surface the actual storage failure. */
+/* v1074: preserve the reviewed draft and surface the actual storage failure. */
 function expenseBatchSaveMessage(){
   var messages={quota:'พื้นที่บันทึก Safari เต็ม · ร่างและข้อมูลเดิมยังอยู่ กรุณาสำรองข้อมูล หรือเปิด Cloud Sync เพื่อเก็บรูปใน R2',conflict:'ข้อมูลเปลี่ยนจากอีกแท็บ · ร่างยังอยู่ กรุณาสำรองร่างและเปิดข้อมูลล่าสุดก่อนบันทึก',read:'ยังอ่านข้อมูลเดิมไม่สำเร็จ · ร่างยังอยู่ กรุณาลองเปิดแอปใหม่หลังสำรองข้อมูล',write:'บันทึกในเครื่องไม่สำเร็จ · ร่างและข้อมูลเดิมยังอยู่ กรุณาตรวจพื้นที่และสิทธิ์จัดเก็บ'};
   return messages[U.storageWriteError]||messages.write;
+}
+async function storageArchiveRecoveryCopy(isCurrent){
+  await mirrorQueue.catch(function(){});
+  var backup=localStorage.getItem(BACKUP_KEY)||'',current=localStorage.getItem(KEY)||'';
+  if(current!==committedState){U.storageWriteError='conflict';return false;}
+  if(!backup||!isCurrent())return false;
+  try{var parsed=JSON.parse(backup);if(!parsed||!Array.isArray(parsed.tx)||!Array.isArray(parsed.projects))return false;}catch(_){return false;}
+  var saved=await idbPut('state-backup',backup),verified=saved&&await idbRead('state-backup');
+  if(!isCurrent())throw Error('ร่างเปลี่ยนระหว่างเตรียมพื้นที่ กรุณาตรวจแล้วบันทึกใหม่');
+  if(localStorage.getItem(KEY)!==current){U.storageWriteError='conflict';return false;}
+  if(verified!==backup||localStorage.getItem(BACKUP_KEY)!==backup)return false;
+  localStorage.removeItem(BACKUP_KEY);return true;
 }
 async function expenseBatchRecoverQuota(batch){
   var cloudKey=cloudLedgerKey(false),draft=U.expenseBatch,signature=JSON.stringify(draft),ready=U.expenseBatchEvidence||{},attempts=Object.create(null);
   function unchanged(){return U.expenseBatch===draft&&JSON.stringify(draft)===signature&&U.sheet&&U.sheet.kind==='expenseBatch';}
   U.expenseBatchBusy=true;U.expenseBatchSaveError='พื้นที่ในเครื่องเต็ม · กำลังตรวจพื้นที่สำรองก่อนบันทึกอีกครั้ง';render();
   try{
-    /* The recovery copy can consume half the localStorage quota. Archive and
-       read it back before releasing only that redundant copy; never the ledger. */
-    await mirrorQueue.catch(function(){});
-    var backup=localStorage.getItem(BACKUP_KEY)||'',current=localStorage.getItem(KEY)||'';
-    if(backup&&current===committedState){
-      var saved=await idbPut('state-backup',backup),verified=saved&&await idbRead('state-backup');
-      if(!unchanged())throw Error('ร่างเปลี่ยนระหว่างเตรียมพื้นที่ กรุณาตรวจแล้วบันทึกใหม่');
-      if(verified===backup&&localStorage.getItem(BACKUP_KEY)===backup&&localStorage.getItem(KEY)===current){
-        localStorage.removeItem(BACKUP_KEY);
-        U.expenseBatchBusy=false;expenseBatchSave(true);
-        if(!U.expenseBatch.length||U.storageWriteError!=='quota')return;
-        U.expenseBatchBusy=true;
-      }
+    if(await storageArchiveRecoveryCopy(unchanged)){
+      U.expenseBatchBusy=false;expenseBatchSave(true);
+      if(!U.expenseBatch.length||U.storageWriteError!=='quota')return;
+      U.expenseBatchBusy=true;
     }
     if(!cloudSyncEnabled())throw Error('พื้นที่ยังไม่พอหลังตรวจสำรอง กรุณาสำรองข้อมูลหรือตรวจพื้นที่จัดเก็บ Safari');
     if(!unchanged()||cloudLedgerKey(false)!==cloudKey)throw Error('ร่างเปลี่ยนระหว่างเตรียมพื้นที่ กรุณาตรวจแล้วบันทึกใหม่');
@@ -8888,9 +8892,22 @@ document.addEventListener('change',function(e){
 });
 function txFingerprint(t){return [t.type,t.pid,t.date,Math.round((+t.amount||0)*100),t.cat||'',t.sub||'',t.partner||'',t.paid?'1':'0',t.pay||'',t.billId||'',t.receiptId||''].join('|');}
 function likelyDuplicateTx(t,windowMs){var now=Date.now(),fp=txFingerprint(t);return (S.tx||[]).some(function(x){if(x.id===t.id)return false;if(txFingerprint(x)!==fp)return false;var ct=+x.createdAt||0;return !ct||now-ct<(windowMs||120000);});}
-function saveTx(more){
+function syncDraftAmountFromForm(){var el=document.getElementById('amt');if(U.draft&&el)U.draft.amount=String(el.value||'');}
+function txSaveFailure(d,message){U.txSaveErrorDraft=d;U.txSaveError=message;render();toast(message);}
+async function txRecoverQuota(d,more){
+  var signature=JSON.stringify(d);U.saveLock=true;U.txSaveErrorDraft=d;U.txSaveError='พื้นที่ในเครื่องเต็ม · กำลังตรวจพื้นที่สำรองก่อนบันทึกอีกครั้ง';render();
+  function unchanged(){syncDraftAmountFromForm();return U.draft===d&&JSON.stringify(d)===signature&&U.view==='add'&&!U.sheet;}
+  try{
+    var reclaimed=await storageArchiveRecoveryCopy(unchanged);
+    if(!unchanged())throw Error('ร่างเปลี่ยนระหว่างเตรียมพื้นที่ กรุณาตรวจแล้วบันทึกใหม่');
+    U.saveLock=false;
+    if(reclaimed){saveTx(more,true);return;}
+    txSaveFailure(d,expenseBatchSaveMessage());
+  }catch(e){U.saveLock=false;txSaveFailure(d,String(e.message||'เตรียมพื้นที่ไม่สำเร็จ')+' · ร่างและข้อมูลเดิมยังอยู่');}
+}
+function saveTx(more,quotaRetried){
   if(U.saveLock){toast('กำลังบันทึก กรุณารอสักครู่');return;}
-  if(U.expenseScanBusy){toast('รอ OCR เสร็จก่อนบันทึก');return;}var d=U.draft;if(!d)return;syncDraftProjectFromForm();var a=Number(d.amount);
+  if(U.expenseScanBusy){toast('รอ OCR เสร็จก่อนบันทึก');return;}var d=U.draft;if(!d)return;syncDraftProjectFromForm();syncDraftAmountFromForm();U.txSaveError='';var a=Number(d.amount);
   if(!isFinite(a)||!(a>0)){toast('กรอกจำนวนเงินก่อน');var el=document.getElementById('amt');if(el)el.focus();return;}
   if(!proj(d.pid)){toast('เลือกโครงการก่อน');return;}if(!validIsoDate(d.date)){toast('ตรวจวันที่รายการ');return;}if(isPeriodClosed(d.date)){toast('งวด '+periodKey(d.date)+' ปิดบัญชีแล้ว · เปิดงวดก่อนแก้ไขรายการ');return;}if(d.boqId&&!S.boq.some(function(x){return x.id===d.boqId&&x.pid===d.pid;})){toast('BOQ ไม่อยู่ในโครงการนี้');return;}
   if(d.ocrSource&&!d.id&&(!expensePaymentStatus(d.ocrPaymentStatus)||(d.paid&&['cash','transfer'].indexOf(d.pay)<0))){toast('ยืนยันสถานะชำระเงินและช่องทางจ่ายจากรูปก่อนบันทึก');return;}
@@ -8899,11 +8916,11 @@ function saveTx(more){
   if(d.id){var existingTx=S.tx.find(function(x){return x.id===d.id;});if(existingTx){t=Object.assign({},existingTx,t);if(existingTx.type==='out'&&txPaidNet(existingTx)-net(t)>.01){toast('ยอดใหม่ต่ำกว่ายอดที่ชำระเจ้าหนี้ไปแล้ว');return;}}}
   if(!d.id&&t.photo&&expensePhotoDuplicate(t.photo,t.id)){toast('รูปใบเสร็จนี้ถูกใช้กับรายการอื่นแล้ว · ตรวจรายการซ้ำก่อน');return;}if(!d.id&&likelyDuplicateTx(t,120000)){toast('พบรายการเหมือนกันที่เพิ่งบันทึก จึงไม่บันทึกซ้ำ');return;}
   U.saveLock=true;
-  var idx=S.tx.findIndex(function(x){return x.id===t.id;}),prev=idx>-1?JSON.parse(JSON.stringify(S.tx[idx])):null,prevLast=JSON.parse(JSON.stringify(S.last||{}));
+  var idx=S.tx.findIndex(function(x){return x.id===t.id;}),prev=idx>-1?JSON.parse(JSON.stringify(S.tx[idx])):null,prevLast=JSON.parse(JSON.stringify(S.last||{})),prevAudit=(S.auditLog||[]).slice();
   if(idx>-1)S.tx[idx]=t;else S.tx.push(t);
   S.last={pid:d.pid,cat:(S.last&&S.last.cat)||CAT_OUT[0],pay:(d.paid?d.pay:(S.last&&S.last.pay))||'transfer'};if(d.type==='out')S.last.cat=d.cat;
   accountingAudit(idx>-1?'tx-edit':'tx-create','tx',t.id,prev,t,'');
-  if(!persist()){if(idx>-1)S.tx[idx]=prev;else S.tx=S.tx.filter(function(x){return x.id!==t.id;});S.last=prevLast;U.saveLock=false;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่ กรุณาลองอีกครั้ง');return;}
+  if(!persist()){if(idx>-1)S.tx[idx]=prev;else S.tx=S.tx.filter(function(x){return x.id!==t.id;});S.last=prevLast;S.auditLog=prevAudit;U.saveLock=false;if(!quotaRetried&&U.storageWriteError==='quota'){txRecoverQuota(d,more);return;}txSaveFailure(d,expenseBatchSaveMessage());return;}
   U.saveLock=false;U.lastSaveSig=txFingerprint(t);U.lastSaveAt=Date.now();if(d.photoDeleteRef&&cloudSyncEnabled())cloudFileDelete(d.photoDeleteRef);if(t.photo&&cloudSyncEnabled())cloudOffloadOneTxPhoto(t.id,true).then(function(ok){if(ok)render();});
   var was=d.id,returnView=U.from;U.draft=null;
   if(more&&!was){U.draft=newDraft(d.type,d.pid);U.draft.cat=d.cat;U.draft.date=d.date;render();window.scrollTo(0,0);focusAmt();toast('บันทึกแล้ว เพิ่มรายการต่อได้เลย');return;}
@@ -8979,7 +8996,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1073&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1074&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
