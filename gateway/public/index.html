@@ -1962,35 +1962,6 @@ textarea{resize:vertical}
 /* Shared OCR sheet containment; only this scroll surface consumes viewport height. */
 @media(max-width:900px){.mobile-editor-scrim>.expense-review-sheet{width:min(100%,620px)!important;min-width:0!important;max-width:100%!important;max-height:calc(var(--ledger-vvh,100vh) - 12px)!important;overflow-y:auto;overscroll-behavior-y:contain;scroll-padding:16px 0 150px;box-sizing:border-box}.expense-review-sheet :is(input,select,textarea){font-size:16px!important;min-width:0;max-width:100%;box-sizing:border-box}}
 .review-queue-row{display:flex;flex-direction:column;gap:6px;width:100%;min-width:0;min-height:44px;text-align:left;padding:14px;margin:8px 0;border:1px solid #d5dadd;border-radius:14px;background:#fff;overflow-wrap:anywhere}.review-queue-row b{font-variant-numeric:tabular-nums}.pilot-steps li{margin:12px 0}.update-panel{padding:12px;border:1px solid #d5dadd;border-radius:14px}.update-panel button{min-height:44px}
-/* v1069: full-viewport app shell across every Ledger screen, inspired by Facebook's edge-to-edge layout. */
-html,body{width:100%;min-width:320px;min-height:100%;}
-body{min-height:100vh;min-height:100dvh;}
-#app,#app.nonav{width:100%;max-width:none;min-width:0;min-height:100vh;min-height:100dvh;margin:0;padding-bottom:0;}
-#app:not(.nonav) main{width:100%;max-width:none!important;min-width:0;margin:0;padding:16px clamp(12px,2.4vw,32px) calc(112px + env(safe-area-inset-bottom,0px))!important;}
-#app.nonav main{width:100%;max-width:none!important;min-width:0;margin:0;padding:16px clamp(12px,2.4vw,32px) calc(24px + env(safe-area-inset-bottom,0px))!important;}
-body.force-mobile main,body.force-desktop main{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;}
-body.view-profile #app main{padding-top:0!important;}
-body.force-mobile main{padding-left:clamp(12px,3vw,24px)!important;padding-right:clamp(12px,3vw,24px)!important;padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important;}
-body.force-desktop{width:100%;min-width:320px;max-width:none;}
-body.force-desktop main{padding:20px clamp(20px,2.8vw,40px) 36px!important;}
-.app-social-topbar{width:100%;min-width:0;}
-.app-topbar-brand,.app-topbar-actions{min-width:0;}
-.nav{width:100%;max-width:none;left:0;right:0;}
-.nav-in{width:100%;max-width:none;margin:0;padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));}
-main>*{min-width:0;}
-@media(min-width:900px){
-  #app:not(.nonav) main,#app.nonav main{padding-top:22px!important;padding-left:clamp(24px,3vw,48px)!important;padding-right:clamp(24px,3vw,48px)!important;}
-  body.force-mobile main{padding-left:clamp(20px,3vw,40px)!important;padding-right:clamp(20px,3vw,40px)!important;}
-  .app-social-topbar{min-height:68px;grid-template-columns:48px minmax(120px,1fr) auto;padding-left:clamp(18px,2.5vw,36px);padding-right:clamp(18px,2.5vw,36px);}
-  .app-topbar-menu{width:48px;height:48px;}
-  .app-topbar-action{width:46px;height:46px;}
-}
-@media(max-width:520px){
-  #app:not(.nonav) main{padding-top:12px!important;padding-left:12px!important;padding-right:12px!important;padding-bottom:calc(102px + env(safe-area-inset-bottom,0px))!important;}
-  #app.nonav main{padding:12px 12px calc(20px + env(safe-area-inset-bottom,0px))!important;}
-  body.force-mobile main{padding-bottom:calc(102px + env(safe-area-inset-bottom,0px))!important;}
-  .nav-in{padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px));}
-}
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -3700,6 +3671,35 @@ body.view-add .nav .add{color:#48350B!important}
 body.view-add .master-form-page label:not(.btn):not([for="expenseScanIn"]){min-height:0!important}
 body.view-add .master-form-page :where(input:not([type=file]),select,textarea){min-height:44px!important;padding:9px 10px!important;border-radius:8px!important}
 body.view-add .add-amount .amt input{min-height:40px!important;padding:0!important}
+/* v1069: full-viewport app shell across every Ledger screen, inspired by Facebook's edge-to-edge layout. */
+html,body{width:100%;min-width:320px;min-height:100%;}
+body{min-height:100vh;min-height:100dvh;}
+#app,#app.nonav{width:100%;max-width:none;min-width:0;min-height:100vh;min-height:100dvh;margin:0;padding-bottom:0;}
+#app:not(.nonav) main{width:100%;max-width:none!important;min-width:0;margin:0;padding:16px clamp(12px,2.4vw,32px) calc(112px + env(safe-area-inset-bottom,0px))!important;}
+#app.nonav main{width:100%;max-width:none!important;min-width:0;margin:0;padding:16px clamp(12px,2.4vw,32px) calc(24px + env(safe-area-inset-bottom,0px))!important;}
+body.force-mobile main,body.force-desktop main{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;}
+body.view-profile #app main{padding-top:0!important;}
+body.force-mobile main{padding-left:clamp(12px,3vw,24px)!important;padding-right:clamp(12px,3vw,24px)!important;padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important;}
+body.force-desktop{width:100%;min-width:320px;max-width:none;}
+body.force-desktop main{padding:20px clamp(20px,2.8vw,40px) 36px!important;}
+.app-social-topbar{width:100%;min-width:0;}
+.app-topbar-brand,.app-topbar-actions{min-width:0;}
+.nav{width:100%;max-width:none;left:0;right:0;}
+.nav-in{width:100%;max-width:none;margin:0;padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));}
+main>*{min-width:0;}
+@media(min-width:900px){
+  #app:not(.nonav) main,#app.nonav main{padding-top:22px!important;padding-left:clamp(24px,3vw,48px)!important;padding-right:clamp(24px,3vw,48px)!important;}
+  body.force-mobile main{padding-left:clamp(20px,3vw,40px)!important;padding-right:clamp(20px,3vw,40px)!important;}
+  .app-social-topbar{min-height:68px;grid-template-columns:48px minmax(120px,1fr) auto;padding-left:clamp(18px,2.5vw,36px);padding-right:clamp(18px,2.5vw,36px);}
+  .app-topbar-menu{width:48px;height:48px;}
+  .app-topbar-action{width:46px;height:46px;}
+}
+@media(max-width:520px){
+  #app:not(.nonav) main{padding-top:12px!important;padding-left:12px!important;padding-right:12px!important;padding-bottom:calc(102px + env(safe-area-inset-bottom,0px))!important;}
+  #app.nonav main{padding:12px 12px calc(20px + env(safe-area-inset-bottom,0px))!important;}
+  body.force-mobile main{padding-bottom:calc(102px + env(safe-area-inset-bottom,0px))!important;}
+  .nav-in{padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px));}
+}
 </style>
 </head>
 <body>
