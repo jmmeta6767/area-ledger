@@ -5390,7 +5390,13 @@ function expenseOcrNumberTokens(text){
   while((m=re.exec(s))){var raw=m[2],n=parseFloat(raw.replace(/,/g,''));if(isFinite(n)&&n>0&&n<=1000000000)out.push({value:n,raw:raw,index:m.index+m[1].length});}
   return out;
 }
-function expenseOcrAmount(text){
+function expenseOcrPhoneMatchesAmount(amount,text){
+  var target=String(Math.round(+amount||0)),s=String(text||''),re=/(?:โทร(?:ศัพท์)?|มือถือ|โทร\.?|tel(?:ephone)?|phone)\s*[:：.]?\s*(\+?\d[\d\s().-]{6,}\d)/ig,m;
+  if(!target||target==='0')return false;
+  while((m=re.exec(s))){var digits=m[1].replace(/\D/g,'');if(digits&&(digits===target||digits.endsWith(target)))return true;}
+  return false;
+}
+function expenseOcrAmountEvidence(text){
   var s=String(text||''),best=0,labels=/(ยอดเงินสุทธิ|ยอดสุทธิ|รวมสุทธิ|grand\s*total|รวมทั้งสิ้น|รวมเงิน|จำนวนเงินรวม|total)/ig,m;
   while((m=labels.exec(s))){
     var after=expenseOcrNumberTokens(s.slice(m.index+m[0].length,m.index+m[0].length+90));
@@ -5398,15 +5404,19 @@ function expenseOcrAmount(text){
     var before=expenseOcrNumberTokens(s.slice(Math.max(0,m.index-45),m.index));
     if(before.length)best=Math.max(best,before[before.length-1].value);
   }
-  if(best>0)return best;
+  if(best>0)return{amount:best,explicit:true};
   var nums=expenseOcrNumberTokens(s).map(function(x){return x.value;});
-  if(!nums.length)return 0;
+  if(!nums.length)return{amount:0,explicit:false};
   var counts={};nums.forEach(function(n){var k=String(n);counts[k]=(counts[k]||0)+1;});
   if(/บิลเงินสด|cash\s*sale|amount|จำนวนเงิน/i.test(s)){
     var repeated=Object.keys(counts).map(function(k){return {value:+k,count:counts[k]};}).filter(function(x){return x.count>=2&&x.value>=1;}).sort(function(a,b){return (b.value*b.count)-(a.value*a.count);});
-    if(repeated.length){var sum=repeated[0].value*repeated[0].count;if(sum>Math.max.apply(Math,nums)&&sum<=1000000000)return sum;}
+    if(repeated.length){var sum=repeated[0].value*repeated[0].count;if(sum>Math.max.apply(Math,nums)&&sum<=1000000000)return{amount:sum,explicit:false};}
   }
-  return Math.max.apply(Math,nums);
+  var fallback=Math.max.apply(Math,nums);
+  return{amount:expenseOcrPhoneMatchesAmount(fallback,s)?0:fallback,explicit:false};
+}
+function expenseOcrAmount(text){
+  return expenseOcrAmountEvidence(text).amount;
 }
 function expenseOcrCleanDescription(value){var sub=String(value||'').replace(/\s+/g,' ').trim().slice(0,160);if(!sub)return '';var signals=[/ว\s*\/\s*ด\s*\/\s*ป/i,/วันที่/i,/รายการ\s*\/\s*(?:ค่า)?(?:แรง|ของ)/i,/จำนวน(?:\s*เงิน)?/i,/ราคา\s*\/\s*หน่วย/i,/หมายเหตุ/i],hits=signals.reduce(function(n,re){return n+(re.test(sub)?1:0);},0),compact=sub.toLowerCase().replace(/[\s/|,;:：.·()_\-–]+/g,'');if(hits>=3||['ว/ด/ป','วันที่','รายการ','รายการค่าแรง','รายการค่าของ','จำนวน','จำนวนเงิน','ราคาหน่วย','หมายเหตุ'].map(function(x){return x.replace(/[\s/|,;:：.·()_\-–]+/g,'');}).indexOf(compact)>=0)return '';return sub;}
 function expenseOcrCleanPartner(value){var partner=String(value||'').replace(/\s+/g,' ').trim().slice(0,160);if(!partner)return '';var signals=[/ว\s*\/\s*ด\s*\/\s*ป/i,/วันที่/i,/รายการ/i,/ค่าของ|ค่าแรง/,/จำนวน/,/ราคา\s*\/\s*หน่วย/i,/รวม/,/หมายเหตุ/],hits=signals.reduce(function(n,re){return n+(re.test(partner)?1:0);},0),compact=partner.toLowerCase().replace(/[\s/|,;:：.·()_\-–]+/g,'');if(hits>=3||['ร้านค้า','ผู้รับเงิน','ร้านค้าผู้รับเงิน','ผู้รับเงินร้านค้า','ชื่อร้านค้า','ชื่อผู้รับเงิน','วดป','วันที่','รายการ','รายการค่าแรง','รายการค่าของ','ค่าแรง','ค่าของ','จำนวน','ราคาหน่วย','รวม','หมายเหตุ'].indexOf(compact)>=0)return '';return partner;}
@@ -5812,9 +5822,10 @@ function expenseOcrResult(text){
   return {text:text,amount:amt,cat:g.cat,sub:g.sub,partner:expenseOcrPartner(text),source:'local'};
 }
 function expenseOcrNormalizeRemote(x){
-  x=x&&typeof x==='object'?x:{};var text=String(x.text||''),local=expenseOcrResult(text),amount=+x.amount||0,rows=Array.isArray(x.rows)?x.rows.slice(0,80).map(function(r){return{paymentStatus:expensePaymentStatus(r.paymentStatus),amount:+r.amount||0,date:/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?String(r.date):'',cat:CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):'ค่าของ',sub:expenseOcrCleanDescription(r.sub),partner:expenseOcrCleanPartner(r.partner),confidence:Math.max(0,Math.min(1,+r.confidence||0))};}):[];
+  x=x&&typeof x==='object'?x:{};var text=String(x.text||''),local=expenseOcrResult(text),evidence=expenseOcrAmountEvidence(text),amount=+x.amount||0,rows=Array.isArray(x.rows)?x.rows.slice(0,80).map(function(r){return{paymentStatus:expensePaymentStatus(r.paymentStatus),amount:+r.amount||0,date:/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?String(r.date):'',cat:CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):'ค่าของ',sub:expenseOcrCleanDescription(r.sub),partner:expenseOcrCleanPartner(r.partner),confidence:Math.max(0,Math.min(1,+r.confidence||0))};}):[];
   var documentTotal=x.documentTotal==null||x.documentTotal===''?0:+x.documentTotal;
-  return {paymentStatus:expensePaymentStatus(x.paymentStatus),text:text,amount:rows.length>1?0:(amount>0&&isFinite(amount)?amount:local.amount),documentTotal:isFinite(documentTotal)&&documentTotal>0&&documentTotal<=1000000000?documentTotal:0,cat:String(x.cat||local.cat||'ค่าของ'),sub:expenseOcrCleanDescription(x.sub||local.sub),partner:expenseOcrCleanPartner(x.partner)||expenseOcrCleanPartner(local.partner),date:/^\d{4}-\d{2}-\d{2}$/.test(String(x.date||''))?String(x.date):'',confidence:Math.max(0,Math.min(1,+x.confidence||0)),rows:rows,source:'ai'};
+  var trustedAmount=evidence.explicit?evidence.amount:(expenseOcrPhoneMatchesAmount(amount,text)?0:(amount>0&&isFinite(amount)?amount:local.amount));
+  return {paymentStatus:expensePaymentStatus(x.paymentStatus),text:text,amount:rows.length>1?0:trustedAmount,documentTotal:isFinite(documentTotal)&&documentTotal>0&&documentTotal<=1000000000?documentTotal:0,cat:String(x.cat||local.cat||'ค่าของ'),sub:expenseOcrCleanDescription(x.sub||local.sub),partner:expenseOcrCleanPartner(x.partner)||expenseOcrCleanPartner(local.partner),date:/^\d{4}-\d{2}-\d{2}$/.test(String(x.date||''))?String(x.date):'',confidence:Math.max(0,Math.min(1,+x.confidence||0)),rows:rows,source:'ai'};
 }
 function expenseOcrLocal(canvas){
   return new Promise(function(resolve,reject){loadTesseract(function(ok){if(!ok){reject(new Error('Local OCR unavailable'));return;}Tesseract.recognize(canvas,'tha+eng').then(function(res){resolve(expenseOcrResult(res.data&&res.data.text||''));}).catch(reject);});});
