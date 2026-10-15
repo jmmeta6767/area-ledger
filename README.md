@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1069 Full-viewport Facebook-inspired app shell
+
+- Extends the app shell, page area, top bar and bottom navigation across the available screen width on every view, including desktop and manually selected mobile/desktop modes.
+- Keeps responsive gutters, iPhone safe-area spacing, the floating company-profile menu and readable form content while removing the narrow centered frame around the app.
+- Presentation only: accounting calculations, handlers, storage keys, OCR and voice behavior are unchanged.
+- `node tests/qa.cjs` covers the global shell contract; browser-emulated viewport QA remains the final responsive verification.
+
 ## v1041 Expense Batch Integrity Regression
 
 - Exercises multi-row expense saves through the actual app handler: only selected rows are written, totals/fields stay bound to their project and payment data, and OCR review provenance and source-row evidence survive.
