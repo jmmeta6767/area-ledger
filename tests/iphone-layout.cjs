@@ -6,7 +6,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..'),out=path.resolve(process.env.LAYOUT_OUTPUT||path.join(root,'layout-evidence'));
 fs.mkdirSync(out,{recursive:true});
 const current=fs.readFileSync(path.join(root,'gateway/public/index.html'),'utf8');
-const before=cp.execFileSync('git',['show','86b5c5948fba70ee8e839036160fb4d9dcb0a075:gateway/public/index.html'],{cwd:root,encoding:'utf8',maxBuffer:8e6});
+const before=cp.execFileSync('git',['show','86af4a50134191618ecc63eec2a14e95c01c33fd:gateway/public/index.html'],{cwd:root,encoding:'utf8',maxBuffer:8e6});
 const prepare=html=>html.replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n');
 async function fixture(page,view,count){
  await page.evaluate(({view,count})=>{
@@ -23,7 +23,7 @@ async function fixture(page,view,count){
  const evidence=[];
  try{
  for(const version of ['before','after']){
-  for(const mode of ['browser','safe-area-simulation'])for(const [width,height] of [[320,640],[375,812],[390,844],[430,932],[844,390]]){
+  for(const mode of ['browser','safe-area-simulation'])for(const [width,height] of [[320,640],[375,812],[390,844],[430,932],[768,1024],[844,390]]){
    const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,deviceScaleFactor:1,serviceWorkers:'block'});
    const page=await context.newPage();await page.route('**/*',r=>r.abort());let html=prepare(version==='before'?before:current);
    if(mode==='safe-area-simulation')html=html.replace(/env\(safe-area-inset-top(?:,\s*0px)?\)/g,'44px').replace(/env\(safe-area-inset-bottom(?:,\s*0px)?\)/g,'34px');
@@ -32,15 +32,13 @@ async function fixture(page,view,count){
     await fixture(page,view,count);
     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&!e.closest('.wrapx,.acct-table');}).slice(0,12).map(e=>e.className),handles:document.querySelectorAll('.master-sheet-handle').length}));
     evidence.push({version,mode,width,height,view,count,...result});
-    if(view==='home'&&width===390&&version==='before'){
-     const baseline=await page.evaluate(()=>({columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})}));
-     assert.equal(baseline.columns.split(' ').length,2,JSON.stringify(baseline));assert(baseline.amounts.some(lines=>lines>1),JSON.stringify(baseline));
-    }
     if(version==='after'){
      assert(result.scrollWidth<=result.width+1,JSON.stringify(evidence.at(-1)));
      if(view==='add'&&!count){
       const amount=await page.locator('.add-amount .amt').evaluate(el=>{const s=getComputedStyle(el),i=getComputedStyle(el.querySelector('input')),r=el.getBoundingClientRect();return {height:r.height,outlineStyle:s.outlineStyle,borderWidth:s.borderTopWidth,boxShadow:s.boxShadow,inputOutlineStyle:i.outlineStyle,inputBoxShadow:i.boxShadow};});
       assert(amount.height<=72&&amount.outlineStyle==='none'&&amount.borderWidth==='2px'&&amount.boxShadow==='none'&&amount.inputOutlineStyle==='none'&&amount.inputBoxShadow==='none',JSON.stringify(amount));
+      const entry=await page.evaluate(()=>({title:document.querySelector('.add-form-head h1')?.textContent.trim(),actions:[...document.querySelectorAll('.expense-scan-card label,.expense-voice-button')].map(e=>({text:e.innerText.trim(),width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})),categoryColumns:getComputedStyle(document.querySelector('.add-core-card .grp')).gridTemplateColumns.split(' ').length,savePosition:getComputedStyle(document.querySelector('.add-savebar')).position,amountFont:parseFloat(getComputedStyle(document.querySelector('.add-amount .amt input')).fontSize),typePressed:[...document.querySelectorAll('.add-type-seg button')].map(x=>x.getAttribute('aria-pressed'))}));
+      assert.equal(entry.title,'เพิ่มรายการ');assert.deepEqual(entry.actions.map(x=>x.text).filter(Boolean),['สแกนบิล','พูดรายการ']);assert(entry.actions.every(x=>x.width>=44&&x.height>=44));assert.equal(entry.categoryColumns,2);assert.equal(entry.savePosition,'static');assert(entry.amountFont>=32&&entry.amountFont<=40);assert.deepEqual(entry.typePressed,['true','false']);
      }
      if(view==='home'){
       const finance=await page.evaluate(()=>({innerWidth,media:matchMedia('(max-width:600px)').matches,view:document.body.dataset.view,columns:getComputedStyle(document.querySelector('.expense-status-grid')).gridTemplateColumns,labels:[...document.querySelectorAll('.expense-status-copy small')].map(e=>e.textContent.trim()),amounts:[...document.querySelectorAll('.expense-status-copy>b')].map(e=>({text:e.textContent,whiteSpace:getComputedStyle(e).whiteSpace,rects:(()=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;})()}))}));
@@ -72,14 +70,36 @@ async function fixture(page,view,count){
      await page.locator('.expense-status-overview').screenshot({animations:'disabled',path:path.join(out,`${version}-${mode}-dashboard-expenses-390.png`)});
     }
     if(width===390||width===320){
-     if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&!count)await page.screenshot({path:path.join(out,'after-browser-390-add-amount.png'),fullPage:true});
+     if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&!count){await page.screenshot({path:path.join(out,'after-browser-390-add-amount.png'),fullPage:true});await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(out,'after-browser-390-add-form-top.png')});await page.locator('.add-savebar').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'after-browser-390-add-form-bottom.png')});}
      if(count){await page.evaluate(()=>document.querySelector('.master-sheet').scrollTop=0);await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}-top.png`)});await page.evaluate(()=>{const s=document.querySelector('.master-sheet');s.scrollTop=s.scrollHeight;});}
      if(version==='after'&&mode==='browser'&&width===390&&view==='add'&&count===11){const summary=page.locator('.expense-batch-evidence summary').first();await summary.click();const image=page.locator('.expense-batch-evidence img').first();assert(await image.isVisible());assert(await image.evaluate(el=>el.src.startsWith('data:image/')));assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));await page.screenshot({path:path.join(out,'after-browser-390-add-11-evidence-open.png')});await summary.click();}
      if(view==='print'){await page.evaluate(()=>{const table=document.querySelector('.tx-report-table')||[...document.querySelectorAll('.pv table')].at(-1);if(table)table.scrollIntoView({block:'start'});});await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-print-list-viewport.png`)});}
      await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}.png`),fullPage:!count});
     }
    }
-   if(version==='after'){
+    if(version==='after'){
+    if(width===390&&mode==='browser'){
+     await page.unroute('**/*');await page.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({status:200,contentType:'text/html',body:prepare(current)}):r.abort());await page.goto('http://area-ledger.test/');
+     await page.evaluate(()=>{S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'p',name:'โครงการทดสอบ A'},{id:'p2',name:'โครงการทดสอบ B'}];S.bank='บัญชีทดสอบจริง';S.tx=[];U.storageReadBlocked=false;U.view='add';U.pid='p';U.from='home';U.draft=newDraft('out','p');render();committedState=JSON.stringify(S);localStorage.setItem(KEY,committedState);});
+     await page.locator('#pid').selectOption('p2');
+     await page.locator('#amt').fill('1234.56');await page.locator('#par').fill('ร้านทดสอบ');await page.locator('#dt').fill('2026-10-13');
+     await page.locator('[data-act="cat"][data-v="ค่าแรง"]').click();
+     await page.locator('#subc').fill('เหล็กเส้นทดสอบ');
+     await page.locator('.add-advanced summary').click();
+     await page.locator('[data-act="tog"][data-v="vat"]').click();await page.locator('[data-act="tog"][data-v="wht"]').click();
+     await page.locator('[data-act="paid"][data-v="1"]').click();
+     assert((await page.locator('[data-act="pay"][data-v="transfer"]').innerText()).includes('บัญชีทดสอบจริง'));
+     await page.locator('[data-act="pay"][data-v="transfer"]').click();await page.locator('[data-act="saveMore"]').click();
+     const expense=await page.evaluate(()=>({rows:S.tx.length,stored:JSON.parse(localStorage.getItem(KEY)).tx.length,tx:S.tx[0],draft:U.draft}));
+     assert.equal(expense.rows,1);assert.equal(expense.stored,1);assert.equal(expense.tx.pid,'p2');assert.equal(expense.tx.type,'out');assert.equal(expense.tx.amount,1234.56);assert.equal(expense.tx.cat,'ค่าแรง');assert.equal(expense.tx.sub,'เหล็กเส้นทดสอบ');assert.equal(expense.tx.partner,'ร้านทดสอบ');assert.equal(expense.tx.date,'2026-10-13');assert.equal(expense.tx.pay,'transfer');assert.equal(expense.tx.paid,true);assert.equal(expense.tx.vat,true);assert.equal(expense.tx.wht,true);assert.equal(expense.draft.type,'out');assert.equal(expense.draft.pid,'p2');assert.equal(expense.draft.cat,'ค่าแรง');assert.equal(expense.draft.date,'2026-10-13');
+     await page.locator('[data-act="setType"][data-v="in"]').click();await page.locator('#amt').fill('2500');await page.locator('#par').fill('ลูกค้าทดสอบ');await page.locator('#dt').fill('2026-10-14');
+     await page.locator('[data-act="cat"][data-v="เงินประกันผลงาน"]').click();await page.locator('[data-act="paid"][data-v="0"]').click();
+     assert.equal(await page.locator('[data-act="paid"][data-v="0"]').getAttribute('aria-pressed'),'true');assert(await page.locator('#due').count());
+     await page.locator('[data-act="save"]').click();
+     const final=await page.evaluate(()=>({rows:S.tx.length,stored:JSON.parse(localStorage.getItem(KEY)).tx.length,expense:S.tx.find(t=>t.type==='out'),income:S.tx.find(t=>t.type==='in'),pendingReceivable:stats('p2').recPend}));
+     assert.equal(final.rows,2);assert.equal(final.stored,2);assert.equal(final.expense.amount,1234.56);assert.equal(final.income.amount,2500);assert.equal(final.income.pid,'p2');assert.equal(final.income.cat,'เงินประกันผลงาน');assert.equal(final.income.partner,'ลูกค้าทดสอบ');assert.equal(final.income.date,'2026-10-14');assert.equal(final.income.paid,false);assert.equal(final.income.pay,'');assert.equal(final.pendingReceivable,2500);
+     evidence.push({version,mode,width,height,view:'add-interaction',count:2,storedRows:final.stored,expense:final.expense.amount,income:final.income.amount,pendingReceivable:final.pendingReceivable});
+    }
     if(width===390&&mode==='browser'){
      await fixture(page,'add',2);
      await page.evaluate(()=>{U.expenseBatch.forEach((x,i)=>{x.sourceGroupId='reconcile-fixture';x.sourceRowCount=2;x.sourceRowIndex=i+1;x.ocrDocumentTotal=10000;x.amount=i?4500:4500;x.include=true;});render();expenseBatchUpdateUi();});
@@ -108,3 +128,4 @@ async function fixture(page,view,count){
  fs.writeFileSync(path.join(out,'layout-results.json'),JSON.stringify(evidence,null,2));console.log('PASS Chromium layout: 5 viewports, browser/safe-area simulation, 4 screens, batches 1/11/60, edit/selection, viewport shrink and scroll restoration');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
+

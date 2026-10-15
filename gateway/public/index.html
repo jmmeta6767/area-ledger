@@ -3532,13 +3532,93 @@ body.project-keyboard-focus .project-sheet .project-form-savebar{grid-template-c
 @media(max-width:380px){.project-boq-usage-values{display:grid;grid-template-columns:1fr}.project-budget-glance em{font-size:.68rem}}
 @media(prefers-reduced-motion:reduce){.settings-feedback-entry,.feedback-close{scroll-behavior:auto;transition:none!important}}
 
-/* HOME MENU — floating over the wallpaper for a cleaner dashboard */
-.home-floating-header{position:relative!important;height:64px!important;min-height:64px!important;padding:0!important;gap:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;pointer-events:none!important;z-index:1002!important}
-.home-floating-header:after{display:none!important}
-.home-floating-menu{position:fixed!important;left:max(14px,env(safe-area-inset-left))!important;top:calc(env(safe-area-inset-top) + 14px)!important;transform:none!important;display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;height:48px!important;flex:0 0 48px!important;padding:12px!important;border:1px solid rgba(255,255,255,.52)!important;border-radius:50%!important;background:rgba(23,32,43,.46)!important;backdrop-filter:blur(14px) saturate(1.2)!important;-webkit-backdrop-filter:blur(14px) saturate(1.2)!important;box-shadow:0 5px 18px rgba(15,23,32,.2)!important;pointer-events:auto!important;touch-action:manipulation}
-.home-floating-menu span{width:22px!important;height:2.5px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.38)}
-.home-floating-menu:focus-visible{outline:3px solid #ffc333!important;outline-offset:3px!important}
-.home-floating-menu:active{transform:scale(.96)!important}
+/* Facebook-inspired app bar: left menu, AREA Ledger wordmark, real shortcuts. */
+.app-social-topbar{position:sticky;top:0;z-index:120;display:grid;grid-template-columns:44px minmax(78px,1fr) auto;align-items:center;gap:8px;min-height:64px;padding:env(safe-area-inset-top,0px) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));background:rgba(255,255,255,.97);border-bottom:1px solid #e8ebed;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.app-topbar-menu{width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:0;border-radius:50%;background:transparent;color:#20242b;touch-action:manipulation}
+.app-topbar-menu span{display:block;width:25px;height:2.5px;border-radius:2px;background:#20242b}
+.app-topbar-menu:active,.app-topbar-action:active{background:#f1f3f5}
+.app-topbar-brand{min-width:0;overflow:hidden;color:#20242b;font-size:1.22rem;font-weight:800;letter-spacing:-.045em;white-space:nowrap;text-overflow:ellipsis;line-height:1}
+.app-topbar-brand strong{color:#b98200;font-weight:850}
+.app-topbar-brand .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.app-topbar-actions{display:flex;align-items:center;gap:5px}
+.app-topbar-action{position:relative;width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:#20242b;touch-action:manipulation}
+.app-topbar-action:first-child{border:1px solid #dfe3e7;border-radius:13px}
+.app-topbar-action svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app-topbar-action:focus-visible,.app-topbar-menu:focus-visible{outline:3px solid #ffc928;outline-offset:2px}
+.app-topbar-badge{position:absolute;top:0;right:0;min-width:18px;height:18px;padding:0 4px;border-radius:10px;background:#d93025;color:#fff;font-size:10px;font-style:normal;font-weight:800;line-height:18px;text-align:center}
+body.sheet-open .app-topbar-menu,body[data-view="print"] .app-social-topbar,body[data-view="quoteprint"] .app-social-topbar{display:none!important}
+/* On the company profile, float the controls over the cover photo like Facebook's profile header. */
+body.view-profile .app-social-topbar{position:absolute;top:8px;left:0;right:0;min-height:64px;padding:0 18px;background:transparent;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;grid-template-columns:44px minmax(0,1fr) auto;pointer-events:none}
+body.view-profile .app-topbar-menu,body.view-profile .app-topbar-actions{pointer-events:auto}
+body.view-profile .app-topbar-menu{background:rgba(17,24,39,.38);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+body.view-profile .app-topbar-menu span{background:#fff}
+body.view-profile .app-topbar-brand{visibility:hidden}
+body.view-profile .app-topbar-actions{gap:7px}
+body.view-profile .app-topbar-actions .app-topbar-action{width:42px;height:42px;border:1px solid rgba(255,255,255,.28);background:rgba(17,24,39,.34);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+body.view-profile .app-topbar-actions .app-topbar-action:active{background:rgba(17,24,39,.62)}
+body.view-profile main{padding-top:8px!important}
+body.view-add main{padding-top:0!important}
+@media(max-width:360px){.app-social-topbar{grid-template-columns:40px minmax(70px,1fr) auto;gap:5px;padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}.app-topbar-menu{width:40px;height:44px}.app-topbar-actions{gap:2px}.app-topbar-action{width:38px;height:42px}.app-topbar-brand{font-size:1.1rem}}
+/* Premium Yellow & White transaction entry v1067. Keep styles scoped to this view. */
+body.view-add{--color-primary:#FFC928;--color-primary-hover:#F2BA16;--color-primary-soft:#FFF7D6;--color-background:#F7F8FA;--color-surface:#FFFFFF;--color-text:#20242B;--color-text-secondary:#667085;--color-border:#E5E7EB;--radius-card:18px;--radius-control:12px;--shadow-card:0 4px 20px rgba(16,24,40,0.04);background:var(--color-background)!important;color:var(--color-text)!important}
+body.view-add #app,body.view-add main{background:var(--color-background)!important;color:var(--color-text)!important}
+body.view-add main{padding-top:12px!important}
+body.view-add .master-form-page{width:min(100%,680px)!important;max-width:680px!important;min-width:0!important;margin:0 auto!important;padding:4px 0 calc(88px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box}
+body.view-add .add-form-head{display:flex;align-items:center;justify-content:center;min-height:46px;margin:0 0 10px}
+body.view-add .add-form-head h1{margin:0;color:var(--color-text);font-size:1.22rem;line-height:1.3;font-weight:750}
+body.view-add .master-form-page :where(*,*::before,*::after){box-sizing:border-box}
+body.view-add .master-form-page :where(.add-core-card,.add-payment-card,.add-advanced){min-width:0;max-width:100%;border:1px solid var(--color-border)!important;border-radius:var(--radius-card)!important;background:var(--color-surface)!important;box-shadow:var(--shadow-card)!important;color:var(--color-text)!important}
+body.view-add .master-form-page .add-core-card{padding:16px!important;margin:0 0 10px!important}
+body.view-add .master-form-page .add-type-seg{position:relative!important;top:auto!important;z-index:1!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px!important;margin:0 0 10px!important;border:1px solid var(--color-border)!important;border-radius:var(--radius-control)!important;background:var(--color-surface)!important;box-shadow:none!important}
+body.view-add .add-type-seg button{min-width:0;min-height:48px!important;border-radius:9px!important;background:transparent!important;color:var(--color-text)!important;font-size:1rem;font-weight:700}
+body.view-add .add-type-seg button.on{background:var(--color-primary-soft)!important;color:var(--color-text)!important;box-shadow:inset 0 0 0 1.5px var(--color-primary)!important}
+body.view-add .expense-action-tools{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-height:0;margin:0 0 10px;padding:0;border:0;background:transparent;box-shadow:none}
+body.view-add :where(.expense-scan-card,.expense-voice-card){display:block;min-width:0;min-height:48px}
+body.view-add .expense-scan-card label,body.view-add .expense-voice-button{display:flex;flex:1 1 auto;justify-content:center;align-items:center;gap:8px;width:100%;min-width:0;min-height:48px;height:auto;padding:8px 10px;border:1px solid var(--color-border);border-radius:var(--radius-control);background:var(--color-surface);color:var(--color-text);box-shadow:none;font:inherit;font-size:.95rem;font-weight:650;touch-action:manipulation}
+body.view-add .expense-scan-card label svg,body.view-add .expense-voice-button svg{flex:none;width:21px;height:21px;color:inherit}
+body.view-add .expense-scan-card label span,body.view-add .expense-voice-button>span{min-width:0;overflow-wrap:anywhere}
+body.view-add .expense-voice-button{background:var(--color-primary)!important;border-color:var(--color-primary)!important;color:var(--color-text)!important}
+body.view-add .expense-voice-card.listening .expense-voice-button{background:var(--color-text)!important;color:#fff!important;border-color:var(--color-text)!important}
+body.view-add .expense-voice-sr{position:absolute!important}
+body.view-add .add-core-card>.field{margin-top:14px}
+body.view-add .add-core-card>.field>label,body.view-add .add-core-card>.field>.lbl,body.view-add .add-payment-card>.lbl{display:block;margin:0 0 7px;color:var(--color-text);font-size:.91rem;font-weight:650;line-height:1.4}
+body.view-add .master-form-page :where(input:not([type=file]),select,textarea){min-width:0;max-width:100%;width:100%;min-height:48px;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius-control);background:#fff;color:var(--color-text);font-family:inherit;font-size:16px;line-height:1.4}
+body.view-add .master-form-page :where(input,select,textarea)::placeholder{color:var(--color-text-secondary);opacity:.8}
+body.view-add .add-amount{padding:12px!important;border:1px solid #F2D879!important;border-radius:14px!important;border-left:3px solid var(--color-primary)!important;background:#FFFCF0!important;box-shadow:none!important}
+body.view-add .add-amount .amt{display:flex;gap:8px;align-items:center;min-height:68px;padding:4px 12px!important;border:2px solid #F2D879!important;border-radius:var(--radius-control)!important;background:#fff!important}
+body.view-add .add-amount .amt span{flex:none;color:var(--color-text-secondary);font-size:1.5rem;font-weight:700}
+body.view-add .add-amount .amt input{min-width:0;width:100%;min-height:54px;padding:0!important;border:0!important;background:transparent!important;color:var(--color-text)!important;font-size:clamp(32px,8vw,40px)!important;font-weight:750;line-height:1.15}
+body.view-add .add-amount #amtfmt{min-height:0;margin-top:4px;color:var(--color-text-secondary)}
+body.view-add .add-core-card .grp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0}
+body.view-add .add-core-card .gbtn{position:relative;min-width:0;min-height:50px;padding:8px 24px 8px 10px;border:1px solid var(--color-border);border-radius:var(--radius-control);background:#fff;color:var(--color-text);font:inherit;font-size:.92rem;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+body.view-add .add-core-card .gbtn.on{border:1.5px solid var(--color-primary)!important;background:var(--color-primary-soft)!important;color:var(--color-text)!important}
+body.view-add .add-core-card .gbtn.on::after{content:"✓";position:absolute;top:4px;right:7px;font-size:.78rem;font-weight:800;color:#725500}
+body.view-add .add-core-card .chip.on{border-color:var(--color-primary)!important;background:var(--color-primary-soft)!important;color:var(--color-text)!important}
+body.view-add .add-quick-chips{display:flex;flex-wrap:wrap!important;gap:6px;overflow:visible!important;padding:2px 0 0}
+body.view-add .add-quick-chips .chip{flex:0 1 auto!important;max-width:100%;min-width:0;min-height:40px;padding:7px 11px;border-color:var(--color-border);color:var(--color-text);white-space:normal;overflow-wrap:anywhere;scroll-snap-align:none!important}
+body.view-add .add-payment-card{padding:14px!important;margin:0 0 10px!important;box-shadow:var(--shadow-card)!important}
+body.view-add .add-payment-card .seg{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-flow:row;gap:6px;border:0;border-radius:0;background:transparent;padding:0}
+body.view-add .add-payment-card .seg button,body.view-add .add-pay-method button{min-width:0;min-height:48px!important;padding:8px;border:1px solid var(--color-border);border-radius:var(--radius-control);background:#fff;color:var(--color-text);font-size:.95rem;font-weight:650;overflow-wrap:anywhere}
+body.view-add .add-payment-card .seg button.on,body.view-add .add-pay-method button.on{border-color:var(--color-primary)!important;background:var(--color-primary-soft)!important;color:var(--color-text)!important;box-shadow:inset 0 0 0 1px var(--color-primary)}
+body.view-add .add-pay-method{margin-top:8px}
+body.view-add .add-advanced{margin:0 0 10px;overflow:hidden}
+body.view-add .add-advanced>summary{display:flex;align-items:center;min-height:56px;padding:12px 14px;color:var(--color-text);font-weight:650;cursor:pointer;touch-action:manipulation}
+body.view-add .add-advanced>summary small{display:block;margin-top:2px;color:var(--color-text-secondary);font-weight:400;overflow-wrap:anywhere}
+body.view-add .add-advanced-body{padding:0 14px 14px}
+body.view-add .add-advanced-body .field{margin-top:12px}
+body.view-add .add-savebar{position:static!important;inset:auto!important;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:12px 0 0!important;padding:0 0 10px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.view-add .add-savebar .btn{min-width:0;min-height:52px!important;border:1px solid var(--color-border);border-radius:var(--radius-control);background:var(--color-surface);color:var(--color-text);font-size:1rem}
+body.view-add .add-savebar .btn.pri{border-color:var(--color-primary)!important;background:var(--color-primary)!important;color:var(--color-text)!important}
+body.view-add .add-savebar .btn.pri:hover{background:var(--color-primary-hover)!important}
+body.view-add .nav{background:var(--color-surface)!important;border-color:var(--color-border)!important;padding-bottom:env(safe-area-inset-bottom,0px)}
+body.view-add .nav button{min-width:0;min-height:52px;color:var(--color-text-secondary)}
+body.view-add .nav button.on{color:var(--color-text)}
+body.view-add .nav .add{background:var(--color-primary)!important;border-color:var(--color-background)!important;color:var(--color-text)!important}
+body.view-add .nav button:focus-visible,body.view-add .master-form-page button:focus-visible,body.view-add .master-form-page :where(input,select,textarea):focus-visible{outline:3px solid #9A6B00;outline-offset:2px}
+body.view-add .master-form-page :where(.field,.add-core-card,.add-payment-card,.add-advanced,.savebar){min-width:0;max-width:100%}
+@media(min-width:680px){body.view-add .add-savebar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}body.view-add .master-form-page>.add-type-seg{margin-bottom:12px!important}}
+@media(max-width:360px){body.view-add .master-form-page .add-core-card{padding:12px!important}body.view-add .expense-action-tools{gap:7px}body.view-add .expense-scan-card label,body.view-add .expense-voice-button{gap:5px;padding:7px 5px;font-size:.88rem}}
+@media(max-height:560px) and (orientation:landscape){body.view-add .master-form-page{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))!important}}
 </style>
 </head>
 <body>
@@ -3807,7 +3887,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1066,"sha":"","environment":"source"};
+var APP_BUILD={"version":1067,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4914,10 +4994,28 @@ function homeUrgentAlert(allMode,active,all){
   return '<button class="urgent-alert '+a.tone+'"'+attrs+'><span class="urgent-ico">'+(a.tone==='critical'?'!':'⏱')+'</span><span class="urgent-copy"><b>'+esc(a.title)+'</b><small>'+esc(a.detail)+(extra?' · อีก '+extra+' เรื่องเร่งด่วน':'')+'</small></span><strong>›</strong></button>';
 }
 
+function appTopBar(title){
+  var due=urgentCount();
+  if(title==='โปรไฟล์บริษัท')return '<header class="app-social-topbar profile-overlay-topbar" aria-label="เมนูโปรไฟล์บริษัท">'+
+    '<button class="app-menu-btn app-topbar-menu" data-act="appMenu" aria-label="เปิดเมนูหลัก" title="เมนูหลัก"><span></span><span></span><span></span></button>'+
+    '<div class="app-topbar-brand" aria-label="AREA Ledger"><span class="sr-only">AREA Ledger · '+esc(title)+'</span></div>'+
+    '<div class="app-topbar-actions">'+
+      '<button class="app-topbar-action" data-act="profileEdit" aria-label="แก้ไขโปรไฟล์บริษัท" title="แก้ไขโปรไฟล์"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L20 7.5 16.5 4 4 16.5Z"/><path d="m14.8 5.7 3.5 3.5"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="openList" aria-label="ค้นหารายการ" title="ค้นหารายการ"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="profileShareCompany" aria-label="แชร์โปรไฟล์บริษัท" title="แชร์โปรไฟล์"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg></button>'+
+    '</div></header>';
+  return '<header class="app-social-topbar" aria-label="แถบเมนูหลัก">'+
+    '<button class="app-menu-btn app-topbar-menu" data-act="appMenu" aria-label="เปิดเมนูหลัก" title="เมนูหลัก"><span></span><span></span><span></span></button>'+
+    '<div class="app-topbar-brand" aria-label="AREA Ledger">AREA <strong>Ledger</strong><span class="sr-only"> · '+esc(title||'')+'</span></div>'+
+    '<div class="app-topbar-actions">'+
+      '<button class="app-topbar-action" data-act="newTx" aria-label="เพิ่มรายการ" title="เพิ่มรายการ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="openList" aria-label="ค้นหารายการ" title="ค้นหารายการ"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="go" data-v="due" aria-label="ติดตามรายการค้าง" title="ติดตามรายการค้าง"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>'+(due?'<i class="app-topbar-badge">'+(due>9?'9+':due)+'</i>':'')+'</button>'+
+    '</div></header>';
+}
 function header(title,back){
-  var menu='<button class="app-menu-btn" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button>';
-  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header home-floating-header"><button class="app-menu-btn home-floating-menu" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button></div>';
-  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="navBack" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1>'+(back?'<button class="header-home" data-act="navHome" aria-label="กลับหน้าหลัก">'+ic('home')+'</button>':'')+'</div><div class="stripe"></div></div>';
+  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header home-floating-header" aria-hidden="true"></div>';
+  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="navBack" aria-label="ย้อนกลับ">'+ic('back')+'</button>':'')+'<h1>'+esc(title)+'</h1>'+(back?'<button class="header-home" data-act="navHome" aria-label="กลับหน้าหลัก">'+ic('home')+'</button>':'')+'</div><div class="stripe"></div></div>';
 }
 
 function txIcon(t){
@@ -5366,26 +5464,26 @@ function expenseScanImage(file){
 function vAdd(){
   var d=U.draft;if(!d){U.from=U.from||'home';U.draft=newDraft('out',quickEntryProject()||U.pid||null);d=U.draft;}var foreman=S.role==='foreman',cats=d.type==='in'?CAT_IN:CAT_OUT;
   var partners={};S.tx.forEach(function(t){if(t.partner)partners[t.partner]=1;});
-  var h='<section class="master-form-page add-mobile-focus">';
+  var h='<section class="master-form-page add-mobile-focus"><header class="add-form-head"><h1>เพิ่มรายการ</h1></header>';
   if(!S.projects.length)return '<div class="empty" style="margin-top:20px">ต้องมีโครงการก่อนจึงจะบันทึกรายการได้</div><div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการ</button></div>';
-  if(!foreman)h+='<div class="seg add-type-seg"><button class="out-c'+(d.type==='out'?' on':'')+'" data-act="setType" data-v="out">รายจ่าย</button><button class="in-c'+(d.type==='in'?' on':'')+'" data-act="setType" data-v="in">รายรับ</button></div>';
-  if(d.type==='out')h+='<div class="expense-action-tools"><div class="expense-scan-card"><label for="expenseScanIn" aria-label="สแกนหรือเลือกรูปใบเสร็จ" title="สแกนหรือเลือกรูปใบเสร็จ">'+ic('scan')+'</label><input id="expenseScanIn" type="file" accept="image/*" multiple aria-label="เลือกภาพใบเสร็จเพื่ออ่านข้อมูล"></div><div class="expense-voice-card'+(U.expenseVoiceState==='listening'?' listening':'')+'"><button class="expense-voice-button" type="button" data-act="expenseVoiceStart" aria-pressed="'+(U.expenseVoiceState==='listening')+'" aria-label="'+(U.expenseVoiceState==='listening'?'กำลังฟัง แตะเพื่อหยุด':'สั่งงานด้วยเสียง')+'" title="'+(U.expenseVoiceState==='listening'?'กำลังฟัง · แตะเพื่อหยุด':'สั่งงานด้วยเสียง')+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"></path></svg></button><span class="expense-voice-sr" aria-live="polite">'+(U.expenseVoiceState==='listening'?'กำลังฟังอยู่ · แตะเพื่อหยุด · แอปไม่บันทึกเสียง':'สั่งงานด้วยเสียง · พูดรายการและยอดเงิน แล้วตรวจทานก่อนบันทึก · แอปไม่บันทึกเสียง · เสียงอาจถูกประมวลผลโดยบริการรู้จำเสียงของเบราว์เซอร์หรืออุปกรณ์')+'</span></div></div>'+(U.expenseScanBusy?'<div class="expense-scan-status"><b>'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%</b> · '+esc(U.expenseScanStage||'กำลังอ่านรูปและแยกหมวด')+'<div class="bar" style="margin-top:7px"><i style="width:'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%"></i></div></div>':'')+(U.expenseScanMsg?'<div class="expense-scan-result">'+esc(U.expenseScanMsg)+'</div>':'')+(U.expenseBatchDraftAvailable?'<div class="expense-draft-recovery"><div><b>พบร่างที่ยังไม่ได้บันทึก</b><small>'+(U.expenseBatchDraft&&U.expenseBatchDraft.items?U.expenseBatchDraft.items.length:0)+' รายการ · กู้คืนเพื่อตรวจต่อ</small></div><button class="btn pri" data-act="expenseBatchDraftResume">กู้คืน</button><button class="btn" data-act="expenseBatchDraftDiscard">ลบร่าง</button></div>':'');
+  if(!foreman)h+='<div class="seg add-type-seg" role="group" aria-label="ประเภทรายการ"><button class="out-c'+(d.type==='out'?' on':'')+'" data-act="setType" data-v="out" aria-pressed="'+(d.type==='out')+'">รายจ่าย</button><button class="in-c'+(d.type==='in'?' on':'')+'" data-act="setType" data-v="in" aria-pressed="'+(d.type==='in')+'">รายรับ</button></div>';
+  if(d.type==='out')h+='<div class="expense-action-tools"><div class="expense-scan-card"><label for="expenseScanIn" aria-label="สแกนหรือเลือกรูปใบเสร็จ" title="สแกนหรือเลือกรูปใบเสร็จ">'+ic('scan')+'<span>สแกนบิล</span></label><input id="expenseScanIn" type="file" accept="image/*" multiple aria-label="เลือกภาพใบเสร็จเพื่ออ่านข้อมูล"></div><div class="expense-voice-card'+(U.expenseVoiceState==='listening'?' listening':'')+'"><button class="expense-voice-button" type="button" data-act="expenseVoiceStart" aria-pressed="'+(U.expenseVoiceState==='listening')+'" aria-label="'+(U.expenseVoiceState==='listening'?'กำลังฟัง แตะเพื่อหยุด':'สั่งงานด้วยเสียง')+'" title="'+(U.expenseVoiceState==='listening'?'กำลังฟัง · แตะเพื่อหยุด':'สั่งงานด้วยเสียง')+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"></path></svg><span>พูดรายการ</span></button><span class="expense-voice-sr" aria-live="polite">'+(U.expenseVoiceState==='listening'?'กำลังฟังอยู่ · แตะเพื่อหยุด · แอปไม่บันทึกเสียง':'สั่งงานด้วยเสียง · พูดรายการและยอดเงิน แล้วตรวจทานก่อนบันทึก · แอปไม่บันทึกเสียง · เสียงอาจถูกประมวลผลโดยบริการรู้จำเสียงของเบราว์เซอร์หรืออุปกรณ์')+'</span></div></div>'+(U.expenseScanBusy?'<div class="expense-scan-status"><b>'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%</b> · '+esc(U.expenseScanStage||'กำลังอ่านรูปและแยกหมวด')+'<div class="bar" style="margin-top:7px"><i style="width:'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%"></i></div></div>':'')+(U.expenseScanMsg?'<div class="expense-scan-result">'+esc(U.expenseScanMsg)+'</div>':'')+(U.expenseBatchDraftAvailable?'<div class="expense-draft-recovery"><div><b>พบร่างที่ยังไม่ได้บันทึก</b><small>'+(U.expenseBatchDraft&&U.expenseBatchDraft.items?U.expenseBatchDraft.items.length:0)+' รายการ · กู้คืนเพื่อตรวจต่อ</small></div><button class="btn pri" data-act="expenseBatchDraftResume">กู้คืน</button><button class="btn" data-act="expenseBatchDraftDiscard">ลบร่าง</button></div>':'');
   if(d.type==='out'&&d.photo&&d.ocrSource)h+='<div class="expense-scan-result"><b>AI/OCR กรอกค่าจากบิลให้แล้ว</b><br><span>ตรวจรูปบิลเทียบกับข้อมูลด้านล่างก่อนบันทึก · ระบบจะไม่บันทึกอัตโนมัติ</span></div>';
 
   h+='<div class="add-core-card"><div class="field"><label for="pid">โครงการ</label><select id="pid" data-f="pid">'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(d.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div>';
   h+='<div class="field add-amount"><label for="amt">จำนวนเงิน</label><div class="amt"><span>฿</span><input id="amt" data-f="amount" type="number" inputmode="decimal" min="0" step="any" placeholder="0" value="'+esc(d.amount)+'" autofocus></div><div class="muted num" id="amtfmt">'+(parseFloat(d.amount)>0?fmt(parseFloat(d.amount),1):'')+'</div></div>';
   if(d.type==='in'){
-    h+='<div class="field"><span class="lbl">หมวด</span><div class="chips">'+cats.map(function(c){return '<button class="chip'+(d.cat===c?' on':'')+'" data-act="cat" data-v="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'</div></div>';
+    h+='<div class="field"><span class="lbl">หมวด</span><div class="chips">'+cats.map(function(c){return '<button class="chip'+(d.cat===c?' on':'')+'" data-act="cat" data-v="'+esc(c)+'" aria-pressed="'+(d.cat===c)+'">'+esc(c)+'</button>';}).join('')+'</div></div>';
   }else{
-    h+='<div class="field"><span class="lbl">ประเภทค่าใช้จ่าย</span><div class="grp">'+CAT_OUT.map(function(c){return '<button class="gbtn'+(d.cat===c?' on':'')+'" data-act="cat" data-v="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'</div></div>';
+    h+='<div class="field"><span class="lbl">ประเภทค่าใช้จ่าย</span><div class="grp">'+CAT_OUT.map(function(c){return '<button class="gbtn'+(d.cat===c?' on':'')+'" data-act="cat" data-v="'+esc(c)+'" aria-pressed="'+(d.cat===c)+'">'+esc(c)+'</button>';}).join('')+'</div></div>';
     var PH={'ค่าของ':'เช่น เหล็กเส้น 12 มม. 50 เส้น','ค่าแรง':'เช่น ช่างปูน 5 คน 3 วัน','ค่างานเอกสาร':'เช่น ค่าขออนุญาตก่อสร้าง','ค่าเช่าอื่นๆ':'เช่น เช่านั่งร้าน 1 เดือน'};
     h+='<div class="field"><label for="subc">รายละเอียดรายการ <span class="muted">(ไม่บังคับ)</span></label><input id="subc" data-f="sub" type="text" placeholder="'+esc(PH[d.cat]||'พิมพ์รายการ')+'" value="'+esc(d.sub)+'" autocomplete="off"><div class="chips add-quick-chips">'+subsOf(d.cat).filter(function(x){return x!=='อื่นๆ';}).slice(0,6).map(function(x){return '<button class="chip'+(d.sub===x?' on':'')+'" data-act="sub" data-v="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div></div>';
     var bqo=boqRows(d.pid);if(bqo.length)h+='<div class="field"><label for="boqid">อ้างอิง BOQ <span class="muted">(ไม่บังคับ)</span></label><select id="boqid" data-f="boqId"><option value="">ไม่ผูก BOQ</option>'+bqo.map(function(x){return '<option value="'+x.id+'"'+(d.boqId===x.id?' selected':'')+'>'+esc(x.name)+' · '+fmt(boqAmount(x))+'</option>';}).join('')+'</select></div>';
   }
   h+='<div class="field"><label for="par">'+(d.type==='in'?'จากใคร (ลูกค้า)':'จ่ายให้ใคร (ร้านค้า/ช่าง)')+'</label><input id="par" data-f="partner" type="text" list="pl" placeholder="พิมพ์ชื่อ" value="'+esc(d.partner)+'"><datalist id="pl">'+Object.keys(partners).map(function(p){return '<option value="'+esc(p)+'">';}).join('')+'</datalist></div>';
   h+='<div class="field"><label for="dt">วันที่</label><input id="dt" data-f="date" type="date" value="'+d.date+'"></div></div>';
-  if(d.ocrSource&&!d.id&&!d.ocrPaymentStatus)h+='<p class="role">รูปยังไม่ยืนยันสถานะชำระเงิน กรุณาเลือกจ่ายแล้วหรือยังค้าง</p>';h+='<div class="field add-payment-card"><span class="lbl">สถานะการชำระ</span><div class="seg"><button class="'+(d.paid?'on':'')+'" data-act="paid" data-v="1">'+(d.type==='in'?'รับแล้ว':'จ่ายแล้ว')+'</button><button class="'+(!d.paid?'on':'')+'" data-act="paid" data-v="0">ยังค้าง</button></div>';
-  if(d.paid)h+='<div class="seg add-pay-method"><button class="'+(d.pay==='transfer'?'on':'')+'" data-act="pay" data-v="transfer">โอน'+(S.bank?' ('+esc(S.bank)+')':'')+'</button><button class="'+(d.pay==='cash'?'on':'')+'" data-act="pay" data-v="cash">เงินสด</button></div>';
+  if(d.ocrSource&&!d.id&&!d.ocrPaymentStatus)h+='<p class="role">รูปยังไม่ยืนยันสถานะชำระเงิน กรุณาเลือกจ่ายแล้วหรือยังค้าง</p>';h+='<div class="field add-payment-card"><span class="lbl">สถานะการชำระ</span><div class="seg"><button class="'+(d.paid?'on':'')+'" data-act="paid" data-v="1" aria-pressed="'+!!d.paid+'">'+(d.type==='in'?'รับแล้ว':'จ่ายแล้ว')+'</button><button class="'+(!d.paid?'on':'')+'" data-act="paid" data-v="0" aria-pressed="'+!d.paid+'">ยังค้าง</button></div>';
+  if(d.paid)h+='<div class="seg add-pay-method"><button class="'+(d.pay==='transfer'?'on':'')+'" data-act="pay" data-v="transfer" aria-pressed="'+(d.pay==='transfer')+'">โอน'+(S.bank?' ('+esc(S.bank)+')':'')+'</button><button class="'+(d.pay==='cash'?'on':'')+'" data-act="pay" data-v="cash" aria-pressed="'+(d.pay==='cash')+'">เงินสด</button></div>';
   else{
     var dueOn=d.dueEnabled!==false;
     h+='<button class="tog add-due-toggle'+(dueOn?' on':'')+'" data-act="dueToggle"><span class="sw"></span><span>'+(dueOn?'ติดตามวันครบกำหนด':'ไม่กำหนดวันครบกำหนด')+'<small>'+(dueOn?'ระบบจะแจ้งเตือนเมื่อใกล้ถึงกำหนด':'รายการยังค้าง แต่ไม่แจ้งตามวัน')+'</small></span></button>';
@@ -5398,7 +5496,7 @@ function vAdd(){
   h+='<div class="prev" id="prev">'+prevText(d)+'</div>';
   h+='<div class="field"><span class="lbl">รูปใบเสร็จ</span>'+(d.photo?'<div class="photo"><img src="'+d.photo+'" alt="รูปใบเสร็จ"></div><div class="stack" style="margin-top:10px"><button class="btn" data-act="rmphoto">ลบรูป</button></div>':d.photoRef?'<div class="photo">'+(d.photoThumb?'<img src="'+d.photoThumb+'" alt="รูปใบเสร็จย่อ">':'')+'</div><div class="stack" style="margin-top:10px"><button class="btn" data-act="cloudPhotoOpen" data-key="'+esc(d.photoRef)+'" data-mime="'+esc(d.photoMime||'image/jpeg')+'">เปิดรูปต้นฉบับจาก R2</button><button class="btn" data-act="rmphoto">ลบรูปออกจากรายการ</button></div>':'<label class="btn" for="photoIn">'+ic('cam')+'ถ่ายรูปหรือเลือกรูป</label>')+'<input id="photoIn" type="file" accept="image/*" capture="environment"></div>';
   h+='<div class="field"><label for="note">หมายเหตุ</label><input id="note" data-f="note" type="text" placeholder="ไม่บังคับ" value="'+esc(d.note)+'"></div></div></details>';
-  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save">'+(d.id?'บันทึกการแก้ไข':'บันทึก')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore">บันทึกและเพิ่มอีก</button>')+'</div>';
+  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save">'+(d.id?'บันทึกการแก้ไข':'บันทึกรายการ')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore">บันทึกและเพิ่มอีก</button>')+'</div>';
   return h+'</section>';
 }
 function prevText(d){
@@ -7877,6 +7975,7 @@ function render(){
   document.body.classList.toggle('view-boq',v==='boq');
   document.body.classList.toggle('view-add',v==='add');
   document.body.classList.toggle('view-project',v==='project');
+  document.body.classList.toggle('view-profile',v==='profile');
   document.body.classList.toggle('view-docs',v==='docs'||v==='doclist'||v==='quoteprint');
   document.body.classList.toggle('view-due',v==='due');
   document.body.setAttribute('data-view',v);
@@ -7884,7 +7983,7 @@ function render(){
   var sheetRestorePosition=syncSheetScrollLock(!!U.sheet);
   document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
+  document.getElementById('app').innerHTML=appTopBar(title)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
   if(sheetRestorePosition){var oldScrollBehavior=document.documentElement.style.scrollBehavior;document.documentElement.style.scrollBehavior='auto';window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);document.documentElement.style.scrollBehavior=oldScrollBehavior;}
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
@@ -8720,7 +8819,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1066&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1067&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
