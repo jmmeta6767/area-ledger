@@ -5,6 +5,11 @@ function expensePaymentStatus(value){
   if(['unpaid','pending','ค้างชำระ','ยังไม่ชำระ','ค้างจ่าย'].indexOf(v)>=0)return 'unpaid';
   return '';
 }
+function expenseScanPaymentSelection(draft){
+  var d=draft||{},statusManual=!!d.id||d.expensePaymentStatusManual===true,methodManual=!!d.id||d.expensePaymentMethodManual===true;
+  var paid=statusManual?!!d.paid:true,pay=methodManual&&['transfer','cash'].indexOf(d.pay)>=0?d.pay:'transfer';
+  return {paid:paid,status:paid?'paid':'unpaid',pay:pay,statusManual:statusManual,methodManual:methodManual};
+}
 function expenseReviewIssues(t){
   var issues=[];
   if(t.sub&&!expenseOcrCleanDescriptionForProject(t.sub,t.pid))issues.push('รายละเอียดคล้ายหัวตาราง');

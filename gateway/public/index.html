@@ -5006,7 +5006,7 @@ function quickEntryProject(){
 function newDraft(type,pid){
   type=type||'out';
   var first=S.projects[0]?S.projects[0].id:'';
-  return {id:null,type:type,amount:'',boqId:'',cat:type==='in'?CAT_IN[1]:((S.last&&CAT_OUT.indexOf(S.last.cat)>-1)?S.last.cat:CAT_OUT[0]),pay:(S.last&&S.last.pay)||'transfer',sub:'',subCustom:'',pid:pid||((S.last&&proj(S.last.pid))?S.last.pid:first),partner:'',date:today(),vat:false,wht:false,paid:true,dueEnabled:true,due:addDays(7),photo:'',photoRef:'',photoThumb:'',photoHash:'',photoMime:'',photoDeleteRef:'',note:'',ocrConfidence:0,ocrSource:'',ocrReviewed:false};
+  return {id:null,type:type,amount:'',boqId:'',cat:type==='in'?CAT_IN[1]:((S.last&&CAT_OUT.indexOf(S.last.cat)>-1)?S.last.cat:CAT_OUT[0]),pay:(S.last&&S.last.pay)||'transfer',sub:'',subCustom:'',pid:pid||((S.last&&proj(S.last.pid))?S.last.pid:first),partner:'',date:today(),vat:false,wht:false,paid:true,dueEnabled:true,due:addDays(7),photo:'',photoRef:'',photoThumb:'',photoHash:'',photoMime:'',photoDeleteRef:'',note:'',ocrConfidence:0,ocrSource:'',ocrReviewed:false,expensePaymentStatusManual:false,expensePaymentMethodManual:false};
 }
 function expenseVoiceParse(transcript){
   var text=String(transcript||'').trim(),out={transcript:text,amount:'',partner:'',sub:'',type:'',cat:'',date:''};
@@ -5450,6 +5450,11 @@ function expensePaymentStatus(value){
   if(['unpaid','pending','ค้างชำระ','ยังไม่ชำระ','ค้างจ่าย'].indexOf(v)>=0)return 'unpaid';
   return '';
 }
+function expenseScanPaymentSelection(draft){
+  var d=draft||{},statusManual=!!d.id||d.expensePaymentStatusManual===true,methodManual=!!d.id||d.expensePaymentMethodManual===true;
+  var paid=statusManual?!!d.paid:true,pay=methodManual&&['transfer','cash'].indexOf(d.pay)>=0?d.pay:'transfer';
+  return {paid:paid,status:paid?'paid':'unpaid',pay:pay,statusManual:statusManual,methodManual:methodManual};
+}
 function expenseReviewIssues(t){
   var issues=[];
   if(t.sub&&!expenseOcrCleanDescriptionForProject(t.sub,t.pid))issues.push('รายละเอียดคล้ายหัวตาราง');
@@ -5466,12 +5471,12 @@ function expenseBatchEvidenceDetails(x,i){
   return '<details class="expense-batch-evidence"><summary>ดูรูปต้นฉบับ · '+(total>1?'แถว '+row+'/'+total:'รายการนี้')+'</summary><img src="'+esc(String(x.photo))+'" alt="รูปต้นฉบับที่ใช้ให้อ่าน '+(total>1?'แถว '+row+'/'+total:'รายการนี้')+'" loading="lazy"></details>';
 }
 /* END expense-review module */
-function expenseBatchItemsFromResult(res,photo,fileName,pid,defaultPay,groupId){
+function expenseBatchItemsFromResult(res,photo,fileName,pid,defaultPay,groupId,defaultStatus,statusManual){
   res=res||{};var rows=Array.isArray(res.rows)?res.rows:[],multi=rows.length>1,src=multi?rows:[{amount:+res.amount||0,date:res.date||'',cat:res.cat||'ค่าของ',sub:res.sub||'',partner:res.partner||'',confidence:+res.confidence||0,paymentStatus:res.paymentStatus}],count=src.length||1;
   return src.map(function(r,i){
     var amount=+r.amount||0,date=validIsoDate(String(r.date||''))?String(r.date):'',sub=expenseOcrCleanDescriptionForProject(r.sub,pid),partner=expenseOcrCleanPartnerForProject(r.partner,pid)||expenseOcrCleanPartnerForProject(res.partner,pid),cat=CAT_OUT.indexOf(String(r.cat||''))>=0?String(r.cat):expenseGuess(sub).cat,confidence=Math.max(0,Math.min(1,+r.confidence||+res.confidence||0)),uncertain=[];
-    var paymentStatus=expensePaymentStatus(r.paymentStatus);if(!paymentStatus)uncertain.push('สถานะชำระเงิน');if(!(amount>0))uncertain.push('ยอดเงิน');if(!date)uncertain.push('วันที่');if(!sub)uncertain.push('รายการ/รายละเอียด');if(!partner)uncertain.push('ร้านค้า/ผู้รับเงิน');
-    return {id:uid(),file:fileName||'',photo:photo||'',amount:amount,cat:cat||'ค่าของ',sub:sub,partner:partner,date:date,pid:pid,paymentStatus:paymentStatus,pay:'',include:multi&&amount>0,ocrConfidence:confidence,ocrSource:res.source||'ai',ocrUncertainFields:uncertain,sourceGroupId:groupId||uid(),sourceRowIndex:i+1,sourceRowCount:count,sourceKind:multi?'table':'receipt',ocrDocumentTotal:multi&&+res.documentTotal>0?+res.documentTotal:0,ocrTotalReviewed:false};
+    var sourceStatus=expensePaymentStatus(r.paymentStatus),paymentStatus=statusManual?(defaultStatus==='unpaid'?'unpaid':'paid'):(sourceStatus|| (defaultStatus==='unpaid'?'unpaid':'paid'));if(!(amount>0))uncertain.push('ยอดเงิน');if(!date)uncertain.push('วันที่');if(!sub)uncertain.push('รายการ/รายละเอียด');if(!partner)uncertain.push('ร้านค้า/ผู้รับเงิน');
+    return {id:uid(),file:fileName||'',photo:photo||'',amount:amount,cat:cat||'ค่าของ',sub:sub,partner:partner,date:date,pid:pid,paymentStatus:paymentStatus,pay:defaultPay==='cash'?'cash':'transfer',include:multi&&amount>0,ocrConfidence:confidence,ocrSource:res.source||'ai',ocrUncertainFields:uncertain,sourceGroupId:groupId||uid(),sourceRowIndex:i+1,sourceRowCount:count,sourceKind:multi?'table':'receipt',ocrDocumentTotal:multi&&+res.documentTotal>0?+res.documentTotal:0,ocrTotalReviewed:false};
   });
 }
 function expenseBatchScan(files){
@@ -5481,7 +5486,7 @@ function expenseBatchScan(files){
   U.expenseLocalOnce=false;
   if(fs.length===1){if(U.draft)syncDraftProjectFromForm();expenseScanImage(fs[0]);return;}
   U.expenseBatchBusy=true;U.expenseBatch=[];U.expenseBatchDone=0;U.expenseBatchTotal=fs.length;U.expenseBatchProgress=1;
-  var batchToken=U.expenseBatch,pid=U.draft&&U.draft.pid||U.pid||'',defaultPay=(S.last&&S.last.pay)||'transfer';
+  var batchToken=U.expenseBatch,pid=U.draft&&U.draft.pid||U.pid||'',paymentSelection=expenseScanPaymentSelection(U.draft),defaultPay=paymentSelection.pay,defaultStatus=paymentSelection.status;
   U.sheet={kind:'expenseBatch'};render();
   (async function(){
     for(var i=0;i<fs.length;i++){
@@ -5492,12 +5497,12 @@ function expenseBatchScan(files){
         data=await new Promise(function(resolve,reject){var r=new FileReader(),im=null;r.onload=function(){im=new Image();im.onload=function(){try{var M=1100,k=Math.min(1,M/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);var photo=c.toDataURL('image/jpeg',.65);runtimeReleaseImage(im);r.onload=null;r.onerror=null;resolve({canvas:c,photo:photo});}catch(e){runtimeReleaseImage(im);reject(e);}};im.onerror=function(e){runtimeReleaseImage(im);reject(e);};im.src=r.result;};r.onerror=reject;r.readAsDataURL(file);});
         var res;try{res=await expenseOcrRecognize(data.canvas);}finally{runtimeReleaseCanvas(data&&data.canvas);if(data)data.canvas=null;}
         var qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res,pid),items;
-        if(Array.isArray(res.rows)&&res.rows.length>1)items=expenseBatchItemsFromResult(res,data.photo,file.name,pid,defaultPay,groupId);
-        else items=[{id:uid(),file:file.name,photo:data.photo,amount:+res.amount||0,cat:res.cat||'ค่าของ',sub:expenseOcrCleanDescriptionForProject(res.sub,pid),partner:expenseOcrCleanPartnerForProject(res.partner,pid),date:validIsoDate(String(res.date||''))?String(res.date):'',pid:pid,paymentStatus:expensePaymentStatus(res.paymentStatus),pay:'',include:false,ocrConfidence:qa.score,ocrSource:res.source||'local',ocrUncertainFields:review.uncertainFields.slice(),sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'}];
+        if(Array.isArray(res.rows)&&res.rows.length>1)items=expenseBatchItemsFromResult(res,data.photo,file.name,pid,defaultPay,groupId,defaultStatus,paymentSelection.statusManual);
+        else items=[{id:uid(),file:file.name,photo:data.photo,amount:+res.amount||0,cat:res.cat||'ค่าของ',sub:expenseOcrCleanDescriptionForProject(res.sub,pid),partner:expenseOcrCleanPartnerForProject(res.partner,pid),date:validIsoDate(String(res.date||''))?String(res.date):'',pid:pid,paymentStatus:defaultStatus,pay:defaultPay,include:false,ocrConfidence:qa.score,ocrSource:res.source||'local',ocrUncertainFields:review.uncertainFields.slice(),sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'}];
         if(U.expenseBatch!==batchToken||!U.sheet||U.sheet.kind!=='expenseBatch')break;
         Array.prototype.push.apply(U.expenseBatch,items);
       }catch(e){
-        U.expenseBatch.push({id:uid(),file:file.name,photo:data&&data.photo||'',amount:0,cat:'ค่าของ',sub:'',partner:'',date:'',pid:pid,pay:defaultPay,include:false,ocrConfidence:0,ocrSource:'failed',ocrUncertainFields:['ยอดเงิน','ร้านค้า/ผู้รับเงิน','รายการ/รายละเอียด','วันที่'],sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'});
+        U.expenseBatch.push({id:uid(),file:file.name,photo:data&&data.photo||'',amount:0,cat:'ค่าของ',sub:'',partner:'',date:'',pid:pid,paymentStatus:defaultStatus,pay:defaultPay,include:false,ocrConfidence:0,ocrSource:'failed',ocrUncertainFields:['ยอดเงิน','ร้านค้า/ผู้รับเงิน','รายการ/รายละเอียด','วันที่'],sourceGroupId:groupId,sourceRowIndex:1,sourceRowCount:1,sourceKind:'receipt'});
       }
       U.expenseBatchDone=i+1;U.expenseBatchProgress=Math.max(+U.expenseBatchProgress||1,Math.round(U.expenseBatchDone/U.expenseBatchTotal*100));expenseBatchDraftSchedule();runtimeScheduleRender();
     }
@@ -5536,14 +5541,14 @@ function expenseScanImage(file){
           if(!current()){done('','ยกเลิกแล้ว');return;}expenseScanProgressSet(88,'ตรวจความมั่นใจ');
           if(JSON.stringify(draft)!==beforeOcr){done('ข้อมูลถูกแก้ไขระหว่าง OCR · คงค่าที่คุณกรอกไว้','คงข้อมูลที่คุณแก้');return;}
           if(Array.isArray(res.rows)&&res.rows.length>1){
-            var pid=draft.pid||U.pid||'',pay=(S.last&&S.last.pay)||draft.pay||'transfer',items=expenseBatchItemsFromResult(res,draft.photo,file&&file.name||'',pid,pay,'expense-table-'+uid());
+            var pid=draft.pid||U.pid||'',paymentSelection=expenseScanPaymentSelection(draft),items=expenseBatchItemsFromResult(res,draft.photo,file&&file.name||'',pid,paymentSelection.pay,'expense-table-'+uid(),paymentSelection.status,paymentSelection.statusManual);
             U.expenseBatch=items;U.expenseBatchDone=1;U.expenseBatchTotal=1;U.expenseBatchProgress=100;U.expenseBatchBusy=false;expenseBatchDraftSchedule();U.expenseScanBusy=false;U.expenseScanProgress=100;U.expenseScanStage='พบ '+items.length+' รายการ';U.expenseScanMsg='AI พบตาราง '+items.length+' รายการ · ตรวจแต่ละแถวก่อนบันทึก';U.sheet={kind:'expenseBatch',source:'table'};render();return;
           }
           var pid=draft.pid||U.pid||'',amt=+res.amount||0,qa=expenseOcrAssessment(res),review=expenseOcrReviewSummary(res,pid);
           if(!(amt>0)||!isFinite(amt)){var dg=S.ops&&S.ops.ocrDiagnostic||{};done((res&&res.source==='ai'?'AI Vision ยังไม่พบยอด':'OCR ยังไม่พบยอด')+(dg&&dg.errorCode?' · '+dg.errorCode:'')+' · ไม่บันทึกอัตโนมัติ กรุณากรอกและตรวจเอง','ต้องตรวจเอง');return;}
           if(!qa.accepted){done('OCR confidence '+Math.round(qa.score*100)+'% · ยังไม่เติมยอดอัตโนมัติ กรุณาตรวจและกรอกเอง','ความมั่นใจต่ำ');return;}
           expenseScanProgressSet(96,'กรอกข้อมูลให้ตรวจ');
-          draft.paid=expensePaymentStatus(res.paymentStatus)==='paid';draft.pay='';draft.dueEnabled=false;draft.due='';draft.date=validIsoDate(String(res.date||''))?res.date:'';draft.ocrPaymentStatus=expensePaymentStatus(res.paymentStatus);draft.cat=res.cat||'ค่าของ';var cleanSub=expenseOcrCleanDescriptionForProject(res.sub,pid),cleanPartner=expenseOcrCleanPartnerForProject(res.partner,pid);if(cleanSub)draft.sub=cleanSub;draft.amount=String(amt);if(cleanPartner)draft.partner=cleanPartner;if(validIsoDate(String(res.date||'')))draft.date=res.date;draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
+          var paymentSelection=expenseScanPaymentSelection(draft);draft.paid=paymentSelection.paid;draft.pay=paymentSelection.pay;if(!paymentSelection.statusManual){draft.dueEnabled=false;draft.due='';}else if(!draft.paid&&draft.dueEnabled!==false&&!draft.due)draft.due=addDays(7);draft.date=validIsoDate(String(res.date||''))?res.date:'';draft.ocrPaymentStatus=paymentSelection.status;draft.ocrPaymentReviewed=true;draft.cat=res.cat||'ค่าของ';var cleanSub=expenseOcrCleanDescriptionForProject(res.sub,pid),cleanPartner=expenseOcrCleanPartnerForProject(res.partner,pid);if(cleanSub)draft.sub=cleanSub;draft.amount=String(amt);if(cleanPartner)draft.partner=cleanPartner;if(validIsoDate(String(res.date||'')))draft.date=res.date;draft.ocrConfidence=qa.score;draft.ocrSource=res.source||'local';draft.ocrUncertainFields=review.uncertainFields.slice();draft.ocrReviewed=false;
           done((res.source==='ai'?'AI อ่านบิลและกรอกข้อมูลแล้ว':'OCR ในเครื่องกรอกข้อมูลแล้ว')+' · '+(review.uncertainFields.length?'ควรตรวจเพิ่ม: '+review.uncertainFields.join(', ')+' · ':'')+'กรุณาตรวจรูปกับยอด ร้านค้า รายการ หมวด วันที่ และโครงการ แล้วกดบันทึก','เสร็จแล้ว');
         }).catch(function(){cleanup();done('OCR ใช้งานไม่ได้ · แนบรูปไว้แล้ว กรุณากรอกเอง','OCR ไม่สำเร็จ');});
       }catch(e){cleanup();done('เตรียมรูปไม่สำเร็จ กรุณาเลือกรูปใหม่','เตรียมรูปไม่สำเร็จ');}
@@ -8404,7 +8409,7 @@ document.addEventListener('click',function(e){
   else if(a==='sub'){U.draft.sub=(U.draft.sub===v)?'':v;render();var si=document.getElementById('subc');if(si){si.focus();var n=si.value.length;try{si.setSelectionRange(n,n);}catch(x){}}}
   else if(a==='tog'){U.draft[v]=!U.draft[v];render();}
   else if(a==='paid'){
-    U.draft.paid=v==='1';if(U.draft.ocrSource)U.draft.ocrPaymentStatus=U.draft.paid?'paid':'unpaid';
+    U.draft.paid=v==='1';U.draft.expensePaymentStatusManual=true;if(U.draft.ocrSource)U.draft.ocrPaymentStatus=U.draft.paid?'paid':'unpaid';
     if(U.draft.paid&&!U.draft.pay&&!U.draft.ocrSource)U.draft.pay=(S.last&&S.last.pay)||'transfer';
     if(!U.draft.paid&&U.draft.dueEnabled===undefined)U.draft.dueEnabled=true;
     if(!U.draft.paid&&U.draft.dueEnabled!==false&&!U.draft.due)U.draft.due=addDays(7);
@@ -8417,7 +8422,7 @@ document.addEventListener('click',function(e){
     render();
   }
   else if(a==='dueQuick'){if(!U.draft)return;var qdays=Math.max(1,Math.min(365,+el.dataset.days||7));U.draft.dueEnabled=true;U.draft.due=addDays(qdays);render();}
-  else if(a==='pay'){U.draft.pay=v;render();}
+  else if(a==='pay'){U.draft.pay=v;U.draft.expensePaymentMethodManual=true;render();}
   else if(a==='rmphoto'){if(U.draft.photoRef)U.draft.photoDeleteRef=U.draft.photoRef;U.draft.photo='';U.draft.photoRef='';U.draft.photoThumb='';U.draft.photoHash='';U.draft.photoMime='';render();}
   else if(a==='save')saveTx();
   else if(a==='saveMore')saveTx(true);
