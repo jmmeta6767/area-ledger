@@ -3547,6 +3547,16 @@ body.project-keyboard-focus .project-sheet .project-form-savebar{grid-template-c
 .app-topbar-action:focus-visible,.app-topbar-menu:focus-visible{outline:3px solid #ffc928;outline-offset:2px}
 .app-topbar-badge{position:absolute;top:0;right:0;min-width:18px;height:18px;padding:0 4px;border-radius:10px;background:#d93025;color:#fff;font-size:10px;font-style:normal;font-weight:800;line-height:18px;text-align:center}
 body.sheet-open .app-topbar-menu,body[data-view="print"] .app-social-topbar,body[data-view="quoteprint"] .app-social-topbar{display:none!important}
+/* On the company profile, float the controls over the cover photo like Facebook's profile header. */
+body.view-profile .app-social-topbar{position:absolute;top:8px;left:0;right:0;min-height:64px;padding:0 18px;background:transparent;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;grid-template-columns:44px minmax(0,1fr) auto;pointer-events:none}
+body.view-profile .app-topbar-menu,body.view-profile .app-topbar-actions{pointer-events:auto}
+body.view-profile .app-topbar-menu{background:rgba(17,24,39,.38);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+body.view-profile .app-topbar-menu span{background:#fff}
+body.view-profile .app-topbar-brand{visibility:hidden}
+body.view-profile .app-topbar-actions{gap:7px}
+body.view-profile .app-topbar-actions .app-topbar-action{width:42px;height:42px;border:1px solid rgba(255,255,255,.28);background:rgba(17,24,39,.34);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+body.view-profile .app-topbar-actions .app-topbar-action:active{background:rgba(17,24,39,.62)}
+body.view-profile main{padding-top:8px!important}
 body.view-add main{padding-top:0!important}
 @media(max-width:360px){.app-social-topbar{grid-template-columns:40px minmax(70px,1fr) auto;gap:5px;padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}.app-topbar-menu{width:40px;height:44px}.app-topbar-actions{gap:2px}.app-topbar-action{width:38px;height:42px}.app-topbar-brand{font-size:1.1rem}}
 /* Premium Yellow & White transaction entry v1067. Keep styles scoped to this view. */
@@ -4986,6 +4996,14 @@ function homeUrgentAlert(allMode,active,all){
 
 function appTopBar(title){
   var due=urgentCount();
+  if(title==='โปรไฟล์บริษัท')return '<header class="app-social-topbar profile-overlay-topbar" aria-label="เมนูโปรไฟล์บริษัท">'+
+    '<button class="app-menu-btn app-topbar-menu" data-act="appMenu" aria-label="เปิดเมนูหลัก" title="เมนูหลัก"><span></span><span></span><span></span></button>'+
+    '<div class="app-topbar-brand" aria-label="AREA Ledger"><span class="sr-only">AREA Ledger · '+esc(title)+'</span></div>'+
+    '<div class="app-topbar-actions">'+
+      '<button class="app-topbar-action" data-act="profileEdit" aria-label="แก้ไขโปรไฟล์บริษัท" title="แก้ไขโปรไฟล์"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L20 7.5 16.5 4 4 16.5Z"/><path d="m14.8 5.7 3.5 3.5"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="openList" aria-label="ค้นหารายการ" title="ค้นหารายการ"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="profileShareCompany" aria-label="แชร์โปรไฟล์บริษัท" title="แชร์โปรไฟล์"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg></button>'+
+    '</div></header>';
   return '<header class="app-social-topbar" aria-label="แถบเมนูหลัก">'+
     '<button class="app-menu-btn app-topbar-menu" data-act="appMenu" aria-label="เปิดเมนูหลัก" title="เมนูหลัก"><span></span><span></span><span></span></button>'+
     '<div class="app-topbar-brand" aria-label="AREA Ledger">AREA <strong>Ledger</strong><span class="sr-only"> · '+esc(title||'')+'</span></div>'+
@@ -7928,6 +7946,7 @@ function render(){
   document.body.classList.toggle('view-boq',v==='boq');
   document.body.classList.toggle('view-add',v==='add');
   document.body.classList.toggle('view-project',v==='project');
+  document.body.classList.toggle('view-profile',v==='profile');
   document.body.classList.toggle('view-docs',v==='docs'||v==='doclist'||v==='quoteprint');
   document.body.classList.toggle('view-due',v==='due');
   document.body.setAttribute('data-view',v);
