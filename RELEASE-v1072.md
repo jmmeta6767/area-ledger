@@ -8,4 +8,4 @@ The multi-receipt save handler overwrote every persistence failure with a generi
 - Block duplicate taps during upload; never auto-commit if the review or cloud ledger changes. Failed uploads preserve all rows/photos and reuse already uploaded evidence on retry.
 - No automatic quota fallback for stale tabs, blocked reads or other write failures. Existing primary/recovery data and unrelated media are never deleted to make room.
 
-Validation: 612 core QA groups plus six storage regressions covering the 3-row / 6430 total, local quota, stale-tab preservation, failed upload/retry, double tap, changed draft, and a competing write during upload. Existing release QA and mobile layout gates apply. Real device storage state cannot be inferred from a screenshot; the revised UI reports the actual cause.
+Validation: 612 core QA groups plus seven storage regressions covering the 3-row / 6430 total, local quota, stale-tab preservation, failed upload/retry, double tap, changed draft, and a competing write during upload. Existing release QA and mobile layout gates apply. Real device storage state cannot be inferred from a screenshot; the revised UI reports the actual cause.
