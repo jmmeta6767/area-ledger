@@ -3532,13 +3532,17 @@ body.project-keyboard-focus .project-sheet .project-form-savebar{grid-template-c
 @media(max-width:380px){.project-boq-usage-values{display:grid;grid-template-columns:1fr}.project-budget-glance em{font-size:.68rem}}
 @media(prefers-reduced-motion:reduce){.settings-feedback-entry,.feedback-close{scroll-behavior:auto;transition:none!important}}
 
-/* HOME MENU — floating over the wallpaper for a cleaner dashboard */
+/* GLOBAL MENU — Facebook-style floating control on every screen */
 .home-floating-header{position:relative!important;height:64px!important;min-height:64px!important;padding:0!important;gap:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;pointer-events:none!important;z-index:1002!important}
 .home-floating-header:after{display:none!important}
-.home-floating-menu{position:fixed!important;left:max(14px,env(safe-area-inset-left))!important;top:calc(env(safe-area-inset-top) + 14px)!important;transform:none!important;display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;height:48px!important;flex:0 0 48px!important;padding:12px!important;border:1px solid rgba(255,255,255,.52)!important;border-radius:50%!important;background:rgba(23,32,43,.46)!important;backdrop-filter:blur(14px) saturate(1.2)!important;-webkit-backdrop-filter:blur(14px) saturate(1.2)!important;box-shadow:0 5px 18px rgba(15,23,32,.2)!important;pointer-events:auto!important;touch-action:manipulation}
-.home-floating-menu span{width:22px!important;height:2.5px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.38)}
-.home-floating-menu:focus-visible{outline:3px solid #ffc333!important;outline-offset:3px!important}
-.home-floating-menu:active{transform:scale(.96)!important}
+.home-floating-menu,.app-floating-menu{position:fixed!important;left:max(14px,env(safe-area-inset-left))!important;top:calc(env(safe-area-inset-top) + 14px)!important;transform:none!important;display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;height:48px!important;flex:0 0 48px!important;padding:12px!important;border:1px solid rgba(255,255,255,.52)!important;border-radius:50%!important;background:rgba(23,32,43,.62)!important;backdrop-filter:blur(14px) saturate(1.2)!important;-webkit-backdrop-filter:blur(14px) saturate(1.2)!important;box-shadow:0 5px 18px rgba(15,23,32,.2)!important;pointer-events:auto!important;touch-action:manipulation;z-index:1003!important}
+.home-floating-menu span,.app-floating-menu span{width:22px!important;height:2.5px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.38)}
+.home-floating-menu:focus-visible,.app-floating-menu:focus-visible{outline:3px solid #ffc333!important;outline-offset:3px!important}
+.home-floating-menu:active,.app-floating-menu:active{transform:scale(.96)!important}
+.hd .hd-in{padding-left:max(72px,calc(env(safe-area-inset-left) + 72px))!important}
+.hd h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.sheet-open .app-floating-menu,body[data-view="print"] .app-floating-menu,body[data-view="quoteprint"] .app-floating-menu{display:none!important}
+body.view-add main{padding-top:74px!important}
 /* Premium Yellow & White transaction entry v1067. Keep styles scoped to this view. */
 body.view-add{--color-primary:#FFC928;--color-primary-hover:#F2BA16;--color-primary-soft:#FFF7D6;--color-background:#F7F8FA;--color-surface:#FFFFFF;--color-text:#20242B;--color-text-secondary:#667085;--color-border:#E5E7EB;--radius-card:18px;--radius-control:12px;--shadow-card:0 4px 20px rgba(16,24,40,0.04);background:var(--color-background)!important;color:var(--color-text)!important}
 body.view-add #app,body.view-add main{background:var(--color-background)!important;color:var(--color-text)!important}
@@ -4974,10 +4978,12 @@ function homeUrgentAlert(allMode,active,all){
   return '<button class="urgent-alert '+a.tone+'"'+attrs+'><span class="urgent-ico">'+(a.tone==='critical'?'!':'⏱')+'</span><span class="urgent-copy"><b>'+esc(a.title)+'</b><small>'+esc(a.detail)+(extra?' · อีก '+extra+' เรื่องเร่งด่วน':'')+'</small></span><strong>›</strong></button>';
 }
 
+function floatingMenuButton(){
+  return '<button class="app-menu-btn app-floating-menu" data-act="appMenu" aria-label="เปิดเมนูหลัก" title="เมนูหลัก"><span></span><span></span><span></span></button>';
+}
 function header(title,back){
-  var menu='<button class="app-menu-btn" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button>';
-  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header home-floating-header"><button class="app-menu-btn home-floating-menu" data-act="appMenu" aria-label="เปิดเมนู"><span></span><span></span><span></span></button></div>';
-  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="navBack" aria-label="ย้อนกลับ">'+ic('back')+'</button>':menu)+'<h1>'+esc(title)+'</h1>'+(back?'<button class="header-home" data-act="navHome" aria-label="กลับหน้าหลัก">'+ic('home')+'</button>':'')+'</div><div class="stripe"></div></div>';
+  if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header home-floating-header" aria-hidden="true"></div>';
+  return '<div class="hd"><div class="hd-in">'+(back?'<button class="back" data-act="navBack" aria-label="ย้อนกลับ">'+ic('back')+'</button>':'')+'<h1>'+esc(title)+'</h1>'+(back?'<button class="header-home" data-act="navHome" aria-label="กลับหน้าหลัก">'+ic('home')+'</button>':'')+'</div><div class="stripe"></div></div>';
 }
 
 function txIcon(t){
@@ -7915,7 +7921,7 @@ function render(){
   var sheetRestorePosition=syncSheetScrollLock(!!U.sheet);
   document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
+  document.getElementById('app').innerHTML=floatingMenuButton()+header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
   if(sheetRestorePosition){var oldScrollBehavior=document.documentElement.style.scrollBehavior;document.documentElement.style.scrollBehavior='auto';window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);document.documentElement.style.scrollBehavior=oldScrollBehavior;}
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
