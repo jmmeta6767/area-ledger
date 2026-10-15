@@ -3532,17 +3532,22 @@ body.project-keyboard-focus .project-sheet .project-form-savebar{grid-template-c
 @media(max-width:380px){.project-boq-usage-values{display:grid;grid-template-columns:1fr}.project-budget-glance em{font-size:.68rem}}
 @media(prefers-reduced-motion:reduce){.settings-feedback-entry,.feedback-close{scroll-behavior:auto;transition:none!important}}
 
-/* GLOBAL MENU — Facebook-style floating control on every screen */
-.home-floating-header{position:relative!important;height:64px!important;min-height:64px!important;padding:0!important;gap:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;pointer-events:none!important;z-index:1002!important}
-.home-floating-header:after{display:none!important}
-.home-floating-menu,.app-floating-menu{position:fixed!important;left:max(14px,env(safe-area-inset-left))!important;top:calc(env(safe-area-inset-top) + 14px)!important;transform:none!important;display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;height:48px!important;flex:0 0 48px!important;padding:12px!important;border:1px solid rgba(255,255,255,.52)!important;border-radius:50%!important;background:rgba(23,32,43,.62)!important;backdrop-filter:blur(14px) saturate(1.2)!important;-webkit-backdrop-filter:blur(14px) saturate(1.2)!important;box-shadow:0 5px 18px rgba(15,23,32,.2)!important;pointer-events:auto!important;touch-action:manipulation;z-index:1003!important}
-.home-floating-menu span,.app-floating-menu span{width:22px!important;height:2.5px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.38)}
-.home-floating-menu:focus-visible,.app-floating-menu:focus-visible{outline:3px solid #ffc333!important;outline-offset:3px!important}
-.home-floating-menu:active,.app-floating-menu:active{transform:scale(.96)!important}
-.hd .hd-in{padding-left:max(72px,calc(env(safe-area-inset-left) + 72px))!important}
-.hd h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-body.sheet-open .app-floating-menu,body[data-view="print"] .app-floating-menu,body[data-view="quoteprint"] .app-floating-menu{display:none!important}
-body.view-add main{padding-top:74px!important}
+/* Facebook-inspired app bar: left menu, AREA Ledger wordmark, real shortcuts. */
+.app-social-topbar{position:sticky;top:0;z-index:120;display:grid;grid-template-columns:44px minmax(78px,1fr) auto;align-items:center;gap:8px;min-height:64px;padding:env(safe-area-inset-top,0px) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));background:rgba(255,255,255,.97);border-bottom:1px solid #e8ebed;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.app-topbar-menu{width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:0;border-radius:50%;background:transparent;color:#20242b;touch-action:manipulation}
+.app-topbar-menu span{display:block;width:25px;height:2.5px;border-radius:2px;background:#20242b}
+.app-topbar-menu:active,.app-topbar-action:active{background:#f1f3f5}
+.app-topbar-brand{min-width:0;overflow:hidden;color:#20242b;font-size:1.22rem;font-weight:800;letter-spacing:-.045em;white-space:nowrap;text-overflow:ellipsis;line-height:1}
+.app-topbar-brand strong{color:#b98200;font-weight:850}
+.app-topbar-actions{display:flex;align-items:center;gap:5px}
+.app-topbar-action{position:relative;width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:#20242b;touch-action:manipulation}
+.app-topbar-action:first-child{border:1px solid #dfe3e7;border-radius:13px}
+.app-topbar-action svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app-topbar-action:focus-visible,.app-topbar-menu:focus-visible{outline:3px solid #ffc928;outline-offset:2px}
+.app-topbar-badge{position:absolute;top:0;right:0;min-width:18px;height:18px;padding:0 4px;border-radius:10px;background:#d93025;color:#fff;font-size:10px;font-style:normal;font-weight:800;line-height:18px;text-align:center}
+body.sheet-open .app-topbar-menu,body[data-view="print"] .app-social-topbar,body[data-view="quoteprint"] .app-social-topbar{display:none!important}
+body.view-add main{padding-top:0!important}
+@media(max-width:360px){.app-social-topbar{grid-template-columns:40px minmax(70px,1fr) auto;gap:5px;padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}.app-topbar-menu{width:40px;height:44px}.app-topbar-actions{gap:2px}.app-topbar-action{width:38px;height:42px}.app-topbar-brand{font-size:1.1rem}}
 /* Premium Yellow & White transaction entry v1067. Keep styles scoped to this view. */
 body.view-add{--color-primary:#FFC928;--color-primary-hover:#F2BA16;--color-primary-soft:#FFF7D6;--color-background:#F7F8FA;--color-surface:#FFFFFF;--color-text:#20242B;--color-text-secondary:#667085;--color-border:#E5E7EB;--radius-card:18px;--radius-control:12px;--shadow-card:0 4px 20px rgba(16,24,40,0.04);background:var(--color-background)!important;color:var(--color-text)!important}
 body.view-add #app,body.view-add main{background:var(--color-background)!important;color:var(--color-text)!important}
@@ -4978,8 +4983,16 @@ function homeUrgentAlert(allMode,active,all){
   return '<button class="urgent-alert '+a.tone+'"'+attrs+'><span class="urgent-ico">'+(a.tone==='critical'?'!':'⏱')+'</span><span class="urgent-copy"><b>'+esc(a.title)+'</b><small>'+esc(a.detail)+(extra?' · อีก '+extra+' เรื่องเร่งด่วน':'')+'</small></span><strong>›</strong></button>';
 }
 
-function floatingMenuButton(){
-  return '<button class="app-menu-btn app-floating-menu" data-act="appMenu" aria-label="เปิดเมนูหลัก" title="เมนูหลัก"><span></span><span></span><span></span></button>';
+function appTopBar(title){
+  var due=urgentCount();
+  return '<header class="app-social-topbar" aria-label="แถบเมนูหลัก">'+
+    '<button class="app-menu-btn app-topbar-menu" data-act="appMenu" aria-label="เปิดเมนูหลัก" title="เมนูหลัก"><span></span><span></span><span></span></button>'+
+    '<div class="app-topbar-brand" aria-label="AREA Ledger">AREA <strong>Ledger</strong><span class="sr-only"> · '+esc(title||'')+'</span></div>'+
+    '<div class="app-topbar-actions">'+
+      '<button class="app-topbar-action" data-act="newTx" aria-label="เพิ่มรายการ" title="เพิ่มรายการ"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="openList" aria-label="ค้นหารายการ" title="ค้นหารายการ"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>'+
+      '<button class="app-topbar-action" data-act="go" data-v="due" aria-label="ติดตามรายการค้าง" title="ติดตามรายการค้าง"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>'+(due?'<i class="app-topbar-badge">'+(due>9?'9+':due)+'</i>':'')+'</button>'+
+    '</div></header>';
 }
 function header(title,back){
   if(title==='บัญชีหน้างาน'&&!back)return '<div class="mheader master-ref-header home-floating-header" aria-hidden="true"></div>';
@@ -7921,7 +7934,7 @@ function render(){
   var sheetRestorePosition=syncSheetScrollLock(!!U.sheet);
   document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML=floatingMenuButton()+header(title,back)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
+  document.getElementById('app').innerHTML=appTopBar(title)+'<main'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
   if(sheetRestorePosition){var oldScrollBehavior=document.documentElement.style.scrollBehavior;document.documentElement.style.scrollBehavior='auto';window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);document.documentElement.style.scrollBehavior=oldScrollBehavior;}
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
