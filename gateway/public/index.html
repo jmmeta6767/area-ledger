@@ -3702,7 +3702,7 @@ main>*{min-width:0;}
   .nav-in{padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px));}
 }
 
-/* v1076 — memorable category colors, retained in every selection state */
+/* v1077 — memorable category colors, retained in every selection state */
 .ledger-icon{--icon-bg:#EEF2F6;--icon-ink:#4B5C73;width:32px;height:32px;flex:0 0 32px;display:inline-grid;place-items:center;border-radius:10px;background:linear-gradient(145deg,var(--icon-bg),var(--icon-end,var(--icon-bg)));color:var(--icon-ink);box-shadow:inset 0 1px 0 #ffffff32,0 2px 5px #18304b16}
 .ledger-icon svg,.entry-category-check svg{width:20px;height:20px;flex:none}
 .category-tone-material{--icon-bg:#2872EB;--icon-end:#1852C4;--icon-ink:#FFFFFF}
@@ -3739,6 +3739,29 @@ body.view-add .add-section-title>svg{width:17px;height:17px;flex:none}
 @media(max-width:360px){body.view-add .entry-category{gap:6px;padding:8px!important;font-size:.83rem!important}.entry-category>.ledger-icon{width:28px;height:28px;flex-basis:28px}.entry-category-check svg{width:12px;height:12px}}
 
 body.view-add .gbtn.entry-category.on::after{content:none!important}
+
+/* v1077 — page, tool and dialog icon coverage */
+.category-tone-danger{--icon-bg:#BE3D43;--icon-end:#98292F;--icon-ink:#FFFFFF}
+.ui-feature-icon{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;flex:none;width:24px;height:24px;border-radius:8px;background:linear-gradient(145deg,var(--icon-bg,#2872EB),var(--icon-end,#1852C4));color:var(--icon-ink,#FFFFFF);box-shadow:inset 0 1px 0 #ffffff28}
+.ui-feature-icon svg{width:17px;height:17px;flex:none}
+.ui-heading-copy{display:inline-flex;align-items:center;gap:8px;max-width:100%;min-width:0;vertical-align:middle}
+.ui-heading-text{min-width:0;overflow-wrap:anywhere}
+.ui-action-icon{width:21px;height:21px;border-radius:6px;margin-inline-end:6px;vertical-align:-5px}
+.ui-action-icon svg{width:15px;height:15px}
+button[data-ui-action]{white-space:normal}
+.proc-head .ui-title-icon{margin-inline-end:8px}
+.docs-quick-create button>span,.docs-kind-grid .doc-type-icon,.proc-grid .proc-icon{background:linear-gradient(145deg,#6064E8,#4544B7)!important;color:#FFFFFF!important;box-shadow:inset 0 1px 0 #ffffff28,0 2px 6px #18304b16}
+.docs-quick-create [data-act="newBill"]>span,.docs-kind-grid [data-kind="bill"] .doc-type-icon{background:linear-gradient(145deg,#C96912,#AD4C0B)!important}
+.docs-quick-create [data-act="newReceipt"]>span,.docs-kind-grid [data-kind="receipt"] .doc-type-icon{background:linear-gradient(145deg,#16845A,#096842)!important}
+.proc-grid [data-act="procurementInfo"] .proc-icon{background:linear-gradient(145deg,#2872EB,#1852C4)!important}
+.docs-quick-create button>span svg,.docs-kind-grid .doc-type-icon svg,.proc-grid .proc-icon svg{color:#FFFFFF!important}
+.nav button[data-v="home"]>svg{color:#2864D8!important}.nav button[data-v="boq"]>svg{color:#148D83!important}.nav button[data-v="projects"]>svg{color:#3776CE!important}.nav button[data-v="profile"]>svg{color:#8A4DE8!important}
+.nav button.on>svg{stroke-width:2.2}
+@media(max-width:360px){.ui-action-icon{width:19px;height:19px;margin-inline-end:4px}.ui-action-icon svg{width:14px;height:14px}.ui-heading-copy{gap:6px}}
+@media print{.ui-feature-icon{display:none!important}.ui-heading-copy,.ui-heading-text{display:contents!important}}
+
+.docs-quick-create button>span{display:grid!important;place-items:center;width:38px;height:38px;border-radius:11px;margin:0 auto 7px!important}
+.docs-quick-create button>span svg{width:23px;height:23px}
 </style>
 
 </head>
@@ -3888,6 +3911,19 @@ function migrate(o){
 var CAT_IN=['มัดจำ','งวดงาน','เงินประกันผลงาน','เงินประกันสัญญา','อื่นๆ'];
 var KEY='site-ledger-v1';
 var IC={
+ download:'M12 3v12 M7 10l5 5 5-5 M4 16v5h16v-5',
+ upload:'M12 16V3 M7 8l5-5 5 5 M4 16v5h16v-5',
+ edit:'M4 16l12-12 4 4L8 20H4v-4 M14 6l4 4',
+ trash:'M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7',
+ cloud:'M7 18H6a4 4 0 0 1-1-8 7 7 0 0 1 13-1 4.5 4.5 0 0 1 0 9h-1 M9 18l3 3 3-3 M12 21v-9',
+ search:'M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0 M15 15l6 6',
+ share:'M12 16V3 M7 8l5-5 5 5 M5 13v8h14v-8',
+ calendar:'M4 5h16v16H4z M8 3v4 M16 3v4 M4 10h16 M8 14h3 M14 17h2',
+ savefile:'M4 3h13l3 3v15H4z M8 3v6h8V3 M8 21v-7h8v7',
+ link:'M9 15l6-6 M8 10l-3 3a4 4 0 0 0 6 6l3-3 M10 8l3-3a4 4 0 0 1 6 6l-3 3',
+ print:'M6 9V3h12v6 M6 18H3V9h18v9h-3 M6 14h12v7H6z M17 12h.01',
+ refresh:'M20 8a8 8 0 0 0-14-3L3 8 M3 3v5h5 M4 16a8 8 0 0 0 14 3l3-3 M16 16h5v5',
+
  materials:'M3 7l9-4 9 4v10l-9 4-9-4V7 M3 7l9 4 9-4 M12 11v10 M8 5l9 4',
  helmet:'M4 15v-3a8 8 0 0 1 16 0v3 M9 5v6 M15 5v6 M3 15h18v4H3z',
  equipment:'M14 5a5 5 0 0 0-6 6L3 16v4h4l5-5a5 5 0 0 0 7-6l-3 3-4-4 3-3',
@@ -3926,6 +3962,71 @@ function categoryVisual(cat,type){
   var v=(type==='in'?income:out)[cat]||(type==='in'?['coins','income']:['wallet','neutral']);return {icon:v[0],tone:v[1]};
 }
 function categoryBadge(cat,type){var v=categoryVisual(cat,type);return '<span class="ledger-icon category-tone-'+v.tone+'" aria-hidden="true">'+ic(v.icon)+'</span>';}
+
+var UI_VIEW_ICONS={"home":["home","material"],"profile":["profile","guarantee"],"list":["list","material"],"add":["plus","material"],"projects":["build","material"],"project":["build","material"],"boq":["boq","rental"],"due":["clock","labor"],"guarantees":["shield","guarantee"],"report":["chart","income"],"docs":["documents","document"],"procurement":["box","material"],"doclist":["documents","document"]};
+var UI_ACTION_ICONS={"newProj":["plus","material"],"newTx":["plus","material"],"addToProj":["plus","material"],"newBoq":["plus","material"],"quoteAddItem":["plus","material"],"profilePostNew":["plus","material"],"govEventNew":["plus","material"],"contractChangeNew":["plus","material"],"timeExtensionNew":["plus","material"],"newQuote":["quote","document"],"editQuote":["quote","document"],"newBill":["bill","labor"],"billPay":["bill","labor"],"newReceipt":["receipt","income"],"saveBillPayment":["receipt","income"],"newGuarantee":["shield","guarantee"],"newRetentionGuarantee":["shield","guarantee"],"newLegacyRetentionImport":["shield","guarantee"],"projectGuarantees":["shield","guarantee"],"editGuarantee":["shield","guarantee"],"editTx":["edit","material"],"editProj":["edit","material"],"editBoq":["edit","material"],"editDoc":["edit","material"],"profileEdit":["edit","material"],"profilePostEdit":["edit","material"],"profileLoanEdit":["edit","material"],"editDueTx":["edit","material"],"save":["savefile","income"],"saveMore":["savefile","income"],"saveOpen":["calendar","labor"],"saveProj":["savefile","income"],"saveBoq":["savefile","income"],"saveGuarantee":["savefile","income"],"saveQuote":["savefile","income"],"saveBizDoc":["savefile","income"],"saveDueTx":["savefile","income"],"saveLegacyRetentionImport":["savefile","income"],"apPaySave":["savefile","income"],"contractorPackageSave":["savefile","income"],"profileSaveCompany":["savefile","income"],"profilePostSave":["savefile","income"],"profileLoanSave":["savefile","income"],"profileLoanPaymentSave":["savefile","income"],"manualJournalSave":["savefile","income"],"contractChangeSave":["savefile","income"],"timeExtensionSave":["savefile","income"],"govEventSave":["savefile","income"],"govEventLetterSave":["savefile","income"],"boqImportConfirm":["savefile","income"],"expenseBatchSave":["savefile","income"],"delTx":["trash","danger"],"delProj":["trash","danger"],"deleteBoq":["trash","danger"],"deleteGuarantee":["trash","danger"],"profilePostDelete":["trash","danger"],"profilePhotoRemove":["trash","danger"],"profileLoanDelete":["trash","danger"],"profileLoanPaymentDelete":["trash","danger"],"resetAsk":["trash","danger"],"resetDo":["trash","danger"],"xlsx":["download","income"],"exportProjectXlsx":["download","income"],"exportGuarantees":["download","income"],"accountingExport":["download","income"],"backupFile":["download","income"],"csv":["download","income"],"exportProjectPdf":["download","document"],"downloadDocPdf":["download","document"],"pdfView":["download","document"],"copyCsv":["download","document"],"boqImport":["upload","rental"],"boqImportPick":["upload","rental"],"boqRunImages":["upload","rental"],"boqRunLocalOnly":["upload","rental"],"boqLinkStart":["link","rental"],"boqLinkSave":["link","rental"],"boqLinkBulk":["link","rental"],"boqLinkBulkCommit":["link","rental"],"accountingOpen":["calculator","income"],"accountingChart":["calculator","income"],"accountingGL":["calculator","income"],"accountingTB":["calculator","income"],"accountingStatements":["calculator","income"],"accountingProjectCost":["calculator","income"],"accountingControl2":["calculator","income"],"accountingReport":["calculator","income"],"manualJournalNew":["calculator","income"],"accountingTaxReconcile":["documents","document"],"accountingTaxRegister":["documents","document"],"accountingDocumentFlow":["documents","document"],"accountingAudit":["documents","document"],"projectDocList":["documents","document"],"govDraft":["documents","document"],"govDraftCopy":["documents","document"],"govPendingLetters":["documents","document"],"govEventLetter":["documents","document"],"govFollowup":["documents","document"],"bankReconcile":["bank","income"],"apPayOpen":["bank","income"],"markPaid":["bank","income"],"profileLoanPayment":["bank","income"],"contractorPackageNew":["wallet","income"],"profileLoanOpen":["wallet","income"],"profileLoanNew":["wallet","income"],"profileLoanDetail":["wallet","income"],"accountingMonthEnd":["calendar","labor"],"retRecv":["calendar","labor"],"returnGuarantee":["calendar","labor"],"backup":["cloud","material"],"restoreOpen":["cloud","material"],"doRestore":["cloud","material"],"googleWorkspaceOpen":["cloud","material"],"googleWorkspaceConnect":["cloud","material"],"googleWorkspaceSync":["cloud","material"],"cloudEnable":["cloud","material"],"cloudPush":["cloud","material"],"cloudPull":["cloud","material"],"cloudHistory":["cloud","material"],"cloudRestorePrevious":["cloud","material"],"cloudFilesMigrate":["cloud","material"],"healthCheck":["shield","guarantee"],"integrityOpen":["shield","guarantee"],"reliabilityCheck":["shield","guarantee"],"cloudAcceptance":["shield","guarantee"],"aiCheckReady":["shield","guarantee"],"settings":["settings","material"],"systemAdvanced":["settings","material"],"ownerOps":["settings","material"],"businessStableOpen":["settings","material"],"productionCandidateCheck":["settings","material"],"deploymentStatusOpen":["settings","material"],"pwaCheck":["refresh","material"],"pwaRefresh":["refresh","material"],"aiSmokeTest":["refresh","material"],"profileShareCompany":["share","material"],"profilePostShare":["share","material"],"profilePublicShare":["share","material"],"feedbackShare":["share","material"],"feedbackOpen":["documents","document"],"expenseOcrFeedback":["documents","document"],"ocrReviewQueue":["documents","document"],"profilePhotoOpen":["cam","material"],"cloudPhotoOpen":["cam","material"],"doPrint":["print","document"],"boqOpenProject":["boq","rental"],"boqPickProject":["boq","rental"],"boqBackProjects":["boq","rental"]};
+function uiFeatureIcon(name,tone,kind){return '<span class="ui-feature-icon '+(kind||'')+' category-tone-'+tone+'" aria-hidden="true">'+ic(IC[name]?name:'documents')+'</span>';}
+function uiHeadingIcons(html,spec){
+  if(!spec)return html;
+  return html.replace(/<h([123])([^>]*)>([\s\S]*?)<\/h\1>/,function(all,level,attrs,inner){
+    if(/<svg\b|data-ui-heading/.test(all))return all;
+    var split=inner.indexOf('<button'),title=split<0?inner:inner.slice(0,split),controls=split<0?'':inner.slice(split);
+    return '<h'+level+attrs+' data-ui-heading="1"><span class="ui-heading-copy">'+uiFeatureIcon(spec[0],spec[1],'ui-title-icon')+'<span class="ui-heading-text">'+title+'</span></span>'+controls+'</h'+level+'>';
+  });
+}
+function uiActionIcons(html){
+  return html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g,function(all,attrs,inner){
+    var match=attrs.match(/\bdata-act="([A-Za-z0-9]+)"/),spec=match&&UI_ACTION_ICONS[match[1]];
+    if(!spec||/<svg\b|ui-feature-icon/.test(inner)||/\b(?:row|mitem|boq-row|tx-modern)\b/.test(attrs)||/^\s*[+＋]/.test(inner))return all;
+    /* Preserve grid/card structure: insert inside its existing text container. */
+    var icon=uiFeatureIcon(spec[0],spec[1],'ui-action-icon');
+    if(/^\s*<(?:span|b)\b/.test(inner))inner=inner.replace(/^(\s*<(?:span|b)\b[^>]*>)/,'$1'+icon);else inner=icon+inner;
+    return '<button'+attrs+' data-ui-action="1">'+inner+'</button>';
+  });
+}
+function uiSummaryIcons(html){
+  return html.replace(/<summary([^>]*)>([\s\S]*?)<\/summary>/g,function(all,attrs,inner){
+    if(/<svg\b|ui-feature-icon/.test(inner))return all;
+    var label=inner.replace(/<[^>]+>/g,'').trim(),spec=null;
+    if(/^(กราฟ|กระแส|กำไร)/.test(label))spec=['chart','income'];
+    else if(/^(ตัวกรอง|ค้นหา)/.test(label))spec=['search','material'];
+    else if(/^(เครื่องมือ|ตัวเลือก)/.test(label))spec=['equipment','rental'];
+    else if(/^BOQ/.test(label))spec=['boq','rental'];
+    else if(/^(บัญชี|AR \/ AP)/.test(label))spec=['calculator','income'];
+    else if(/^(ภาษี|เอกสาร|งานสัญญา)/.test(label))spec=['documents','document'];
+    else if(/^ธนาคาร/.test(label))spec=['bank','income'];
+    else if(/^(ข้อมูล|สำรอง|ระบบ)/.test(label))spec=['cloud','material'];
+    else if(/^ทั่วไป/.test(label))spec=['settings','material'];
+    else if(/^AI/.test(label))spec=['scan','material'];
+    else if(/^โครงการ/.test(label))spec=['build','material'];
+    if(!spec)return all;var icon=uiFeatureIcon(spec[0],spec[1],'ui-action-icon');
+    if(/<b\b/.test(inner))inner=inner.replace(/(<b\b[^>]*>)/,'$1'+icon);else if(/<span\b/.test(inner))inner=inner.replace(/(<span\b[^>]*>)/,'$1'+icon);else inner=icon+inner;
+    return '<summary'+attrs+'>'+inner+'</summary>';
+  });
+}
+function uiSheetIcon(kind){
+  if(/^accounting|manualJournal|loan/.test(kind))return ['calculator','income'];
+  if(/^boq/.test(kind))return ['boq','rental'];
+  if(/^gov|contractChange/.test(kind))return ['documents','document'];
+  if(/guarantee|Guarantee|Retention/.test(kind))return ['shield','guarantee'];
+  if(/^profile/.test(kind))return ['profile','guarantee'];
+  if(/expense/.test(kind))return ['scan','labor'];
+  if(/backup|restore|google|cloud|migration/i.test(kind))return ['cloud','material'];
+  if(/billPay|apPay|contractor/.test(kind))return ['wallet','income'];
+  if(/quote|bizdoc/.test(kind))return ['documents','document'];
+  if(kind==='proj')return ['build','material'];if(kind==='tx')return ['receipt','material'];if(kind==='resetConfirm')return ['trash','danger'];
+  if(/timeExtension|dueEdit/.test(kind))return ['calendar','labor'];return ['settings','material'];
+}
+function uiViewIcons(html,view){
+  if(view==='print'||view==='quoteprint')return uiActionIcons(html);
+  var spec=UI_VIEW_ICONS[view];
+  if(view!=='profile')html=uiHeadingIcons(html,spec);
+  if(view==='procurement')html=html.replace('<div class="proc-head"><div><b>งานพัสดุ','<div class="proc-head"><div><b>'+uiFeatureIcon('box','material','ui-title-icon')+'งานพัสดุ');
+  if(view==='list')html=html.replace('<div class="list-command-summary"><span><small>รายการ','<div class="list-command-summary"><span><small>'+uiFeatureIcon('list','material','ui-action-icon')+'รายการ');
+  if(view==='projects')html=html.replace('<div class="project-list-toolbar"><div><b>เลือกโครงการ','<div class="project-list-toolbar"><div><b>'+uiFeatureIcon('build','material','ui-title-icon')+'เลือกโครงการ');
+  if(view==='report')html=html.replace('<div class="workflow-section-head report-workflow-head"><span>ภาพรวมเดือน','<div class="workflow-section-head report-workflow-head"><span>'+uiFeatureIcon('chart','income','ui-action-icon')+'ภาพรวมเดือน');
+  return uiSummaryIcons(uiActionIcons(html));
+}
 
 /* ---------- วันที่ / เงิน ---------- */
 function ymd(d){var m=d.getMonth()+1,dd=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd;}
@@ -4027,7 +4128,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1076,"sha":"","environment":"source"};
+var APP_BUILD={"version":1077,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -7352,7 +7453,7 @@ function expenseBatchMarkUncertain(){
  var names={amount:'ยอดเงิน',date:'วันที่',sub:'รายการ/รายละเอียด',partner:'ร้านค้า/ผู้รับเงิน'};
  document.querySelectorAll('[data-exp-batch][data-k]').forEach(function(el){var x=(U.expenseBatch||[])[+el.dataset.expBatch],label=el.closest('.expense-batch-field');if(!x||!label)return;var uncertain=(x.ocrUncertainFields||[]).indexOf(names[el.dataset.k])>=0;label.classList.toggle('ocr-uncertain',uncertain);if(uncertain)el.setAttribute('title','AI อ่านช่องนี้ไม่ชัด โปรดตรวจเทียบต้นฉบับ');});
 }
-/* v1076: preserve the reviewed draft and surface the actual storage failure. */
+/* v1077: preserve the reviewed draft and surface the actual storage failure. */
 function expenseBatchSaveMessage(){
   var messages={quota:'พื้นที่บันทึก Safari เต็ม · ร่างและข้อมูลเดิมยังอยู่ กรุณาสำรองข้อมูล หรือเปิด Cloud Sync เพื่อเก็บรูปใน R2',conflict:'ข้อมูลเปลี่ยนจากอีกแท็บ · ร่างยังอยู่ กรุณาสำรองร่างและเปิดข้อมูลล่าสุดก่อนบันทึก',read:'ยังอ่านข้อมูลเดิมไม่สำเร็จ · ร่างยังอยู่ กรุณาลองเปิดแอปใหม่หลังสำรองข้อมูล',write:'บันทึกในเครื่องไม่สำเร็จ · ร่างและข้อมูลเดิมยังอยู่ กรุณาตรวจพื้นที่และสิทธิ์จัดเก็บ'};
   return messages[U.storageWriteError]||messages.write;
@@ -7434,7 +7535,7 @@ function expenseBatchUpdateUi(){
   var values={expenseBatchSelectedCount:totals.selectedCount+' รายการ',expenseBatchSelectedAmount:fmt(totals.selectedTotal,1),expenseBatchActionCount:totals.selectedCount+' รายการ',expenseBatchActionAmount:fmt(totals.selectedTotal,1),expenseBatchTotalCount:totals.count+' รายการ',expenseBatchTotalAmount:fmt(totals.total,1)};
   Object.keys(values).forEach(function(id){var node=document.getElementById(id);if(node)node.textContent=values[id];});
   var reconciliation=expenseBatchReconciliation(items),pendingTotalReview=reconciliation.some(function(g){return g.mismatch&&!g.reviewed&&g.rows.some(function(x){return x.include;});}),notice=document.getElementById('expenseBatchReconcile');if(notice)notice.innerHTML=expenseBatchReconciliationHtml(items);
-  var save=document.querySelector('[data-act="expenseBatchSave"]');if(save){save.disabled=!!U.expenseBatchBusy||totals.selectedCount===0||pendingTotalReview;save.textContent=pendingTotalReview?'ตรวจยอดรวมก่อนบันทึก':'บันทึก '+totals.selectedCount+' รายการ';}
+  var save=document.querySelector('[data-act="expenseBatchSave"]');if(save){save.disabled=!!U.expenseBatchBusy||totals.selectedCount===0||pendingTotalReview;save.innerHTML=uiFeatureIcon('savefile','income','ui-action-icon')+esc(pendingTotalReview?'ตรวจยอดรวมก่อนบันทึก':'บันทึก '+totals.selectedCount+' รายการ');}
   var allButton=document.querySelector('[data-act="expenseBatchSelectAll"]'),noneButton=document.querySelector('[data-act="expenseBatchSelectNone"]');
   if(allButton)allButton.disabled=!!U.expenseBatchBusy||totals.selectedCount===totals.count;
   if(noneButton)noneButton.disabled=!!U.expenseBatchBusy||totals.selectedCount===0;
@@ -7862,6 +7963,7 @@ function sheetHtml(){
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
+  b=uiSummaryIcons(uiActionIcons(uiHeadingIcons(b,uiSheetIcon(sh.kind))));
   return '<div class="scrim master-scrim'+(sh.kind==='proj'?' project-edit-scrim mobile-editor-scrim':((sh.kind==='profileEdit'||sh.kind==='feedback'||sh.kind==='expenseBatch')?' mobile-editor-scrim':''))+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='proj'?' project-sheet':'')+(sh.kind==='profileEdit'?' profile-editor-sheet':'')+(sh.kind==='feedback'?' feedback-editor-sheet':'')+(sh.kind==='expenseBatch'?' expense-review-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
 }
 function csvText(){
@@ -8181,6 +8283,7 @@ function render(){
   else if(v==='procurement'){title='งานพัสดุ';body=vProcurement();back=true;}
   else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
   else if(v==='quoteprint'){title=docTitle(U.docKind||'quote')[0];body=vBusinessDoc();back=true;}
+  body=uiViewIcons(body,v);
   var tabs=[['home','home','ภาพรวม'],['boq','documents','BOQ'],['add','plus',''],['projects','build','โครงการ'],['profile','profile','โปรไฟล์']];
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
@@ -9041,7 +9144,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1076&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1077&project-keyboard=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
