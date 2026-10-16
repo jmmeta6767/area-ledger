@@ -57,7 +57,7 @@ async function googleEncrypt(env,text){const iv=new Uint8Array(12);crypto.getRan
 async function googleDecrypt(env,value){const p=String(value||'').split('.');if(p.length!==2)throw Error('GOOGLE_TOKEN_INVALID');const key=await googleCryptoKey(env),iv=b64urlDecode(p[0]),ct=b64urlDecode(p[1]),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);return new TextDecoder().decode(plain);}
 function googleReturnUrl(request,value,env){let u;try{u=new URL(String(value||''),request.url);}catch(_){return '';}const self=new URL(request.url).origin;if(u.origin!==self&&!allowedOrigins(env).includes(u.origin))return '';if(!/^https?:$/.test(u.protocol))return '';return u.toString();}
 async function googlePkceChallenge(verifier){const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier));return b64urlBytes(h);}
-async function googleConnection(env,ledgerHash){if(!d1Ready(env))return null;try{return await env.LEDGER_DB.prepare('SELECT email,refresh_token_enc AS refreshTokenEnc,scopes,root_drive_folder_id AS rootDriveFolderId,connected_at AS connectedAt,updated_at AS updatedAt FROM google_connections WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first();}catch(_){return null;}}
+async function googleConnection(env,ledgerHash){if(!d1Ready(env))return null;try{return await env.LEDGER_DB.prepare('SELECT email,refresh_token_enc AS refreshTokenEnc,scopes,root_drive_folder_id AS rootDriveFolderId,connected_at AS connectedAt,updated_at AS updatedAt FROM google_connections WHERE ledger_hash=? LIMIT 1').bind(ledgerHash).first();}catch(_){throw Error('GOOGLE_CONNECTION_READ_FAILED');}}
 async function googleProjectLink(env,ledgerHash,pid){try{return await env.LEDGER_DB.prepare('SELECT project_id AS projectId,project_name AS projectName,drive_folder_id AS driveFolderId,spreadsheet_id AS spreadsheetId,drive_url AS driveUrl,sheet_url AS sheetUrl,last_sync_hash AS lastSyncHash,last_sync_at AS lastSyncAt,updated_at AS updatedAt FROM google_project_links WHERE ledger_hash=? AND project_id=? LIMIT 1').bind(ledgerHash,pid).first();}catch(_){return null;}}
 async function googleAccessToken(env,ledgerHash){
   const conn=await googleConnection(env,ledgerHash);if(!conn||!conn.refreshTokenEnc)throw Error('GOOGLE_NOT_CONNECTED');
@@ -537,24 +537,32 @@ export default{async fetch(request,env){
     }catch(e){const code=String(e&&e.message||'LEDGER_ERROR'),status=code==='LEDGER_PAYLOAD_TOO_LARGE'?413:code==='LEDGER_JSON_INVALID'||code==='LEDGER_STATE_INVALID'?400:500;return json({error:code},status,origin,rid);}
   }
   if(url.pathname==='/v1/google/oauth/callback'&&request.method==='GET'){
-    if(!googleConfigured(env))return new Response('Google Workspace is not configured',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
-    const state=String(url.searchParams.get('state')||''),code=String(url.searchParams.get('code')||'');if(!state||!code)return new Response('Google OAuth callback invalid',{status:400});
+    const callbackError=(message,status)=>new Response(message,{status,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
+    let callbackStage='state';
+    try{
+    if(!googleConfigured(env))return callbackError('GOOGLE_NOT_CONFIGURED',503);
+    const state=String(url.searchParams.get('state')||''),code=String(url.searchParams.get('code')||'');if(!state||!code)return callbackError('GOOGLE_CALLBACK_INVALID',400);
     const sh=await sha256Hex(state),row=await env.LEDGER_DB.prepare('SELECT ledger_hash AS ledgerHash,code_verifier AS codeVerifier,return_url AS returnUrl,expires_at AS expiresAt FROM google_oauth_states WHERE state_hash=? LIMIT 1').bind(sh).first();await env.LEDGER_DB.prepare('DELETE FROM google_oauth_states WHERE state_hash=?').bind(sh).run();
-    if(!row||+row.expiresAt<Date.now())return new Response('Google OAuth state expired',{status:400});
+    if(!row||+row.expiresAt<Date.now())return callbackError('GOOGLE_STATE_EXPIRED: Start a new Google connection from AREA Ledger.',400);
     const redirectUri=new URL('/v1/google/oauth/callback',request.url).toString(),form=new URLSearchParams({client_id:String(env.GOOGLE_CLIENT_ID),client_secret:String(env.GOOGLE_CLIENT_SECRET),code,code_verifier:String(row.codeVerifier),grant_type:'authorization_code',redirect_uri:redirectUri});
+    callbackStage='token';
     const tr=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:form});let td={};try{td=await tr.json();}catch(_){}
-    if(!tr.ok||!td.refresh_token)return new Response('Google OAuth token exchange failed',{status:502});
+    if(!tr.ok||!td.refresh_token){const tokenError=['invalid_client','invalid_grant','unauthorized_client','invalid_request','invalid_scope','access_denied'].includes(td.error)?td.error:!td.refresh_token&&tr.ok?'refresh_token_missing':'token_exchange_failed';return callbackError('GOOGLE_TOKEN_EXCHANGE_FAILED: '+tokenError,502);}
     let email='';try{const ui=await googleJson('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:'Bearer '+td.access_token}});email=cleanFileMeta(ui.email,160);}catch(_){}
+    callbackStage='save';
     const enc=await googleEncrypt(env,td.refresh_token),now=new Date().toISOString();await env.LEDGER_DB.prepare('INSERT INTO google_connections (ledger_hash,email,refresh_token_enc,scopes,connected_at,updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT(ledger_hash) DO UPDATE SET email=excluded.email,refresh_token_enc=excluded.refresh_token_enc,scopes=excluded.scopes,updated_at=excluded.updated_at').bind(row.ledgerHash,email,enc,String(td.scope||''),now,now).run();
-    const back=new URL(row.returnUrl);back.searchParams.set('google','connected');return Response.redirect(back.toString(),302);
+    const back=new URL(row.returnUrl);back.searchParams.set('google','connected');return new Response(null,{status:302,headers:{Location:back.toString(),'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
+    }catch(_){return callbackError(callbackStage==='state'?'GOOGLE_STATE_STORAGE_FAILED':callbackStage==='save'?'GOOGLE_CONNECTION_SAVE_FAILED':'GOOGLE_TOKEN_REQUEST_FAILED',502);}
   }
   if(['/v1/google/status','/v1/google/oauth/start','/v1/google/sync','/v1/google/file-upload','/v1/google/disconnect'].includes(url.pathname)){
     if(sentOrigin&&!origin)return json({error:'ORIGIN_DENIED'},403,'',rid);
     if(!protocolOk(request))return json({error:'PROTOCOL_VERSION_REQUIRED',protocol:PROTOCOL_VERSION},426,origin,rid);
     const access=ledgerAccessKey(request);if(!access)return json({error:'LEDGER_KEY_REQUIRED'},401,origin,rid);const ledgerHash=await sha256Hex(access),configured=googleConfigured(env);
     if(url.pathname==='/v1/google/status'&&request.method==='GET'){
+      try{
       const conn=configured?await googleConnection(env,ledgerHash):null,pid=cleanFileMeta(url.searchParams.get('pid')||'',160),link=configured&&pid?await googleProjectLink(env,ledgerHash,pid):null,files=configured&&pid?await googleProjectFiles(env,ledgerHash,pid):[];
       return json({ok:true,configured,connected:!!conn,email:conn&&conn.email||'',project:link||null,files:files},200,origin,rid);
+      }catch(_){return json({error:'GOOGLE_CONNECTION_READ_FAILED'},503,origin,rid);}
     }
     if(!configured)return json({error:'GOOGLE_NOT_CONFIGURED'},503,origin,rid);
     if(url.pathname==='/v1/google/oauth/start'&&request.method==='POST'){

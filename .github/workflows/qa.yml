@@ -80,7 +80,9 @@ jobs:
       - name: Gateway contract QA
         run: node tests/gateway-contract.cjs
       - name: Gateway runtime QA
-        run: node tests/gateway-runtime.cjs
+        run: |
+          node tests/gateway-runtime.cjs
+          node tests/google-oauth-recovery.cjs
       - name: Cloudflare ledger sync QA
         run: node tests/cloud-ledger-sync.cjs
       - name: D1 ledger shadow QA

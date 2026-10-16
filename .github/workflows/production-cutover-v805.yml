@@ -113,6 +113,7 @@ jobs:
           node tests/boq-quality-contract.mjs
           node tests/gateway-contract.cjs
           node tests/gateway-runtime.cjs
+          node tests/google-oauth-recovery.cjs
           node tests/cloud-ledger-sync.cjs
           node tests/d1-ledger.cjs
           node tests/r2-files.cjs
