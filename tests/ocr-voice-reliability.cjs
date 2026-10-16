@@ -7,7 +7,7 @@ const c={console,Date,Math,JSON,Number,String,Array,Object,Promise,Set,Map,RegEx
 vm.createContext(c);vm.runInContext(code,c);c.render=()=>{};c.toast=()=>{};c.persist=()=>true;c.S=c.emptyState();c.S.projects=[{id:'p',name:'Test',status:'active'}];c.U.view='add';
 const tests=[];function test(name,f){tests.push([name,f]);}
 test('explicit monetary amounts win over dimensions, quantities, dates and phone numbers',()=>{
- for(const [text,amount] of [['ซื้อเหล็ก 12 มม. 50 เส้น ยอด 4,500 บาท','4500'],['วันที่ 15 จ่าย 1200 บาท ร้านทดสอบ','1200'],['โทร 064-9893124 ยอดเงิน 6,430.00 บาท','6430'],['จ่าย ๑,๒๐๐ บาท ร้านสมใจ','1200'],['จ่าย950บาทร้านทดสอบ','950'],['จ่ายหนึ่งพันสองร้อยบาท','1200'],['ยอดสองหมื่นห้าพันบาทห้าสิบสตางค์','25000.5'],['จำนวนเงินเก้าร้อยเก้าสิบเก้าบาท','999'],['จ่าย 300 ร้านสมใจ','300'],['฿ 320.50','320.5']])assert.equal(c.expenseVoiceParse(text).amount,amount,text);
+ for(const [text,amount] of [['ซื้อเหล็ก 12 มม. 50 เส้น ยอด 4,500 บาท','4500'],['วันที่ 15 จ่าย 1200 บาท ร้านทดสอบ','1200'],['โทร 000-9876543 ยอดเงิน 6,430.00 บาท','6430'],['จ่าย ๑,๒๐๐ บาท ร้านสมใจ','1200'],['จ่าย950บาทร้านทดสอบ','950'],['จ่ายหนึ่งพันสองร้อยบาท','1200'],['ยอดสองหมื่นห้าพันบาทห้าสิบสตางค์','25000.5'],['จำนวนเงินเก้าร้อยเก้าสิบเก้าบาท','999'],['จ่าย 300 ร้านสมใจ','300'],['฿ 320.50','320.5']])assert.equal(c.expenseVoiceParse(text).amount,amount,text);
  for(const text of ['เหล็ก 12 มม. 50 เส้น','วันที่ 15/10/2569','โทร 000-9876543','ยอด 000-9876543','จ่าย 12 เส้น','จ่าย -500 บาท','ราคา 100 บาท อีก 200 บาท'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
  assert.equal(c.S.tx.length,0);
 });
