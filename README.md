@@ -1,5 +1,13 @@
 # AREA Ledger V2 — Master v800
 
+## v1077 OCR and voice reliability
+
+- Preserves printed receipt totals through client validation, so multi-row review can block mismatched totals before saving.
+- Distinguishes safe provider image/auth/config errors, retains ten metadata-only diagnostics, and keeps the receipt/input available with retry and manual-entry actions.
+- Parses explicit monetary context and Thai number words; recognition sessions stop on navigation/background and ignore callbacks from an older draft.
+- Adds synthetic receipt provider acceptance and browser expense entry coverage. See [QA-v1077.md](QA-v1077.md) for checks and the pending physical iPhone acceptance.
+
+
 ## v1069 Full-viewport Facebook-inspired app shell
 
 - Extends the app shell, page area, top bar and bottom navigation across the available screen width on every view, including desktop and manually selected mobile/desktop modes.

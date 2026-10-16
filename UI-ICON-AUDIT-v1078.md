@@ -1,4 +1,4 @@
-# AREA Ledger icon audit — v1077
+# AREA Ledger icon audit — v1078
 
 ## Main screens — all 15 render routes
 

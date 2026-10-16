@@ -121,7 +121,9 @@ jobs:
           AREA_LEDGER_ACCEPTANCE_TARGET: staging
           AREA_LEDGER_ACCEPTANCE_SHA: ${{ github.sha }}
           AREA_LEDGER_ACCEPTANCE_RUN: ${{ github.run_id }}
-        run: node tests/live-cloudflare-acceptance.mjs
+        run: |
+          node tests/live-cloudflare-acceptance.mjs
+          node tests/expense-document-quality.mjs
 
       - name: Deploy production and auto-provision bindings
         if: ${{ inputs.target == 'production' }}
@@ -172,12 +174,16 @@ jobs:
           AREA_LEDGER_ACCEPTANCE_TARGET: production
           AREA_LEDGER_ACCEPTANCE_SHA: ${{ github.sha }}
           AREA_LEDGER_ACCEPTANCE_RUN: ${{ github.run_id }}
-        run: node tests/live-cloudflare-acceptance.mjs
+        run: |
+          node tests/live-cloudflare-acceptance.mjs
+          node tests/expense-document-quality.mjs
 
       - name: Upload production acceptance evidence
         if: ${{ always() && inputs.target == 'production' }}
         uses: actions/upload-artifact@v4
         with:
           name: production-live-acceptance
-          path: live-acceptance.json
+          path: |
+            live-acceptance.json
+            expense-document-quality.json
           if-no-files-found: ignore
