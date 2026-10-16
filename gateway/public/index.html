@@ -3977,7 +3977,7 @@ function uiHeadingIcons(html,spec){
 function uiActionIcons(html){
   return html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g,function(all,attrs,inner){
     var match=attrs.match(/\bdata-act="([A-Za-z0-9]+)"/),spec=match&&UI_ACTION_ICONS[match[1]];
-    if(!spec||/<svg\b|ui-feature-icon/.test(inner)||/\b(?:row|mitem|boq-row|tx-modern)\b/.test(attrs)||/^\s*[+＋]/.test(inner))return all;
+    if(!spec||/<(?:svg|img|picture)\b|ui-feature-icon/.test(inner)||/\b(?:row|mitem|boq-row|tx-modern)\b/.test(attrs)||/^\s*[+＋]/.test(inner))return all;
     /* Preserve grid/card structure: insert inside its existing text container. */
     var icon=uiFeatureIcon(spec[0],spec[1],'ui-action-icon');
     if(/^\s*<(?:span|b)\b/.test(inner))inner=inner.replace(/^(\s*<(?:span|b)\b[^>]*>)/,'$1'+icon);else inner=icon+inner;
