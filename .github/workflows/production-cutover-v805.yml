@@ -204,6 +204,7 @@ jobs:
         run: |
           node tests/live-cloudflare-acceptance.mjs
           node tests/boq-document-quality.mjs
+          node tests/expense-document-quality.mjs
 
       - name: Upload production cutover evidence
         if: always()
@@ -213,6 +214,7 @@ jobs:
           path: |
             live-acceptance.json
             boq-document-quality.json
+            expense-document-quality.json
             production-bindings.json
             production-preflight.json
           if-no-files-found: ignore

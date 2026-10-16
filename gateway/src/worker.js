@@ -337,7 +337,18 @@ function geminiJson(data){
 function geminiExpense(data){return cleanExpense(geminiJson(data));}
 function geminiBoq(data){return cleanBoq(geminiJson(data));}
 function retryableStatus(s){return s===408||s===429||s>=500;}
-async function providerFetch(p,payload,rid){let last;for(let attempt=0;attempt<=p.retries;attempt++){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),p.timeout);try{const rq=providerRequest(p,payload,rid),res=await fetch(rq.url,{method:'POST',headers:rq.headers,body:rq.body,signal:ctrl.signal});if(res.ok)return res;if(!retryableStatus(res.status)||attempt>=p.retries)throw Error('PROVIDER_HTTP_'+res.status);last=Error('PROVIDER_HTTP_'+res.status);}catch(e){last=e;if(attempt>=p.retries||String(e&&e.message||'').startsWith('PROVIDER_HTTP_')&&!retryableStatus(Number(String(e.message).split('_').pop())))throw e;}finally{clearTimeout(timer);}}throw last||Error('PROVIDER_FAILED');}
+async function providerError(res){
+  const error=Error('PROVIDER_HTTP_'+res.status);error.providerStatus=res.status;
+  if(res.status!==400&&res.status!==401&&res.status!==403)return error;
+  let body='',reader;
+  try{reader=res.body&&res.body.getReader();if(reader){const decoder=new TextDecoder();let size=0;while(size<8192){const part=await reader.read();if(part.done)break;const bytes=part.value.subarray(0,8192-size);size+=bytes.length;body+=decoder.decode(bytes,{stream:true});}reader.cancel().catch(()=>{});}else body=(await res.text()).slice(0,8192);}catch(_){}
+  let message='';try{const data=JSON.parse(body);message=String(data.error&&data.error.message||data.message||'');}catch(_){}
+  if(res.status===401||res.status===403||/api.?key.{0,40}(?:invalid|expired|not valid)|(?:invalid|expired).{0,40}api.?key|unauthenticated/i.test(message))error.message='PROVIDER_AUTH_FAILED';
+  else if(/(?:image|inline.?data).{0,100}(?:decode|invalid|corrupt|unsupported|processing)|(?:decode|invalid|corrupt|unsupported).{0,100}image/i.test(message))error.message='PROVIDER_IMAGE_INVALID';
+  else if(/unknown name|unknown field|unsupported.{0,50}(?:parameter|config|field)|(?:generationconfig|thinkingconfig).{0,60}(?:invalid|unsupported)/i.test(message))error.message='PROVIDER_REQUEST_INVALID';
+  return error;
+}
+async function providerFetch(p,payload,rid){let last;for(let attempt=0;attempt<=p.retries;attempt++){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),p.timeout);try{const rq=providerRequest(p,payload,rid),res=await fetch(rq.url,{method:'POST',headers:rq.headers,body:rq.body,signal:ctrl.signal});if(res.ok)return res;last=await providerError(res);if(!retryableStatus(res.status)||attempt>=p.retries)throw last;}catch(e){last=e;if(attempt>=p.retries||e.providerStatus&&!retryableStatus(e.providerStatus)||String(e&&e.message||'').startsWith('PROVIDER_HTTP_')&&!retryableStatus(Number(String(e.message).split('_').pop())))throw e;}finally{clearTimeout(timer);}}throw last||Error('PROVIDER_FAILED');}
 async function readProviderJson(res){const len=Number(res.headers.get('Content-Length')||0);if(len&&len>MAX_PROVIDER_BYTES)throw Error('PROVIDER_RESPONSE_TOO_LARGE');const text=await res.text();if(new TextEncoder().encode(text).byteLength>MAX_PROVIDER_BYTES)throw Error('PROVIDER_RESPONSE_TOO_LARGE');try{return JSON.parse(text);}catch(_){throw Error('PROVIDER_INVALID_RESPONSE');}}
 async function expenseOcr(payload,env,rid){
   const p=providerConfig(env);if(!p.key||(p.kind==='generic'&&!p.url))throw Error('PROVIDER_NOT_CONFIGURED');

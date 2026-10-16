@@ -1,0 +1,39 @@
+/* Browser emulation with synthetic data and mocked OCR/speech. No live ledger writes. */
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright'),root=path.resolve(__dirname,'..'),out=path.resolve(process.env.LAYOUT_OUTPUT||'layout-evidence');fs.mkdirSync(out,{recursive:true});
+const html=fs.readFileSync(path.join(root,'gateway/public/index.html'),'utf8').replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n');
+const rows=[1480,2250,2700].map((amount,i)=>({amount,sub:['Cement A','Cement B','Sand'][i],date:'2026-10-14',partner:'QA Materials',cat:'ค่าของ',confidence:.99}));
+const server=http.createServer((req,res)=>{res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);});
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://localhost:'+server.address().port;
+ const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})});
+ try{
+  const generator=await browser.newPage();const image=await generator.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=1000;canvas.height=1100;const x=canvas.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,1000,1100);x.fillStyle='#111';x.font='bold 32px sans-serif';x.fillText('SYNTHETIC RECEIPT / QA ONLY',50,70);x.font='26px sans-serif';for(const [i,line] of ['QA Materials Store','Bill QA0080625   Tel 000-9876543','Date 14/10/2026','Item                 Qty    Unit price       Amount','Cement A          10       148.00          1,480.00','Cement B          15       150.00          2,250.00','Sand                    3       900.00          2,700.00','GRAND TOTAL                          6,430.00','Paid 0.00              Balance 6,430.00'].entries())x.fillText(line,50,140+i*70);return canvas.toDataURL('image/png').split(',')[1];});
+  const fixture=path.join(root,'tests/fixtures/expense-synthetic-receipt.png');fs.mkdirSync(path.dirname(fixture),{recursive:true});if(!fs.existsSync(fixture))fs.writeFileSync(fixture,Buffer.from(image,'base64'));await generator.close();
+  for(const width of [320,375,390,430,768,1280]){
+   const context=await browser.newContext({viewport:{width,height:844},isMobile:width<768,hasTouch:true,serviceWorkers:'block'}),page=await context.newPage();
+   await page.route('**/*',route=>route.request().url().startsWith(origin)?route.continue():route.abort());await page.goto(origin);
+   async function fixtureState(){await page.evaluate(origin=>{S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'p',name:'โครงการทดสอบรายการที่มีชื่อยาวสำหรับตรวจหน้าจอมือถือ',status:'active'}];S.ai={mode:'gateway',endpoint:origin,remoteOcrConsent:true,remoteOcrConsentBase:origin,timeoutMs:15000};U.view='add';U.pid='p';U.sheet=null;U.draft=newDraft('out','p');U.expenseBatch=[];U.expenseScanMsg='';U.expenseScanMsgDraft=null;U.saveLock=false;U.expenseScanBusy=false;U.expenseBatchBusy=false;U.storageWriteError='';U.storageConflict=false;localStorage.setItem(KEY,JSON.stringify(S));committedState=localStorage.getItem(KEY);render();},origin);}
+   await fixtureState();let calls=0,mode='error';
+   await page.route(origin+'/v1/ocr/expense',async route=>{calls++;const rid=route.request().headers()['x-area-request-id'];await route.fulfill({status:mode==='error'?502:200,contentType:'application/json',headers:{'X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},body:JSON.stringify(mode==='error'?{error:'PROVIDER_IMAGE_INVALID'}:{rows,amount:0,documentTotal:mode==='mismatch'?6500:6430,confidence:.99})});});
+   await page.evaluate(()=>{expenseOcrLocal=async()=>({amount:0,source:'local'});});
+   await page.locator('#expenseScanIn').setInputFiles(fixture);await page.waitForFunction(()=>!U.expenseScanBusy&&U.expenseScanTone==='error');assert.equal(calls,1);assert.equal(await page.locator('.expense-scan-result').count(),1);assert(await page.locator('[data-act=expenseScanRetry]').isVisible());assert(await page.evaluate(()=>!!U.draft.photo&&S.tx.length===0));
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));if(width===390)await page.screenshot({path:path.join(out,'expense-390-error.png')});
+   mode='table';await page.locator('[data-act=expenseScanRetry]').click();await page.waitForFunction(()=>U.sheet?.kind==='expenseBatch');assert.equal(calls,2);assert.deepEqual(await page.evaluate(()=>U.expenseBatch.map(x=>x.ocrDocumentTotal)),[6430,6430,6430]);assert(await page.evaluate(()=>U.expenseBatch.every(x=>x.paymentStatus==='paid'&&x.pay==='transfer')));
+   await page.locator('[data-act=expenseBatchSave]').click();await page.waitForFunction(()=>S.tx.length===3);assert.equal(await page.evaluate(()=>S.tx.reduce((n,x)=>n+x.amount,0)),6430);
+   await page.evaluate(()=>expenseBatchSave());assert.equal(await page.evaluate(()=>S.tx.length),3);await page.reload();assert.deepEqual(await page.evaluate(()=>{const x=JSON.parse(localStorage.getItem(KEY));return [x.tx.length,x.tx.reduce((n,x)=>n+x.amount,0)];}),[3,6430]);
+   await fixtureState();mode='mismatch';await page.locator('#expenseScanIn').setInputFiles(fixture);await page.waitForFunction(()=>U.sheet?.kind==='expenseBatch');assert(await page.locator('[data-act=expenseBatchSave]').isDisabled());await page.evaluate(()=>expenseBatchSave());assert.equal(await page.evaluate(()=>S.tx.length),0);assert.equal(await page.evaluate(()=>U.expenseBatch.length),3);
+   await fixtureState();await page.evaluate(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k===KEY)throw new DOMException('quota','QuotaExceededError');return set.call(this,k,v);};U.draft.amount='123.45';U.draft.partner='ร้านทดสอบ';render();});
+   await page.locator('[data-act=saveMore]').click();await page.waitForFunction(()=>!!U.txSaveError);assert.equal(await page.evaluate(()=>U.draft.amount),'123.45');assert.equal(await page.evaluate(()=>S.tx.length),0);assert(await page.locator('.expense-scan-result.error').isVisible());
+   await page.reload();await fixtureState();
+   await page.evaluate(()=>{window.SpeechRecognition=function(){window.testRecognition=this;this.start=()=>{};this.abort=()=>{};};});
+   for(let i=0;i<10;i++){await page.locator('[data-act=expenseVoiceStart]').click();await page.evaluate(i=>testRecognition.onresult({results:[[{transcript:`ซื้อเหล็ก 12 มม. 50 เส้น ยอด ${4500+i} บาท`}]]}),i);assert.equal(await page.locator('#amt').inputValue(),String(4500+i));}
+   assert.equal(await page.evaluate(()=>S.tx.length),0);await page.locator('[data-f=partner]').fill('ร้านทดสอบ');
+   if(width===390){await page.waitForFunction(()=>!document.querySelector('.toast'));await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(out,'expense-390-top.png')});await page.locator('[data-act=saveMore]').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'expense-390-bottom.png')});}
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   await page.locator('[data-act=saveMore]').click();await page.waitForFunction(()=>S.tx.length===1);assert.equal(await page.locator('#amt').inputValue(),'');assert.equal(await page.evaluate(()=>S.tx[0].amount),4509);
+   await page.waitForFunction(()=>Date.now()-U.lastSaveAt>800);await page.locator('#amt').fill('100');await page.locator('#amt').blur();await page.locator('[data-act=save]').evaluate(button=>{button.click();button.click();});await page.waitForFunction(()=>S.tx.length===2);assert.equal(await page.evaluate(()=>S.tx.length),2);
+   await context.close();console.log('PASS expense image/error/retry/total/save/reload/quota/voice/form at',width);
+  }
+ }finally{await browser.close();server.close();}
+})().catch(e=>{console.error(e);server.close();process.exitCode=1;});
