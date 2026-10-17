@@ -80,6 +80,22 @@ try{
     const browserData=await browserReady.json();assert.equal(browserData.ok,true);evidence.checks.browserOriginReady=true;
     const legacyHealth=await fetch(appBase+'/legacy-health',{method:'GET',cache:'no-store'});assert.equal(legacyHealth.ok,true);
     const legacyData=await legacyHealth.json();assert.equal(legacyData.service,'area-ledger-legacy-app');assert.equal(legacyData.canonicalGateway,base);evidence.checks.legacyAppHealth=true;
+    // First-visit Safari contract: no HTTP redirects at g entry and its SW
+    // script must not intercept future document navigations.
+    const coldEntry=await fetch(appBase+'/?safari-first-open='+sourceSha,{method:'GET',cache:'no-store',redirect:'manual'});
+    assert.equal(coldEntry.status,200,'g entry must be a direct 200');
+    assert.equal(coldEntry.headers.get('Location'),null,'g entry must not redirect');
+    evidence.checks.legacyFirstOpenNoRedirect=true;
+    const safeWorker=await fetch(appBase+'/sw.js?safari-first-open='+sourceSha,{method:'GET',cache:'no-store',redirect:'manual'});
+    assert.equal(safeWorker.status,200,'g service worker must be directly available');
+    const safeScript=await safeWorker.text();
+    assert(safeScript.includes('skipWaiting()')&&safeScript.includes('clients.claim()'));
+    assert(!safeScript.includes("addEventListener('fetch'"),'g worker must not intercept navigations');
+    evidence.checks.legacyNetworkOnlyServiceWorker=true;
+    const payrollEntry=await fetch(appBase+'/payroll.html?safari-first-open='+sourceSha,{method:'GET',cache:'no-store',redirect:'manual'});
+    assert.equal(payrollEntry.status,200,'g payroll page must open without redirects');
+    assert((await payrollEntry.text()).includes('บัญชีค่าแรงพนักงาน'));
+    evidence.checks.legacyPayrollDirect=true;
     const legacyReady=await fetch(appBase+'/ready',{method:'GET',cache:'no-store'});assert.equal(legacyReady.ok,true);const legacyReadyData=await legacyReady.json();assert.equal(legacyReadyData.ok,true);evidence.checks.legacyGatewayProxy=true;
     const app=await fetch(appBase+'/?contract=v1005',{method:'GET',cache:'no-store'});assert.equal(app.ok,true);const html=await app.text();
     assert(html.includes('area-ledger-client-contract'));assert(html.includes('v1005-canonical-gateway'));assert(html.includes('https://area-ledger-ai-gateway.areamaibab.workers.dev'));evidence.checks.legacyAppCurrent=true;

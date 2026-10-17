@@ -9256,12 +9256,21 @@ async function pwaCheckUpdate(){
 function pwaCanReload(){var cleanAddDraft=!!U.draft&&U.view==='add'&&!draftDirty();return !U.saveLock&&(!U.draft||cleanAddDraft)&&!U.boqImportBusy&&!U.expenseScanBusy&&!U.expenseBatchBusy&&!U.cloudSyncBusy&&!U.profilePostSaving&&!U.profilePhotoBusy&&!U.sheet;}
 function pwaApplyPendingUpdate(){if(!U.pwaUpdatePending||!pwaCanReload())return false;U.pwaUpdatePending=false;location.reload();return true;}
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
-  var pwaController=navigator.serviceWorker.controller;
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
-    if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
-  });
-  navigator.serviceWorker.register('sw.js?v=800&source=1085&project-keyboard=1&oauth-recovery=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  if(location.hostname==='g.areamaibab.workers.dev'){
+    // The legacy g origin is online-only. Retire old SW registrations without
+    // touching localStorage, IndexedDB, project data or payroll records.
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      return Promise.all(regs.filter(function(r){return new URL(r.scope).origin===location.origin;})
+        .map(function(r){return r.unregister();}));
+    }).catch(function(){});
+  }else{
+    var pwaController=navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange',function(){
+      if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
+      if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
+    });
+    navigator.serviceWorker.register('sw.js?v=800&source=1085&project-keyboard=1&oauth-recovery=1&safari-first-open=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}

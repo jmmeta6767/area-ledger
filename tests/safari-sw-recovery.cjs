@@ -5,7 +5,7 @@ const sw=fs.readFileSync(path.join(__dirname,'../gateway/public/sw.js'),'utf8');
 const legacy=fs.readFileSync(path.join(__dirname,'../legacy-app/src/worker.js'),'utf8');
 async function main(){
   assert.match(sw,/e.request.mode==='navigate'&&self.location.hostname==='g.areamaibab.workers.dev'/);
-  assert.match(sw,/result=navigation&&r&&r.redirected&&r.ok/);
+  assert.match(sw,/result=navigation&&r&&r.ok/);
   assert.match(sw,/c.match\('\.\/'\)/,'existing offline app-shell fallback must remain');
   assert.match(sw,/url.pathname.startsWith\('\/v1\/'\)/,'SW must not intercept API and repair pages');
   const handlers={};
@@ -24,6 +24,19 @@ async function main(){
   handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://area-ledger-ai-gateway.areamaibab.workers.dev/'},respondWith:x=>{registered=x;}});
   assert(registered,'Gateway navigation should remain intercepted to preserve offline fallback');
   const safe=await registered;assert.equal(safe.redirected,false);assert.equal(await safe.text(),'final html');
+  ctx.fetch=async()=>new Response('network content',{headers:{Location:'https://unexpected.invalid/','Content-Type':'text/html'}});
+  let safePromise=null;
+  handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://area-ledger-ai-gateway.areamaibab.workers.dev/'},respondWith:x=>{safePromise=x;}});
+  const normalized=await safePromise;assert.equal(normalized.status,200);
+  assert.equal(normalized.headers.get('Location'),null);
+  assert.equal(await normalized.text(),'network content');
+  const index=fs.readFileSync(path.join(__dirname,'../gateway/public/index.html'),'utf8');
+  const payroll=fs.readFileSync(path.join(__dirname,'../gateway/public/payroll.html'),'utf8');
+  assert(index.includes("if(location.hostname==='g.areamaibab.workers.dev')"));
+  assert(index.includes('navigator.serviceWorker.getRegistrations()'));
+  assert(payroll.includes("if(location.hostname==='g.areamaibab.workers.dev'"));
+  assert(payroll.includes('r.unregister()'));
+  assert(!payroll.includes('localStorage.clear('));
   const engine={URL,Request,Response,Headers};vm.createContext(engine);
   vm.runInContext(legacy.replace('export default','globalThis.legacyWorker='),engine,{filename:'legacy-worker.js'});
   const repair=await engine.legacyWorker.fetch(new Request('https://g.areamaibab.workers.dev/v1/safari-repair'),{ASSETS:{fetch:()=>{throw Error('Repair must not use asset fallback');}},GATEWAY:{fetch:()=>{throw Error('Repair must not proxy private API');}}});

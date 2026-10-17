@@ -1,5 +1,7 @@
 const CANONICAL_GATEWAY='https://area-ledger-ai-gateway.areamaibab.workers.dev';
 const CLIENT_CONTRACT='v1005-canonical-gateway';
+// Legacy g has no offline navigation requirement; it must never issue redirected SW responses.
+const SAFE_LEGACY_SW="self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));";
 
 function json(data,status=200){
   return new Response(JSON.stringify(data),{
@@ -20,11 +22,26 @@ function gatewayPath(pathname){
 export default {
   async fetch(request,env){
     const url=new URL(request.url);
+    // Serve the known index asset, not the directory route. On some WebKit
+    // versions a slash asset fetch follows a redirect and an old SW rejects it.
     if((url.pathname==='/'||url.pathname==='/index.html')&&(request.method==='GET'||request.method==='HEAD')){
-      const shell=await env.ASSETS.fetch(request),headers=new Headers(shell.headers);
+      const assetUrl=new URL('/index.html',url);
+      const shell=await env.ASSETS.fetch(new Request(assetUrl.toString(),{method:'GET'}));
+      if(!shell.ok)return new Response('AREA Ledger temporarily unavailable',{status:503,headers:{'Cache-Control':'no-store'}});
+      const headers=new Headers(shell.headers);
+      headers.delete('Location');
+      headers.set('Content-Type','text/html; charset=utf-8');
       headers.set('Cache-Control','no-store');
       headers.set('Pragma','no-cache');
-      return new Response(shell.body,{status:shell.status,statusText:shell.statusText,headers});
+      return new Response(request.method==='HEAD'?null:shell.body,{status:200,headers});
+    }
+    // A minimal network-only SW replaces prior g workers on their next update.
+    // Do not clear CacheStorage, localStorage or IndexedDB.
+    if(url.pathname==='/sw.js'&&(request.method==='GET'||request.method==='HEAD')){
+      return new Response(request.method==='HEAD'?null:SAFE_LEGACY_SW,{
+        status:200,headers:{'Content-Type':'text/javascript; charset=utf-8',
+          'Cache-Control':'no-store, max-age=0','Service-Worker-Allowed':'/'}
+      });
     }
     if(url.pathname==='/legacy-health'){
       return json({ok:true,service:'area-ledger-legacy-app',protocol:'1',clientContract:CLIENT_CONTRACT,canonicalGateway:CANONICAL_GATEWAY});
