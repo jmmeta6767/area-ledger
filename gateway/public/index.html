@@ -1963,6 +1963,7 @@ textarea{resize:vertical}
 @media(max-width:900px){.mobile-editor-scrim>.expense-review-sheet{width:min(100%,620px)!important;min-width:0!important;max-width:100%!important;max-height:calc(var(--ledger-vvh,100vh) - 12px)!important;overflow-y:auto;overscroll-behavior-y:contain;scroll-padding:16px 0 150px;box-sizing:border-box}.expense-review-sheet :is(input,select,textarea){font-size:16px!important;min-width:0;max-width:100%;box-sizing:border-box}}
 .review-queue-row{display:flex;flex-direction:column;gap:6px;width:100%;min-width:0;min-height:44px;text-align:left;padding:14px;margin:8px 0;border:1px solid #d5dadd;border-radius:14px;background:#fff;overflow-wrap:anywhere}.review-queue-row b{font-variant-numeric:tabular-nums}.pilot-steps li{margin:12px 0}.update-panel{padding:12px;border:1px solid #d5dadd;border-radius:14px}.update-panel button{min-height:44px}
 
+.google-sync-scope{margin-top:14px;min-width:0}.google-sync-scope .seg{margin:8px 0}.google-sync-scope .seg button{min-width:0;min-height:44px;white-space:normal;overflow-wrap:anywhere}.google-sync-scope button[aria-pressed="true"]{background:var(--color-primary-soft,#fff7d6);font-weight:700;box-shadow:inset 0 0 0 2px #D7AE30}.google-sync-results{min-width:0;margin-top:12px}.google-sync-results ul{list-style:none;padding:0;display:grid;gap:8px}.google-sync-results li{min-width:0;padding:10px;border:1px solid var(--color-border,#e5e7eb);border-radius:12px;display:grid;gap:5px;overflow-wrap:anywhere}.google-sync-results li small{overflow-wrap:anywhere}.google-sync-results .btn{white-space:normal}
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -4052,7 +4053,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1084,"sha":"","environment":"source"};
+var APP_BUILD={"version":1085,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4156,6 +4157,7 @@ async function cloudOffloadAllTxPhotos(){
 
 function googleWorkspaceState(){if(!U.googleWorkspace||typeof U.googleWorkspace!=='object')U.googleWorkspace={loading:false,status:null,error:''};return U.googleWorkspace;}
 async function googleWorkspaceRefresh(pid){
+  var busy=googleWorkspaceState();if(busy.bulkSyncBusy||busy.syncBusy)return busy;
   var st=googleWorkspaceState(),key=cloudLedgerKey(false),sequence=(+st.sequence||0)+1;st.sequence=sequence;st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
   if(!key){st.loading=false;st.status=null;st.error='GOOGLE_LEDGER_IDENTITY_MISSING';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();return st;}
   var timer,r=await Promise.race([cloudGateway('GET','/v1/google/status?pid='+encodeURIComponent(pid||'')),new Promise(function(resolve){timer=setTimeout(function(){resolve({ok:false,data:{error:'GOOGLE_STATUS_TIMEOUT'}});},12000);})]);clearTimeout(timer);
@@ -4163,6 +4165,7 @@ async function googleWorkspaceRefresh(pid){
   if(U.sheet&&U.sheet.kind==='googleWorkspace')render();return st;
 }
 async function googleWorkspaceResume(){
+  var activeSync=googleWorkspaceState();if(activeSync.bulkSyncBusy||activeSync.syncBusy)return false;
   if(U.googleWorkspaceReturnBusy)return false;U.googleWorkspaceReturnBusy=true;
   try{
     var pid=U.sheet&&U.sheet.kind==='googleWorkspace'?U.sheet.pid||'':'';try{pid=sessionStorage.getItem('area-ledger-google-return-pid')||pid;}catch(_){}
@@ -4183,7 +4186,7 @@ window.addEventListener('focus',googleWorkspaceWake);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')googleWorkspaceWake();});
 async function googleWorkspaceConnect(pid){
   if(isNativeStoreApp()){toast('การเชื่อม Google ต้องกลับมาได้อย่างปลอดภัยในแอป · ฟังก์ชันนี้ยังไม่พร้อม');return false;}
-  cloudLedgerKey(true);var returnUrl=location.origin+location.pathname,st=googleWorkspaceState();if(st.loading)return false;st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
+  cloudLedgerKey(true);var returnUrl=location.origin+location.pathname,st=googleWorkspaceState();if(st.loading||st.bulkSyncBusy||st.syncBusy)return false;st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
   var r=await cloudGateway('POST','/v1/google/oauth/start',{returnUrl:returnUrl});st.loading=false;
   if(!r.ok||!r.data||!r.data.authorizationUrl){st.error=String(r.data&&r.data.error||'GOOGLE_CONNECT_FAILED');render();toast(st.error==='GOOGLE_NOT_CONFIGURED'?'Google OAuth ยังไม่ได้ตั้งค่าบน Server':'เริ่มเชื่อม Google ไม่สำเร็จ');return false;}
   try{sessionStorage.setItem('area-ledger-google-return-pid',String(pid||''));}catch(_){}
@@ -4195,20 +4198,44 @@ function googleProjectFinanceSnapshot(pid){
   var costs=[['รายการต้นทุน','จำนวนเงิน','คำอธิบาย']];Object.keys(st.byCat).sort().forEach(function(cat){costs.push([cat,st.byCat[cat],'รายจ่ายก่อน VAT รวมที่ยังค้าง']);});costs.push(['รายจ่ายที่บันทึก',m.bookedExpense,'ยอดตาม AREA Ledger'],['เงินประกันรอคืนทั้งหมด',m.guaranteePending,'แสดงประกอบ ไม่บวกทั้งหมดซ้ำ'],['เงินประกันเพิ่มจากทะเบียน',m.guaranteeAdd,'เฉพาะส่วนที่ยังไม่ได้ลงรายจ่าย'],['ต้นทุนรวม',m.cost,'รายจ่ายที่บันทึก + เงินประกันส่วนเพิ่ม']);
   return {version:1,expenses:rows('out'),income:rows('in'),costs:costs,profit:[['รายการ','จำนวนเงิน','คำอธิบาย'],['มูลค่าสัญญารวมอนุมัติ',m.contract,'รวมเปลี่ยนแปลงสัญญาที่อนุมัติ'],['รายรับที่ได้รับจริง',m.received,'ยอดตามการรับชำระ'],['ต้นทุนรวม',m.cost,'รวมเงินประกันโดยไม่บวกซ้ำ'],['กำไรคาดการณ์',m.forecast,'มูลค่าสัญญา − ต้นทุนรวม'],['กำไร/ขาดทุนสุทธิ',m.netProfit===null?'':m.netProfit,m.hasRevenue?'รายรับที่ได้รับจริง − ต้นทุนรวม':'รอรับรายได้'],['รายจ่ายที่จ่ายจริง',m.cashPaid,'ยอดตามการชำระ'],['กระแสเงินสดสุทธิ',m.cashBalance,'รับจริง − จ่ายจริง'],['ค้างจ่าย',st.payPend,'ยอดสุทธิที่ยังไม่ชำระ'],['ค้างรับ',st.recPend,'ยอดสุทธิที่ยังไม่ได้รับ']]};
 }
-async function googleWorkspaceSync(pid){
-  var p=proj(pid);if(!p){toast('ไม่พบโครงการ');return false;}var st=googleWorkspaceState();if(st.syncBusy)return false;st.sequence=(+st.sequence||0)+1;st.syncBusy=true;st.loading=true;st.error='';render();
+function googleWorkspaceActiveProjects(){var seen=Object.create(null);return projectHubProjects().filter(function(p){if((p.status||'active')!=='active'||!p.id||seen[p.id])return false;seen[p.id]=true;return true;});}
+function googleWorkspaceSyncBatchHtml(){
+  var st=googleWorkspaceState(),rows=st.bulkSyncResults||[],done=rows.filter(function(x){return x.state==='success'||x.state==='error'||x.state==='skipped';}).length,failed=rows.filter(function(x){return x.state==='error';}).length;
+  if(!rows.length)return '';return '<section class="google-sync-results" aria-label="ผลซิงก์แต่ละโครงการ"><p role="status" aria-live="polite">'+(st.bulkSyncBusy?'กำลังซิงก์ '+done+'/'+rows.length:'ผลซิงก์ '+rows.filter(function(x){return x.state==='success';}).length+'/'+rows.length+' โครงการสำเร็จ')+'</p><ul>'+rows.map(function(x){return '<li><strong>'+esc(x.name)+'</strong><span>'+esc(({waiting:'รอซิงก์',syncing:'กำลังซิงก์…',success:'สำเร็จ',error:'ไม่สำเร็จ',skipped:'ข้าม'})[x.state]||x.state)+'</span>'+(x.error?'<small>'+esc(x.error)+'</small>':'')+(x.state==='success'&&x.sheetUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(x.sheetUrl)+'">เปิด Sheet โครงการนี้</button>':'')+'</li>';}).join('')+'</ul>'+(!st.bulkSyncBusy&&failed?'<button class="btn" data-act="googleWorkspaceRetryFailed">ลองใหม่เฉพาะที่ไม่สำเร็จ ('+failed+')</button>':'')+'</section>';
+}
+async function googleWorkspaceSyncActive(retry){
+  var st=googleWorkspaceState();if(st.syncBusy||st.bulkSyncBusy||st.loading)return false;
+  var active=googleWorkspaceActiveProjects(),ids=active.map(function(p){return p.id;}),targets=retry?(st.bulkSyncResults||[]).filter(function(x){return x.state==='error'&&ids.indexOf(x.id)>=0;}):active;
+  if(!targets.length){toast(retry?'ไม่มีโครงการที่ต้องลองซ้ำและยังดำเนินงานอยู่':'ไม่มีโครงการที่กำลังดำเนินงาน');return false;}
+  var key=cloudLedgerKey(false);if(!key){st.error='GOOGLE_LEDGER_IDENTITY_MISSING';render();return false;}
+  var token={};st.bulkSyncBusy=true;st.bulkSyncToken=token;st.bulkSyncSelectedPid=U.sheet&&U.sheet.pid||U.boqProjectPid||'';
+  st.bulkSyncResults=retry?(st.bulkSyncResults||[]).map(function(x){return targets.some(function(t){return t.id===x.id;})?Object.assign({},x,{state:'waiting',error:''}):x;}):targets.map(function(p){return {id:p.id,name:p.name,state:'waiting',error:''};});render();
+  try{
+    for(var i=0;i<targets.length;i++){
+      var target=targets[i],row=st.bulkSyncResults.find(function(x){return x.id===target.id;}),p=proj(target.id);
+      if(cloudLedgerKey(false)!==key){st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:'GOOGLE_LEDGER_IDENTITY_CHANGED'});});break;}
+      if(!p||(p.status||'active')!=='active'){row.state='skipped';row.error='โครงการไม่ได้อยู่ในสถานะกำลังดำเนินการแล้ว';continue;}
+      row.state='syncing';render();var ok=await googleWorkspaceSync(p.id,token);row.state=ok?'success':'error';row.error=ok?'':st.error||'GOOGLE_SYNC_FAILED';if(ok)Object.assign(row,{sheetUrl:st.lastSyncResult.sheetUrl||'',lastSyncAt:st.lastSyncResult.lastSyncAt||''});render();
+      if(!ok&&['GOOGLE_NOT_CONNECTED','GOOGLE_TOKEN_REFRESH_FAILED','GOOGLE_LEDGER_IDENTITY_CHANGED'].indexOf(row.error)>=0){st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:row.error});});break;}
+    }
+    var success=st.bulkSyncResults.filter(function(x){return x.state==='success';}).length;toast('ซิงก์สำเร็จ '+success+'/'+st.bulkSyncResults.length+' โครงการ');return st.bulkSyncResults.every(function(x){return x.state==='success';});
+  }finally{st.bulkSyncBusy=false;st.bulkSyncToken=null;st.loading=false;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();}
+}
+async function googleWorkspaceSync(pid,bulkToken){
+  var p=proj(pid);if(!p){toast('ไม่พบโครงการ');return false;}var st=googleWorkspaceState();if(st.syncBusy||st.bulkSyncBusy&&st.bulkSyncToken!==bulkToken)return false;var requestKey=cloudLedgerKey(false);st.sequence=(+st.sequence||0)+1;st.syncBusy=true;st.loading=true;st.error='';render();
   try{
     var rows=boqRows(pid).map(function(x){return {id:x.id,sectionCode:x.sectionCode||'',sectionName:x.sectionName||'',name:x.name||'',category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,note:x.note||''};});
     var r=await cloudGateway('POST','/v1/google/sync',{project:{id:p.id,name:p.name},rows:rows,finance:googleProjectFinanceSnapshot(pid)});
-    if(!r.ok){st.error=String(r.data&&r.data.error||'GOOGLE_SYNC_FAILED');toast(st.error==='GOOGLE_NOT_CONNECTED'?'กรุณาเชื่อม Google ก่อน':st.error==='GOOGLE_SYNC_TOO_LARGE'?'ข้อมูลเกินขนาดที่ซิงก์ได้ · ยังไม่ได้อัปเดต Sheet':'ซิงก์ Google Sheets ไม่สำเร็จ');return false;}
-    st.status=Object.assign({},st.status||{},{configured:true,connected:true,project:{projectId:pid,projectName:p.name,driveFolderId:r.data.folderId,spreadsheetId:r.data.spreadsheetId,driveUrl:r.data.driveUrl,sheetUrl:r.data.sheetUrl,lastSyncAt:r.data.lastSyncAt}});
-    toast('ซิงก์ BOQ ค่าใช้จ่าย ต้นทุน และกำไรแล้ว');return true;
-  }catch(_){st.error='GOOGLE_SYNC_FAILED';toast('ซิงก์ไม่สำเร็จ · ข้อมูลใน Ledger ยังอยู่');return false;}finally{st.loading=false;st.syncBusy=false;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();}
+    if(cloudLedgerKey(false)!==requestKey){st.error='GOOGLE_LEDGER_IDENTITY_CHANGED';return false;}
+    if(!r.ok){st.error=String(r.data&&r.data.error||'GOOGLE_SYNC_FAILED');if(!bulkToken)toast(st.error==='GOOGLE_NOT_CONNECTED'?'กรุณาเชื่อม Google ก่อน':st.error==='GOOGLE_SYNC_TOO_LARGE'?'ข้อมูลเกินขนาดที่ซิงก์ได้ · ยังไม่ได้อัปเดต Sheet':'ซิงก์ Google Sheets ไม่สำเร็จ');return false;}
+    st.lastSyncResult=r.data||{};if(!bulkToken||pid===(U.sheet&&U.sheet.kind==='googleWorkspace'?U.sheet.pid:st.bulkSyncSelectedPid))st.status=Object.assign({},st.status||{},{configured:true,connected:true,project:{projectId:pid,projectName:p.name,driveFolderId:r.data.folderId,spreadsheetId:r.data.spreadsheetId,driveUrl:r.data.driveUrl,sheetUrl:r.data.sheetUrl,lastSyncAt:r.data.lastSyncAt}});
+    if(!bulkToken)toast('ซิงก์ BOQ ค่าใช้จ่าย ต้นทุน และกำไรแล้ว');return true;
+  }catch(_){st.error='GOOGLE_SYNC_FAILED';if(!bulkToken)toast('ซิงก์ไม่สำเร็จ · ข้อมูลใน Ledger ยังอยู่');return false;}finally{st.loading=false;st.syncBusy=false;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();}
 }
 function googleFileDataUrl(file){return new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(String(r.result||''));};r.onerror=reject;r.readAsDataURL(file);});}
 async function googleWorkspaceUploadFiles(files,pid){
   var p=proj(pid),list=Array.from(files||[]).slice(0,12);if(!p||!list.length)return false;
-  var st=googleWorkspaceState();st.loading=true;st.error='';st.uploadProgress='เตรียมไฟล์ 0/'+list.length;render();var ok=0,fail=0;
+  var st=googleWorkspaceState();if(st.bulkSyncBusy||st.syncBusy)return false;st.loading=true;st.error='';st.uploadProgress='เตรียมไฟล์ 0/'+list.length;render();var ok=0,fail=0;
   for(var i=0;i<list.length;i++){
     var file=list[i],name=String(file.name||'BOQ-source').slice(0,180);st.uploadProgress='กำลังเก็บไฟล์ '+(i+1)+'/'+list.length+' · '+name;render();
     if(file.size>8*1024*1024){fail++;continue;}
@@ -4221,7 +4248,7 @@ async function googleWorkspaceUploadFiles(files,pid){
   return fail===0;
 }
 async function googleWorkspaceDisconnect(){
-  var st=googleWorkspaceState();st.loading=true;render();var r=await cloudGateway('POST','/v1/google/disconnect',{});st.loading=false;if(r.ok){st.status={configured:true,connected:false,project:null};st.error='';render();toast('ยกเลิกการเชื่อม Google แล้ว');return true;}st.error='GOOGLE_DISCONNECT_FAILED';render();return false;
+  var st=googleWorkspaceState();if(st.bulkSyncBusy||st.syncBusy)return false;st.loading=true;render();var r=await cloudGateway('POST','/v1/google/disconnect',{});st.loading=false;if(r.ok){st.status={configured:true,connected:false,project:null};st.error='';render();toast('ยกเลิกการเชื่อม Google แล้ว');return true;}st.error='GOOGLE_DISCONNECT_FAILED';render();return false;
 }
 function cloudSyncInfo(){
   var m=cloudMeta(),enabled=cloudSyncEnabled(),label='ปิด';
@@ -8030,16 +8057,18 @@ function sheetHtml(){
       '<div class="kv"><span>โครงการ</span><span>'+esc(gp&&gp.name||'-')+'</span></div>'+
       (gl&&gl.lastSyncAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><span>'+esc(String(gl.lastSyncAt).replace('T',' ').slice(0,16))+'</span></div>':'')+
       (gs.error?'<div class="out" role="alert" style="margin-top:8px;overflow-wrap:anywhere">'+esc(gs.error==='GOOGLE_CONNECTION_NOT_FOUND'?'กลับจาก Google แล้ว แต่เซิร์ฟเวอร์ยังไม่ยืนยันการเชื่อม · ตรวจสถานะอีกครั้ง หรือเริ่มเชื่อมใหม่':gs.error==='GOOGLE_STATUS_TIMEOUT'?'ตรวจสถานะนานเกินไป · ลองตรวจสถานะอีกครั้ง':gs.error==='GOOGLE_LEDGER_IDENTITY_MISSING'||gs.error==='GOOGLE_LEDGER_IDENTITY_CHANGED'?'รหัสข้อมูลของเบราว์เซอร์ไม่ตรงกับรอบที่เชื่อม · กลับไปเชื่อมจากเบราว์เซอร์เดิม':gs.error)+'<small style="display:block">'+esc(gs.error)+'</small></div>':'')+'</div>'+
+      (gst.connected?'<section class="google-sync-scope"><b>เลือกโครงการที่จะซิงก์</b><div class="seg" role="group" aria-label="ขอบเขตการซิงก์"><button data-act="googleWorkspaceScope" data-v="project" aria-pressed="'+(gs.syncScope!=='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>เฉพาะโครงการนี้</button><button data-act="googleWorkspaceScope" data-v="active" aria-pressed="'+(gs.syncScope==='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')</button></div>'+(gs.syncScope==='active'?'<small>เฉพาะสถานะกำลังดำเนินการ · แยกไฟล์ตามโครงการเดิม</small><details><summary>ดูรายชื่อโครงการ</summary><ul>'+googleWorkspaceActiveProjects().map(function(p){return '<li>'+esc(p.name)+'</li>';}).join('')+'</ul></details>':'')+'</section>':'')+
+      googleWorkspaceSyncBatchHtml()+
       '<div class="stack" style="margin-top:12px">'+
-      (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'"'+(gs.syncBusy?' disabled':'')+'>'+(gs.syncBusy?'กำลังซิงก์…':'ซิงก์ BOQ + ค่าใช้จ่าย + ต้นทุน/กำไร')+'</button>')+
+      (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy||gs.syncScope==='active'&&!googleWorkspaceActiveProjects().length?' disabled':'')+'>'+(gs.bulkSyncBusy?'กำลังซิงก์หลายโครงการ…':gs.syncBusy?'กำลังซิงก์…':gs.syncScope==='active'?'ซิงก์ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')':'ซิงก์ BOQ + ค่าใช้จ่าย + ต้นทุน/กำไร')+'</button>')+
       (gst.connected?'<label class="btn" for="googleDriveFiles">เก็บไฟล์ต้นฉบับใน Google Drive</label><input id="googleDriveFiles" type="file" multiple accept=".pdf,.xlsx,.xls,.csv,image/jpeg,image/png,image/webp,image/heic,image/heif" style="display:none">':'')+
       (gs.uploadProgress?'<div class="muted">'+esc(gs.uploadProgress)+'</div>':'')+
       (gfiles.length?'<div class="card"><div class="kv"><span>ไฟล์ใน Drive</span><b>'+gfiles.length+' ไฟล์</b></div>'+gfiles.slice(0,4).map(function(x){return '<div class="kv"><span>'+esc(x.name||'ไฟล์')+'</span><small>'+esc(String(x.createdAt||'').replace('T',' ').slice(0,16))+'</small></div>';}).join('')+'</div>':'')+
       (gl&&gl.sheetUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.sheetUrl)+'">เปิด Google Sheet</button>':'')+
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
-      (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect">ยกเลิกการเชื่อม Google</button>':'')+
-      '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
-      '<p class="muted" style="margin-top:10px">v1084 รองรับ Ledger → Google Sheets: BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
+      (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect"'+(gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ยกเลิกการเชื่อม Google</button>':'')+
+      '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
+      '<p class="muted" style="margin-top:10px">v1085 รองรับ Ledger → Google Sheets: BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -8417,7 +8446,9 @@ function directAction(el){
   if(a==='googleWorkspaceOpen'){U.sheet={kind:'googleWorkspace',pid:id||U.boqProjectPid||''};googleWorkspaceState();render();googleWorkspaceRefresh(U.sheet.pid);return true;}
   if(a==='googleWorkspaceRefresh'){googleWorkspaceResume();return true;}
   if(a==='googleWorkspaceConnect'){googleWorkspaceConnect(id||U.boqProjectPid||'');return true;}
-  if(a==='googleWorkspaceSync'){googleWorkspaceSync(id||U.boqProjectPid||'');return true;}
+  if(a==='googleWorkspaceScope'){var scopeState=googleWorkspaceState();if(!scopeState.syncBusy&&!scopeState.bulkSyncBusy){scopeState.syncScope=el.getAttribute('data-v')==='active'?'active':'project';render();}return true;}
+  if(a==='googleWorkspaceRetryFailed'){googleWorkspaceSyncActive(true);return true;}
+  if(a==='googleWorkspaceSync'){if(googleWorkspaceState().syncScope==='active')googleWorkspaceSyncActive(false);else googleWorkspaceSync(id||U.boqProjectPid||'');return true;}
   if(a==='googleWorkspaceOpenUrl'){var gu=el.getAttribute('data-url')||'';if(/^https:\/\/(?:docs|drive)\.google\.com\//.test(gu))window.open(gu,'_blank','noopener');return true;}
   if(a==='googleWorkspaceDisconnect'){googleWorkspaceDisconnect();return true;}
   if(a==='boqQuickClear'){U.boqQuery='';U.boqRenderLimit=200;var qi=document.getElementById('boqQuickFind');if(qi)qi.value='';boqApplyQuickFind('');if(qi)qi.focus();return true;}
@@ -9228,7 +9259,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1084&project-keyboard=1&oauth-recovery=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1085&project-keyboard=1&oauth-recovery=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}
