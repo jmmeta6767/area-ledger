@@ -5,6 +5,7 @@ const html=fs.readFileSync('gateway/public/index.html','utf8');
 assert(cfg.includes('name = "g"'));
 assert(cfg.includes('directory = "../gateway/public"'));
 assert(cfg.includes('binding = "ASSETS"'));
+assert(cfg.includes('html_handling = "none"'),'legacy g must serve .html without HTTP 307');
 assert(cfg.includes('run_worker_first = ["/", "/index.html", "/sw.js", "/legacy-health", "/health", "/ready", "/v1/*"]'));
 assert(!/OCR_API_KEY|GEMINI|LEDGER_DB|LEDGER_FILES|durable_objects|r2_buckets|d1_databases/.test(cfg));
 assert(cfg.includes('[[services]]'));
