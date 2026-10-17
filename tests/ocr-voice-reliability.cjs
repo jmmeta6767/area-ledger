@@ -83,7 +83,7 @@ test('ten voice sessions, repeated errors, stop, navigation and stale callbacks 
  for(const error of ['no-speech','not-allowed','network']){c.expenseVoiceStart();instance.onerror({error});assert.equal(c.U.expenseVoiceRecognition,null);}
  c.expenseVoiceStart();const stale=instance.onresult;const old=c.U.draft;c.U.draft=c.newDraft('out','p');stale({results:[[{transcript:'จ่าย 999 บาท'}]]});assert.equal(c.U.draft.amount,'');assert.equal(old.amount,'109');
  c.expenseVoiceStart();const late=instance.onresult;c.applyNavState({view:'home'});late({results:[[{transcript:'จ่าย 999 บาท'}]]});assert.equal(c.U.draft.amount,'');assert.equal(c.U.expenseVoiceRecognition,null);
- c.U.view='add';c.expenseVoiceStart();c.document.visibilityState='hidden';listeners.visibilitychange[0]();assert.equal(c.U.expenseVoiceRecognition,null);assert(aborts>=6);assert.equal(c.S.tx.length,0);
+ c.U.view='add';c.expenseVoiceStart();c.document.visibilityState='hidden';listeners.visibilitychange.forEach(f=>f());assert.equal(c.U.expenseVoiceRecognition,null);assert(aborts>=6);assert.equal(c.S.tx.length,0);
  c.U.draft=c.newDraft('out','p');c.U.draft.sub='old expense detail';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'รับเงิน 1200 บาท รับจากลูกค้า รายการงวดงาน'}]]});assert.equal(c.U.draft.type,'in');assert.equal(c.U.draft.cat,c.CAT_IN[1]);assert.equal(c.U.draft.amount,'1200');assert.equal(c.U.draft.sub,'งวดงาน');assert.equal(c.S.tx.length,0);
 });
 const rows=[1480,2250,2700].map((amount,i)=>({amount,date:'2026-10-14',sub:'วัสดุทดสอบ '+(i+1),partner:'ร้านทดสอบ',cat:'ค่าของ',confidence:.99}));
