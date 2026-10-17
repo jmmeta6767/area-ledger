@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1084 Project finances in Google Sheets
+
+- Project sync now updates BOQ plus expenses, income, costs and profit in the existing workbook.
+- Export values use existing VAT, withholding, partial-payment and guarantee/profit helpers. No formulas or Ledger storage change.
+- One atomic Sheets batch replaces managed ranges, removes stale rows and adds missing tabs without appending duplicates or touching other tabs.
+- Manual project sync only; Google Sheets does not write back into Ledger. See QA-v1084.md.
+
 ## v1083 Google return status recovery
 
 - Rechecks Google connection after a cached Safari return, focus or visibility restore.

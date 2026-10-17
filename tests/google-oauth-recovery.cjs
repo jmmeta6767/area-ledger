@@ -57,4 +57,5 @@ function serviceWorker(){
  assert(html.includes('data-act="googleWorkspaceRefresh"'));console.log('PASS cached Safari return, pending retry, focus/visibility refresh, response ordering and unchanged ledger identity');
 
 
+require('node:child_process').execFileSync(process.execPath,['tests/google-project-finance.cjs'],{stdio:'inherit'});
 })().catch(e=>{console.error(e);process.exitCode=1;});
