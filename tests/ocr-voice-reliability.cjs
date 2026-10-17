@@ -19,6 +19,7 @@ test('oversized and ambiguous money is rejected without accepting a smaller suff
  for(const [text,n] of [['หนึ่งล้านบาท','1000000'],['หนึ่งพันล้านบาท','1000000000'],['เก้าร้อยเก้าสิบเก้าล้านบาท','999000000'],['ยี่สิบเอ็ดบาท','21'],['หนึ่งร้อยเอ็ดบาท','101']])assert.equal(c.expenseVoiceAmount(text),n,text);
 });
 test('invalid voice money/date clears stale values and displays field-specific review without saving',()=>{
+ assert.equal(c.expenseVoiceParse('จ่ายหนึ่งล้านล้านบาท วันที่ 31/2/2569').sub,'');assert.equal(c.expenseVoiceParse('จ่ายหนึ่งล้านล้านบาท รายการปูน').sub,'ปูน');
  let instance;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.draft=c.newDraft('out','p');c.U.draft.amount='250';c.U.draft.date='2026-10-01';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'จ่ายหนึ่งล้านล้านบาท วันที่ 31/2/2569'}]]});assert.equal(c.U.draft.amount,'');assert.equal(c.U.draft.date,'');assert.equal(c.U.expenseVoiceIssues.length,2);assert(c.vAdd().includes('วันที่อ่านไม่ได้'));assert.equal(c.S.tx.length,0);
  c.U.draft.amount='500';c.expenseVoiceReviewUpdate();assert.equal(c.U.expenseVoiceIssues.length,1);c.U.draft.date='2026-10-14';c.expenseVoiceReviewUpdate();assert.equal(c.U.expenseVoiceIssues.length,0);
 });

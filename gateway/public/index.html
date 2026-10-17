@@ -5120,7 +5120,7 @@ function expenseVoiceParse(transcript){
   var subMatch=text.match(/(?:รายการ|รายละเอียด)\s*[:：]?\s*([^,，;；]+?)(?=\s+(?:ร้าน(?:ค้า)?|จ่ายให้|รับจาก|วันที่|วันนี้|เมื่อวาน|จำนวน|ยอด)|[,，;；]|$)/);
   if(subMatch)out.sub=subMatch[1].trim().replace(/\s+/g,' ').slice(0,240);
   else if(!partnerMatch){var clean=text.replace(/(?:จ่าย|รายจ่าย|รายรับ|รับเงิน|ซื้อ|บาท|วันนี้|เมื่อวาน|ค่าแรง|ค่าช่าง|ค่าวัสดุ|วัสดุ|ค่าของ|ค่าประกันผลงาน|ค่าประกัน|ค่างานเอกสาร|ค่าเอกสาร|ค่าแบบ|ค่าธรรมเนียม|ค่าเช่า|เช่า)/g,' ').replace(/[0-9,๐-๙]+(?:\.[0-9]+)?/g,' ').replace(/\s+/g,' ').trim();if(clean)out.sub=clean.slice(0,240);}
-  var date=expenseVoiceDate(text);out.date=date.date;out.dateIssue=date.invalid;return out;
+  var date=expenseVoiceDate(text);out.date=date.date;out.dateIssue=date.invalid;if((out.amountIssue||out.dateIssue)&&!subMatch)out.sub='';return out;
 }
 function expenseVoiceReviewUpdate(){
   var d=U.draft;if(!d||U.expenseVoiceIssuesDraft!==d||!Array.isArray(U.expenseVoiceIssues))return;
