@@ -43,6 +43,7 @@ jobs:
           node --check tests/stamp-build.mjs
           node --check tests/live-cloudflare-acceptance.mjs
           node tests/cloudflare-only.cjs
+          node tests/menu-icons.cjs
           node tests/qa.cjs
           node tests/reliability-v1048.cjs
           node tests/boq-quality-provenance.cjs
