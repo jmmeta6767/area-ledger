@@ -27,12 +27,13 @@ jobs:
           node-version: '22'
       - name: Install isolated browser test runtime
         run: |
-          npm install --prefix "$RUNNER_TEMP/layout-runtime" playwright@1.62.1
+          npm install --prefix "$RUNNER_TEMP/layout-runtime" playwright@1.62.1 axe-core@4.14.0
           "$RUNNER_TEMP/layout-runtime/node_modules/.bin/playwright" install --with-deps chromium
       - name: iPhone layout and scroll regression
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/layout-runtime/node_modules/playwright
           LAYOUT_OUTPUT: layout-evidence
+          AXE_SOURCE: ${{ runner.temp }}/layout-runtime/node_modules/axe-core/axe.min.js
         run: |
           node tests/iphone-layout.cjs
           node tests/iphone-card-keyboard.cjs
@@ -42,6 +43,7 @@ jobs:
           node tests/reliability-mobile.cjs
           node tests/expense-entry-e2e.cjs
           node tests/ux-ui-v1080-e2e.cjs
+          node tests/workspace-ux-v1087.cjs
       - name: Upload before and after layout evidence
         if: always()
         uses: actions/upload-artifact@v4
