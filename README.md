@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1081 Short expense speech and microphone restart
+
+- `ค่าทราย 500` now fills amount 500, item ทราย and the existing materials category without requiring baht.
+- Successful recognition stops gracefully and waits for the browser end event before another start. Rapid repeat taps queue one next session; successful disconnected recognizers are reused. Cancellation, missing-end recovery and old callbacks remain guarded.
+- Adds delayed WebKit lifecycle and real DOM click regressions. Physical iPhone audio remains unverified. See QA-v1081.md.
+
 ## v1080 Repeated voice edits and shared app presentation
 
 - Speak again to correct only an amount or description; existing project, date and payment choices remain. The latest transcript is visible and unresolved field warnings persist until corrected.

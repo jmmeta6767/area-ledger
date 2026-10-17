@@ -57,6 +57,24 @@ test('backup choices separate file cloud and restore without changing data or re
  for(const enabled of [false,true]){c.cloudSyncInfo=()=>({enabled,label:enabled?'ซิงก์แล้ว':'ปิด',meta:{hit:enabled,revision:3,savedAt:'2026-10-17'},key:''});let h=c.sheetHtml();for(const title of ['1. เก็บไฟล์สำรองไว้กับคุณ','2. สำรองและซิงก์บนคลาวด์','3. กู้คืนจากไฟล์สำรอง'])assert(h.includes(title));for(const action of ['backupFile','copyBk','restoreOpen','cloudUseKey','closeSheet'])assert(h.includes('data-act="'+action+'"'));assert(h.includes('id="bkbox"'));assert(h.includes('id="cloudKeyImport"'));if(enabled){for(const action of ['cloudPush','cloudPull','cloudHistory','cloudCopyKey','cloudDisable','cloudAcceptance','cloudFilesMigrate','cloudRestorePrevious'])assert(h.includes('data-act="'+action+'"'));c.U.confirm='cloudPull';h=c.sheetHtml();assert(h.includes('ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์'));assert(h.includes('dng sure'));}else assert(h.includes('data-act="cloudEnable"'));c.U.confirm=null;}
  c.cloudSyncInfo=info;c.U.sheet=null;assert.equal(JSON.stringify(c.S),before);
 });
+test('short material expenses without baht split the item and amount, including Thai number words',()=>{
+ for(const text of ['ค่าทราย 500','ค่าทราย500','ค่าทราย ๕๐๐','ค่าทราย ห้าร้อย','ค่าปูน 1,250','ค่าเหล็ก สองพัน']){const x=c.expenseVoiceParse(text);assert.equal(x.cat,'ค่าของ');assert.equal(x.amount,/ปูน/.test(text)?'1250':/เหล็ก/.test(text)?'2000':'500');assert.equal(x.sub,/ปูน/.test(text)?'ปูน':/เหล็ก/.test(text)?'เหล็ก':'ทราย');}
+ for(const text of ['ค่าทราย 5 คิว','ค่าทราย วันที่ 17/10/2569','ค่าทราย -500','ค่าทราย-500','ค่าทราย 5 คิว 500','ค่าทราย 50,00'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
+});
+test('delayed WebKit end queues a single repeat and reuses the disconnected recognizer without aborting successful results',()=>{
+ c.expenseVoiceStop();let instance,constructed=0,starts=0,stops=0,aborts=0;c.window.webkitSpeechRecognition=function(){constructed++;instance=this;this.active=false;this.start=()=>{assert(!this.active,'must wait for end before another start');this.active=true;starts++;};this.stop=()=>{stops++;};this.abort=()=>{aborts++;this.active=false;};};delete c.window.SpeechRecognition;c.U.view='add';c.U.draft=c.newDraft('out','p');
+ const end=()=>{instance.active=false;instance.onend();};
+ for(let i=0;i<10;i++){
+  if(!c.U.expenseVoiceRecognition)assert(c.expenseVoiceStart());const result=instance.onresult;
+  result({results:[[{transcript:'ค่าทราย '+(500+i)}]]});assert.equal(c.U.draft.amount,String(500+i));assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceEnding,instance);assert.equal(c.U.expenseVoiceState,'recognized');
+  if(i<9){assert(c.expenseVoiceStart());assert(c.expenseVoiceStart());assert.equal(c.U.expenseVoiceState,'restarting');assert.equal(starts,i+1);end();assert.equal(starts,i+2);result({results:[[{transcript:'ค่าทราย 9999'}]]});assert.equal(c.U.draft.amount,String(500+i),'late prior result ignored');}else end();
+ }
+ assert.equal(constructed,1);assert.equal(starts,10);assert.equal(stops,10);assert.equal(aborts,0);assert.equal(c.U.expenseVoiceReleaseTimer,null);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.S.tx.length,0);
+ // A missing end event releases the stuck engine and preserves the recognized draft.
+ assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:'ค่าทราย 700'}]]});assert(c.expenseVoiceStart());const release=c.U.expenseVoiceReleaseTimer;timers.get(release)();assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.draft.amount,'700');assert(!timers.has(release));assert(c.expenseVoiceStart());assert.equal(constructed,2);c.expenseVoiceStop();
+ // Cancelling navigation must discard a queued restart and ignore its old end event.
+ assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:'ค่าทราย 800'}]]});c.expenseVoiceStart();const oldEnd=instance.onend;c.applyNavState({view:'home'});oldEnd();assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.U.expenseVoiceRestartDraft,null);c.U.view='add';
+});
 test('explicit monetary amounts win over dimensions, quantities, dates and phone numbers',()=>{
  for(const [text,amount] of [['ซื้อเหล็ก 12 มม. 50 เส้น ยอด 4,500 บาท','4500'],['วันที่ 15 จ่าย 1200 บาท ร้านทดสอบ','1200'],['โทร 000-9876543 ยอดเงิน 6,430.00 บาท','6430'],['จ่าย ๑,๒๐๐ บาท ร้านสมใจ','1200'],['จ่าย950บาทร้านทดสอบ','950'],['จ่ายหนึ่งพันสองร้อยบาท','1200'],['ยอดสองหมื่นห้าพันบาทห้าสิบสตางค์','25000.5'],['จำนวนเงินเก้าร้อยเก้าสิบเก้าบาท','999'],['จ่าย 300 ร้านสมใจ','300'],['฿ 320.50','320.5']])assert.equal(c.expenseVoiceParse(text).amount,amount,text);
  for(const text of ['เหล็ก 12 มม. 50 เส้น','วันที่ 15/10/2569','โทร 000-9876543','ยอด 000-9876543','จ่าย 12 เส้น','จ่าย -500 บาท','ราคา 100 บาท อีก 200 บาท'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
@@ -69,7 +87,7 @@ test('ten voice sessions, repeated errors, stop, navigation and stale callbacks 
  for(const error of ['no-speech','not-allowed','network']){c.expenseVoiceStart();instance.onerror({error});assert.equal(c.U.expenseVoiceRecognition,null);}
  c.expenseVoiceStart();const stale=instance.onresult;const old=c.U.draft;c.U.draft=c.newDraft('out','p');stale({results:[[{transcript:'จ่าย 999 บาท'}]]});assert.equal(c.U.draft.amount,'');assert.equal(old.amount,'109');
  c.expenseVoiceStart();const late=instance.onresult;c.applyNavState({view:'home'});late({results:[[{transcript:'จ่าย 999 บาท'}]]});assert.equal(c.U.draft.amount,'');assert.equal(c.U.expenseVoiceRecognition,null);
- c.U.view='add';c.expenseVoiceStart();c.document.visibilityState='hidden';listeners.visibilitychange[0]();assert.equal(c.U.expenseVoiceRecognition,null);assert(aborts>=16);assert.equal(c.S.tx.length,0);
+ c.U.view='add';c.expenseVoiceStart();c.document.visibilityState='hidden';listeners.visibilitychange[0]();assert.equal(c.U.expenseVoiceRecognition,null);assert(aborts>=6);assert.equal(c.S.tx.length,0);
  c.U.draft=c.newDraft('out','p');c.U.draft.sub='old expense detail';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'รับเงิน 1200 บาท รับจากลูกค้า รายการงวดงาน'}]]});assert.equal(c.U.draft.type,'in');assert.equal(c.U.draft.cat,c.CAT_IN[1]);assert.equal(c.U.draft.amount,'1200');assert.equal(c.U.draft.sub,'งวดงาน');assert.equal(c.S.tx.length,0);
 });
 const rows=[1480,2250,2700].map((amount,i)=>({amount,date:'2026-10-14',sub:'วัสดุทดสอบ '+(i+1),partner:'ร้านทดสอบ',cat:'ค่าของ',confidence:.99}));
