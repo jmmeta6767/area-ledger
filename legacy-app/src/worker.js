@@ -33,7 +33,7 @@ export default {
     // /v1/* is deliberately bypassed by existing SW scripts, so this page stays reachable.
     // Never delete localStorage, IndexedDB, CacheStorage or project/payroll records.
     if(url.pathname==='/v1/safari-repair'&&request.method==='GET'){
-      const page=\`<!doctype html><html lang="th"><head><meta charset="utf-8">
+      const page=`<!doctype html><html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AREA Ledger — แก้ Safari โดยไม่ลบข้อมูล</title>
 <style>body{font:17px -apple-system,BlinkMacSystemFont,sans-serif;max-width:560px;margin:40px auto;padding:18px;line-height:1.65;color:#172536;background:#f8fafc}main{padding:22px;background:white;border-radius:20px}button,a{display:block;padding:12px 18px;margin-top:16px;border:0;border-radius:12px;background:#f4c533;color:#172536;font-size:17px;font-weight:650;text-align:center;text-decoration:none}small{display:block;color:#555}#back{display:none}</style></head>
@@ -59,7 +59,7 @@ document.getElementById('fix').addEventListener('click',async function(){
   document.getElementById('back').style.display='block';
  }catch(e){out.textContent='ยังซ่อมไม่สำเร็จ: '+String(e.message||e);button.disabled=false;}
 });
-</script></body></html>\`;
+</script></body></html>`;
       return new Response(page,{status:200,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
     }
     if(gatewayPath(url.pathname)){
