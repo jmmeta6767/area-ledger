@@ -34,6 +34,12 @@ test('partial document survives transport and prevents a page total from becomin
  for(const text of ['Page 1 of 2 GRAND TOTAL 6430','หน้า ๑ จาก ๒ รวมสุทธิ 6430']){const local=c.expenseOcrResult(text);assert(local.partialDocument,text);assert.equal(local.amount,0);const remote=c.expenseOcrNormalizeRemote({text,amount:6430,documentTotal:6430});assert(remote.partialDocument);assert.equal(remote.amount,0);assert.equal(remote.documentTotal,0);}
  assert(!c.expenseOcrPartialDocument('Page 1 of 1'));
 });
+test('labor description followed by an unlabelled amount fills the amount on repeated speech sessions',()=>{
+ for(const text of ['ค่าแรงงานโครงหลัง 54,000','ค่าแรงงานโครงหลังคา 54000','ค่าแรงงานโครงหลังคา ๕๔,๐๐๐','ค่าแรงงานโครงหลังคา ห้าหมื่นสี่พัน']){const x=c.expenseVoiceParse(text);assert.equal(x.amount,'54000',text);assert.equal(x.cat,'ค่าแรง');assert(!/ห้าหมื่น|สี่พัน|54000|54,000/.test(x.sub));}
+ for(const text of ['ค่าแรงงาน 12 คน','ค่าแรงงาน วันที่ 14/10/2569','ค่าแรง โทร 064 9893124','ค่าแรง 12 คน 54000','ค่าแรง ร้านสมใจ 54000','ค่าแรง -54000','ค่าแรงงานโครงหลังคา 54,00'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
+ let instance;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');
+ for(const text of ['ค่าแรงงานโครงหลัง 54,000','ค่าแรงงานโครงหลังคา ห้าหมื่นสี่พัน']){c.U.draft.amount='999';assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:text}]]});assert.equal(c.U.draft.amount,'54000');assert.equal(c.U.draft.cat,'ค่าแรง');assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);}
+});
 test('explicit monetary amounts win over dimensions, quantities, dates and phone numbers',()=>{
  for(const [text,amount] of [['ซื้อเหล็ก 12 มม. 50 เส้น ยอด 4,500 บาท','4500'],['วันที่ 15 จ่าย 1200 บาท ร้านทดสอบ','1200'],['โทร 000-9876543 ยอดเงิน 6,430.00 บาท','6430'],['จ่าย ๑,๒๐๐ บาท ร้านสมใจ','1200'],['จ่าย950บาทร้านทดสอบ','950'],['จ่ายหนึ่งพันสองร้อยบาท','1200'],['ยอดสองหมื่นห้าพันบาทห้าสิบสตางค์','25000.5'],['จำนวนเงินเก้าร้อยเก้าสิบเก้าบาท','999'],['จ่าย 300 ร้านสมใจ','300'],['฿ 320.50','320.5']])assert.equal(c.expenseVoiceParse(text).amount,amount,text);
  for(const text of ['เหล็ก 12 มม. 50 เส้น','วันที่ 15/10/2569','โทร 000-9876543','ยอด 000-9876543','จ่าย 12 เส้น','จ่าย -500 บาท','ราคา 100 บาท อีก 200 บาท'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
