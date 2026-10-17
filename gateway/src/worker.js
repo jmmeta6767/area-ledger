@@ -80,7 +80,22 @@ async function googleEnsureRootFolder(env,ledgerHash,conn,token){
 }
 function googleCleanProject(body){
   const p=body&&body.project||{},id=cleanFileMeta(p.id,160),name=cleanFileMeta(p.name,180);if(!id||!name)throw Error('GOOGLE_PROJECT_INVALID');
-  const rows=Array.isArray(body&&body.rows)?body.rows.slice(0,1500):[];return {id,name,rows};
+  const rows=Array.isArray(body&&body.rows)?body.rows:[];if(rows.length>1500)throw Error('GOOGLE_SYNC_TOO_LARGE');return {id,name,rows,finance:googleCleanFinance(body&&body.finance)};
+}
+function googleCleanFinance(finance){
+  if(finance===undefined)return null;if(!finance||finance.version!==1)throw Error('GOOGLE_FINANCE_INVALID');const out={version:1};
+  for(const [key,width,max] of [['expenses',15,10001],['income',15,10001],['costs',3,1001],['profit',3,1001]]){const rows=finance[key];if(!Array.isArray(rows)||!rows.length||rows.length>max)throw Error(rows&&rows.length>max?'GOOGLE_SYNC_TOO_LARGE':'GOOGLE_FINANCE_INVALID');out[key]=rows.map(row=>{if(!Array.isArray(row)||row.length!==width)throw Error('GOOGLE_FINANCE_INVALID');return row.map(value=>{if(typeof value==='number'&&Number.isFinite(value))return value;if(typeof value==='string'&&value.length<=4000)return value;throw Error('GOOGLE_FINANCE_INVALID');});});}return out;
+}
+async function googleWriteProjectSnapshot(token,id,tabs){
+  const endpoint='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id),meta=await googleJson(endpoint+'?fields=sheets(properties(sheetId,title,gridProperties))',{headers:{Authorization:'Bearer '+token}}),sheets=(meta.sheets||[]).map(x=>x.properties),requests=[];let next=Math.max(0,...sheets.map(x=>x.sheetId))+1;
+  for(const tab of tabs){let sheet=sheets.find(x=>x.title===tab.title),count=tab.values.length,width=tab.values[0].length;
+    if(!sheet){sheet={sheetId:next++,title:tab.title,gridProperties:{rowCount:Math.max(1000,count),columnCount:Math.max(26,width)}};requests.push({addSheet:{properties:sheet}});}else{const grid=sheet.gridProperties||{},rows=Math.max(grid.rowCount||1000,count),cols=Math.max(grid.columnCount||26,width);if(rows!==grid.rowCount||cols!==grid.columnCount)requests.push({updateSheetProperties:{properties:{sheetId:sheet.sheetId,gridProperties:{rowCount:rows,columnCount:cols}},fields:'gridProperties.rowCount,gridProperties.columnCount'}});sheet={...sheet,gridProperties:{rowCount:rows,columnCount:cols}};}
+    requests.push({updateCells:{range:{sheetId:sheet.sheetId,startRowIndex:0,endRowIndex:sheet.gridProperties.rowCount,startColumnIndex:0,endColumnIndex:width},rows:tab.values.map(row=>({values:row.map(value=>({userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value??'')}}))})),fields:'userEnteredValue'}});
+    requests.push({updateSheetProperties:{properties:{sheetId:sheet.sheetId,gridProperties:{frozenRowCount:1}},fields:'gridProperties.frozenRowCount'}});
+    const moneyStart=tab.title==='ค่าใช้จ่าย'||tab.title==='รายรับ'?4:tab.title==='ต้นทุน'||tab.title==='กำไร'?1:null;if(moneyStart!==null)requests.push({repeatCell:{range:{sheetId:sheet.sheetId,startRowIndex:1,endRowIndex:sheet.gridProperties.rowCount,startColumnIndex:moneyStart,endColumnIndex:moneyStart===4?11:2},cell:{userEnteredFormat:{numberFormat:{type:'NUMBER',pattern:'#,##0.00'}}},fields:'userEnteredFormat.numberFormat'}});
+  }
+  // One atomic batch replaces managed ranges, clears stale rows, and preserves other tabs/columns.
+  await googleJson(endpoint+':batchUpdate',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({requests})});
 }
 function googleSheetRows(project,rows){
   const header=['รหัสหมวด','หมวดงาน','รายการ','ประเภท','จำนวน','หน่วย','ราคาต่อหน่วย','รวม','หมายเหตุ','Ledger ID'],all=[header],mat=[header],lab=[header],summaryMap={};
@@ -104,10 +119,11 @@ async function googleEnsureProjectAssets(env,ledgerHash,project,token){
 async function googleWriteRange(token,id,range,values){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+':clear',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});return googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+'?valueInputOption=RAW',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values})});}
 async function googleSyncProject(env,ledgerHash,body){
   const project=googleCleanProject(body),token=await googleAccessToken(env,ledgerHash),asset=await googleEnsureProjectAssets(env,ledgerHash,project,token),data=googleSheetRows(project,project.rows);
-  await googleWriteRange(token,asset.spreadsheetId,'BOQ!A:J',data.boq);await googleWriteRange(token,asset.spreadsheetId,'สรุปหมวด!A:F',data.summary);await googleWriteRange(token,asset.spreadsheetId,'ค่าวัสดุ!A:J',data.material);await googleWriteRange(token,asset.spreadsheetId,'ค่าแรง!A:J',data.labor);
-  try{await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(asset.spreadsheetId)+':batchUpdate',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({requests:[{updateSheetProperties:{properties:{sheetId:0,gridProperties:{frozenRowCount:1}},fields:'gridProperties.frozenRowCount'}},{autoResizeDimensions:{dimensions:{sheetId:0,dimension:'COLUMNS',startIndex:0,endIndex:10}}}]})});}catch(_){}
-  const hash=await sha256Hex(JSON.stringify({id:project.id,name:project.name,rows:project.rows})),now=new Date().toISOString();await env.LEDGER_DB.prepare('UPDATE google_project_links SET last_sync_hash=?,last_sync_at=?,updated_at=? WHERE ledger_hash=? AND project_id=?').bind(hash,now,now,ledgerHash,project.id).run();
-  return {ok:true,projectId:project.id,rows:data.boq.length-1,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
+  const tabs=[{title:'BOQ',values:data.boq},{title:'สรุปหมวด',values:data.summary},{title:'ค่าวัสดุ',values:data.material},{title:'ค่าแรง',values:data.labor}];
+  if(project.finance)for(const [key,title] of [['expenses','ค่าใช้จ่าย'],['income','รายรับ'],['costs','ต้นทุน'],['profit','กำไร']])tabs.push({title,values:project.finance[key]});
+  await googleWriteProjectSnapshot(token,asset.spreadsheetId,tabs);
+  const hash=await sha256Hex(JSON.stringify({id:project.id,name:project.name,rows:project.rows,finance:project.finance})),now=new Date().toISOString();await env.LEDGER_DB.prepare('UPDATE google_project_links SET last_sync_hash=?,last_sync_at=?,updated_at=? WHERE ledger_hash=? AND project_id=?').bind(hash,now,now,ledgerHash,project.id).run();
+  return {ok:true,projectId:project.id,rows:data.boq.length-1,expenseRows:project.finance?project.finance.expenses.length-1:0,financeSynced:!!project.finance,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
 }
 
 function parseGoogleUploadDataUrl(value){
@@ -572,7 +588,7 @@ export default{async fetch(request,env){
       await env.LEDGER_DB.prepare('INSERT INTO google_oauth_states (state_hash,ledger_hash,code_verifier,return_url,expires_at,created_at) VALUES (?,?,?,?,?,?)').bind(stateHash,ledgerHash,verifier,returnUrl,expires,now).run();
       const a=new URL('https://accounts.google.com/o/oauth2/v2/auth');a.searchParams.set('client_id',String(env.GOOGLE_CLIENT_ID));a.searchParams.set('redirect_uri',redirectUri);a.searchParams.set('response_type','code');a.searchParams.set('scope','openid email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets');a.searchParams.set('access_type','offline');a.searchParams.set('prompt','consent');a.searchParams.set('state',state);a.searchParams.set('code_challenge',challenge);a.searchParams.set('code_challenge_method','S256');return json({ok:true,authorizationUrl:a.toString()},200,origin,rid);
     }
-    if(url.pathname==='/v1/google/sync'&&request.method==='POST'){try{return json(await googleSyncProject(env,ledgerHash,await readJson(request)),200,origin,rid);}catch(e){const code=String(e&&e.message||'GOOGLE_SYNC_FAILED');return json({error:code},code==='GOOGLE_NOT_CONNECTED'?409:502,origin,rid);}}
+    if(url.pathname==='/v1/google/sync'&&request.method==='POST'){try{return json(await googleSyncProject(env,ledgerHash,await readLedgerJson(request)),200,origin,rid);}catch(e){const code=String(e&&e.message||'GOOGLE_SYNC_FAILED');return json({error:code},code==='GOOGLE_NOT_CONNECTED'?409:code==='GOOGLE_SYNC_TOO_LARGE'||code==='LEDGER_PAYLOAD_TOO_LARGE'?413:code==='GOOGLE_FINANCE_INVALID'||code==='GOOGLE_PROJECT_INVALID'?400:502,origin,rid);}}
     if(url.pathname==='/v1/google/file-upload'&&request.method==='POST'){try{return json(await googleUploadProjectFile(env,ledgerHash,await readLedgerJson(request)),200,origin,rid);}catch(e){const code=String(e&&e.message||'GOOGLE_FILE_UPLOAD_FAILED'),status=code==='GOOGLE_NOT_CONNECTED'?409:code==='GOOGLE_FILE_TOO_LARGE'?413:code==='GOOGLE_FILE_TYPE_UNSUPPORTED'||code==='GOOGLE_FILE_BASE64_INVALID'||code==='GOOGLE_FILE_EMPTY'?400:502;return json({error:code},status,origin,rid);}}
     if(url.pathname==='/v1/google/disconnect'&&request.method==='POST'){await env.LEDGER_DB.prepare('DELETE FROM google_connections WHERE ledger_hash=?').bind(ledgerHash).run();await env.LEDGER_DB.prepare('DELETE FROM google_project_links WHERE ledger_hash=?').bind(ledgerHash).run();return json({ok:true},200,origin,rid);}
     return json({error:'METHOD_NOT_ALLOWED'},405,origin,rid);
