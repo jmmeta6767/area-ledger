@@ -3763,7 +3763,7 @@ body[data-view] .nav button.add{background:var(--color-primary)!important;color:
 .voice-last-command{display:grid;gap:4px;margin-top:8px;padding:10px 12px;background:#fff;border:1px solid #D9E1EB;border-radius:8px;overflow-wrap:anywhere}.voice-last-command b{color:#214D79}.voice-last-command span{color:#20242B;font-size:16px}.voice-last-command small{color:#667085}
 .backup-section{padding:14px;margin:12px 0;background:#fff;border:1px solid #DFE5ED;border-radius:12px;min-width:0}.backup-section h4{margin:0 0 6px;color:#214D79;font-size:1rem}.backup-section p{margin:0 0 10px;color:#667085;line-height:1.6}.backup-section .stack{margin-top:10px}.backup-section details{margin-top:12px}.backup-section summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:#214D79;font-weight:600}.backup-section .csv{width:100%;box-sizing:border-box}.backup-section .field{margin-top:10px}
 
-.voice-mic-diagnostic{margin:6px 0 12px;font-size:.8rem;color:#54657A}.voice-mic-diagnostic summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.voice-mic-diagnostic p{overflow-wrap:anywhere;font-family:monospace;line-height:1.6}
+.expense-voice-status{margin:8px 0;padding:10px 12px;background:var(--color-primary-soft);border-radius:12px;font-size:14px;overflow-wrap:anywhere}.voice-mic-diagnostic{margin:6px 0 12px;font-size:.8rem;color:#54657A}.voice-mic-diagnostic summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.voice-mic-diagnostic p{overflow-wrap:anywhere;font-family:monospace;line-height:1.6}
 </style>
 
 </head>
@@ -5185,7 +5185,7 @@ function expenseVoiceStatusText(){
   return x.results?'พร้อมพูดใหม่ · ข้อมูลที่อ่านได้ยังอยู่ในฟอร์ม':'หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่';
 }
 function expenseVoiceDiagnosticText(){var x=U.expenseVoiceDiagnostic;return x?'v'+APP_BUILD.version+' · รอบ '+x.attempt+' · start='+(x.started?1:0)+' audio='+(x.audio?1:0)+' speech='+(x.speech?1:0)+' result='+x.results+' end='+(x.ended?1:0)+' · '+(x.code||'OK')+' · '+x.events.join(' > '):'';}
-function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-scan-result" role="status" aria-live="polite"'+(!U.expenseVoiceDiagnostic?' hidden':'')+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
+function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-voice-status" role="status" aria-live="polite"'+(!U.expenseVoiceDiagnostic?' hidden':'')+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
 function expenseVoiceUiUpdate(){
   var button=document.querySelector('[data-act="expenseVoiceStart"]'),active=!!U.expenseVoiceRecognition;
   if(button){button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-label',expenseVoiceButtonText());var label=button.querySelector('span');if(label)label.textContent=expenseVoiceButtonText();var card=button.closest('.expense-voice-card');if(card)card.classList.toggle('listening',U.expenseVoiceState==='listening');}

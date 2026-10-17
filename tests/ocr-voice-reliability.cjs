@@ -105,7 +105,7 @@ test('HTTP400 is not blindly retried; failed local OCR preserves the actual prov
 });
 test('scan errors have one actionable alert scoped to the original draft',()=>{
  c.U.view='add';c.U.draft=c.newDraft('out','p');c.U.expenseScanRetryDraft=c.U.draft;c.U.expenseScanRetryFile={name:'private.png'};c.U.expenseScanBusy=false;c.U.expenseScanTone='error';c.U.expenseScanMsg=c.expenseOcrErrorMessage({gatewayCode:'PROVIDER_HTTP_400'});c.U.draft.photo='test';c.U.draft.ocrSource='ai';
- const markup=c.vAdd();assert.equal((markup.match(/expense-scan-result/g)||[]).length,2);assert(markup.includes('role="alert"'));assert(markup.includes('data-act="expenseScanRetry"'));assert(markup.includes('data-act="expenseScanManual"'));assert(!markup.includes('AI/OCR กรอกค่าจากบิลให้แล้ว'));
+ const markup=c.vAdd();assert.equal((markup.match(/expense-scan-result/g)||[]).length,1);assert(markup.includes('role="alert"'));assert(markup.includes('data-act="expenseScanRetry"'));assert(markup.includes('data-act="expenseScanManual"'));assert(!markup.includes('AI/OCR กรอกค่าจากบิลให้แล้ว'));
  c.U.draft=c.newDraft('out','p');assert(!c.expenseScanStatusHtml(c.U.draft).includes('data-act="expenseScanRetry"'));
 });
 test('provider failures classify safe reasons, keep HTTP400 single-attempt and retry 503 only',async()=>{
