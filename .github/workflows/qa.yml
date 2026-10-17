@@ -88,6 +88,7 @@ jobs:
         run: |
           node tests/gateway-runtime.cjs
           node tests/google-oauth-recovery.cjs
+          node tests/google-sheet-presentation.cjs
       - name: Cloudflare ledger sync QA
         run: node tests/cloud-ledger-sync.cjs
       - name: D1 ledger shadow QA
