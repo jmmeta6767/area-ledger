@@ -289,5 +289,15 @@ if(!dbLoadError)ensureMonthlyVault();
 render();
 })();
 </script>
+<script>
+// On the legacy g address, retire obsolete Service Workers after a successful
+// load. Unregistering changes no payroll, account, localStorage or IndexedDB data.
+if(location.hostname==='g.areamaibab.workers.dev'&&'serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    return Promise.all(regs.filter(function(r){return new URL(r.scope).origin===location.origin;})
+      .map(function(r){return r.unregister();}));
+  }).catch(function(){});
+}
+</script>
 </body>
 </html>
