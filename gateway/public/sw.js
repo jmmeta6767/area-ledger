@@ -11,8 +11,8 @@ self.addEventListener('fetch',e=>{
   const navCacheKey=(url.pathname==='/payroll.html'||url.pathname==='/portfolio.html')?url.pathname.slice(1):'./';
   e.respondWith(fetch(e.request,navigation?{cache:'no-store'}:undefined).then(async r=>{
     if(r&&r.ok){try{const c=await caches.open(C);await c.put(navigation?navCacheKey:e.request,r.clone());}catch(ignore){/* A cache quota error must not reject the network response. */}}
-    if(navigation&&(!r||!r.ok)){const c=await caches.open(C),cached=await c.match(navCacheKey)||(navCacheKey==='./'?await c.match('index.html'):null);if(cached)return cached;}
+    if(navigation&&(!r||!r.ok)){const c=await caches.open(C),cached=navCacheKey==='./'?(await c.match('./')||await c.match('index.html')):await c.match(navCacheKey);if(cached)return cached;}
     return r;
-  }).catch(async()=>{const c=await caches.open(C);return (navigation?(await c.match(navCacheKey)||(navCacheKey==='./'?await c.match('index.html'):null)):await c.match(e.request))||new Response('Offline',{status:503});}));
+  }).catch(async()=>{const c=await caches.open(C);return (navigation?(navCacheKey==='./'?(await c.match('./')||await c.match('index.html')):await c.match(navCacheKey)):await c.match(e.request))||new Response('Offline',{status:503});}));
 });
 
