@@ -35,6 +35,7 @@ jobs:
           LAYOUT_OUTPUT: layout-evidence
         run: |
           node tests/iphone-layout.cjs
+          node tests/menu-icons-visual.cjs
           node tests/iphone-card-keyboard.cjs
           node tests/iphone-project-keyboard.cjs
           node tests/iphone-project-create-keyboard.cjs
