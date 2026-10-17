@@ -4053,7 +4053,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1085,"sha":"","environment":"source"};
+var APP_BUILD={"version":1086,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -8060,7 +8060,7 @@ function sheetHtml(){
       (gst.connected?'<section class="google-sync-scope"><b>เลือกโครงการที่จะซิงก์</b><div class="seg" role="group" aria-label="ขอบเขตการซิงก์"><button data-act="googleWorkspaceScope" data-v="project" aria-pressed="'+(gs.syncScope!=='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>เฉพาะโครงการนี้</button><button data-act="googleWorkspaceScope" data-v="active" aria-pressed="'+(gs.syncScope==='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')</button></div>'+(gs.syncScope==='active'?'<small>เฉพาะสถานะกำลังดำเนินการ · แยกไฟล์ตามโครงการเดิม</small><details><summary>ดูรายชื่อโครงการ</summary><ul>'+googleWorkspaceActiveProjects().map(function(p){return '<li>'+esc(p.name)+'</li>';}).join('')+'</ul></details>':'')+'</section>':'')+
       googleWorkspaceSyncBatchHtml()+
       '<div class="stack" style="margin-top:12px">'+
-      (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy||gs.syncScope==='active'&&!googleWorkspaceActiveProjects().length?' disabled':'')+'>'+(gs.bulkSyncBusy?'กำลังซิงก์หลายโครงการ…':gs.syncBusy?'กำลังซิงก์…':gs.syncScope==='active'?'ซิงก์ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')':'ซิงก์ BOQ + ค่าใช้จ่าย + ต้นทุน/กำไร')+'</button>')+
+      (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy||gs.syncScope==='active'&&!googleWorkspaceActiveProjects().length?' disabled':'')+'>'+(gs.bulkSyncBusy?'กำลังซิงก์หลายโครงการ…':gs.syncBusy?'กำลังซิงก์…':gs.syncScope==='active'?'ซิงก์ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')':'ซิงก์ข้อมูลและกราฟไป Google Sheets')+'</button>')+
       (gst.connected?'<label class="btn" for="googleDriveFiles">เก็บไฟล์ต้นฉบับใน Google Drive</label><input id="googleDriveFiles" type="file" multiple accept=".pdf,.xlsx,.xls,.csv,image/jpeg,image/png,image/webp,image/heic,image/heif" style="display:none">':'')+
       (gs.uploadProgress?'<div class="muted">'+esc(gs.uploadProgress)+'</div>':'')+
       (gfiles.length?'<div class="card"><div class="kv"><span>ไฟล์ใน Drive</span><b>'+gfiles.length+' ไฟล์</b></div>'+gfiles.slice(0,4).map(function(x){return '<div class="kv"><span>'+esc(x.name||'ไฟล์')+'</span><small>'+esc(String(x.createdAt||'').replace('T',' ').slice(0,16))+'</small></div>';}).join('')+'</div>':'')+
@@ -8068,7 +8068,7 @@ function sheetHtml(){
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
       (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect"'+(gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ยกเลิกการเชื่อม Google</button>':'')+
       '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
-      '<p class="muted" style="margin-top:10px">v1085 รองรับ Ledger → Google Sheets: BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
+      '<p class="muted" style="margin-top:10px">v1086 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -9269,7 +9269,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1085&project-keyboard=1&oauth-recovery=1&safari-first-open=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1086&project-keyboard=1&oauth-recovery=1&safari-first-open=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;

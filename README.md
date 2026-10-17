@@ -1,5 +1,15 @@
 # AREA Ledger V2 — Master v800
 
+## v1086 Google Sheets presentation and charts
+
+- Native linked charts compare contract/receipts/cost, forecast/net profit, and expense categories. Re-sync updates existing charts without duplicates and preserves user-created charts and manually moved positions. Missing revenue is not plotted as zero profit.
+
+## Google Sheets presentation
+
+- Adds a project overview sourced from existing finance metrics, with Thailand sync time and an explicit waiting-for-revenue state.
+- Applies the AREA navy/yellow/white palette, readable Thai wrapping, filters, status colors and numeric date/currency formatting. Transaction columns prioritize date, category, item, counterparty, gross amount, status and method. Tax/payment detail and technical IDs can be expanded as a column group.
+- Updates the existing workbook title to AREA Ledger - project name. Repeated sync reuses tabs, banding, column groups and owned conditional rules. Custom tabs/extra columns remain untouched. See QA-google-sheet-presentation.md.
+
 ## v1085 All active projects Google sync
 
 - Choose the current project or every project in the existing active status (missing legacy status defaults to active). Waiting, delivered and closed projects are excluded.

@@ -86,17 +86,141 @@ function googleCleanFinance(finance){
   if(finance===undefined)return null;if(!finance||finance.version!==1)throw Error('GOOGLE_FINANCE_INVALID');const out={version:1};
   for(const [key,width,max] of [['expenses',15,10001],['income',15,10001],['costs',3,1001],['profit',3,1001]]){const rows=finance[key];if(!Array.isArray(rows)||!rows.length||rows.length>max)throw Error(rows&&rows.length>max?'GOOGLE_SYNC_TOO_LARGE':'GOOGLE_FINANCE_INVALID');out[key]=rows.map(row=>{if(!Array.isArray(row)||row.length!==width)throw Error('GOOGLE_FINANCE_INVALID');return row.map(value=>{if(typeof value==='number'&&Number.isFinite(value))return value;if(typeof value==='string'&&value.length<=4000)return value;throw Error('GOOGLE_FINANCE_INVALID');});});}return out;
 }
-async function googleWriteProjectSnapshot(token,id,tabs){
-  const endpoint='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id),meta=await googleJson(endpoint+'?fields=sheets(properties(sheetId,title,gridProperties))',{headers:{Authorization:'Bearer '+token}}),sheets=(meta.sheets||[]).map(x=>x.properties),requests=[];let next=Math.max(0,...sheets.map(x=>x.sheetId))+1;
+// Presentation only. Snapshot values retain their existing accounting owners.
+function googlePresentationTabs(project,tabs,at=new Date()){
+  const result=tabs.map(tab=>{
+    if(!['ค่าใช้จ่าย','รายรับ'].includes(tab.title))return tab;
+    const order=[0,1,2,3,4,11,12,9,10,5,6,7,8,13,14];
+    return {...tab,values:tab.values.map(row=>order.map(i=>row[i]))};
+  });
+  if(project.finance){
+    const time=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(at);
+    result.unshift({title:'ภาพรวมโครงการ',values:[
+      ['AREA Ledger','ภาพรวมโครงการ',''],['โครงการ',project.name,''],['ซิงค์ล่าสุด',time,'เวลาไทย (UTC+7)'],
+      ['แหล่งข้อมูล','AREA Ledger','แก้ข้อมูลในแอปแล้วซิงค์ใหม่ ข้อมูลในชีทไม่ส่งกลับเข้าแอป'],
+      ['รายการ','จำนวนเงิน (บาท)','ความหมาย'],...project.finance.profit.slice(1).map(row=>[row[0],row[1]===''?'รอรับรายได้':row[1],row[2]]),
+      ['การอ่านต้นทุน','','เงินประกันทั้งหมดเป็นยอดอ้างอิง ไม่ให้นำมาบวกซ้ำกับต้นทุนรวม'],
+      ['ดูรายการเงินจริง','ค่าใช้จ่าย / รายรับ','กรองตามวันที่ หมวด ผู้รับเงิน และสถานะ'],
+      ['ดูแผนและประมาณการ','BOQ / สรุปหมวด / ค่าวัสดุ / ค่าแรง','BOQ เป็นแผน ไม่ใช่รายจ่ายที่บันทึกจริง']
+    ]});
+  }
+  if(project.finance){const order=['ภาพรวมโครงการ','กำไร','ต้นทุน','ค่าใช้จ่าย','รายรับ','BOQ','สรุปหมวด','ค่าวัสดุ','ค่าแรง'];return result.sort((a,b)=>order.indexOf(a.title)-order.indexOf(b.title)).map((tab,index)=>({...tab,index}));}
+  return result;
+}
+function googleSheetColor(hex){return {red:parseInt(hex.slice(1,3),16)/255,green:parseInt(hex.slice(3,5),16)/255,blue:parseInt(hex.slice(5,7),16)/255};}
+function googleSheetStyleRequests(tab,sheet,detail){
+  const id=sheet.sheetId,count=tab.values.length,width=tab.values[0].length,overview=tab.title==='ภาพรวมโครงการ',tx=['ค่าใช้จ่าย','รายรับ'].includes(tab.title),summary=['ต้นทุน','กำไร'].includes(tab.title);
+  const color=googleSheetColor,navy=color('#083F79'),yellow=color('#FFF7D6'),white=color('#FFFFFF'),text=color('#20242B'),gray=color('#F7F8FA');
+  const range=(r0,r1,c0=0,c1=width)=>({sheetId:id,startRowIndex:r0,endRowIndex:r1,startColumnIndex:c0,endColumnIndex:c1}),requests=[];
+  const paint=(r,format)=>{
+    if(format.backgroundColor){format.backgroundColorStyle={rgbColor:format.backgroundColor};delete format.backgroundColor;}
+    if(format.textFormat?.foregroundColor){format.textFormat.foregroundColorStyle={rgbColor:format.textFormat.foregroundColor};delete format.textFormat.foregroundColor;}
+    if(r.endRowIndex>r.startRowIndex&&r.endColumnIndex>r.startColumnIndex)requests.push({repeatCell:{range:r,cell:{userEnteredFormat:format},fields:Object.keys(format).map(k=>'userEnteredFormat.'+k).join(',')}});
+  };
+  const tabColor=overview?'#FFC928':tab.title==='ค่าใช้จ่าย'?'#D97706':tab.title==='รายรับ'?'#15803D':summary?'#083F79':'#93B4D7';
+  const positioned=Number.isInteger(tab.index);
+  requests.push({updateSheetProperties:{properties:{sheetId:id,...(positioned?{index:tab.index}:overview?{index:0}:{}),tabColorStyle:{rgbColor:color(tabColor)},gridProperties:{frozenRowCount:overview?0:1,frozenColumnCount:tx?1:0,hideGridlines:true}},fields:(positioned||overview?'index,':'')+'tabColorStyle,gridProperties.frozenRowCount,gridProperties.frozenColumnCount,gridProperties.hideGridlines'}});
+  // Clear stale style only inside the managed table; preserve other columns and tabs.
+  paint(range(0,sheet.gridProperties.rowCount),{backgroundColor:white,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:text,bold:false},verticalAlignment:'MIDDLE',horizontalAlignment:'LEFT',wrapStrategy:'WRAP',numberFormat:{type:'TEXT',pattern:'@'}});
+  paint(range(0,1),{backgroundColor:navy,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:white,bold:true},horizontalAlignment:'CENTER'});
+  const header=overview?4:0;
+  if(overview)paint(range(4,5),{backgroundColor:navy,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:white,bold:true},horizontalAlignment:'CENTER'});
+  const bands=detail.bandedRanges||[],overlap=bands.find(b=>(b.range.startColumnIndex||0)<width&&(b.range.endColumnIndex??width)>0);
+  if(!overview&&count>1){
+    const band={range:range(0,count),rowProperties:{headerColorStyle:{rgbColor:navy},firstBandColorStyle:{rgbColor:white},secondBandColorStyle:{rgbColor:gray}}};
+    if(overlap&&(overlap.range.startColumnIndex||0)===0&&overlap.range.endColumnIndex===width)requests.push({updateBanding:{bandedRange:{...band,bandedRangeId:overlap.bandedRangeId},fields:'range,rowProperties'}});
+    else if(!overlap)requests.push({addBanding:{bandedRange:band}});
+  }else if(!overview&&overlap&&(overlap.range.startColumnIndex||0)===0&&overlap.range.endColumnIndex===width){requests.push({updateBanding:{bandedRange:{bandedRangeId:overlap.bandedRangeId,range:range(0,1)},fields:'range'}});}
+  if(!overview&&!summary){
+    let previous=detail.basicFilter||{};
+    if(tx&&!(detail.developerMetadata||[]).some(m=>m.metadataKey==='AREA_LEDGER_PRESENTATION'&&m.metadataValue==='1')){
+      const order=[0,1,2,3,4,11,12,9,10,5,6,7,8,13,14],column=i=>i<15?order.indexOf(i):i;
+      previous={...previous,...(previous.criteria?{criteria:Object.fromEntries(Object.entries(previous.criteria).map(([i,v])=>[column(+i),v]))}:{}),...(previous.sortSpecs?{sortSpecs:previous.sortSpecs.map(v=>({...v,dimensionIndex:column(v.dimensionIndex)}))}:{}),...(previous.filterSpecs?{filterSpecs:previous.filterSpecs.map(v=>({...v,...(v.columnIndex!==undefined?{columnIndex:column(v.columnIndex)}:{})}))}:{})};
+      requests.push({createDeveloperMetadata:{developerMetadata:{metadataKey:'AREA_LEDGER_PRESENTATION',metadataValue:'1',location:{sheetId:id},visibility:'DOCUMENT'}}});
+    }
+    // Retain existing user filters/sorts when growing or shrinking the snapshot.
+    requests.push({setBasicFilter:{filter:{...previous,range:range(0,Math.max(2,count),0,Math.max(width,previous.range?.endColumnIndex||0))}}});
+  }
+  const sizes=overview?[265,220,440]:tx?[120,155,290,210,145,130,120,145,145,145,120,145,145,280,190]:summary?[275,180,440]:tab.title==='สรุปหมวด'?[110,280,120,150,150,150]:[110,210,300,120,110,90,145,160,260,190];
+  sizes.slice(0,width).forEach((pixelSize,i)=>requests.push({updateDimensionProperties:{range:{sheetId:id,dimension:'COLUMNS',startIndex:i,endIndex:i+1},properties:{pixelSize},fields:'pixelSize'}}));
+  requests.push({autoResizeDimensions:{dimensions:{sheetId:id,dimension:'ROWS',startIndex:0,endIndex:count}}});
+  requests.push({updateDimensionProperties:{range:{sheetId:id,dimension:'ROWS',startIndex:header,endIndex:header+1},properties:{pixelSize:40},fields:'pixelSize'}});
+  const money=overview||summary?[1]:tx?[4,7,8,9,10,11,12]:tab.title==='สรุปหมวด'?[3,4,5]:[6,7];
+  for(const col of money)if(col<width)paint(range(overview?5:1,overview?count-3:count,col,col+1),{numberFormat:{type:'NUMBER',pattern:'#,##0.00;[Red](#,##0.00)'},horizontalAlignment:'RIGHT'});
+  if(!overview&&!summary&&!tx&&width>=6){const col=tab.title==='สรุปหมวด'?2:4;paint(range(1,count,col,col+1),{numberFormat:{type:'NUMBER',pattern:col===2?'#,##0':'#,##0.00'},horizontalAlignment:'RIGHT'});}
+  if(tx&&count>1)paint(range(1,count,0,1),{numberFormat:{type:'DATE',pattern:'dd/mm/yyyy'}});
+  if(overview)paint(range(0,1),{textFormat:{fontFamily:'Arial',fontSize:15,foregroundColor:white,bold:true}});
+  tab.values.forEach((row,i)=>{
+    if(i<=header)return;
+    if(['ต้นทุนรวม','กำไรคาดการณ์','กำไร/ขาดทุนสุทธิ','กระแสเงินสดสุทธิ'].includes(row[0]))paint(range(i,i+1),{backgroundColor:yellow,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:text,bold:true}});
+    if(row[0]==='เงินประกันรอคืนทั้งหมด')paint(range(i,i+1),{backgroundColor:gray,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:color('#667085'),italic:true}});
+  });
+  // Only remove our own conditional rules, retaining user-created rules.
+  (detail.conditionalFormats||[]).map((r,i)=>({r,i})).filter(x=>JSON.stringify(x.r.booleanRule?.condition||{}).includes('AREA_LEDGER_STYLE_')).reverse().forEach(x=>requests.push({deleteConditionalFormatRule:{sheetId:id,index:x.i}}));
+  const rule=(formula,r,bg,fg)=>requests.push({addConditionalFormatRule:{index:0,rule:{ranges:[r],booleanRule:{condition:{type:'CUSTOM_FORMULA',values:[{userEnteredValue:formula}]},format:{backgroundColorStyle:{rgbColor:color(bg)},textFormat:{foregroundColorStyle:{rgbColor:color(fg)},bold:true}}}}}});
+  if(tx&&count>1){
+    rule('=AND(N("AREA_LEDGER_STYLE_PAID")=0,OR($F2="จ่ายแล้ว",$F2="รับแล้ว"))',range(1,count,5,6),'#E8F5EC','#166534');
+    rule('=AND(N("AREA_LEDGER_STYLE_PENDING")=0,OR($F2="ยังค้าง",$F2="ยังไม่รับ",$F2="ค้างรับ",$F2="จ่ายบางส่วน",$F2="รับบางส่วน"))',range(1,count,5,6),'#FFF7D6','#854D0E');
+  }
+  if((summary||overview)&&count>header+1)rule('=AND(N("AREA_LEDGER_STYLE_NEGATIVE")=0,ISNUMBER($B'+(header+2)+'),$B'+(header+2)+'<0)',range(header+1,count,1,2),'#FEECEC','#B42318');
+  const groupStart=tx?7:!summary&&!overview&&width===10?8:null;
+  if(groupStart!==null){
+    const groups=detail.columnGroups||[],intersection=groups.some(g=>g.range.startIndex<width&&g.range.endIndex>groupStart);
+    if(!intersection){
+      const groupRange={sheetId:id,dimension:'COLUMNS',startIndex:groupStart,endIndex:width};
+      requests.push({addDimensionGroup:{range:groupRange}});
+      requests.push({updateDimensionGroup:{dimensionGroup:{range:groupRange,depth:1,collapsed:true},fields:'collapsed'}});
+    }
+  }
+  return requests;
+}
+function googleProjectChartRequests(resolved){
+  const overview=resolved.find(x=>x.tab.title==='ภาพรวมโครงการ'),cost=resolved.find(x=>x.tab.title==='ต้นทุน');if(!overview)return [];
+  const requests=[],existing=overview.detail.charts||[],owned=existing.filter(c=>String(c.spec?.altText||'').startsWith('AREA_LEDGER_CHART_'));
+  const source=(sheetId,start,end,col)=>({sourceRange:{sources:[{sheetId,startRowIndex:start,endRowIndex:end,startColumnIndex:col,endColumnIndex:col+1}]}});
+  const definitions=[],rows=overview.tab.values,row=label=>rows.findIndex(r=>r[0]===label);
+  function define(key,title,subtitle,sheetId,start,end,type,accent){
+    if(start<0||end<=start)return;
+    definitions.push({key,spec:{title,subtitle,altText:'AREA_LEDGER_CHART_'+key,fontName:'Arial',backgroundColorStyle:{rgbColor:googleSheetColor('#FFFFFF')},titleTextFormat:{fontSize:14,bold:true,foregroundColorStyle:{rgbColor:googleSheetColor('#083F79')}},basicChart:{chartType:type,legendPosition:'NO_LEGEND',headerCount:0,axis:[{position:'BOTTOM_AXIS',title:type==='BAR'?'จำนวนเงิน (บาท)':''},{position:'LEFT_AXIS',title:type==='BAR'?'หมวดรายจ่าย':'จำนวนเงิน (บาท)'}],domains:[{domain:source(sheetId,start,end,0)}],series:[{series:source(sheetId,start,end,1),targetAxis:type==='BAR'?'BOTTOM_AXIS':'LEFT_AXIS',colorStyle:{rgbColor:googleSheetColor(accent)},dataLabel:{type:'DATA'}}]}}});
+  }
+  define('FINANCE','มูลค่าสัญญา รายรับจริง และต้นทุน','ยอดจาก AREA Ledger ณ เวลาซิงค์',overview.sheet.sheetId,row('มูลค่าสัญญารวมอนุมัติ'),row('ต้นทุนรวม')+1,'COLUMN','#083F79');
+  define('PROFIT','กำไรคาดการณ์ และกำไรสุทธิ',typeof rows[row('กำไร/ขาดทุนสุทธิ')]?.[1]==='number'?'กำไรสุทธิอ้างอิงรายรับที่ได้รับจริง':'ยังไม่มีรายรับจริง จึงยังไม่แสดงแท่งกำไรสุทธิ',overview.sheet.sheetId,row('กำไรคาดการณ์'),row('กำไร/ขาดทุนสุทธิ')+1,'COLUMN','#D99A00');
+  const categoryEnd=cost?.tab.values.findIndex(r=>r[0]==='รายจ่ายที่บันทึก')??-1;
+  if(cost&&categoryEnd>1)define('CATEGORIES','ต้นทุนรายจ่ายแยกตามหมวด','ยอดก่อน VAT รวมรายการที่ยังค้าง ไม่รวมแถวสรุปและเงินประกันอ้างอิง',cost.sheet.sheetId,1,categoryEnd,'BAR','#267A60');
+  // Place newly created charts below tables and user charts. Preserve manual positions on resync.
+  const base=existing.filter(c=>!owned.includes(c)).reduce((n,c)=>{const p=c.position?.overlayPosition;return p?Math.max(n,(p.anchorCell?.rowIndex||0)+Math.ceil((p.heightPixels||400)/20)+2):n;},rows.length+2);
+  definitions.forEach(({key,spec},i)=>{
+    const matches=owned.filter(c=>c.spec.altText==='AREA_LEDGER_CHART_'+key),chart=matches[0];
+    if(chart)requests.push({updateChartSpec:{chartId:chart.chartId,spec}});
+    else requests.push({addChart:{chart:{spec,position:{overlayPosition:{anchorCell:{sheetId:overview.sheet.sheetId,rowIndex:base+i*21,columnIndex:0},widthPixels:880,heightPixels:360}}}}});
+    matches.slice(1).forEach(c=>requests.push({deleteEmbeddedObject:{objectId:c.chartId}}));
+  });
+  owned.filter(c=>!definitions.some(d=>c.spec.altText==='AREA_LEDGER_CHART_'+d.key)).forEach(c=>requests.push({deleteEmbeddedObject:{objectId:c.chartId}}));
+  return requests;
+}
+async function googleWriteProjectSnapshot(token,id,tabs,project){
+  const endpoint='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id),meta=await googleJson(endpoint+'?fields=sheets(properties(sheetId,title,gridProperties),bandedRanges,basicFilter,columnGroups,conditionalFormats,developerMetadata,charts)',{headers:{Authorization:'Bearer '+token}}),details=meta.sheets||[],sheets=details.map(x=>x.properties),requests=[],resolved=[];let next=Math.max(0,...sheets.map(x=>x.sheetId))+1;
+  if(project)requests.push({updateSpreadsheetProperties:{properties:{title:'AREA Ledger - '+project.name},fields:'title'}});
   for(const tab of tabs){let sheet=sheets.find(x=>x.title===tab.title),count=tab.values.length,width=tab.values[0].length;
     if(!sheet){sheet={sheetId:next++,title:tab.title,gridProperties:{rowCount:Math.max(1000,count),columnCount:Math.max(26,width)}};requests.push({addSheet:{properties:sheet}});}else{const grid=sheet.gridProperties||{},rows=Math.max(grid.rowCount||1000,count),cols=Math.max(grid.columnCount||26,width);if(rows!==grid.rowCount||cols!==grid.columnCount)requests.push({updateSheetProperties:{properties:{sheetId:sheet.sheetId,gridProperties:{rowCount:rows,columnCount:cols}},fields:'gridProperties.rowCount,gridProperties.columnCount'}});sheet={...sheet,gridProperties:{rowCount:rows,columnCount:cols}};}
-    requests.push({updateCells:{range:{sheetId:sheet.sheetId,startRowIndex:0,endRowIndex:sheet.gridProperties.rowCount,startColumnIndex:0,endColumnIndex:width},rows:tab.values.map(row=>({values:row.map(value=>({userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value??'')}}))})),fields:'userEnteredValue'}});
-    requests.push({updateSheetProperties:{properties:{sheetId:sheet.sheetId,gridProperties:{frozenRowCount:1}},fields:'gridProperties.frozenRowCount'}});
-    const moneyStart=tab.title==='ค่าใช้จ่าย'||tab.title==='รายรับ'?4:tab.title==='ต้นทุน'||tab.title==='กำไร'?1:null;if(moneyStart!==null)requests.push({repeatCell:{range:{sheetId:sheet.sheetId,startRowIndex:1,endRowIndex:sheet.gridProperties.rowCount,startColumnIndex:moneyStart,endColumnIndex:moneyStart===4?11:2},cell:{userEnteredFormat:{numberFormat:{type:'NUMBER',pattern:'#,##0.00'}}},fields:'userEnteredFormat.numberFormat'}});
+    const detail=details.find(d=>d.properties.sheetId===sheet.sheetId)||{};
+    if(['ค่าใช้จ่าย','รายรับ'].includes(tab.title)&&detail.properties&&!(detail.developerMetadata||[]).some(m=>m.metadataKey==='AREA_LEDGER_PRESENTATION'&&m.metadataValue==='1')){
+      // Move existing columns once so formulas outside the managed range follow their source columns.
+      const order=[0,1,2,3,4,11,12,9,10,5,6,7,8,13,14],current=Array.from({length:15},(_,i)=>i);
+      order.forEach((value,to)=>{const from=current.indexOf(value);if(from!==to){requests.push({moveDimension:{source:{sheetId:sheet.sheetId,dimension:'COLUMNS',startIndex:from,endIndex:from+1},destinationIndex:to}});current.splice(to,0,current.splice(from,1)[0]);}});
+    }
+    requests.push({updateCells:{range:{sheetId:sheet.sheetId,startRowIndex:0,endRowIndex:sheet.gridProperties.rowCount,startColumnIndex:0,endColumnIndex:width},rows:tab.values.map((row,r)=>({values:row.map((value,c)=>{
+      if(r>0&&c===0&&['ค่าใช้จ่าย','รายรับ'].includes(tab.title)&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value)return {userEnteredValue:{numberValue:Date.parse(value)/86400000+25569}};
+      return {userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value??'')}};
+    })})),fields:'userEnteredValue'}});
+    requests.push(...googleSheetStyleRequests(tab,sheet,detail));
+    resolved.push({tab,sheet,detail});
   }
-  // One atomic batch replaces managed ranges, clears stale rows, and preserves other tabs/columns.
+  requests.push(...googleProjectChartRequests(resolved));
+  // Atomic values and presentation update; failures never advance successful-sync metadata.
   await googleJson(endpoint+':batchUpdate',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({requests})});
 }
+
 function googleSheetRows(project,rows){
   const header=['รหัสหมวด','หมวดงาน','รายการ','ประเภท','จำนวน','หน่วย','ราคาต่อหน่วย','รวม','หมายเหตุ','Ledger ID'],all=[header],mat=[header],lab=[header],summaryMap={};
   for(const x of rows){if(!x||typeof x!=='object')continue;const qty=Number(x.qty)||0,price=Number(x.unitPrice)||0,cat=String(x.category||'')==='ค่าแรง'?'ค่าแรง':'ค่าวัสดุ',amt=Math.round(qty*price*100)/100,row=[String(x.sectionCode||''),String(x.sectionName||''),String(x.name||''),cat,qty,String(x.unit||''),price,amt,String(x.note||''),String(x.id||'')];all.push(row);(cat==='ค่าแรง'?lab:mat).push(row);const k=row[0]+'|'+row[1],m=summaryMap[k]||(summaryMap[k]={code:row[0],name:row[1],count:0,material:0,labor:0});m.count++;if(cat==='ค่าแรง')m.labor+=amt;else m.material+=amt;}
@@ -107,7 +231,7 @@ async function googleEnsureProjectAssets(env,ledgerHash,project,token){
   let link=await googleProjectLink(env,ledgerHash,project.id),conn=await googleConnection(env,ledgerHash),root=await googleEnsureRootFolder(env,ledgerHash,conn,token),now=new Date().toISOString(),folderId=link&&link.driveFolderId,spreadsheetId=link&&link.spreadsheetId;
   if(!folderId){const f=await googleCreateFolder(token,project.name,[root]);folderId=f.id;}
   if(!spreadsheetId){
-    const created=await googleJson('https://sheets.googleapis.com/v4/spreadsheets',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({properties:{title:'BOQ - '+project.name},sheets:[{properties:{title:'BOQ'}},{properties:{title:'สรุปหมวด'}},{properties:{title:'ค่าวัสดุ'}},{properties:{title:'ค่าแรง'}}]})});spreadsheetId=created.spreadsheetId;
+    const created=await googleJson('https://sheets.googleapis.com/v4/spreadsheets',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({properties:{title:'AREA Ledger - '+project.name},sheets:[{properties:{title:'BOQ'}},{properties:{title:'สรุปหมวด'}},{properties:{title:'ค่าวัสดุ'}},{properties:{title:'ค่าแรง'}}]})});spreadsheetId=created.spreadsheetId;
     let parents=[];try{const d=await googleJson('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(spreadsheetId)+'?fields=parents',{headers:{Authorization:'Bearer '+token}});parents=Array.isArray(d.parents)?d.parents:[];}catch(_){}
     const qs=new URLSearchParams({addParents:folderId,fields:'id,parents,webViewLink'});if(parents.length)qs.set('removeParents',parents.join(','));
     try{await googleJson('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(spreadsheetId)+'?'+qs.toString(),{method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});}catch(_){}
@@ -121,7 +245,7 @@ async function googleSyncProject(env,ledgerHash,body){
   const project=googleCleanProject(body),token=await googleAccessToken(env,ledgerHash),asset=await googleEnsureProjectAssets(env,ledgerHash,project,token),data=googleSheetRows(project,project.rows);
   const tabs=[{title:'BOQ',values:data.boq},{title:'สรุปหมวด',values:data.summary},{title:'ค่าวัสดุ',values:data.material},{title:'ค่าแรง',values:data.labor}];
   if(project.finance)for(const [key,title] of [['expenses','ค่าใช้จ่าย'],['income','รายรับ'],['costs','ต้นทุน'],['profit','กำไร']])tabs.push({title,values:project.finance[key]});
-  await googleWriteProjectSnapshot(token,asset.spreadsheetId,tabs);
+  await googleWriteProjectSnapshot(token,asset.spreadsheetId,googlePresentationTabs(project,tabs),project);
   const hash=await sha256Hex(JSON.stringify({id:project.id,name:project.name,rows:project.rows,finance:project.finance})),now=new Date().toISOString();await env.LEDGER_DB.prepare('UPDATE google_project_links SET last_sync_hash=?,last_sync_at=?,updated_at=? WHERE ledger_hash=? AND project_id=?').bind(hash,now,now,ledgerHash,project.id).run();
   return {ok:true,projectId:project.id,rows:data.boq.length-1,expenseRows:project.finance?project.finance.expenses.length-1:0,financeSynced:!!project.finance,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
 }
