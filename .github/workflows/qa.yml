@@ -64,6 +64,8 @@ jobs:
         run: node --check tests/live-cloudflare-acceptance.mjs
       - name: Cloudflare service worker syntax
         run: node --check gateway/public/sw.js
+      - name: Payroll calculations and navigation contract
+        run: node tests/payroll-module.cjs
       - name: Legacy recovery service worker syntax
         run: node --check sw.js
       - name: Cloudflare-only deployment contract

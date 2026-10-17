@@ -8332,7 +8332,8 @@ function appMenuHtml(){
       ['home','home','ภาพรวม','ยอดเงินและสถานะวันนี้',0],
       ['profile','profile','โปรไฟล์บริษัท','ข้อมูลบริษัท · ผลงาน · อัปเดตหน้างาน',0],
       ['list','list','รายการทั้งหมด','รายรับและรายจ่าย'],
-      ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม · เปิดจากเมนูนี้':'กำหนดรับเงินและจ่ายเงิน',due]
+      ['due','clock','ค้างรับ / ค้างจ่าย',due?due+' เรื่องที่ต้องติดตาม · เปิดจากเมนูนี้':'กำหนดรับเงินและจ่ายเงิน',due],
+      ['payroll','calculator','เงินเดือนพนักงาน','มาทำงาน · เงินเบิก · คงเหลือ',0,'payrollOpen']
     ]},
     {label:'โครงการและต้นทุน',hint:'งานก่อสร้าง',items:[
       ['projects','build','โครงการ','ข้อมูลโครงการ · สัญญา · ต้นทุน',0],
@@ -8711,6 +8712,7 @@ document.addEventListener('click',function(e){
   }
   if(a==='appMenu'){U.appMenu=true;render();return;}
   if(a==='appMenuClose'){U.appMenu=false;render();return;}
+  if(a==='payrollOpen'){window.location.assign('/payroll.html');return;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='menuGo'){U.appMenu=false;if(v==='docs')U.docProjectPid='';go(v);return;}
   if(a==='docSection'){U.docProjectPid='';U.docBillFilter='all';U.docQuery='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
