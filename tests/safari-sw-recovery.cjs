@@ -1,0 +1,35 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const path=require('node:path');
+const sw=fs.readFileSync(path.join(__dirname,'../gateway/public/sw.js'),'utf8');
+const legacy=fs.readFileSync(path.join(__dirname,'../legacy-app/src/worker.js'),'utf8');
+async function main(){
+  assert.match(sw,/e.request.mode==='navigate'&&self.location.hostname==='g.areamaibab.workers.dev'/);
+  assert.match(sw,/result=navigation&&r&&r.redirected&&r.ok/);
+  assert.match(sw,/c.match\('\.\/'\)/,'existing offline app-shell fallback must remain');
+  assert.match(sw,/url.pathname.startsWith\('\/v1\/'\)/,'SW must not intercept API and repair pages');
+  const handlers={};
+  const self={location:{origin:'https://g.areamaibab.workers.dev',hostname:'g.areamaibab.workers.dev'},addEventListener:(n,fn)=>handlers[n]=fn};
+  const storage={put:async()=>{},match:async()=>null};
+  const ctx={self,URL,Headers,Response,caches:{open:async()=>storage},fetch:async()=>new Response('ok')};
+  vm.runInNewContext(sw,ctx,{filename:'sw.js'});
+  let intercepted=false;
+  handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://g.areamaibab.workers.dev/'},respondWith:()=>{intercepted=true;}});
+  assert.equal(intercepted,false,'Legacy Safari navigation must use browser network directly');
+  handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://g.areamaibab.workers.dev/v1/safari-repair'},respondWith:()=>{intercepted=true;}});
+  assert.equal(intercepted,false,'Legacy Safari repair must bypass SW');
+  let registered=null;
+  ctx.self.location={origin:'https://area-ledger-ai-gateway.areamaibab.workers.dev',hostname:'area-ledger-ai-gateway.areamaibab.workers.dev'};
+  ctx.fetch=async()=>{const r=new Response('final html',{headers:{'Content-Type':'text/html'}});Object.defineProperty(r,'redirected',{value:true});return r;};
+  handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://area-ledger-ai-gateway.areamaibab.workers.dev/'},respondWith:x=>{registered=x;}});
+  assert(registered,'Gateway navigation should remain intercepted to preserve offline fallback');
+  const safe=await registered;assert.equal(safe.redirected,false);assert.equal(await safe.text(),'final html');
+  const engine={URL,Request,Response,Headers};vm.createContext(engine);
+  vm.runInContext(legacy.replace('export default','globalThis.legacyWorker='),engine,{filename:'legacy-worker.js'});
+  const repair=await engine.legacyWorker.fetch(new Request('https://g.areamaibab.workers.dev/v1/safari-repair'),{ASSETS:{fetch:()=>{throw Error('Repair must not use asset fallback');}},GATEWAY:{fetch:()=>{throw Error('Repair must not proxy private API');}}});
+  assert.equal(repair.status,200);const page=await repair.text();
+  assert(page.includes('getRegistrations()'));assert(page.includes('r.unregister()'));
+  assert(!page.includes('localStorage.clear(')&&!page.includes('indexedDB.deleteDatabase(')&&!page.includes('caches.delete('));
+  console.log('PASS Safari g navigation bypass, redirected fetch normalization and non-destructive repair');
+}
+main().catch(e=>{console.error(e);process.exitCode=1;});
