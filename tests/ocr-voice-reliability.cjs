@@ -57,6 +57,20 @@ test('backup choices separate file cloud and restore without changing data or re
  for(const enabled of [false,true]){c.cloudSyncInfo=()=>({enabled,label:enabled?'ซิงก์แล้ว':'ปิด',meta:{hit:enabled,revision:3,savedAt:'2026-10-17'},key:''});let h=c.sheetHtml();for(const title of ['1. เก็บไฟล์สำรองไว้กับคุณ','2. สำรองและซิงก์บนคลาวด์','3. กู้คืนจากไฟล์สำรอง'])assert(h.includes(title));for(const action of ['backupFile','copyBk','restoreOpen','cloudUseKey','closeSheet'])assert(h.includes('data-act="'+action+'"'));assert(h.includes('id="bkbox"'));assert(h.includes('id="cloudKeyImport"'));if(enabled){for(const action of ['cloudPush','cloudPull','cloudHistory','cloudCopyKey','cloudDisable','cloudAcceptance','cloudFilesMigrate','cloudRestorePrevious'])assert(h.includes('data-act="'+action+'"'));c.U.confirm='cloudPull';h=c.sheetHtml();assert(h.includes('ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์'));assert(h.includes('dng sure'));}else assert(h.includes('data-act="cloudEnable"'));c.U.confirm=null;}
  c.cloudSyncInfo=info;c.U.sheet=null;assert.equal(JSON.stringify(c.S),before);
 });
+test('fragmented Thai currency suffix from iPhone speech keeps rental amount and category',()=>{
+ for(const text of ['ค่าเช่าเครื่องตบดิน 500 ย','ค่าเช่าเครื่องตบดิน 500 บ','ค่าเช่าเครื่องตบดิน 500 บา','ค่าเช่าเครื่องตบดิน ๕๐๐ ย','ค่าเช่าเครื่องตบดิน 500 บาท']){
+  const x=c.expenseVoiceParse(text);assert.equal(x.transcript,text);assert.equal(x.amount,'500',text);assert.equal(x.cat,'ค่าเช่าอื่นๆ',text);assert.equal(x.sub,'เครื่องตบดิน',text);assert.equal(x.amountIssue,false,text);
+ }
+ for(const text of ['ค่าเช่าเครื่องตบดิน 500 คิว','ค่าเช่าเครื่องตบดิน 500 ยาง','ค่าเช่าเครื่องตบดิน 500 ย 600','ค่าเช่าเครื่องตบดิน 50,00 ย','ค่าเช่าเครื่องตบดิน -500 ย']){
+  const x=c.expenseVoiceParse(text);assert.equal(x.amount,'',text);
+ }
+ for(const text of ['ค่าเช่าเครื่องตบดิน 50,00 ย','ค่าเช่าเครื่องตบดิน -500 ย'])assert.equal(c.expenseVoiceParse(text).amountIssue,true,text);
+ c.expenseVoiceStop();let instance;
+ c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.stop=()=>{this.onend?.()};this.abort=()=>{};};
+ c.U.view='add';c.U.draft=c.newDraft('out','p');assert(c.expenseVoiceStart());
+ instance.onresult({results:[[{transcript:'ค่าเช่าเครื่องตบดิน 500 ย'}]]});
+ assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'เครื่องตบดิน');assert.equal(c.U.draft.cat,'ค่าเช่าอื่นๆ');assert.equal(c.S.tx.length,0);
+});
 test('short material expenses without baht split the item and amount, including Thai number words',()=>{
  for(const text of ['ค่าทราย 500','ค่าทราย500','ค่าทราย ๕๐๐','ค่าทราย ห้าร้อย','ค่าปูน 1,250','ค่าเหล็ก สองพัน']){const x=c.expenseVoiceParse(text);assert.equal(x.cat,'ค่าของ');assert.equal(x.amount,/ปูน/.test(text)?'1250':/เหล็ก/.test(text)?'2000':'500');assert.equal(x.sub,/ปูน/.test(text)?'ปูน':/เหล็ก/.test(text)?'เหล็ก':'ทราย');}
  for(const text of ['ค่าทราย 5 คิว','ค่าทราย วันที่ 17/10/2569','ค่าทราย -500','ค่าทราย-500','ค่าทราย 5 คิว 500','ค่าทราย 50,00'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
