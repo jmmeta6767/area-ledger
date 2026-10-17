@@ -6,6 +6,33 @@ const node=()=>({style:{setProperty(){}},classList:{add(){},remove(){},toggle(){
 const c={console,Date,Math,JSON,Number,String,Array,Object,Promise,Set,Map,RegExp,URL,parseFloat,isFinite,isNaN,AbortController,setTimeout:f=>{timers.set(++timerId,f);return timerId;},clearTimeout:id=>timers.delete(id),navigator:{},location:{protocol:'https:',origin:'https://ledger.test',hostname:'ledger.test'},history:{pushState(){},replaceState(){}},window:{addEventListener(){},scrollTo(){}},document:{addEventListener(k,f){(listeners[k]??=[]).push(f);},getElementById(){return null;},querySelector(){return null;},querySelectorAll(){return [];},documentElement:node(),body:node(),createElement:node},localStorage:{getItem(){return null;},setItem(){},removeItem(){}},sessionStorage:{getItem(){return null;},setItem(){},removeItem(){}}};
 vm.createContext(c);vm.runInContext(code,c);c.render=()=>{};c.toast=()=>{};c.persist=()=>true;c.S=c.emptyState();c.S.projects=[{id:'p',name:'Test',status:'active'}];c.U.view='add';
 const tests=[];function test(name,f){tests.push([name,f]);}
+test('merchant words cannot select expense category, while explicit work categories keep their mappings',()=>{
+ for(const [text,cat] of [['ซื้อ ปูน 500 บาท ร้านช่างสมใจ','ค่าของ'],['ซื้อเหล็ก500บาท ร้านค่าแรงดี','ค่าของ'],['ค่าแรง 1200 บาท ร้านวัสดุสมใจ','ค่าแรง'],['ค่าเช่าเครื่องตัด 300 บาท ร้านช่างดี','ค่าเช่าอื่นๆ'],['ค่าประกันสัญญา 500 บาท ร้านวัสดุ','ค่าประกัน/ค่างาน'],['ค่าแบบ 300 บาท ร้านช่างสมใจ','ค่างานเอกสาร']])assert.equal(c.expenseVoiceParse(text).cat,cat,text);
+});
+test('explicit Thai Buddhist, Gregorian, short-year and named-month dates validate without rollover or guessing',()=>{
+ assert.equal(c.expenseVoiceParse('วันที่ 2026/10/14').date,'2026-10-14');assert(c.expenseVoiceParse('วันที่ 014/10/2569').dateIssue);
+ for(const [text,date] of [['จ่าย 1200 บาท วันที่ 14/10/2569 ร้านสมใจ','2026-10-14'],['วันที่ ๑๔/๑๐/๒๕๖๙','2026-10-14'],['วันที่ 14-10-69','2026-10-14'],['วันที่ 2026-10-14','2026-10-14'],['วันที่ สิบสี่ ตุลาคม 2569','2026-10-14'],['วันที่ 14 ต.ค. 2569','2026-10-14'],['วันที่ 29/2/2567','2024-02-29']])assert.equal(c.expenseVoiceParse(text).date,date,text);
+ for(const text of ['วันที่ 31/2/2569','วันที่ 29/2/2569','วันที่ 32/10/2569','วันที่ 14/13/2569','วันที่ 14/10','วันที่ 14/10/2569 และวันที่ 15/10/2569']){const x=c.expenseVoiceParse(text);assert.equal(x.date,'',text);assert(x.dateIssue,text);}
+});
+test('oversized and ambiguous money is rejected without accepting a smaller suffix or fee instead',()=>{
+ for(const text of ['จ่ายหนึ่งล้านล้านบาท','ศูนย์ล้านบาท','หนึ่งล้านล้านบาท ค่ารถ 100 บาท','ยอดสองพันล้านบาท','ยอด 1000000001 บาท ค่าขนส่ง 50 บาท','จ่ายลบห้าร้อยบาท','ยอดยี่บาท','ยอดเอ็ดบาท','จ่าย 100 บาท และ 200 บาท']){const x=c.expenseVoiceParse(text);assert.equal(x.amount,'',text);assert(x.amountIssue,text);}
+ for(const [text,n] of [['หนึ่งล้านบาท','1000000'],['หนึ่งพันล้านบาท','1000000000'],['เก้าร้อยเก้าสิบเก้าล้านบาท','999000000'],['ยี่สิบเอ็ดบาท','21'],['หนึ่งร้อยเอ็ดบาท','101']])assert.equal(c.expenseVoiceAmount(text),n,text);
+});
+test('invalid voice money/date clears stale values and displays field-specific review without saving',()=>{
+ let instance;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.draft=c.newDraft('out','p');c.U.draft.amount='250';c.U.draft.date='2026-10-01';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'จ่ายหนึ่งล้านล้านบาท วันที่ 31/2/2569'}]]});assert.equal(c.U.draft.amount,'');assert.equal(c.U.draft.date,'');assert.equal(c.U.expenseVoiceIssues.length,2);assert(c.vAdd().includes('วันที่อ่านไม่ได้'));assert.equal(c.S.tx.length,0);
+ c.U.draft.amount='500';c.expenseVoiceReviewUpdate();assert.equal(c.U.expenseVoiceIssues.length,1);c.U.draft.date='2026-10-14';c.expenseVoiceReviewUpdate();assert.equal(c.U.expenseVoiceIssues.length,0);
+});
+test('WebKit-prefixed speech can restart after silence, permission failure, timeout and thrown start',()=>{
+ delete c.window.SpeechRecognition;let instance;c.window.webkitSpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');c.U.draft.amount='123';
+ for(const event of ['end','denied','timeout']){assert(c.expenseVoiceStart());const timer=c.U.expenseVoiceTimer;if(event==='end')instance.onend();else if(event==='denied')instance.onerror({error:'not-allowed'});else timers.get(timer)();assert.equal(c.U.expenseVoiceRecognition,null);assert(!timers.has(timer));assert.equal(c.U.draft.amount,'123');}
+ c.U.draft.date='2026-10-14';c.expenseVoiceStart();c.saveTx(false);assert.equal(c.S.tx.length,0);assert(c.U.expenseVoiceRecognition);assert.equal(c.U.draft.amount,'123');c.expenseVoiceStop();
+ c.window.webkitSpeechRecognition=function(){this.start=()=>{throw Error('start failed');};this.abort=()=>{};};assert.equal(c.expenseVoiceStart(),false);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceTimer,null);delete c.window.webkitSpeechRecognition;assert.equal(c.S.tx.length,0);
+});
+test('partial document survives transport and prevents a page total from becoming a single expense',()=>{
+ const x=c.aiGatewayValidateExpense({amount:6430,documentTotal:null,partialDocument:true,rows:[]}),r=c.expenseOcrNormalizeRemote(x);assert.equal(r.partialDocument,true);assert.equal(r.amount,0);assert(c.expenseScanImage.toString().includes("if(res.partialDocument){done('เอกสารระบุหลายหน้า"));
+ for(const text of ['Page 1 of 2 GRAND TOTAL 6430','หน้า ๑ จาก ๒ รวมสุทธิ 6430']){const local=c.expenseOcrResult(text);assert(local.partialDocument,text);assert.equal(local.amount,0);const remote=c.expenseOcrNormalizeRemote({text,amount:6430,documentTotal:6430});assert(remote.partialDocument);assert.equal(remote.amount,0);assert.equal(remote.documentTotal,0);}
+ assert(!c.expenseOcrPartialDocument('Page 1 of 1'));
+});
 test('explicit monetary amounts win over dimensions, quantities, dates and phone numbers',()=>{
  for(const [text,amount] of [['ซื้อเหล็ก 12 มม. 50 เส้น ยอด 4,500 บาท','4500'],['วันที่ 15 จ่าย 1200 บาท ร้านทดสอบ','1200'],['โทร 000-9876543 ยอดเงิน 6,430.00 บาท','6430'],['จ่าย ๑,๒๐๐ บาท ร้านสมใจ','1200'],['จ่าย950บาทร้านทดสอบ','950'],['จ่ายหนึ่งพันสองร้อยบาท','1200'],['ยอดสองหมื่นห้าพันบาทห้าสิบสตางค์','25000.5'],['จำนวนเงินเก้าร้อยเก้าสิบเก้าบาท','999'],['จ่าย 300 ร้านสมใจ','300'],['฿ 320.50','320.5']])assert.equal(c.expenseVoiceParse(text).amount,amount,text);
  for(const text of ['เหล็ก 12 มม. 50 เส้น','วันที่ 15/10/2569','โทร 000-9876543','ยอด 000-9876543','จ่าย 12 เส้น','จ่าย -500 บาท','ราคา 100 บาท อีก 200 บาท'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
@@ -48,9 +75,15 @@ test('provider failures classify safe reasons, keep HTTP400 single-attempt and r
  const p={provider:'generic',url:'https://provider.test',key:'secret',timeout:1000,retries:2};
  for(const [status,message,expected] of [[400,'Unable to decode image','PROVIDER_IMAGE_INVALID'],[400,'API key not valid','PROVIDER_AUTH_FAILED'],[400,'Unknown name thinkingConfig','PROVIDER_REQUEST_INVALID'],[400,'Unknown provider failure secret','PROVIDER_HTTP_400'],[401,'secret','PROVIDER_AUTH_FAILED']]){let calls=0;w.fetch=async()=>{calls++;return new Response(JSON.stringify({error:{message}}),{status});};await assert.rejects(w.providerFetch(p,{image:'data:image/png;base64,AA'},'id'),e=>e.message===expected);assert.equal(calls,1);}
  let calls=0;w.fetch=async()=>new Response('{}',{status:++calls<3?503:200});assert.equal((await w.providerFetch(p,{},'id')).status,200);assert.equal(calls,3);
+ const incomplete=w.cleanExpense({text:'Page 2 of 2',amount:6430,documentTotal:6430,rows:[{amount:2700,sub:'Sand'}]});assert.equal(incomplete.partialDocument,true);assert.equal(incomplete.amount,0);assert.equal(incomplete.documentTotal,null);assert.equal(incomplete.rows[0].amount,2700);
 });
 test('live receipt gate rejects partial rows, telephone amounts, wrong total and date',async()=>{
  const {verifyExpenseReceipt}=await import('./expense-document-quality.mjs'),data={rows,amount:0,documentTotal:6430};assert(verifyExpenseReceipt(data));
  for(const corrupt of [{...data,documentTotal:9876543},{...data,rows:rows.slice(0,2)},{...data,rows:rows.map((r,i)=>i? r:{...r,amount:12})},{...data,rows:rows.map(r=>({...r,date:''}))}])assert.throws(()=>verifyExpenseReceipt(corrupt));
+});
+test('expanded receipt gate verifies net adjustments and incomplete-page source rows independently',async()=>{
+ const {verifyExpenseCase}=await import('./expense-document-quality.mjs'),net={amount:2889,documentTotal:2889,date:'2026-10-14',cat:'ค่าของ',partialDocument:false,rows:[]},vat={id:'discount-vat',mode:'net',amount:2889};assert(verifyExpenseCase(net,vat));assert.throws(()=>verifyExpenseCase({...net,amount:3000},vat));assert.throws(()=>verifyExpenseCase({...net,rows:[{amount:2700},{amount:189}]},vat));
+ const partial={amount:0,documentTotal:null,partialDocument:true,rows:[{amount:1480},{amount:2250}]},item={id:'page-1-of-2',mode:'partial'};assert(verifyExpenseCase(partial,item));assert.throws(()=>verifyExpenseCase({...partial,amount:6430},item));assert.throws(()=>verifyExpenseCase({...partial,partialDocument:false},item));assert.throws(()=>verifyExpenseCase({...partial,rows:[{amount:3730}]},item));
+ const manifest=JSON.parse(fs.readFileSync('tests/fixtures/expense-quality/manifest.json','utf8'));assert.equal(manifest.cases.length,7);for(const x of manifest.cases){const bytes=fs.readFileSync(require('node:path').join('tests/fixtures/expense-quality',x.file));assert.equal(bytes.subarray(1,4).toString(),'PNG');}
 });
 (async()=>{for(const [name,f] of tests){await f();console.log('PASS',name);}console.log('PASS',tests.length,'OCR and voice reliability groups');})().catch(e=>{console.error(e);process.exitCode=1;});

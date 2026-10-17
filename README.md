@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1078 Voice accuracy and expense OCR quality
+
+- Isolates merchant names from category detection, validates explicit spoken dates and rejects malformed/out-of-range Thai monetary numbers without stale values.
+- Shows field-specific review warnings that clear when corrected; keeps the existing category values, accounting formulas and storage identities.
+- Expands live expense quality acceptance to seven public synthetic cases, including degraded images, handwriting-style, net discount/VAT and incomplete pages. Partial documents cannot silently fill a grand total as one page expense.
+- Adds WebKit-prefixed speech lifecycle and six-width browser coverage. Physical iPhone and real audio/Thai handwriting acceptance remain pending. See [QA-v1078.md](QA-v1078.md).
+
 ## v1077 OCR and voice reliability
 
 - Preserves printed receipt totals through client validation, so multi-row review can block mismatched totals before saving.

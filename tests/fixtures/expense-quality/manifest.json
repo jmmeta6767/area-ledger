@@ -1,0 +1,42 @@
+{
+  "description": "Public synthetic receipts. Handwriting-style is simulated; not a real Thai handwritten bill. Partial pages must fail closed, not be silently combined.",
+  "cases": [
+    {
+      "id": "clear",
+      "file": "../expense-synthetic-receipt.png",
+      "mode": "table"
+    },
+    {
+      "id": "faded",
+      "file": "faded.png",
+      "mode": "table"
+    },
+    {
+      "id": "tilted",
+      "file": "tilted.png",
+      "mode": "table"
+    },
+    {
+      "id": "handwriting-style",
+      "file": "handwriting-style.png",
+      "mode": "net",
+      "amount": 1000
+    },
+    {
+      "id": "discount-vat",
+      "file": "discount-vat.png",
+      "mode": "net",
+      "amount": 2889
+    },
+    {
+      "id": "page-1-of-2",
+      "file": "page-1-of-2.png",
+      "mode": "partial"
+    },
+    {
+      "id": "page-2-of-2",
+      "file": "page-2-of-2.png",
+      "mode": "partial"
+    }
+  ]
+}
