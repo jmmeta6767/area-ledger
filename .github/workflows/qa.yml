@@ -35,6 +35,7 @@ jobs:
           LAYOUT_OUTPUT: layout-evidence
         run: |
           node tests/iphone-layout.cjs
+          node tests/menu-icons-visual.cjs
           node tests/iphone-card-keyboard.cjs
           node tests/iphone-project-keyboard.cjs
           node tests/iphone-project-create-keyboard.cjs
@@ -68,6 +69,8 @@ jobs:
         run: node --check sw.js
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
+      - name: Artwork/menu icon regression
+        run: node tests/menu-icons.cjs
       - name: Native store package contract
         run: node tests/mobile-store-contract.cjs
       - name: Regression QA

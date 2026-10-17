@@ -57,6 +57,7 @@ jobs:
           node --check gateway/public/sw.js
           node --check sw.js
           node tests/cloudflare-only.cjs
+          node tests/menu-icons.cjs
           node tests/qa.cjs
           node tests/reliability-v1048.cjs
           node tests/gateway-contract.cjs
