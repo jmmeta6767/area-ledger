@@ -5145,8 +5145,13 @@ function expenseVoiceParse(transcript){
   // Speech recognition can leave a standalone Thai currency fragment after a complete number.
   // Only strip known fragments in an expense/income phrase; do not relax unit/date or amount guards.
   var noisyCurrencyFragment=/^(?:ค่า(?=[ก-๙])|ซื้อ|จ่าย|รายจ่าย|รับเงิน|รายรับ)/.test(text)&&/[0-9๐-๙][0-9๐-๙,]*(?:\.[0-9๐-๙]{1,2})?\s+(?:ย|บ|บา)\s*$/.test(text);
-  if(noisyCurrencyFragment)text=text.replace(/([0-9๐-๙][0-9๐-๙,]*(?:\.[0-9๐-๙]{1,2})?)\s+(?:ย|บ|บา)\s*$/,'$1');
-  text=text.replace(/^(?:แก้(?:ไข)?|เปลี่ยน)\s*(?:ยอด(?:เงิน)?|จำนวนเงิน)\s*(?:เป็น|ใหม่)?\s*/, 'ยอด ').replace(/^(?:แก้(?:ไข)?|เปลี่ยน)\s*(?:รายการ|รายละเอียด)\s*(?:เป็น|ใหม่)?\s*/, 'รายการ ');var bare=expenseVoiceNumber(text.replace(/[๐-๙]/g,function(x){return String('๐๑๒๓๔๕๖๗๘๙'.indexOf(x));}));var bareCandidate=/^(?:[-−+]\s*|ลบ\s*)?(?:[0-9๐-๙.,]+|(?:(?:ศูนย์|หนึ่ง|เอ็ด|สอง|ยี่|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า|สิบ|ร้อย|พัน|หมื่น|แสน|ล้าน)\s*)+)$/.test(text),bareMoney=isFinite(bare)&&bare>0&&bare<=1000000000&&!/^0[0-9]{8,}$/.test(text);out.amount=bareMoney?String(Math.round(bare*100)/100):expenseVoiceAmount(text);out.amountIssue=!out.amount&&(/บาท|สตางค์|฿|ยอด(?:เงิน|รวม|สุทธิ)?|จำนวนเงิน|เป็นเงิน/.test(text)||!!expenseVoiceTrailingMoney(text)||bareCandidate||noisyCurrencyFragment);
+  var normalizedCurrencyFragment=false;
+  if(noisyCurrencyFragment){
+    var candidate=text.replace(/([0-9๐-๙][0-9๐-๙,]*(?:\.[0-9๐-๙]{1,2})?)\s+(?:ย|บ|บา)\s*$/,'$1');
+    // Never infer a payment when another amount, quantity or date remains in the phrase.
+    if(expenseVoiceTrailingMoney(candidate)){text=candidate;normalizedCurrencyFragment=true;}
+  }
+  text=text.replace(/^(?:แก้(?:ไข)?|เปลี่ยน)\s*(?:ยอด(?:เงิน)?|จำนวนเงิน)\s*(?:เป็น|ใหม่)?\s*/, 'ยอด ').replace(/^(?:แก้(?:ไข)?|เปลี่ยน)\s*(?:รายการ|รายละเอียด)\s*(?:เป็น|ใหม่)?\s*/, 'รายการ ');var bare=expenseVoiceNumber(text.replace(/[๐-๙]/g,function(x){return String('๐๑๒๓๔๕๖๗๘๙'.indexOf(x));}));var bareCandidate=/^(?:[-−+]\s*|ลบ\s*)?(?:[0-9๐-๙.,]+|(?:(?:ศูนย์|หนึ่ง|เอ็ด|สอง|ยี่|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า|สิบ|ร้อย|พัน|หมื่น|แสน|ล้าน)\s*)+)$/.test(text),bareMoney=isFinite(bare)&&bare>0&&bare<=1000000000&&!/^0[0-9]{8,}$/.test(text);out.amount=noisyCurrencyFragment&&!normalizedCurrencyFragment?'':bareMoney?String(Math.round(bare*100)/100):expenseVoiceAmount(text);out.amountIssue=!out.amount&&(/บาท|สตางค์|฿|ยอด(?:เงิน|รวม|สุทธิ)?|จำนวนเงิน|เป็นเงิน/.test(text)||!!expenseVoiceTrailingMoney(text)||bareCandidate||noisyCurrencyFragment);
   if(/(?:^|\s)(?:รับเงิน|รายรับ|รับจาก)(?=\s|[0-9๐-๙]|หนึ่ง|สอง|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า|สิบ)/.test(text))out.type='in';else if(/(?:^|\s)(?:จ่าย|รายจ่าย|ซื้อ)/.test(text))out.type='out';
   var partnerMatch=text.match(/(?:ร้าน(?:ค้า)?|จ่ายให้|รับจาก|ผู้รับเงิน)\s*([^,，;；]+?)(?=\s+(?:รายการ|ซื้อ|ค่าแรง|ค่าวัสดุ|ค่าของ|วันที่|วันนี้|เมื่อวาน|จำนวน|ยอด)|[,，;；]|$)/);
   if(partnerMatch)out.partner=partnerMatch[1].trim().replace(/\s+/g,' ').slice(0,120);
