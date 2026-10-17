@@ -53,6 +53,6 @@ vm.runInContext(worker.replace('export default','globalThis.worker='),runtime);
   const proxied=await runtime.worker.fetch(new Request('https://g.test/v1/health'),{GATEWAY:gateway,ASSETS:assets});
   assert.equal(await proxied.text(),'gateway');
   assert.equal(new URL(gatewayTarget).origin,'https://area-ledger-ai-gateway.areamaibab.workers.dev');
-  assert.equal(assetCalls,2);
+  assert.equal(assetCalls,3);
   console.log('PASS legacy g app shell and no-store runtime contract');
 })().catch(error=>{console.error(error);process.exitCode=1;});
