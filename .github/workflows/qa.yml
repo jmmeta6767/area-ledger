@@ -140,3 +140,4 @@ jobs:
         run: |
           node tests/gateway-preflight.cjs
           node tests/legacy-app.cjs
+          node tests/safari-sw-recovery.cjs
