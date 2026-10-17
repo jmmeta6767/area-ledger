@@ -48,6 +48,7 @@ test('repeated speech edits only named fields and retains unresolved warnings an
  assert.equal(d.amount,'50000');speak('เปลี่ยนรายการเป็น ค่าแรงติดตั้งหลังคา');assert.equal(d.sub,'ค่าแรงติดตั้งหลังคา');assert.equal(d.amount,'50000');assert.equal(d.cat,'ค่าแรง');
  speak('วันที่ 15/10/2569');assert.equal(d.date,'2026-10-15');assert.equal(d.sub,'ค่าแรงติดตั้งหลังคา');
  speak('แก้ยอดเป็น หนึ่งล้านล้าน');assert.equal(d.amount,'');assert.equal(c.U.expenseVoiceIssues.length,1);speak('เปลี่ยนรายการเป็น ค่าแรงมุงหลังคา');assert.equal(c.U.expenseVoiceIssues.length,1);speak('แก้ยอดเป็น 49000');assert.equal(d.amount,'49000');assert.equal(c.U.expenseVoiceIssues.length,0);
+ for(const invalid of ['0','1000000001','-53000','หนึ่งล้านล้าน']){speak(invalid);assert.equal(d.amount,'');assert(c.U.expenseVoiceIssues.length);speak('แก้ยอดเป็น 49000');}
  const markup=c.vAdd();assert(markup.indexOf('id="amt"')<markup.indexOf('class="expense-action-tools"'));assert(markup.indexOf('class="expense-action-tools"')<markup.indexOf('id="pid"'));assert(markup.includes('ข้อความที่ได้ยินล่าสุด'));assert(markup.includes('แก้ยอดเป็น 49000'));
  c.U.draft=c.newDraft('out','p');assert(!c.vAdd().includes('แก้ยอดเป็น 49000'));
 });
