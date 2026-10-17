@@ -4052,7 +4052,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1082,"sha":"","environment":"source"};
+var APP_BUILD={"version":1083,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4156,21 +4156,34 @@ async function cloudOffloadAllTxPhotos(){
 
 function googleWorkspaceState(){if(!U.googleWorkspace||typeof U.googleWorkspace!=='object')U.googleWorkspace={loading:false,status:null,error:''};return U.googleWorkspace;}
 async function googleWorkspaceRefresh(pid){
-  cloudLedgerKey(true);var st=googleWorkspaceState();st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
-  var r=await cloudGateway('GET','/v1/google/status?pid='+encodeURIComponent(pid||''));st.loading=false;if(r.ok){st.status=r.data||{};st.error='';}else{st.status=r.data||{};st.error=String(r.data&&r.data.error||'GOOGLE_STATUS_FAILED');}
+  var st=googleWorkspaceState(),key=cloudLedgerKey(false),sequence=(+st.sequence||0)+1;st.sequence=sequence;st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
+  if(!key){st.loading=false;st.status=null;st.error='GOOGLE_LEDGER_IDENTITY_MISSING';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();return st;}
+  var timer,r=await Promise.race([cloudGateway('GET','/v1/google/status?pid='+encodeURIComponent(pid||'')),new Promise(function(resolve){timer=setTimeout(function(){resolve({ok:false,data:{error:'GOOGLE_STATUS_TIMEOUT'}});},12000);})]);clearTimeout(timer);
+  if(st.sequence!==sequence)return st;if(cloudLedgerKey(false)!==key){st.loading=false;st.status=null;st.error='GOOGLE_LEDGER_IDENTITY_CHANGED';}else{st.loading=false;st.status=r.data||{};st.error=r.ok?'':String(r.data&&r.data.error||'GOOGLE_STATUS_FAILED');}
   if(U.sheet&&U.sheet.kind==='googleWorkspace')render();return st;
 }
 async function googleWorkspaceResume(){
-  var pid='';try{pid=sessionStorage.getItem('area-ledger-google-return-pid')||'';sessionStorage.removeItem('area-ledger-google-return-pid');}catch(_){}
-  U.sheet={kind:'googleWorkspace',pid:pid};var st=googleWorkspaceState();
-  if(!cloudLedgerKey(false)){st.error='GOOGLE_LEDGER_IDENTITY_MISSING';render();return false;}
-  await googleWorkspaceRefresh(pid);
-  if(st.status&&st.status.connected){toast('เชื่อม Google Workspace แล้ว');return true;}
-  if(!st.error)st.error='GOOGLE_CONNECTION_NOT_FOUND';render();return false;
+  if(U.googleWorkspaceReturnBusy)return false;U.googleWorkspaceReturnBusy=true;
+  try{
+    var pid=U.sheet&&U.sheet.kind==='googleWorkspace'?U.sheet.pid||'':'';try{pid=sessionStorage.getItem('area-ledger-google-return-pid')||pid;}catch(_){}
+    U.sheet={kind:'googleWorkspace',pid:pid};var st=googleWorkspaceState();
+    if(!cloudLedgerKey(false)){st.error='GOOGLE_LEDGER_IDENTITY_MISSING';render();return false;}
+    await googleWorkspaceRefresh(pid);
+    if(st.status&&st.status.connected&&!st.error){try{sessionStorage.removeItem('area-ledger-google-return-pid');}catch(_){}toast('เชื่อม Google Workspace แล้ว');return true;}
+    if(!st.error)st.error='GOOGLE_CONNECTION_NOT_FOUND';render();return false;
+  }finally{U.googleWorkspaceReturnBusy=false;}
 }
+function googleWorkspaceWake(){
+  if(document.visibilityState==='hidden'||U.googleWorkspaceReturnBusy||googleWorkspaceState().loading)return;
+  var pending=false;try{pending=sessionStorage.getItem('area-ledger-google-return-pid')!==null;}catch(_){}
+  if(pending)googleWorkspaceResume();else if(U.sheet&&U.sheet.kind==='googleWorkspace')googleWorkspaceRefresh(U.sheet.pid||'');
+}
+window.addEventListener('pageshow',function(e){if(e&&e.persisted)googleWorkspaceWake();});
+window.addEventListener('focus',googleWorkspaceWake);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')googleWorkspaceWake();});
 async function googleWorkspaceConnect(pid){
   if(isNativeStoreApp()){toast('การเชื่อม Google ต้องกลับมาได้อย่างปลอดภัยในแอป · ฟังก์ชันนี้ยังไม่พร้อม');return false;}
-  cloudLedgerKey(true);var returnUrl=location.origin+location.pathname,st=googleWorkspaceState();st.loading=true;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
+  cloudLedgerKey(true);var returnUrl=location.origin+location.pathname,st=googleWorkspaceState();if(st.loading)return false;st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();
   var r=await cloudGateway('POST','/v1/google/oauth/start',{returnUrl:returnUrl});st.loading=false;
   if(!r.ok||!r.data||!r.data.authorizationUrl){st.error=String(r.data&&r.data.error||'GOOGLE_CONNECT_FAILED');render();toast(st.error==='GOOGLE_NOT_CONFIGURED'?'Google OAuth ยังไม่ได้ตั้งค่าบน Server':'เริ่มเชื่อม Google ไม่สำเร็จ');return false;}
   try{sessionStorage.setItem('area-ledger-google-return-pid',String(pid||''));}catch(_){}
@@ -8008,7 +8021,7 @@ function sheetHtml(){
       (gst.email?'<div class="kv"><span>บัญชี Google</span><span>'+esc(gst.email)+'</span></div>':'')+
       '<div class="kv"><span>โครงการ</span><span>'+esc(gp&&gp.name||'-')+'</span></div>'+
       (gl&&gl.lastSyncAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><span>'+esc(String(gl.lastSyncAt).replace('T',' ').slice(0,16))+'</span></div>':'')+
-      (gs.error?'<div class="out" style="margin-top:8px">'+esc(gs.error)+'</div>':'')+'</div>'+
+      (gs.error?'<div class="out" role="alert" style="margin-top:8px;overflow-wrap:anywhere">'+esc(gs.error==='GOOGLE_CONNECTION_NOT_FOUND'?'กลับจาก Google แล้ว แต่เซิร์ฟเวอร์ยังไม่ยืนยันการเชื่อม · ตรวจสถานะอีกครั้ง หรือเริ่มเชื่อมใหม่':gs.error==='GOOGLE_STATUS_TIMEOUT'?'ตรวจสถานะนานเกินไป · ลองตรวจสถานะอีกครั้ง':gs.error==='GOOGLE_LEDGER_IDENTITY_MISSING'||gs.error==='GOOGLE_LEDGER_IDENTITY_CHANGED'?'รหัสข้อมูลของเบราว์เซอร์ไม่ตรงกับรอบที่เชื่อม · กลับไปเชื่อมจากเบราว์เซอร์เดิม':gs.error)+'<small style="display:block">'+esc(gs.error)+'</small></div>':'')+'</div>'+
       '<div class="stack" style="margin-top:12px">'+
       (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'">ซิงก์ BOQ ไป Google Sheets</button>')+
       (gst.connected?'<label class="btn" for="googleDriveFiles">เก็บไฟล์ต้นฉบับใน Google Drive</label><input id="googleDriveFiles" type="file" multiple accept=".pdf,.xlsx,.xls,.csv,image/jpeg,image/png,image/webp,image/heic,image/heif" style="display:none">':'')+
@@ -8017,7 +8030,7 @@ function sheetHtml(){
       (gl&&gl.sheetUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.sheetUrl)+'">เปิด Google Sheet</button>':'')+
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
       (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect">ยกเลิกการเชื่อม Google</button>':'')+
-      '<button class="btn" data-act="closeSheet">ปิด</button></div>'+
+      '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
       '<p class="muted" style="margin-top:10px">v833 รองรับ Ledger → Google Sheets + เก็บไฟล์ต้นฉบับใน Drive · การดึงกลับจาก Sheet จะเพิ่มเป็น Diff Preview ในขั้นถัดไป</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
@@ -8394,6 +8407,7 @@ function directAction(el){
   }
   if(a==='bottomBoq'){var bp=bottomBoqProject();U.appMenu=false;U.sheet=null;if(bp){if(U.boqProjectPid!==bp){U.boqQuery='';U.boqAnchorId='';U.boqScroll=0;}U.boqProjectPid=bp;U.pid=bp;go('boq',{pid:bp,boqProjectPid:bp,boqQuery:U.boqQuery||'',boqAnchorId:U.boqAnchorId||'',boqScroll:U.boqScroll||0});}else{U.boqProjectPid='';U.boqQuery='';U.boqAnchorId='';U.boqScroll=0;go('boq',{boqProjectPid:'',boqQuery:'',boqAnchorId:'',boqScroll:0});}return true;}
   if(a==='googleWorkspaceOpen'){U.sheet={kind:'googleWorkspace',pid:id||U.boqProjectPid||''};googleWorkspaceState();render();googleWorkspaceRefresh(U.sheet.pid);return true;}
+  if(a==='googleWorkspaceRefresh'){googleWorkspaceResume();return true;}
   if(a==='googleWorkspaceConnect'){googleWorkspaceConnect(id||U.boqProjectPid||'');return true;}
   if(a==='googleWorkspaceSync'){googleWorkspaceSync(id||U.boqProjectPid||'');return true;}
   if(a==='googleWorkspaceOpenUrl'){var gu=el.getAttribute('data-url')||'';if(/^https:\/\/(?:docs|drive)\.google\.com\//.test(gu))window.open(gu,'_blank','noopener');return true;}
@@ -9183,7 +9197,7 @@ function boot(){
     try{history.replaceState({areaLedger:true,view:U.view||'home',pid:U.pid||null},'',location.href);}catch(e){}
     render();
     expenseBatchDraftLoad();
-    if(U.googleOauthReturned){U.googleOauthReturned=false;googleWorkspaceResume();}
+    var googlePending=false;try{googlePending=sessionStorage.getItem('area-ledger-google-return-pid')!==null;}catch(_){}if(U.googleOauthReturned||googlePending){U.googleOauthReturned=false;googleWorkspaceResume();}
     if(best&&best===o&&o!==ls)persist({recovery:true});
     try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
   }
@@ -9206,7 +9220,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1082&project-keyboard=1&oauth-recovery=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1083&project-keyboard=1&oauth-recovery=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}

@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1083 Google return status recovery
+
+- Rechecks Google connection after a cached Safari return, focus or visibility restore.
+- Retains the pending project until the server confirms connection; stale responses cannot overwrite a newer status and status reads never create a new ledger identity.
+- Adds explicit status retry and readable errors. Real account authorization still requires device acceptance. See QA-v1083.md.
+
 ## v1082 Fresh microphone sessions and native start diagnostics
 
 - Creates a new recognizer for each direct tap; never starts another capture from an end callback.
