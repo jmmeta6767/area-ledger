@@ -25,7 +25,10 @@ const all=['accounting','contract','house-materials','documents','boq','overview
    });
    await page.goto('https://ledger-icons.test/',{waitUntil:'domcontentloaded'});
    await page.evaluate(()=>{S=emptyState();S.ui.wallpaper=false;U.view='home';U.appMenu=true;render();document.querySelector('.area-shortcuts').open=true;});
-   await page.waitForFunction(()=>performance.getEntriesByType('resource').some(x=>x.name.includes('area-ledger-menu-icons.webp')),{timeout:15000});
+   await page.waitForFunction(()=>performance.getEntriesByType('resource').some(x=>x.name.includes('area-ledger-menu-icons.webp')),null,{timeout:15000});
+   // Existing drawer animation translates the panel off-screen for 180ms.
+   // Measure only after the CSS transition finishes, not during its entrance.
+   await page.waitForFunction(()=>{const d=document.querySelector('.app-drawer');return d&&d.getAnimations().every(a=>a.playState==='finished');},null,{timeout:3000});
    const state=await page.evaluate(()=>{
     const list=[...document.querySelectorAll('.app-drawer .area-menu-art')],names=new Set(list.map(el=>[...el.classList].find(x=>x.startsWith('area-menu-art--')).replace('area-menu-art--',''))),sprite=getComputedStyle(list[0],'::after');
     const drawer=document.querySelector('.app-drawer'),rect=drawer.getBoundingClientRect();
