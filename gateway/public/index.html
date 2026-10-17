@@ -4027,7 +4027,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1078,"sha":"","environment":"source"};
+var APP_BUILD={"version":1079,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5086,6 +5086,14 @@ function expenseVoiceNumber(value){
   for(var i=0;i<tokens.length;i++){var x=tokens[i];if(x==='ยี่'&&tokens[i+1]!=='สิบ'||x==='เอ็ด'&&i===0)return NaN;if(x==='ล้าน'){if(n===0&&section===0)return NaN;total+=(section+(n==null?0:n)||1)*1000000;section=0;n=null;previous=Infinity;}else if(units[x]){if(units[x]>=previous)return NaN;section+=(n==null?1:n)*units[x];n=null;previous=units[x];}else{if(n!==null)return NaN;n=digits[x];}}
   return total+section+(n==null?0:n);
 }
+function expenseVoiceTrailingMoney(text){
+  var t=String(text||'').replace(/[๐-๙]/g,function(x){return String('๐๑๒๓๔๕๖๗๘๙'.indexOf(x));}).trim();
+  var m=t.match(/\s+([0-9][0-9,]*(?:\.[0-9]{1,2})?|(?:(?:ศูนย์|หนึ่ง|เอ็ด|สอง|ยี่|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า|สิบ|ร้อย|พัน|หมื่น|แสน|ล้าน)\s*)+)\s*$/);
+  if(!m)return null;
+  var prefix=t.slice(0,m.index).trim();
+  if(!/^(?:ค่าแรง|ค่าช่าง|ค่าจ้าง|ค่าวัสดุ|ค่าของ|ค่าเช่า|ค่าเอกสาร|ค่างานเอกสาร|ค่าประกัน|ซื้อ|จ่าย|รายจ่าย|รับเงิน|รายรับ)/.test(prefix)||/[0-9]|วันที่|โทร|บัญชี|ร้าน|ผู้รับเงิน|จ่ายให้|รับจาก|ติดลบ|ลบ\s*$/.test(prefix))return null;
+  return {text:m[1].trim(),prefix:prefix};
+}
 function expenseVoiceAmount(text){
   var t=String(text||'').replace(/[๐-๙]/g,function(x){return String('๐๑๒๓๔๕๖๗๘๙'.indexOf(x));}),token='(?:[0-9][0-9,]*(?:\\.[0-9]{1,2})?|(?:(?:ศูนย์|หนึ่ง|เอ็ด|สอง|ยี่|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า|สิบ|ร้อย|พัน|หมื่น|แสน|ล้าน)\\s*)+)';
   function read(m){if(!m)return '';var n=expenseVoiceNumber(m[1]);if(m[2]){var satang=expenseVoiceNumber(m[2]);if(!(satang>=0&&satang<100))return '';n+=satang/100;}return isFinite(n)&&n>0&&n<=1000000000?String(Math.round(n*100)/100):'';}
@@ -5095,7 +5103,8 @@ function expenseVoiceAmount(text){
   while((m=currency.exec(t))){if(/[\d.,/\-−]$|(?:ติดลบ|ลบ)\s*$/.test(t.slice(0,m.index)))return '';var v=read([null,m[1]||m[2],m[3]]);if(!v)return '';if(values.indexOf(v)<0)values.push(v);}if(values.length)return values.length===1?values[0]:'';
   var plain=new RegExp('^(?:จ่าย|รายจ่าย|รับเงิน|รายรับ)\\s*('+token+')(?=\\s|ร้าน|รายการ|$)').exec(t);
   if(plain&&/^(?:\s*(?:มม|ซม|เมตร|เส้น|ถุง|ชิ้น|แผ่น|คิว|กก|วันที่|\/|-))/.test(t.slice(plain[0].length)))return '';
-  return read(plain);
+  if(plain)return read(plain);
+  var trailing=expenseVoiceTrailingMoney(t);return trailing?read([null,trailing.text]):'';
 }
 function expenseVoiceDate(text){
   var t=String(text||'').replace(/[๐-๙]/g,function(x){return String('๐๑๒๓๔๕๖๗๘๙'.indexOf(x));}),dates=[],mentioned=/วันที่|\d{1,4}\s*[\/-]\s*\d{1,2}\s*[\/-]\s*\d{1,4}|วันนี้|เมื่อวาน/.test(t),invalid=false;
@@ -5109,7 +5118,7 @@ function expenseVoiceDate(text){
 }
 function expenseVoiceParse(transcript){
   var text=String(transcript||'').trim(),out={transcript:text,amount:'',partner:'',sub:'',type:'',cat:'',date:'',amountIssue:false,dateIssue:false};
-  if(!text)return out;out.amount=expenseVoiceAmount(text);out.amountIssue=!out.amount&&/บาท|สตางค์|฿|ยอด(?:เงิน|รวม|สุทธิ)?|จำนวนเงิน|เป็นเงิน/.test(text);
+  if(!text)return out;out.amount=expenseVoiceAmount(text);out.amountIssue=!out.amount&&(/บาท|สตางค์|฿|ยอด(?:เงิน|รวม|สุทธิ)?|จำนวนเงิน|เป็นเงิน/.test(text)||!!expenseVoiceTrailingMoney(text));
   if(/(?:^|\s)(?:รับเงิน|รายรับ|รับจาก)(?=\s|[0-9๐-๙]|หนึ่ง|สอง|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า|สิบ)/.test(text))out.type='in';else if(/(?:^|\s)(?:จ่าย|รายจ่าย|ซื้อ)/.test(text))out.type='out';
   var partnerMatch=text.match(/(?:ร้าน(?:ค้า)?|จ่ายให้|รับจาก|ผู้รับเงิน)\s*([^,，;；]+?)(?=\s+(?:รายการ|ซื้อ|ค่าแรง|ค่าวัสดุ|ค่าของ|วันที่|วันนี้|เมื่อวาน|จำนวน|ยอด)|[,，;；]|$)/);
   if(partnerMatch)out.partner=partnerMatch[1].trim().replace(/\s+/g,' ').slice(0,120);
@@ -5119,7 +5128,7 @@ function expenseVoiceParse(transcript){
   if(!out.cat&&partnerMatch&&/^ช่าง/.test(out.partner)&&/จ่ายให้/.test(partnerMatch[0]))out.cat='ค่าแรง';
   var subMatch=text.match(/(?:รายการ|รายละเอียด)\s*[:：]?\s*([^,，;；]+?)(?=\s+(?:ร้าน(?:ค้า)?|จ่ายให้|รับจาก|วันที่|วันนี้|เมื่อวาน|จำนวน|ยอด)|[,，;；]|$)/);
   if(subMatch)out.sub=subMatch[1].trim().replace(/\s+/g,' ').slice(0,240);
-  else if(!partnerMatch){var clean=text.replace(/(?:จ่าย|รายจ่าย|รายรับ|รับเงิน|ซื้อ|บาท|วันนี้|เมื่อวาน|ค่าแรง|ค่าช่าง|ค่าวัสดุ|วัสดุ|ค่าของ|ค่าประกันผลงาน|ค่าประกัน|ค่างานเอกสาร|ค่าเอกสาร|ค่าแบบ|ค่าธรรมเนียม|ค่าเช่า|เช่า)/g,' ').replace(/[0-9,๐-๙]+(?:\.[0-9]+)?/g,' ').replace(/\s+/g,' ').trim();if(clean)out.sub=clean.slice(0,240);}
+  else if(!partnerMatch){var trailing=out.amount&&expenseVoiceTrailingMoney(text),clean=(trailing?trailing.prefix:text).replace(/(?:จ่าย|รายจ่าย|รายรับ|รับเงิน|ซื้อ|บาท|วันนี้|เมื่อวาน|ค่าแรง|ค่าช่าง|ค่าวัสดุ|วัสดุ|ค่าของ|ค่าประกันผลงาน|ค่าประกัน|ค่างานเอกสาร|ค่าเอกสาร|ค่าแบบ|ค่าธรรมเนียม|ค่าเช่า|เช่า)/g,' ').replace(/[0-9,๐-๙]+(?:\.[0-9]+)?/g,' ').replace(/\s+/g,' ').trim();if(clean)out.sub=clean.slice(0,240);}
   var date=expenseVoiceDate(text);out.date=date.date;out.dateIssue=date.invalid;if((out.amountIssue||out.dateIssue)&&!subMatch)out.sub='';return out;
 }
 function expenseVoiceReviewUpdate(){
@@ -9120,7 +9129,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
     if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
     if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
   });
-  navigator.serviceWorker.register('sw.js?v=800&source=1078&project-keyboard=1&oauth-recovery=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+  navigator.serviceWorker.register('sw.js?v=800&source=1079&project-keyboard=1&oauth-recovery=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
 function projectFieldFocused(){var f=document.activeElement,keyboardTypes=['text','search','email','tel','url','number','password'];return !!(f&&f.closest&&f.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet')&&(f.tagName==='TEXTAREA'||(f.tagName==='INPUT'&&keyboardTypes.indexOf(f.type)>=0)));}

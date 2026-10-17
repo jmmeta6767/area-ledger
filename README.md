@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1079 Labor speech amount fix
+
+- Accepts a single trailing monetary number after an expense description without requiring the word baht, including `ค่าแรงงานโครงหลัง 54,000` and Thai number words.
+- Keeps phone/date/quantity ambiguity guards and removes accepted Thai monetary words from the description. Repeated recognition, form values and no automatic ledger saves are covered by regression and six-width browser emulation.
+- Physical iPhone recognition quality remains unverified; this fixes parsing of the supplied transcript.
+
 ## v1078 Voice accuracy and expense OCR quality
 
 - Isolates merchant names from category detection, validates explicit spoken dates and rejects malformed/out-of-range Thai monetary numbers without stale values.
