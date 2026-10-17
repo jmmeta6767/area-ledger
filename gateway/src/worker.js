@@ -174,8 +174,32 @@ function googleSheetStyleRequests(tab,sheet,detail){
   }
   return requests;
 }
+function googleProjectChartRequests(resolved){
+  const overview=resolved.find(x=>x.tab.title==='ภาพรวมโครงการ'),cost=resolved.find(x=>x.tab.title==='ต้นทุน');if(!overview)return [];
+  const requests=[],existing=overview.detail.charts||[],owned=existing.filter(c=>String(c.spec?.altText||'').startsWith('AREA_LEDGER_CHART_'));
+  const source=(sheetId,start,end,col)=>({sourceRange:{sources:[{sheetId,startRowIndex:start,endRowIndex:end,startColumnIndex:col,endColumnIndex:col+1}]}});
+  const definitions=[],rows=overview.tab.values,row=label=>rows.findIndex(r=>r[0]===label);
+  function define(key,title,subtitle,sheetId,start,end,type,accent){
+    if(start<0||end<=start)return;
+    definitions.push({key,spec:{title,subtitle,altText:'AREA_LEDGER_CHART_'+key,fontName:'Arial',backgroundColorStyle:{rgbColor:googleSheetColor('#FFFFFF')},titleTextFormat:{fontSize:14,bold:true,foregroundColorStyle:{rgbColor:googleSheetColor('#083F79')}},basicChart:{chartType:type,legendPosition:'NO_LEGEND',headerCount:0,axis:[{position:'BOTTOM_AXIS',title:type==='BAR'?'จำนวนเงิน (บาท)':''},{position:'LEFT_AXIS',title:type==='BAR'?'หมวดรายจ่าย':'จำนวนเงิน (บาท)'}],domains:[{domain:source(sheetId,start,end,0)}],series:[{series:source(sheetId,start,end,1),targetAxis:type==='BAR'?'BOTTOM_AXIS':'LEFT_AXIS',colorStyle:{rgbColor:googleSheetColor(accent)},dataLabel:{type:'DATA'}}]}}});
+  }
+  define('FINANCE','มูลค่าสัญญา รายรับจริง และต้นทุน','ยอดจาก AREA Ledger ณ เวลาซิงค์',overview.sheet.sheetId,row('มูลค่าสัญญารวมอนุมัติ'),row('ต้นทุนรวม')+1,'COLUMN','#083F79');
+  define('PROFIT','กำไรคาดการณ์ และกำไรสุทธิ',typeof rows[row('กำไร/ขาดทุนสุทธิ')]?.[1]==='number'?'กำไรสุทธิอ้างอิงรายรับที่ได้รับจริง':'ยังไม่มีรายรับจริง จึงยังไม่แสดงแท่งกำไรสุทธิ',overview.sheet.sheetId,row('กำไรคาดการณ์'),row('กำไร/ขาดทุนสุทธิ')+1,'COLUMN','#D99A00');
+  const categoryEnd=cost?.tab.values.findIndex(r=>r[0]==='รายจ่ายที่บันทึก')??-1;
+  if(cost&&categoryEnd>1)define('CATEGORIES','ต้นทุนรายจ่ายแยกตามหมวด','ยอดก่อน VAT รวมรายการที่ยังค้าง ไม่รวมแถวสรุปและเงินประกันอ้างอิง',cost.sheet.sheetId,1,categoryEnd,'BAR','#267A60');
+  // Place newly created charts below tables and user charts. Preserve manual positions on resync.
+  const base=existing.filter(c=>!owned.includes(c)).reduce((n,c)=>{const p=c.position?.overlayPosition;return p?Math.max(n,(p.anchorCell?.rowIndex||0)+Math.ceil((p.heightPixels||400)/20)+2):n;},rows.length+2);
+  definitions.forEach(({key,spec},i)=>{
+    const matches=owned.filter(c=>c.spec.altText==='AREA_LEDGER_CHART_'+key),chart=matches[0];
+    if(chart)requests.push({updateChartSpec:{chartId:chart.chartId,spec}});
+    else requests.push({addChart:{chart:{spec,position:{overlayPosition:{anchorCell:{sheetId:overview.sheet.sheetId,rowIndex:base+i*21,columnIndex:0},widthPixels:880,heightPixels:360}}}}});
+    matches.slice(1).forEach(c=>requests.push({deleteEmbeddedObject:{objectId:c.chartId}}));
+  });
+  owned.filter(c=>!definitions.some(d=>c.spec.altText==='AREA_LEDGER_CHART_'+d.key)).forEach(c=>requests.push({deleteEmbeddedObject:{objectId:c.chartId}}));
+  return requests;
+}
 async function googleWriteProjectSnapshot(token,id,tabs,project){
-  const endpoint='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id),meta=await googleJson(endpoint+'?fields=sheets(properties(sheetId,title,gridProperties),bandedRanges,basicFilter,columnGroups,conditionalFormats,developerMetadata)',{headers:{Authorization:'Bearer '+token}}),details=meta.sheets||[],sheets=details.map(x=>x.properties),requests=[];let next=Math.max(0,...sheets.map(x=>x.sheetId))+1;
+  const endpoint='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id),meta=await googleJson(endpoint+'?fields=sheets(properties(sheetId,title,gridProperties),bandedRanges,basicFilter,columnGroups,conditionalFormats,developerMetadata,charts)',{headers:{Authorization:'Bearer '+token}}),details=meta.sheets||[],sheets=details.map(x=>x.properties),requests=[],resolved=[];let next=Math.max(0,...sheets.map(x=>x.sheetId))+1;
   if(project)requests.push({updateSpreadsheetProperties:{properties:{title:'AREA Ledger - '+project.name},fields:'title'}});
   for(const tab of tabs){let sheet=sheets.find(x=>x.title===tab.title),count=tab.values.length,width=tab.values[0].length;
     if(!sheet){sheet={sheetId:next++,title:tab.title,gridProperties:{rowCount:Math.max(1000,count),columnCount:Math.max(26,width)}};requests.push({addSheet:{properties:sheet}});}else{const grid=sheet.gridProperties||{},rows=Math.max(grid.rowCount||1000,count),cols=Math.max(grid.columnCount||26,width);if(rows!==grid.rowCount||cols!==grid.columnCount)requests.push({updateSheetProperties:{properties:{sheetId:sheet.sheetId,gridProperties:{rowCount:rows,columnCount:cols}},fields:'gridProperties.rowCount,gridProperties.columnCount'}});sheet={...sheet,gridProperties:{rowCount:rows,columnCount:cols}};}
@@ -190,7 +214,9 @@ async function googleWriteProjectSnapshot(token,id,tabs,project){
       return {userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value??'')}};
     })})),fields:'userEnteredValue'}});
     requests.push(...googleSheetStyleRequests(tab,sheet,detail));
+    resolved.push({tab,sheet,detail});
   }
+  requests.push(...googleProjectChartRequests(resolved));
   // Atomic values and presentation update; failures never advance successful-sync metadata.
   await googleJson(endpoint+':batchUpdate',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({requests})});
 }

@@ -1,5 +1,9 @@
 # AREA Ledger V2 — Master v800
 
+## v1086 Google Sheets presentation and charts
+
+- Native linked charts compare contract/receipts/cost, forecast/net profit, and expense categories. Re-sync updates existing charts without duplicates and preserves user-created charts and manually moved positions. Missing revenue is not plotted as zero profit.
+
 ## Google Sheets presentation
 
 - Adds a project overview sourced from existing finance metrics, with Thailand sync time and an explicit waiting-for-revenue state.
