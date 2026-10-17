@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1082 Fresh microphone sessions and native start diagnostics
+
+- Creates a new recognizer for each direct tap; never starts another capture from an end callback.
+- Shows listening only after native start. Missing start/result/end releases the mic with a retry message and preserves the draft.
+- Expandable in-memory microphone metadata helps identify the failing native stage without storing audio or transcript in diagnostics.
+- See QA-v1082.md for coverage and physical iPhone limitations.
+
 ## v1081 Short expense speech and microphone restart
 
 - `ค่าทราย 500` now fills amount 500, item ทราย and the existing materials category without requiring baht.
