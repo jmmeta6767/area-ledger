@@ -1,5 +1,5 @@
-const C='site-ledger-v800-business-stable-1-source-candidate-1085-oauth-recovery';
-const CORE=['./','index.html','icon-180.png','icon-192.png','icon-512.png','manifest.webmanifest','area-logo-header.jpg'];
+const C='site-ledger-v800-business-stable-1-source-candidate-1085-oauth-recovery-payroll';
+const CORE=['./','index.html','icon-180.png','icon-192.png','icon-512.png','manifest.webmanifest','area-logo-header.jpg','payroll.html'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('site-ledger-v')&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{
@@ -8,10 +8,11 @@ self.addEventListener('fetch',e=>{
   // Authentication and private API responses must never use the offline app shell or caches.
   if(url.pathname.startsWith('/v1/')||url.pathname==='/health'||url.pathname==='/ready')return;
   const navigation=e.request.mode==='navigate';
+  const navCacheKey=(url.pathname==='/payroll.html'||url.pathname==='/portfolio.html')?url.pathname.slice(1):'./';
   e.respondWith(fetch(e.request,navigation?{cache:'no-store'}:undefined).then(async r=>{
-    if(r&&r.ok){try{const c=await caches.open(C);await c.put(navigation?'./':e.request,r.clone());}catch(ignore){/* A cache quota error must not reject the network response. */}}
-    if(navigation&&(!r||!r.ok)){const c=await caches.open(C),cached=await c.match('./')||await c.match('index.html');if(cached)return cached;}
+    if(r&&r.ok){try{const c=await caches.open(C);await c.put(navigation?navCacheKey:e.request,r.clone());}catch(ignore){/* A cache quota error must not reject the network response. */}}
+    if(navigation&&(!r||!r.ok)){const c=await caches.open(C),cached=await c.match(navCacheKey)||(navCacheKey==='./'?await c.match('index.html'):null);if(cached)return cached;}
     return r;
-  }).catch(async()=>{const c=await caches.open(C);return (navigation?(await c.match('./')||await c.match('index.html')):await c.match(e.request))||new Response('Offline',{status:503});}));
+  }).catch(async()=>{const c=await caches.open(C);return (navigation?(await c.match(navCacheKey)||(navCacheKey==='./'?await c.match('index.html'):null)):await c.match(e.request))||new Response('Offline',{status:503});}));
 });
 
