@@ -40,6 +40,23 @@ test('labor description followed by an unlabelled amount fills the amount on rep
  let instance;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');
  for(const text of ['ค่าแรงงานโครงหลัง 54,000','ค่าแรงงานโครงหลังคา ห้าหมื่นสี่พัน']){c.U.draft.amount='999';assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:text}]]});assert.equal(c.U.draft.amount,'54000');assert.equal(c.U.draft.cat,'ค่าแรง');assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);}
 });
+test('repeated speech edits only named fields and retains unresolved warnings and draft identity',()=>{
+ let instance;c.window.webkitSpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};delete c.window.SpeechRecognition;c.U.view='add';c.U.draft=c.newDraft('out','p');const d=c.U.draft;d.partner='ร้านเดิม';d.date='2026-10-14';d.pay='cash';d.paid=false;
+ const speak=text=>{assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:text}]]});assert.equal(c.U.draft,d);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);};
+ speak('ค่าแรงงานโครงหลังคา 54,000');assert.equal(d.amount,'54000');const sub=d.sub;
+ for(const command of ['แก้ยอดเป็น 53,000','เปลี่ยนจำนวนเงินเป็น ห้าหมื่นสองพัน','51,000','ห้าหมื่นบาท']){speak(command);assert.equal(d.sub,sub);assert.equal(d.partner,'ร้านเดิม');assert.equal(d.date,'2026-10-14');assert.equal(d.pid,'p');assert.equal(d.pay,'cash');assert.equal(d.paid,false);}
+ assert.equal(d.amount,'50000');speak('เปลี่ยนรายการเป็น ค่าแรงติดตั้งหลังคา');assert.equal(d.sub,'ค่าแรงติดตั้งหลังคา');assert.equal(d.amount,'50000');assert.equal(d.cat,'ค่าแรง');
+ speak('วันที่ 15/10/2569');assert.equal(d.date,'2026-10-15');assert.equal(d.sub,'ค่าแรงติดตั้งหลังคา');
+ speak('แก้ยอดเป็น หนึ่งล้านล้าน');assert.equal(d.amount,'');assert.equal(c.U.expenseVoiceIssues.length,1);speak('เปลี่ยนรายการเป็น ค่าแรงมุงหลังคา');assert.equal(c.U.expenseVoiceIssues.length,1);speak('แก้ยอดเป็น 49000');assert.equal(d.amount,'49000');assert.equal(c.U.expenseVoiceIssues.length,0);
+ for(const invalid of ['0','1000000001','-53000','หนึ่งล้านล้าน']){speak(invalid);assert.equal(d.amount,'');assert(c.U.expenseVoiceIssues.length);speak('แก้ยอดเป็น 49000');}
+ const markup=c.vAdd();assert(markup.indexOf('id="amt"')<markup.indexOf('class="expense-action-tools"'));assert(markup.indexOf('class="expense-action-tools"')<markup.indexOf('id="pid"'));assert(markup.includes('ข้อความที่ได้ยินล่าสุด'));assert(markup.includes('แก้ยอดเป็น 49000'));
+ c.U.draft=c.newDraft('out','p');assert(!c.vAdd().includes('แก้ยอดเป็น 49000'));
+});
+test('backup choices separate file cloud and restore without changing data or removing confirmation gates',()=>{
+ const info=c.cloudSyncInfo,before=JSON.stringify(c.S);c.U.sheet={kind:'backup'};
+ for(const enabled of [false,true]){c.cloudSyncInfo=()=>({enabled,label:enabled?'ซิงก์แล้ว':'ปิด',meta:{hit:enabled,revision:3,savedAt:'2026-10-17'},key:''});let h=c.sheetHtml();for(const title of ['1. เก็บไฟล์สำรองไว้กับคุณ','2. สำรองและซิงก์บนคลาวด์','3. กู้คืนจากไฟล์สำรอง'])assert(h.includes(title));for(const action of ['backupFile','copyBk','restoreOpen','cloudUseKey','closeSheet'])assert(h.includes('data-act="'+action+'"'));assert(h.includes('id="bkbox"'));assert(h.includes('id="cloudKeyImport"'));if(enabled){for(const action of ['cloudPush','cloudPull','cloudHistory','cloudCopyKey','cloudDisable','cloudAcceptance','cloudFilesMigrate','cloudRestorePrevious'])assert(h.includes('data-act="'+action+'"'));c.U.confirm='cloudPull';h=c.sheetHtml();assert(h.includes('ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์'));assert(h.includes('dng sure'));}else assert(h.includes('data-act="cloudEnable"'));c.U.confirm=null;}
+ c.cloudSyncInfo=info;c.U.sheet=null;assert.equal(JSON.stringify(c.S),before);
+});
 test('explicit monetary amounts win over dimensions, quantities, dates and phone numbers',()=>{
  for(const [text,amount] of [['ซื้อเหล็ก 12 มม. 50 เส้น ยอด 4,500 บาท','4500'],['วันที่ 15 จ่าย 1200 บาท ร้านทดสอบ','1200'],['โทร 000-9876543 ยอดเงิน 6,430.00 บาท','6430'],['จ่าย ๑,๒๐๐ บาท ร้านสมใจ','1200'],['จ่าย950บาทร้านทดสอบ','950'],['จ่ายหนึ่งพันสองร้อยบาท','1200'],['ยอดสองหมื่นห้าพันบาทห้าสิบสตางค์','25000.5'],['จำนวนเงินเก้าร้อยเก้าสิบเก้าบาท','999'],['จ่าย 300 ร้านสมใจ','300'],['฿ 320.50','320.5']])assert.equal(c.expenseVoiceParse(text).amount,amount,text);
  for(const text of ['เหล็ก 12 มม. 50 เส้น','วันที่ 15/10/2569','โทร 000-9876543','ยอด 000-9876543','จ่าย 12 เส้น','จ่าย -500 บาท','ราคา 100 บาท อีก 200 บาท'])assert.equal(c.expenseVoiceParse(text).amount,'',text);

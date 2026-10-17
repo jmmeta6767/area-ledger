@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1080 Repeated voice edits and shared app presentation
+
+- Speak again to correct only an amount or description; existing project, date and payment choices remain. The latest transcript is visible and unresolved field warnings persist until corrected.
+- Moves the scan/microphone row below the amount and applies the entry screen color/control tokens across interactive views. Printed document layouts are preserved.
+- Separates backup into downloadable files, cloud copies and restoring, retaining existing handlers and confirmation gates.
+- Tests use synthetic data and mocked recognition; physical iPhone audio remains unverified.
+
 ## v1079 Labor speech amount fix
 
 - Accepts a single trailing monetary number after an expense description without requiring the word baht, including `ค่าแรงงานโครงหลัง 54,000` and Thai number words.
