@@ -61,10 +61,10 @@ test('fragmented Thai currency suffix from iPhone speech keeps rental amount and
  for(const text of ['ค่าเช่าเครื่องตบดิน 500 ย','ค่าเช่าเครื่องตบดิน 500 บ','ค่าเช่าเครื่องตบดิน 500 บา','ค่าเช่าเครื่องตบดิน ๕๐๐ ย','ค่าเช่าเครื่องตบดิน 500 บาท']){
   const x=c.expenseVoiceParse(text);assert.equal(x.transcript,text);assert.equal(x.amount,'500',text);assert.equal(x.cat,'ค่าเช่าอื่นๆ',text);assert.equal(x.sub,'เครื่องตบดิน',text);assert.equal(x.amountIssue,false,text);
  }
- for(const text of ['ค่าเช่าเครื่องตบดิน 500 คิว','ค่าเช่าเครื่องตบดิน 500 ยาง','ค่าเช่าเครื่องตบดิน 500 ย 600','ค่าเช่าเครื่องตบดิน 50,00 ย','ค่าเช่าเครื่องตบดิน -500 ย']){
+ for(const text of ['ค่าเช่าเครื่องตบดิน 500 คิว','ค่าเช่าเครื่องตบดิน 500 ยาง','ค่าเช่าเครื่องตบดิน 500 ย 600','ค่าเช่าเครื่องตบดิน 500 บาท 600 ย','ค่าทราย 5 คิว 500 ย','ค่าเช่าเครื่องตบดิน 50,00 ย','ค่าเช่าเครื่องตบดิน -500 ย']){
   const x=c.expenseVoiceParse(text);assert.equal(x.amount,'',text);
  }
- for(const text of ['ค่าเช่าเครื่องตบดิน 50,00 ย','ค่าเช่าเครื่องตบดิน -500 ย'])assert.equal(c.expenseVoiceParse(text).amountIssue,true,text);
+ for(const text of ['ค่าเช่าเครื่องตบดิน 50,00 ย','ค่าเช่าเครื่องตบดิน -500 ย','ค่าเช่าเครื่องตบดิน 500 บาท 600 ย','ค่าทราย 5 คิว 500 ย'])assert.equal(c.expenseVoiceParse(text).amountIssue,true,text);
  c.expenseVoiceStop();let instance;
  c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.stop=()=>{this.onend?.()};this.abort=()=>{};};
  c.U.view='add';c.U.draft=c.newDraft('out','p');assert(c.expenseVoiceStart());
