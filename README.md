@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1085 All active projects Google sync
+
+- Choose the current project or every project in the existing active status (missing legacy status defaults to active). Waiting, delivered and closed projects are excluded.
+- Syncs sequentially to each project's existing workbook with per-project results and failed-only retry. Financial export behavior remains unchanged.
+- Prevents overlapping runs and stops if the ledger identity changes. No background sync or import from Sheets. See QA-v1085.md.
+
 ## v1084 Project finances in Google Sheets
 
 - Project sync now updates BOQ plus expenses, income, costs and profit in the existing workbook.
