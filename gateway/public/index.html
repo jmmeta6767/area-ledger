@@ -3789,6 +3789,7 @@ body[data-view] :is(.profile-section-head>span>small,.profile-feed-head>div>smal
 body[data-view] .app-drawer small{color:#475467!important}
 body[data-view] .project-list-actions [data-act="addToProj"]{color:#21613D}
 body[data-view] .cc-grid .in{color:#17552F}body[data-view] .cc-grid .out{color:#8D2E1E}
+body[data-view] .due-command .muted{color:#D0D5DD!important}
 body[data-view] .due-command-grid .in{color:#B9F3CE}body[data-view] .due-command-grid .out{color:#FFD0C5}
 .dash-tab[aria-pressed="true"]{font-weight:800}
 @media(prefers-reduced-motion:reduce){body[data-view] *,body[data-view] *::before,body[data-view] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -5348,6 +5349,10 @@ function homeUrgentAlert(allMode,active,all){
 /* Shared workspace presentation. Roles describe the existing local mode, not server authorization. */
 function workspaceProject(){
   var pid=U.view==='home'?(U.homePid==='__all'?'__all':(proj(U.homePid)||S.projects[0]||{}).id):U.view==='add'&&U.draft?U.draft.pid:U.view==='boq'?U.boqProjectPid:U.view==='list'&&U.filter?U.filter.pid:U.view==='project'?U.pid:'';
+  if(U.view==='due')pid=U.dueProjectPid;
+  else if(U.view==='guarantees')pid=U.guaranteeProjectPid;
+  else if(U.view==='doclist')pid=U.docProjectPid;
+  else if(U.view==='profile')pid=U.profileProjectPid;
   return pid&&pid!=='__all'?proj(pid):null;
 }
 function workspaceTime(value){var d=new Date(value||0);return value&&isFinite(d.getTime())?d.toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Bangkok'}):'ยังไม่มีเวลาปรับปรุง';}
