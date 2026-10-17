@@ -23,7 +23,7 @@
 <body>
 <header class="topbar no-print"><div class="topbar-inner"><div class="brand"><div class="brandmark">A</div><div><strong>AREA LEDGER</strong><span>เงินเดือนพนักงานรายวัน · Payroll</span></div></div><a class="btn btn-small btn-soft back-to-ledger" href="/" aria-label="กลับหน้าหลัก AREA Ledger">← กลับหน้าบัญชีหลัก</a></div></header>
 <main class="shell">
-  <div class="hero no-print"><div><div class="eyebrow">DAILY WAGES · PAYROLL</div><h1>บัญชีค่าแรงพนักงาน</h1><p class="subtitle muted">ลงวันทำงาน บันทึกเงินเบิก และดูยอดคงเหลือได้ทันที</p></div><button class="btn btn-primary" data-action="add-employee">＋ เพิ่มพนักงาน</button></div>
+  <div class="hero no-print"><div><div class="eyebrow">DAILY WAGES · PAYROLL</div><h1>บัญชีค่าแรงพนักงาน</h1><p class="subtitle muted">บันทึกรายวัน · สรุปแยกรายเดือน · สำรองอัตโนมัติไม่เกิน 2 เดือนล่าสุด</p></div><button class="btn btn-primary" data-action="add-employee">＋ เพิ่มพนักงาน</button></div>
   <div id="stats" class="stats no-print" aria-live="polite"></div>
   <nav class="tabs no-print" aria-label="เมนูหลัก">
     <button class="tab active" data-tab="day"><span>📅</span> รายวัน</button>
@@ -39,14 +39,14 @@
     </div>
   </section>
   <section id="month-view" hidden>
-    <div class="panel"><div class="panel-head"><div><h2>สรุปเงินเดือน</h2><p class="subtitle muted">ยอดค่าแรงและเงินเบิกเฉพาะเดือนที่เลือก</p></div><div class="toolbar no-print"><input id="monthInput" class="form-control" aria-label="เดือนที่สรุป" type="month"><button class="btn btn-small" data-action="print-month">🖨 พิมพ์</button><button class="btn btn-small" data-action="export-csv">⬇ CSV</button></div></div>
+    <div class="panel"><div class="panel-head"><div><h2>สรุปเงินเดือน</h2><p class="subtitle muted">ยอดค่าแรงและเงินเบิกเฉพาะเดือนที่เลือก</p></div><div class="toolbar no-print"><input id="monthInput" class="form-control" aria-label="เดือนที่สรุป" type="month"><button class="btn btn-icon" data-action="prev-month" aria-label="เดือนก่อนหน้า">‹</button><button class="btn btn-icon" data-action="next-month" aria-label="เดือนถัดไป">›</button><button class="btn btn-small" data-action="print-month">🖨 พิมพ์</button><button class="btn btn-small" data-action="export-csv">⬇ CSV</button></div></div>
       <p id="printMonthLabel" class="hint"></p><div class="table-scroll"><table class="month-table"><thead><tr><th>พนักงาน</th><th class="numeric">มาทำงาน</th><th class="numeric">ค่าแรง</th><th class="numeric">เงินเบิก</th><th class="numeric">คงเหลือ</th><th class="no-print"></th></tr></thead><tbody id="monthlyBody"></tbody><tfoot id="monthlyFoot"></tfoot></table></div><div id="monthlyEmpty"></div>
       <p class="hint">* คงเหลือรายเดือน = ค่าแรงที่บันทึกในเดือนนี้ − เงินเบิกที่ลงวันที่ในเดือนนี้ หากติดลบคือเบิกเกินค่าแรงเดือนนั้น (ไม่ใช่เงินสดคงเหลือของร้าน)</p>
     </div>
   </section>
   <section id="people-view" hidden><div class="panel"><div class="panel-head"><div><h2>จัดการพนักงาน</h2><p class="subtitle muted">เพิ่ม แก้ไขอัตราค่าแรง พักใช้งาน หรือลบพนักงาน</p></div><button class="btn btn-primary" data-action="add-employee">＋ เพิ่มพนักงาน</button></div><div id="peopleList"></div><p class="hint">อัตราค่าแรงใหม่จะใช้กับวันที่ลงเวลาใหม่เท่านั้น ค่าแรงวันที่บันทึกไว้แล้วจะไม่เปลี่ยนย้อนหลัง</p></div></section>
-  <section id="tools-view" hidden><div class="two-col"><div class="panel"><h2>สำรองและนำเข้าข้อมูล</h2><p class="subtitle muted" style="margin:8px 0 18px">ข้อมูลเงินเดือนโมดูลนี้เก็บไว้เฉพาะในเบราว์เซอร์นี้ ยังไม่ซิงก์กับบัญชีหลักหรือ Cloudflare ไม่ซิงก์ข้ามเครื่อง และอาจหายเมื่อล้างข้อมูลเว็บไซต์ ควรสำรองเป็นประจำ</p><div class="instruction"><h3>⬇ สำรองข้อมูลทั้งหมด</h3><p>ดาวน์โหลดไฟล์ JSON เก็บไว้ใน Google Drive หรือคอมพิวเตอร์เพื่อกู้คืนภายหลัง</p><button class="btn btn-primary" data-action="backup" style="margin-top:12px">ดาวน์โหลดไฟล์สำรอง</button></div><div class="instruction"><h3>⬆ นำเข้าข้อมูลเดิม</h3><p>นำเข้าไฟล์สำรองที่ส่งออกจากแอปนี้ โดยข้อมูลในเครื่องปัจจุบันจะถูกแทนที่หลังยืนยัน</p><button class="btn" data-action="select-import" style="margin-top:12px">เลือกไฟล์ JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden></div></div><div class="panel"><h2>เกี่ยวกับการคำนวณ</h2><div class="instruction"><h3>✓ มาทำงาน</h3><p>ค่าจ้างของวันนั้น = ค่าแรงรายวันที่กำหนด (แก้เป็นจำนวนเฉพาะวันได้) โดยวันที่ไม่บันทึกจะไม่คิดค่าแรง</p></div><div class="instruction"><h3>− หยุด</h3><p>ไม่คิดค่าแรงสำหรับวันหยุด และสามารถบันทึกเงินเบิกในวันหยุดได้</p></div><div class="instruction"><h3>฿ เงินเบิก</h3><p>เงินเบิกแต่ละรายการแยกเก็บเป็นประวัติ สามารถเพิ่มหลายครั้งและลบรายการผิดพลาดได้</p></div><div class="instruction danger-zone"><h3>ล้างข้อมูลทั้งหมด</h3><p>ลบข้อมูลพนักงาน วันทำงาน และประวัติเงินเบิกทั้งหมดในเครื่องนี้ โปรดสำรองก่อน</p><button class="btn btn-danger" data-action="reset" style="margin-top:12px">ล้างข้อมูลถาวร</button></div></div></div></section>
-  <footer class="foot no-print">AREA Ledger · Payroll V1 · ยังไม่ซิงก์ข้อมูลขึ้น Cloudflare · ควรสำรองไฟล์ JSON</footer>
+  <section id="tools-view" hidden><div class="two-col"><div class="panel"><h2>สำรองและนำเข้าข้อมูล</h2><p class="subtitle muted" style="margin:8px 0 18px">ข้อมูลเงินเดือนโมดูลนี้เก็บไว้เฉพาะในเบราว์เซอร์นี้ ยังไม่ซิงก์กับบัญชีหลักหรือ Cloudflare ไม่ซิงก์ข้ามเครื่อง และอาจหายเมื่อล้างข้อมูลเว็บไซต์ ควรสำรองเป็นประจำ</p><div class="instruction"><h3>🔒 สำรองอัตโนมัติย้อนหลัง 2 เดือน</h3><p>เก็บสำเนาก่อนการแก้ไขล่าสุดเฉพาะเดือนปัจจุบันและเดือนก่อนหน้าไว้ในเบราว์เซอร์นี้ เมื่อเปลี่ยนเดือน ระบบตัดเดือนเก่าออกจากชุดสำรองโดยอัตโนมัติ แต่ <b>ไม่ลบประวัติรายการจริง</b></p><div id="backupMonths" class="history" aria-live="polite"></div><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" data-action="backup" >⬇ ดาวน์โหลด 2 เดือนล่าสุด</button><button class="btn" data-action="backup-selected">⬇ สำรองเดือนที่เลือก</button></div><p class="hint">ไฟล์ JSON ที่ดาวน์โหลดออกไปไม่สามารถลบจากอุปกรณ์โดยแอปนี้ได้ โปรดจัดการไฟล์สำรองภายนอกด้วยตนเอง และอย่าเก็บไฟล์เงินเดือนในที่สาธารณะ</p></div><div class="instruction"><h3>⬆ กู้คืนข้อมูลรายเดือน</h3><p>นำเข้าไฟล์สำรองรายเดือน หรือไฟล์รวม 2 เดือน โดยกู้เฉพาะเดือนในไฟล์ ไม่ทับรายการของเดือนอื่น ไฟล์แบบเก่าทั้งระบบยังรองรับแต่จะแจ้งเตือนก่อนแทนที่</p><button class="btn" data-action="select-import" style="margin-top:12px">เลือกไฟล์ JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden></div></div><div class="panel"><h2>เกี่ยวกับการคำนวณ</h2><div class="instruction"><h3>✓ มาทำงาน</h3><p>ค่าจ้างของวันนั้น = ค่าแรงรายวันที่กำหนด (แก้เป็นจำนวนเฉพาะวันได้) โดยวันที่ไม่บันทึกจะไม่คิดค่าแรง</p></div><div class="instruction"><h3>− หยุด</h3><p>ไม่คิดค่าแรงสำหรับวันหยุด และสามารถบันทึกเงินเบิกในวันหยุดได้</p></div><div class="instruction"><h3>฿ เงินเบิก</h3><p>เงินเบิกแต่ละรายการแยกเก็บเป็นประวัติ สามารถเพิ่มหลายครั้งและลบรายการผิดพลาดได้</p></div><div class="instruction danger-zone"><h3>ล้างข้อมูลทั้งหมด</h3><p>ลบข้อมูลพนักงาน วันทำงาน และประวัติเงินเบิกทั้งหมดในเครื่องนี้ โปรดสำรองก่อน</p><button class="btn btn-danger" data-action="reset" style="margin-top:12px">ล้างข้อมูลถาวร</button></div></div></div></section>
+  <footer class="foot no-print">AREA Ledger · Payroll V1.1 · สำรองอัตโนมัติ 2 เดือนในเครื่อง · ยังไม่ซิงก์ Cloudflare D1</footer>
 </main>
 <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-panel"><div class="modal-head"><div><h2 id="modalTitle"></h2><p id="modalDesc"></p></div><button class="btn btn-small" data-action="close-modal" aria-label="ปิดหน้าต่าง">✕</button></div><div id="modalContent"></div></div></div>
 <div id="toast" class="toast" role="status" hidden></div>
@@ -54,6 +54,9 @@
 (()=>{
 'use strict';
 const KEY='area-ledger-payroll-v1';
+const BACKUP_KEY='area-ledger-payroll-monthly-snapshots-v1';
+const BACKUP_LIMIT=2;
+
 const $=id=>document.getElementById(id);
 const initial=()=>({version:1,employees:[],attendance:{},advances:[]});
 const thb=new Intl.NumberFormat('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
@@ -75,11 +78,110 @@ function validate(obj){
   const advIds=new Set();for(const a of obj.advances){if(!a||typeof a.id!=='string'||advIds.has(a.id)||!all.has(a.employeeId)||!validDate(a.date)||!validMoney(a.amount,false)||typeof a.note!=='string'||a.note.length>500)throw Error('ข้อมูลเงินเบิกไม่ถูกต้อง');advIds.add(a.id)}
   return obj;
 }
-let db;try{const saved=localStorage.getItem(KEY);db=saved?validate(JSON.parse(saved)):initial()}catch(err){db=initial();setTimeout(()=>toast('เปิดข้อมูลเดิมไม่ได้ โปรดตรวจสอบไฟล์สำรองก่อนบันทึกใหม่'),100)}
+
+// Rolling backups are local, isolated from AREA Ledger accounting state.
+// Never delete payroll transactions outside the two-month backup window.
+const validMonth=m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m);
+function recentMonths(now=new Date()){
+  return Array.from({length:BACKUP_LIMIT},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1,12);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  });
+}
+function monthSnapshot(state,month){
+  if(!validMonth(month))throw Error('เดือนไม่ถูกต้อง');
+  return {version:2,kind:'area-ledger-payroll-month',month,createdAt:new Date().toISOString(),
+    employees:state.employees.map(e=>({...e})),
+    attendance:Object.fromEntries(Object.entries(state.attendance).filter(([,a])=>a.date.startsWith(month))),
+    advances:state.advances.filter(a=>a.date.startsWith(month)).map(a=>({...a}))};
+}
+function validateMonthSnapshot(s){
+  if(!s||s.version!==2||s.kind!=='area-ledger-payroll-month'||!validMonth(s.month))throw Error('รูปแบบสำรองรายเดือนไม่ถูกต้อง');
+  validate({version:1,employees:s.employees,attendance:s.attendance,advances:s.advances});
+  if(Object.values(s.attendance).some(a=>!a.date.startsWith(s.month))||s.advances.some(a=>!a.date.startsWith(s.month)))throw Error('พบรายการวันที่ไม่ตรงเดือนในไฟล์');
+  return s;
+}
+function readMonthlyVault(){
+  try{
+    const raw=localStorage.getItem(BACKUP_KEY);
+    const obj=raw?JSON.parse(raw):null;
+    if(!obj||obj.version!==1||!Array.isArray(obj.months))return [];
+    const allowed=recentMonths();const seen=new Set();
+    return obj.months.filter(x=>{if(!allowed.includes(x.month)||seen.has(x.month))return false;validateMonthSnapshot(x);seen.add(x.month);return true});
+  }catch(_){return []}
+}
+function storeMonthlyVault(months){
+  const allowed=recentMonths();
+  const trimmed=months.filter(s=>allowed.includes(s.month)).slice(0,BACKUP_LIMIT);
+  localStorage.setItem(BACKUP_KEY,JSON.stringify({version:1,months:trimmed}));
+}
+function backupPreviousState(previous){
+  const allowed=recentMonths();
+  const prior=readMonthlyVault();
+  // Preserve the snapshot of the most recent successful state before each edit.
+  const updated=allowed.map(month=>monthSnapshot(previous,month));
+  storeMonthlyVault(updated);
+}
+function ensureMonthlyVault(){
+  try{
+    const old=readMonthlyVault();const missing=recentMonths().filter(month=>!old.some(p=>p.month===month));
+    if(missing.length || old.length!==BACKUP_LIMIT){
+      storeMonthlyVault(recentMonths().map(month=>old.find(x=>x.month===month)||monthSnapshot(db,month)));
+    }
+  }catch(_){/* Keep the primary payroll state available; show backup warning on next edit. */}
+}
+function validateBundle(obj){
+  const months=obj&&obj.version===2&&obj.kind==='area-ledger-payroll-two-months'&&Array.isArray(obj.months)?obj.months:null;
+  if(!months||!months.length||months.length>BACKUP_LIMIT)throw Error('ไฟล์สำรองเกิน 2 เดือนหรือผิดรูปแบบ');
+  const out=months.map(validateMonthSnapshot);
+  if(new Set(out.map(x=>x.month)).size!==out.length)throw Error('มีเดือนซ้ำในไฟล์');
+  return out;
+}
+function mergeMonthSnapshots(snapshots){
+  const next=JSON.parse(JSON.stringify(db));
+  const months=new Set(snapshots.map(s=>s.month));
+  const employees=new Set(next.employees.map(x=>x.id));
+  for(const s of snapshots){
+    for(const e of s.employees)if(!employees.has(e.id)){next.employees.push({...e});employees.add(e.id)}
+  }
+  for(const [key,a] of Object.entries(next.attendance))if(months.has(a.date.slice(0,7)))delete next.attendance[key];
+  next.advances=next.advances.filter(a=>!months.has(a.date.slice(0,7)));
+  for(const s of snapshots){Object.assign(next.attendance,s.attendance);next.advances.push(...s.advances)}
+  // Full validation also rejects duplicate advance IDs, missing employees and malformed entries.
+  return validate(next);
+}
+function restoreSnapshots(snapshots){
+  const names=snapshots.map(s=>fmtMonth(s.month)).join(' และ ');
+  if(!confirm(`กู้คืน ${names}?\nรายการวันทำงานและเงินเบิกของเดือนดังกล่าวจะถูกแทนที่ แต่เดือนอื่นคงเดิม\nกรุณาดาวน์โหลดสำรองข้อมูลก่อนดำเนินการ`))return false;
+  if(dbLoadError&&!confirm('ไฟล์ข้อมูลหลักเสียหายอยู่ การกู้คืนนี้จะเริ่มจากข้อมูลที่ยังอ่านได้ในหน้านี้เท่านั้น อาจไม่สามารถรักษาเดือนเก่าที่เสียหายได้ ยืนยันหรือไม่?'))return false;
+  const old=db,hadLoadError=dbLoadError;
+  try{db=mergeMonthSnapshots(snapshots)}catch(e){db=old;toast('กู้คืนไม่ได้: '+e.message);return false}
+  dbLoadError=false;
+  if(!save(old)){db=old;dbLoadError=hadLoadError;return false}
+  render();toast('กู้คืนเฉพาะเดือนสำเร็จ');return true;
+}
+function renderBackups(){
+  const box=$('backupMonths');if(!box)return;
+  const snapshots=readMonthlyVault();
+  box.innerHTML=recentMonths().map(month=>{
+    const s=snapshots.find(x=>x.month===month),days=s?Object.keys(s.attendance).length:0,adv=s?s.advances.length:0;
+    return `<div class="history-item"><div><b>${esc(fmtMonth(month))}</b><small>${s?`สำรองก่อนการแก้ไขล่าสุด · ${days} วัน · เงินเบิก ${adv} รายการ`:'ยังไม่มีสำรอง'}</small></div><button class="btn btn-small" data-action="restore-auto" data-month="${month}" ${s?'':'disabled'}>กู้คืน</button></div>`;
+  }).join('');
+}
+let db,dbLoadError=false;
+try{const saved=localStorage.getItem(KEY);db=saved?validate(JSON.parse(saved)):initial()}
+catch(err){db=initial();dbLoadError=true;setTimeout(()=>toast('ข้อมูลหลักเสียหาย: ห้ามบันทึกใหม่ กรุณากู้คืนไฟล์สำรอง'),100)}
 let selectedDate=localDate(new Date()),selectedMonth=selectedDate.slice(0,7),tab='day',search='',onSubmit=null,toastTimer;
 function toast(msg){const el=$('toast');el.textContent=msg;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,3200)}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(db));return true}catch(err){toast('บันทึกไม่ได้ พื้นที่จัดเก็บอาจเต็ม กรุณาสำรองข้อมูล');return false}}
-function transact(fn,deferRender=false){const old=JSON.stringify(db);fn();if(!save()){db=JSON.parse(old);return false}if(deferRender)setTimeout(render,0);else render();return true}
+function save(previous){
+  if(dbLoadError){toast('ข้อมูลหลักเดิมเสียหาย กรุณากู้คืนจากไฟล์ก่อนบันทึก');return false}
+  try{
+    localStorage.setItem(KEY,JSON.stringify(db));
+  }catch(err){toast('บันทึกไม่ได้ พื้นที่จัดเก็บอาจเต็ม กรุณาสำรองข้อมูล');return false}
+  try{backupPreviousState(previous||db)}catch(err){toast('บันทึกข้อมูลแล้ว แต่สำรองอัตโนมัติไม่สำเร็จ กรุณาดาวน์โหลดไฟล์สำรอง')}
+  return true;
+}
+function transact(fn,deferRender=false){const old=JSON.stringify(db);fn();if(!save(JSON.parse(old))){db=JSON.parse(old);return false}if(deferRender)setTimeout(render,0);else render();return true}
 function attendance(emp,date){return db.attendance[makeKey(emp,date)]}
 function getTotals(employeeId,month=null,endDate=null){let earned=0,present=0,off=0,advanced=0;for(const a of Object.values(db.attendance)){if((!employeeId||a.employeeId===employeeId)&&(!month||a.date.startsWith(month))&&(!endDate||a.date<=endDate)){if(a.status==='work'){earned+=a.wage;present++}else off++}}
 for(const a of db.advances)if((!employeeId||a.employeeId===employeeId)&&(!month||a.date.startsWith(month))&&(!endDate||a.date<=endDate))advanced+=a.amount;return{earned:decimal(earned),advanced:decimal(advanced),balance:decimal(earned-advanced),present,off}}
@@ -88,7 +190,7 @@ function render(){
   for(const name of ['day','month','people','tools']){$(name+'-view').hidden=tab!==name;document.querySelector(`[data-tab="${name}"]`).classList.toggle('active',tab===name)}
   const t=getTotals(null,selectedMonth),count=db.employees.filter(e=>e.active).length;
   $('stats').innerHTML=`<div class="stat"><div class="kicker">ค่าแรงเดือนนี้</div><div class="value">${money(t.earned)}</div><div class="detail">${fmtMonth(selectedMonth)}</div></div><div class="stat"><div class="kicker">เงินเบิกเดือนนี้</div><div class="value">${money(t.advanced)}</div><div class="detail">หักจากค่าแรงเดือนนี้</div></div><div class="stat emphasis"><div class="kicker">คงเหลือเดือนนี้</div><div class="value ${t.balance<0?'negative':''}">${money(t.balance)}</div><div class="detail">ค่าแรง − เบิก</div></div><div class="stat"><div class="kicker">พนักงานปัจจุบัน</div><div class="value">${count} คน</div><div class="detail">บันทึกวันทำงาน ${t.present} วัน-คน</div></div>`;
-  if(tab==='day')renderDay();if(tab==='month')renderMonth();if(tab==='people')renderPeople();
+  if(tab==='day')renderDay();if(tab==='month')renderMonth();if(tab==='people')renderPeople();if(tab==='tools')renderBackups();
 }
 function renderDay(){
   $('dailyDate').value=selectedDate;
@@ -128,10 +230,13 @@ const t=getTotals(e.id,month),all=getTotals(e.id,undefined,month+'-31');openModa
 function editDayModal(e,date){const a=attendance(e.id,date);openModal('แก้ไขวันทำงาน · '+e.name,fmtDate(date),`<form id="modalForm" class="modal-body"><div class="field"><label for="editStatus">สถานะ</label><select class="form-control" id="editStatus" name="status"><option value="none" ${!a?'selected':''}>ยังไม่ลงเวลา</option><option value="work" ${a?.status==='work'?'selected':''}>มา</option><option value="off" ${a?.status==='off'?'selected':''}>หยุด</option></select></div><div class="field"><label for="editWage">ค่าแรงเฉพาะวันนี้ (ใช้เมื่อเลือก มา)</label><input class="form-control" type="number" name="wage" id="editWage" min="0" max="1000000000" step="0.01" value="${a?.status==='work'?a.wage:e.rate}"></div><div class="modal-actions"><button class="btn" type="button" data-action="close-modal">ยกเลิก</button><button class="btn btn-primary" type="submit">บันทึก</button></div></form>`,form=>{const status=form.elements.status.value,wage=Number(form.elements.wage.value);if(status==='work'&&!validMoney(wage)){toast('ค่าแรงไม่ถูกต้อง');return}if(transact(()=>{if(status==='none')delete db.attendance[makeKey(e.id,date)];else db.attendance[makeKey(e.id,date)]={employeeId:e.id,date,status,wage:status==='work'?decimal(wage):0}})){closeModal();detailModal(e);toast('บันทึกแล้ว')}})}
 function download(name,content,mime){const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function doCSV(){const safe=value=>{const s=String(value??'');const protectedText=/^[\s]*[=+@\-]/.test(s)?"'"+s:s;return '"'+protectedText.replaceAll('"','""')+'"'};const rows=[['ชื่อพนักงาน','วันมาทำงาน','วันหยุด','ค่าแรง (บาท)','เบิก (บาท)','คงเหลือ (บาท)']];for(const e of db.employees){const t=getTotals(e.id,selectedMonth);if(!e.active&&!t.present&&!t.off&&!t.advanced)continue;rows.push([e.name,t.present,t.off,t.earned,t.advanced,t.balance])}rows.push(['รวม',...(()=>{const t=getTotals(null,selectedMonth);return[t.present,t.off,t.earned,t.advanced,t.balance]})()]);download(`area-ledger-payroll-${selectedMonth}.csv`,'\ufeff'+rows.map(r=>r.map(safe).join(',')).join('\r\n'),'text/csv;charset=utf-8');toast('ส่งออกรายงาน CSV แล้ว')}
+function shiftMonth(n){const d=new Date(selectedMonth+'-01T12:00:00');d.setMonth(d.getMonth()+n);selectedMonth=localDate(d).slice(0,7);render()}
 function shiftDate(n){const d=new Date(selectedDate+'T12:00:00');d.setDate(d.getDate()+n);selectedDate=localDate(d);selectedMonth=selectedDate.slice(0,7);render()}
 function handleAction(button){const action=button.dataset.action,employeeId=button.dataset.id,e=db.employees.find(x=>x.id===employeeId);
   if(action==='add-employee')return employeeForm();
   if(action==='close-modal')return closeModal();
+  if(action==='prev-month')return shiftMonth(-1);
+  if(action==='next-month')return shiftMonth(1);
   if(action==='prev-day')return shiftDate(-1);
   if(action==='next-day')return shiftDate(1);
   if(action==='today'){selectedDate=localDate(new Date());selectedMonth=selectedDate.slice(0,7);return render()}
@@ -146,9 +251,21 @@ function handleAction(button){const action=button.dataset.action,employeeId=butt
   if(action==='edit-day-detail'&&e)return editDayModal(e,button.dataset.date);
   if(action==='print-month')return window.print();
   if(action==='export-csv')return doCSV();
-  if(action==='backup')return download(`area-ledger-payroll-backup-${localDate(new Date())}.json`,JSON.stringify(db,null,2),'application/json;charset=utf-8');
+  if(action==='backup'){
+    const months=recentMonths().map(m=>monthSnapshot(db,m));
+    return download(`area-ledger-payroll-2-months-${months[0].month}.json`,JSON.stringify({version:2,kind:'area-ledger-payroll-two-months',months},null,2),'application/json;charset=utf-8');
+  }
+  if(action==='backup-selected'){
+    if(!recentMonths().includes(selectedMonth)){toast('สำรองได้เฉพาะเดือนปัจจุบันและเดือนก่อนหน้า');return}
+    return download(`area-ledger-payroll-${selectedMonth}.json`,JSON.stringify(monthSnapshot(db,selectedMonth),null,2),'application/json;charset=utf-8');
+  }
+  if(action==='restore-auto'){
+    const snapshot=readMonthlyVault().find(x=>x.month===button.dataset.month);
+    if(!snapshot){toast('ไม่พบชุดสำรองเดือนนี้');return}
+    return restoreSnapshots([snapshot]);
+  }
   if(action==='select-import')return $('importFile').click();
-  if(action==='reset'){if(prompt('การลบจะลบข้อมูลทั้งหมดถาวร กรุณาพิมพ์ ล้างทั้งหมด เพื่อยืนยัน')!=='ล้างทั้งหมด')return;const old=db;db=initial();if(!save()){db=old;return}render();toast('ล้างข้อมูลทั้งหมดแล้ว')}
+  if(action==='reset'){if(prompt('การลบจะลบข้อมูลทั้งหมดถาวร กรุณาพิมพ์ ล้างทั้งหมด เพื่อยืนยัน')!=='ล้างทั้งหมด')return;const old=db,hadLoadError=dbLoadError;db=initial();dbLoadError=false;if(!save(old)){db=old;dbLoadError=hadLoadError;return}render();toast('ล้างข้อมูลทั้งหมดแล้ว')}
 }
 document.addEventListener('click',ev=>{const tabButton=ev.target.closest('[data-tab]');if(tabButton){setTab(tabButton.dataset.tab);return}const button=ev.target.closest('[data-action]');if(button)handleAction(button)});
 document.addEventListener('submit',ev=>{if(ev.target.id!=='modalForm')return;ev.preventDefault();if(onSubmit)onSubmit(ev.target)});
@@ -158,8 +275,17 @@ document.addEventListener('change',ev=>{const target=ev.target;
   if(target.dataset.wageFor){const e=db.employees.find(x=>x.id===target.dataset.wageFor),a=e&&attendance(e.id,selectedDate),rate=Number(target.value);if(!a||a.status!=='work'||!validMoney(rate)){toast('ค่าแรงต้องเป็นตัวเลขไม่ติดลบ');render();return}if(transact(()=>a.wage=decimal(rate),true))toast('แก้ค่าแรงวันนี้แล้ว')}
 });
 document.addEventListener('input',ev=>{if(ev.target.id==='dailySearch'){search=ev.target.value;renderDay()}});
-$('importFile').addEventListener('change',async ev=>{const f=ev.target.files?.[0];ev.target.value='';if(!f)return;try{if(f.size>15*1024*1024)throw Error('ไฟล์ใหญ่เกิน 15 MB');const imported=validate(JSON.parse(await f.text()));if(!confirm(`พบพนักงาน ${imported.employees.length} คน\nข้อมูลปัจจุบันจะถูกแทนที่ทั้งหมด ต้องการนำเข้าหรือไม่?`))return;const previous=db;db=imported;if(!save()){db=previous;return}closeModal();render();toast('นำเข้าข้อมูลเรียบร้อย')}catch(err){toast('นำเข้าไม่ได้: '+err.message)}});
+$('importFile').addEventListener('change',async ev=>{const f=ev.target.files?.[0];ev.target.value='';if(!f)return;try{if(f.size>15*1024*1024)throw Error('ไฟล์ใหญ่เกิน 15 MB');const payload=JSON.parse(await f.text());
+  if(payload?.version===2){
+    const snapshots=payload.kind==='area-ledger-payroll-month'?[validateMonthSnapshot(payload)]:validateBundle(payload);
+    restoreSnapshots(snapshots);return;
+  }
+  const imported=validate(payload);
+  if(!confirm(`ไฟล์สำรองเก่า (ทั้งระบบ) มีพนักงาน ${imported.employees.length} คน\nคำเตือน: การนำเข้าจะแทนที่ข้อมูล Payroll ทุกเดือน ต้องการดำเนินการหรือไม่?`))return;
+  const previous=db;db=imported;dbLoadError=false;
+  if(!save(previous)){db=previous;return}closeModal();render();toast('นำเข้าข้อมูลเก่าเรียบร้อย')}catch(err){toast('นำเข้าไม่ได้: '+err.message)}});
 $('modal').addEventListener('click',ev=>{if(ev.target===$('modal'))closeModal()});document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('modal').hidden)closeModal()});
+if(!dbLoadError)ensureMonthlyVault();
 render();
 })();
 </script>
