@@ -8612,7 +8612,7 @@ function directAction(el){
   if(a==='periodClose'){var per2=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7);if((S.accountingPeriods||[]).some(function(x){return x.period===per2&&x.status==='closed';})){toast('งวดนี้ปิดแล้ว');return true;}var me2=monthEndCloseChecklist(per2),gate2=me2.gate,hp=gate2.health,tb2=gate2.trialBalance,tr2=gate2.tax,br2=(S.bankReconciliations||[]).filter(function(x){return x.period===per2;}).slice(-1)[0];if(!me2.ok){U.sheet={kind:'accountingMonthEnd'};render();toast('ยังปิดงวดไม่ได้ '+me2.items.filter(function(x){return !x.ok;}).length+' จุด · เปิด Checklist แล้ว');return true;}var fs2=financialStatements(per2,''),pr={id:uid(),period:per2,status:'closed',closedAt:Date.now(),snapshot:{trialDebit:tb2.debit,trialCredit:tb2.credit,bankBook:bankBookBalance(per2),ar:arAging('').total,ap:apAging('').total,profit:fs2.profitLoss.profit,txCount:(S.tx||[]).filter(function(x){return periodKey(x.date)<=per2;}).length,journalCount:accountingJournalEntries('').filter(function(x){return x.date==='0000-00-00'||periodKey(x.date)<=per2;}).length,auditCount:(S.auditLog||[]).length}};S.accountingPeriods.push(pr);accountingAudit('period-close','period',pr.id,null,pr,'ปิดงวดพร้อม snapshot');if(!persist()){S.accountingPeriods=S.accountingPeriods.filter(function(x){return x.id!==pr.id;});return true;}U.month=per2;render();toast('ปิดงวด '+per2+' แล้ว');return true;}
   if(a==='periodReopen'){var per3=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7),pr3=(S.accountingPeriods||[]).find(function(x){return x.period===per3&&x.status==='closed';});if(!pr3)return true;var old3=JSON.parse(JSON.stringify(pr3));pr3.status='open';pr3.reopenedAt=Date.now();accountingAudit('period-reopen','period',pr3.id,old3,pr3,'เปิดงวดเพื่อแก้ไข');if(!persist()){Object.assign(pr3,old3);return true;}U.month=per3;render();toast('เปิดงวด '+per3+' แล้ว · การแก้ไขจะถูกบันทึกใน Audit Trail');return true;}
   if(a==='appMenu'){U.appMenu=true;render();return true;}
-  if(a==='appMenuClose'){U.appMenu=false;render();return true;}
+  if(a==='appMenuClose'){U.appMenu=false;render();var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});return true;}
   if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',quickEntryProject()||null);go('add');focusAmt();return true;}
   if(a==='profileEdit'){U.appMenu=false;U.sheet={kind:'profileEdit'};render();return true;}
   if(a==='profileShareCompany'){profileShareCompany();return true;}
@@ -8795,7 +8795,7 @@ function directAction(el){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     if(U.sheet){U.sheet=null;render();return;}
-    if(U.appMenu){U.appMenu=false;render();return;}
+    if(U.appMenu){U.appMenu=false;render();var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});return;}
   }
 });
 /* ---------- เหตุการณ์ ---------- */
@@ -8826,7 +8826,7 @@ document.addEventListener('click',function(e){
     if(!persist())return;render();toast('ปิดแดชบอร์ดโครงการแล้ว ข้อมูลยังอยู่ครบ');return;
   }
   if(a==='appMenu'){U.appMenu=true;render();return;}
-  if(a==='appMenuClose'){U.appMenu=false;render();return;}
+  if(a==='appMenuClose'){U.appMenu=false;render();var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});return;}
   if(a==='payrollOpen'){window.location.assign('/payroll.html');return;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='menuGo'){U.appMenu=false;if(v==='docs')U.docProjectPid='';go(v);return;}
