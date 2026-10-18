@@ -8794,8 +8794,8 @@ function directAction(el){
 /* UX keyboard / accessibility */
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
-    if(U.sheet){U.sheet=null;render();return;}
-    if(U.appMenu){U.appMenu=false;render();var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});return;}
+    if(U.sheet){var sheetReturn=workspaceA11y.returnFocus;U.sheet=null;render();workspaceRestoreFocus(sheetReturn);return;}
+    if(U.appMenu){var drawerReturn=workspaceA11y.returnFocus;U.appMenu=false;render();if(!workspaceRestoreFocus(drawerReturn)||!document.activeElement.matches('.app-menu-btn')){var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});}return;}
   }
 });
 /* ---------- เหตุการณ์ ---------- */
