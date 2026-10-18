@@ -63,7 +63,7 @@ const all=['accounting','contract','house-materials','documents','boq','overview
   await fallbackPage.evaluate(()=>{S=emptyState();U.view='home';U.appMenu=true;render();});
   const fallback=fallbackPage.locator('.app-drawer .area-menu-art svg').first();
   assert(await fallback.isVisible(),'native SVG remains visible if bitmap cannot load');
-  await fallbackPage.locator('.app-drawer [data-act="menuGo"][data-v="projects"]').click();
+  await fallbackPage.locator('.app-drawer-menu [data-act="menuGo"][data-v="projects"]').click();
   assert.equal(await fallbackPage.evaluate(()=>U.view),'projects');
   assert(failedImage,'fallback must exercise a failed image request');
   await fallbackCtx.close();
