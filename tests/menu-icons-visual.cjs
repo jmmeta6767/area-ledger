@@ -45,7 +45,7 @@ const all=['accounting','contract','house-materials','documents','boq','overview
    assert.deepEqual(nav,{view:'list',cat:'ค่าเช่าอื่นๆ',type:'out',open:false},'equipment shortcut routes to existing expense filter');
    const out=path.resolve(process.env.LAYOUT_OUTPUT||path.join(root,'layout-evidence'));
    fs.mkdirSync(out,{recursive:true});
-   if(width===390){await page.evaluate(()=>{U.appMenu=true;render();});await page.screenshot({path:path.join(out,'area-ledger-icons-drawer-390.png')});}
+   if(width===390){await page.evaluate(()=>{U.appMenu=true;render();});await page.waitForFunction(()=>{const d=document.querySelector('.app-drawer');if(!d)return false;const r=d.getBoundingClientRect();return r.width>0&&r.left>=-2&&r.right<=innerWidth+2&&d.getAnimations().every(a=>a.playState==='finished');},null,{timeout:3000});await page.screenshot({path:path.join(out,'area-ledger-icons-drawer-390.png')});}
    await ctx.close();
   }
   // A missing bitmap must leave labelled navigation and its native SVG usable.
