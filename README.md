@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1088 Profile Workspace UX and Review Shortcuts
+
+- Moves the company, selected project, local/cloud backup status, and role-specific review shortcuts from Dashboard to the top of Company Profile, reducing dashboard clutter while keeping backup access one tap away.
+- Refines the relocated cards for mobile: clear three-action layout, consistent icon badges and distinct semantic colors, readable labels, responsive small-screen stacking, and visible keyboard focus.
+- Preserves owner and site-role action differences, accounting calculations, Google/Cloudflare data, and storage keys.
+- Adds `tests/profile-workspace-ux.cjs` to release QA and advances the app and service-worker cache identity to v1088.
+
 ## v1086 Google Sheets presentation and charts
 
 - Native linked charts compare contract/receipts/cost, forecast/net profit, and expense categories. Re-sync updates existing charts without duplicates and preserves user-created charts and manually moved positions. Missing revenue is not plotted as zero profit.
