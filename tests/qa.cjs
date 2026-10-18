@@ -17,6 +17,19 @@ function action(a,id='p',fields={}){for(const [k,v] of Object.entries(fields))el
 (async()=>{
 test('JS syntax',()=>assert(scripts.length));
 test('storage keys remain unchanged',()=>{assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db')});
+reset();test('issue219 six synthetic projects backup dry run preserves totals and performs no writes',()=>{
+ c.S.projects=Array.from({length:6},(_,i)=>({id:'synthetic-'+i,name:'SYNTHETIC ONLY '+i,contract:50000,status:'active'}));
+ c.S.tx=c.S.projects.map((p,i)=>({id:'synthetic-t'+i,pid:p.id,type:'out',amount:1000*(i+1),date:'2026-10-01',cat:'ค่าแรง',sub:'synthetic',paid:true,pay:'cash'}));
+ const before=JSON.stringify(c.S),ls=JSON.stringify([...storage]),writeCount=writes.length;
+ const raw=c.backupJson(),parsed=c.restoreParse(raw),drill=c.migrationDrill(parsed);
+ assert(parsed.ok);assert(drill.ok);assert.equal(drill.summary.projects,6);assert.equal(drill.summary.tx,6);
+ assert.equal(drill.digest,c.migrationBusinessDigest(c.migrate(copy(c.S))));
+ for(const p of c.S.projects)assert.equal(parsed.state.tx.filter(t=>t.pid===p.id).reduce((s,t)=>s+t.amount,0),c.S.tx.find(t=>t.pid===p.id).amount);
+ assert.equal(JSON.stringify(c.S),before);assert.equal(JSON.stringify([...storage]),ls);assert.equal(writes.length,writeCount);
+ const corrupt=JSON.parse(raw);corrupt.state.tx[0].amount++;
+ assert.equal(c.restoreParse(JSON.stringify(corrupt)).ok,false);
+ assert.equal(JSON.stringify(c.S),before);assert.equal(writes.length,writeCount);
+});
 reset();test('contractor package 50000 advance 30000 leaves 20000 without duplicate expense',()=>{
   assert(c.vProject().includes('ค่าเหมาช่าง / เบิกเงินค่างวด'));
   action('contractorPackageNew','p');
@@ -49,6 +62,18 @@ reset();test('contractor package 50000 advance 30000 leaves 20000 without duplic
   const persisted=JSON.parse(storage.get(c.KEY));
   assert.equal(persisted.tx.filter(x=>x.contractorPackage===true).length,1);
   assert.equal(persisted.tx.find(x=>x.id===tx.id).payments[0].amount,30000);
+});
+reset();test('issue219 contractor final payment, roles, closed period and storage failure keep one expense',()=>{
+ action('contractorPackageNew','p');action('contractorPackageSave','p',{contractorName:'SYNTHETIC',contractorScope:'test',contractorAmount:'50000'});
+ const id=c.S.tx[0].id,pay=amount=>{c.U.runtimeActionStamps=Object.create(null);action('apPayOpen',id);action('apPaySave',id,{apPayAmount:String(amount),apPayDate:'2026-10-14',apPayMethod:'cash'});};
+ pay(30000);assert.equal(c.txOutstandingNet(c.S.tx[0]),20000);
+ c.S.role='site';pay(20000);assert.equal(c.txOutstandingNet(c.S.tx[0]),20000);c.S.role='owner';
+ c.S.accountingPeriods=[{period:'2026-10',status:'closed'}];pay(20000);assert.equal(c.txOutstandingNet(c.S.tx[0]),20000);c.S.accountingPeriods=[];
+ const originalPersist=c.persist,before=JSON.stringify(c.S.tx);c.persist=()=>false;
+ try{pay(20000);assert.equal(JSON.stringify(c.S.tx),before);}finally{c.persist=originalPersist;}
+ pay(20000);assert.equal(c.txOutstandingNet(c.S.tx[0]),0);assert.equal(c.S.tx.length,1);assert.equal(c.S.tx[0].payments.length,2);
+ assert.equal(c.stats('p').outB,50000);assert.equal(c.contractorPackageSummary('q').remaining,0);
+ const parsed=c.restoreParse(c.backupJson());assert(parsed.ok);assert.equal(parsed.state.tx[0].payments.length,2);
 });
 reset();test('contractor package rejects duplicate and invalid amounts',()=>{
   action('contractorPackageNew','p');
