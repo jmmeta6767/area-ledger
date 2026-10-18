@@ -60,9 +60,11 @@ async function fixture(page,view,count){
        const evidence=[...sheet.querySelectorAll('.expense-batch-evidence')];
        return {dateFits:date.getBoundingClientRect().right<=row.getBoundingClientRect().right,actionFits:action.getBoundingClientRect().bottom<=sheet.getBoundingClientRect().bottom+1,oneHandle:getComputedStyle(sheet,'::before').display==='none',font:parseFloat(getComputedStyle(date).fontSize),evidenceCount:evidence.length,evidenceImages:evidence.every(x=>x.querySelector('img')?.src.startsWith('data:image/')),evidenceTargets:evidence.every(x=>x.querySelector('summary').getBoundingClientRect().height>=44)};
       });assert(checks.dateFits&&checks.actionFits&&checks.oneHandle&&checks.font>=16&&checks.evidenceCount===count&&checks.evidenceImages&&checks.evidenceTargets,JSON.stringify(checks));
+      // The historical snapshot is a visual baseline; exercise edits on release code.
+      if(version==='after'){console.log('CHECK batch selection',mode,width,height,count);
       await page.locator('[data-exp-batch="0"][data-k="sub"]').fill('แก้ไขรายละเอียด');
       await page.locator('[data-exp-batch="0"][data-k="include"]').uncheck();
-      assert.equal(await page.evaluate(()=>U.expenseBatch[0].sub),'แก้ไขรายละเอียด');assert.equal(await page.evaluate(()=>U.expenseBatch[0].include),false);
+      assert.equal(await page.evaluate(()=>U.expenseBatch[0].sub),'แก้ไขรายละเอียด');assert.equal(await page.evaluate(()=>U.expenseBatch[0].include),false);}
      }
     }
     if(width===390&&view==='home'){
