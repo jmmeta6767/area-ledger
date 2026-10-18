@@ -3816,7 +3816,7 @@ body[data-view] .acct-grid .in{color:#166534!important}body[data-view] .acct-gri
 body[data-view] .master-scrim{padding:12px 0 0;background:rgba(16,24,40,.48);backdrop-filter:blur(3px)}
 body[data-view] .master-sheet.system-dialog{width:100%!important;max-width:100%!important;max-height:calc(var(--ledger-vvh,100dvh) - max(env(safe-area-inset-top,0px),12px))!important;padding:0 20px max(24px,env(safe-area-inset-bottom,0px))!important;border-radius:22px 22px 0 0!important;background:#fff!important;color:#20242B!important;scroll-padding-block:100px 36px;overscroll-behavior:contain;box-shadow:0 -12px 40px rgba(16,24,40,.16)}
 .system-dialog .master-sheet-handle{display:none}
-.system-dialog-header{position:sticky;top:0;z-index:35;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:72px;padding:14px 20px;margin:0 -20px 18px;background:#fff;border-bottom:1px solid #E4E7EC;box-shadow:0 4px 12px rgba(16,24,40,.025)}
+.system-dialog-header{position:sticky;top:0;z-index:35;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding:10px 20px;margin:0 -20px 16px;background:#fff;border-bottom:1px solid #E4E7EC;box-shadow:0 4px 12px rgba(16,24,40,.025)}
 .system-dialog-header h2{flex:1;min-width:0;margin:0;font-family:var(--display);font-size:21px;line-height:1.5;color:#20242B;overflow-wrap:anywhere}
 .system-dialog-close{flex:none;width:44px;min-width:44px!important;min-height:44px;border:1px solid #D0D5DD!important;border-radius:12px!important;background:#F7F8FA!important;color:#344054!important;padding:10px!important}.system-dialog-close svg{display:block;width:22px;height:22px}
 .system-dialog>h3[hidden],.system-dialog [hidden]{display:none!important}
@@ -3853,10 +3853,10 @@ body[data-view] .mfc-head small{color:#475467!important}
 
 @media screen {
 body[data-view] :is(.profile-editor-sheet,.feedback-editor-sheet).system-dialog .system-dialog-actions{position:sticky!important;bottom:0!important;inset:auto auto 0!important;z-index:36;margin:12px 0 0!important;padding:10px 0!important;background:#fff!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;box-shadow:0 -8px 12px #fff!important}
-body.project-keyboard-focus .system-dialog-header{min-height:56px;padding-block:6px;margin-bottom:12px}
+
 }
 
-@media screen and (orientation:landscape) and (max-width:1000px){body.project-keyboard-focus .master-scrim{padding:6px!important}body.project-keyboard-focus .master-sheet.system-dialog{max-height:calc(var(--ledger-vvh,100dvh) - 12px)!important;padding-bottom:8px!important}}
+@media screen and (orientation:landscape) and (max-width:1000px){body[data-view] .mobile-editor-scrim{padding:6px!important}body[data-view] .mobile-editor-scrim>.master-sheet.system-dialog{max-height:calc(var(--ledger-vvh,100dvh) - 12px)!important;padding-bottom:8px!important}body[data-view] .system-dialog-header{min-height:56px;padding-block:6px;margin-bottom:12px}}
 </style>
 
 </head>
