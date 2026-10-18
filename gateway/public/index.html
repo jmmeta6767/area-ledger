@@ -3857,6 +3857,10 @@ body[data-view] :is(.profile-editor-sheet,.feedback-editor-sheet).system-dialog 
 }
 
 @media screen and (orientation:landscape) and (max-width:1000px){body[data-view] .mobile-editor-scrim{padding:6px!important}body[data-view] .mobile-editor-scrim>.master-sheet.system-dialog{max-height:calc(var(--ledger-vvh,100dvh) - 12px)!important;padding-bottom:8px!important}body[data-view] .system-dialog-header{min-height:56px;padding-block:6px;margin-bottom:12px}}
+
+/* The application shell fills the viewport even when legacy mobile density is selected. */
+@media screen {body[data-view] #app:not(.nonav),body[data-view] #app.nonav{width:100%!important;max-width:none!important;margin:0!important}}
+@media screen and (min-width:1024px){body[data-view] #app>main#workspace-main{width:calc(100% - 64px)!important;max-width:1160px!important;margin-inline:auto!important;padding-inline:0!important}body[data-view="add"] #app>main#workspace-main{max-width:720px!important}body[data-view="profile"] #app>main#workspace-main{max-width:1040px!important}body[data-view="projects"] .project-directory-focus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}body[data-view="projects"] .project-directory-focus>:not(.project-hub-card){grid-column:1/-1}body[data-view="projects"] .project-directory-focus>.project-hub-card{margin:0!important}body[data-view="projects"] .project-hub-card{display:flex;flex-direction:column}body[data-view="projects"] .project-hub-card .project-hub-main{flex:1}body[data-view="projects"] .project-hub-card .project-hub-actions{margin-top:auto}}
 </style>
 
 </head>
