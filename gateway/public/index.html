@@ -5413,7 +5413,7 @@ function workspaceApplyAccessibility(previous,title,view){
     var heading=panel.querySelector('h1,h2,h3');if(heading){heading.id='workspace-dialog-title';heading.tabIndex=-1;panel.setAttribute('aria-labelledby',heading.id);}else panel.setAttribute('aria-label',U.appMenu?'เมนูหลัก':title||'รายละเอียด');
     if(changed){if(!was)workspaceA11y.returnFocus=previous;panel.tabIndex=-1;(heading||panel).focus({preventScroll:true});}
     else if(previous&&previous.id)workspaceRestoreFocus(previous);
-  }else if(was){if(!workspaceRestoreFocus(workspaceA11y.returnFocus)){var main=document.getElementById('workspace-main');if(main)main.focus({preventScroll:true});}workspaceA11y.returnFocus=null;}
+  }else if(was){var restored=workspaceRestoreFocus(workspaceA11y.returnFocus);if(was==='drawer'&&(!restored||!document.activeElement.matches('.app-menu-btn'))){var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});}else if(!restored){var main=document.getElementById('workspace-main');if(main)main.focus({preventScroll:true});}workspaceA11y.returnFocus=null;}
   else if(previous&&previous.id&&workspaceA11y.view===view)workspaceRestoreFocus(previous);
   else if(workspaceA11y.view&&workspaceA11y.view!==view){var target=document.getElementById('workspace-main');if(target)target.focus({preventScroll:true});}
   workspaceA11y.modal=key;workspaceA11y.view=view;
