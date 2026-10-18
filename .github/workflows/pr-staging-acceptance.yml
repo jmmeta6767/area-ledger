@@ -1,0 +1,236 @@
+name: AREA Ledger PR Staging Acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'gateway/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  iphone-layout:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser test runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/layout-runtime" playwright@1.62.1 axe-core@4.14.0
+          "$RUNNER_TEMP/layout-runtime/node_modules/.bin/playwright" install --with-deps chromium
+      - name: iPhone layout and scroll regression
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/layout-runtime/node_modules/playwright
+          LAYOUT_OUTPUT: layout-evidence
+          AXE_SOURCE: ${{ runner.temp }}/layout-runtime/node_modules/axe-core/axe.min.js
+        run: |
+          node tests/iphone-layout.cjs
+          node tests/iphone-card-keyboard.cjs
+          node tests/iphone-project-keyboard.cjs
+          node tests/iphone-project-create-keyboard.cjs
+          node tests/project-mobile-budget.cjs
+          node tests/reliability-mobile.cjs
+          node tests/expense-entry-e2e.cjs
+          node tests/ux-ui-v1080-e2e.cjs
+          node tests/workspace-ux-v1087.cjs
+          node tests/full-system-ux.cjs
+          QA_COLOR_SCHEME=dark QA_WIDTHS=390 LAYOUT_OUTPUT=layout-evidence/dark-os node tests/full-system-ux.cjs
+      - name: Upload before and after layout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iphone-layout-evidence
+          path: layout-evidence
+  regression:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build identity script syntax
+        run: node --check tests/stamp-build.mjs
+      - name: Live acceptance script syntax
+        run: node --check tests/live-cloudflare-acceptance.mjs
+      - name: Cloudflare service worker syntax
+        run: node --check gateway/public/sw.js
+      - name: Payroll calculations and navigation contract
+        run: node tests/payroll-module.cjs
+      - name: Payroll monthly and two-month backup safety
+        run: node tests/payroll-monthly.cjs
+      - name: Legacy recovery service worker syntax
+        run: node --check sw.js
+      - name: Cloudflare-only deployment contract
+        run: node tests/cloudflare-only.cjs
+      - name: Native store package contract
+        run: node tests/mobile-store-contract.cjs
+      - name: Regression QA
+        run: |
+          node tests/qa.cjs
+          node tests/profile-workspace-ux.cjs
+          node tests/reliability-v1048.cjs
+      - name: BOQ provenance regression
+        run: node tests/boq-quality-provenance.cjs
+      - name: Real document quality verifier regression
+        run: node tests/boq-quality-contract.mjs
+      - name: Gateway contract QA
+        run: node tests/gateway-contract.cjs
+      - name: Gateway runtime QA
+        run: |
+          node tests/gateway-runtime.cjs
+          node tests/google-oauth-recovery.cjs
+          node tests/google-sheet-presentation.cjs
+      - name: Cloudflare ledger sync QA
+        run: node tests/cloud-ledger-sync.cjs
+      - name: D1 ledger shadow QA
+        run: node tests/d1-ledger.cjs
+      - name: R2 attachment vault QA
+        run: node tests/r2-files.cjs
+      - name: R2 PWA attachment cutover QA
+        run: node tests/r2-pwa.cjs
+      - name: Public client portfolio privacy QA
+        run: node tests/public-profile.cjs
+      - name: v1030 UX/UI regression
+        run: node tests/ux-ui-v1030.cjs
+      - name: v1031 iPhone UX regression
+        run: node tests/ux-ui-v1031.cjs
+      - name: v1032 mobile command UX regression
+        run: node tests/ux-ui-v1032.cjs
+      - name: v1033 documents settings accessibility regression
+        run: node tests/ux-ui-v1033.cjs
+      - name: v1034 CSS QA polish regression
+        run: node tests/ux-ui-v1034.cjs
+      - name: v1035 runtime performance regression
+        run: node tests/runtime-v1035.cjs
+      - name: v1036 runtime memory stability regression
+        run: node tests/runtime-v1036.cjs
+      - name: v1037 Safari long-session stability regression
+        run: node tests/runtime-v1037.cjs
+      - name: v1039 full-app UX/UI audit regression
+        run: node tests/ux-ui-v1039.cjs
+      - name: Cloudflare production contract QA
+        run: node tests/cloudflare-production.cjs
+      - name: Cloudflare deploy pipeline QA
+        run: node tests/cloudflare-deploy.cjs
+      - name: v600 stable source baseline QA
+        run: node tests/v600-stable.cjs
+      - name: v700 business stable baseline QA
+        run: node tests/v700-business-stable.cjs
+      - name: v800 business stable 1.0 QA
+        run: node tests/v800-business-stable.cjs
+      - name: v900 business stable candidate QA
+        run: node tests/v900-business-stable.cjs
+      - name: v1000 business stable candidate QA
+        run: node tests/v1000-business-stable.cjs
+      - name: v805 production cutover contract QA
+        run: node tests/production-cutover-v805.cjs
+      - name: Live acceptance script syntax
+        run: node --check tests/live-cloudflare-acceptance.mjs
+      - name: Production binding capture syntax
+        run: node --check tests/capture-production-bindings.mjs
+      - name: PR staging safety regression
+        run: node tests/pr-staging-guard-test.cjs
+      - name: Gateway staging preflight
+        run: |
+          node tests/gateway-preflight.cjs
+          node tests/legacy-app.cjs
+          node tests/safari-sw-recovery.cjs
+
+  candidate-staging:
+    needs: [regression, iphone-layout]
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+    concurrency:
+      group: area-ledger-staging-auto
+      cancel-in-progress: false
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+      CANDIDATE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      CANDIDATE_PR: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify current PR and base identity
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const assert = require('node:assert/strict');
+            const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: Number(process.env.CANDIDATE_PR)});
+            assert.equal(pr.state, 'open');
+            assert.equal(pr.head.repo.full_name, context.repo.owner + '/' + context.repo.repo);
+            assert.equal(pr.head.sha, process.env.CANDIDATE_SHA);
+            assert.equal(pr.base.ref, 'main');
+            const {data: main} = await github.rest.repos.getBranch({...context.repo, branch: 'main'});
+            assert.equal(main.commit.sha, process.env.CANDIDATE_BASE_SHA, 'Main changed: refresh the PR before staging');
+      - name: Candidate safety and closed production gate
+        run: node tests/pr-staging-guard.cjs
+      - name: Validate existing staging credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+      - name: Stamp exact reviewed source
+        run: node tests/stamp-build.mjs "$CANDIDATE_SHA" staging
+      - name: Deploy to existing staging bindings
+        working-directory: gateway
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.145.0 deploy --env staging
+      - name: Exact SHA and isolated data acceptance
+        env:
+          AREA_LEDGER_LIVE_BASE: https://area-ledger-ai-gateway-staging.areamaibab.workers.dev
+          AREA_LEDGER_ACCEPTANCE_TARGET: staging
+          AREA_LEDGER_ACCEPTANCE_SHA: ${{ github.event.pull_request.head.sha }}
+          AREA_LEDGER_ACCEPTANCE_RUN: ${{ github.run_id }}
+        run: |
+          node tests/live-cloudflare-acceptance.mjs
+          node tests/boq-document-quality.mjs
+          node tests/expense-document-quality.mjs
+      - name: Verify PR has not changed during acceptance
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const assert = require('node:assert/strict');
+            const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: Number(process.env.CANDIDATE_PR)});
+            assert.equal(pr.state, 'open');
+            assert.equal(pr.head.sha, process.env.CANDIDATE_SHA);
+            const {data: main} = await github.rest.repos.getBranch({...context.repo, branch: 'main'});
+            assert.equal(main.commit.sha, process.env.CANDIDATE_BASE_SHA);
+      - name: Upload candidate acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-staging-acceptance-${{ github.event.pull_request.head.sha }}
+          path: |
+            live-acceptance.json
+            boq-document-quality.json
+            expense-document-quality.json
+          if-no-files-found: ignore
