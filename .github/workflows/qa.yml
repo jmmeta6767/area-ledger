@@ -36,6 +36,7 @@ jobs:
           AXE_SOURCE: ${{ runner.temp }}/layout-runtime/node_modules/axe-core/axe.min.js
         run: |
           node tests/iphone-layout.cjs
+          node tests/menu-icons-visual.cjs
           node tests/iphone-card-keyboard.cjs
           node tests/iphone-project-keyboard.cjs
           node tests/iphone-project-create-keyboard.cjs
@@ -76,6 +77,8 @@ jobs:
         run: node --check sw.js
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
+      - name: Menu artwork regression
+        run: node tests/menu-icons.cjs
       - name: Native store package contract
         run: node tests/mobile-store-contract.cjs
       - name: Regression QA

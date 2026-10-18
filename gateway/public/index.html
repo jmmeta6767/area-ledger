@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="assets/area-ledger-menu-icons.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
@@ -3957,6 +3958,16 @@ var IC={
 };
 function ic(n){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><path d="'+IC[n]+'"/></svg>';}
 
+/* Presentation only: icon mapping never changes any accounting record. */
+var AREA_ART_BY_MENU={home:'overview',list:'transactions',due:'due',projects:'projects',boq:'boq',guarantees:'guarantee',docs:'documents',procurement:'procurement',report:'accounting',accounting:'accounting'};
+var AREA_ART_KEYS=['accounting','contract','house-materials','documents','boq','overview','projects','transactions','due','guarantee','equipment','scaffolding','materials','procurement','schedule'];
+function areaMenuIcon(name,fallback){
+  var key=AREA_ART_BY_MENU[name]||name;
+  if(AREA_ART_KEYS.indexOf(key)<0)return ic(fallback||'box');
+  return '<span class="area-menu-art area-menu-art--'+key+'" aria-hidden="true">'+ic(fallback||'box')+'</span>';
+}
+
+
 /* Shared category symbols are decorative; Thai labels remain the accessible name. */
 function categoryVisual(cat,type){
   var out={'ค่าของ':['materials','material'],'ค่าแรง':['helmet','labor'],'ค่าประกัน/ค่างาน':['shield','guarantee'],'ค่างานเอกสาร':['documents','document'],'ค่าเช่าอื่นๆ':['equipment','rental']};
@@ -4065,7 +4076,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1090,"sha":"","environment":"source"};
+var APP_BUILD={"version":1091,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -8276,7 +8287,7 @@ function sheetHtml(){
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
       (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect"'+(gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ยกเลิกการเชื่อม Google</button>':'')+
       '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
-      '<p class="muted" style="margin-top:10px">v1090 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
+      '<p class="muted" style="margin-top:10px">v1091 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -8558,14 +8569,26 @@ function appMenuHtml(){
     ]}
   ];
   if(S.role==='foreman')groups=groups.map(function(g){return Object.assign({},g,{items:g.items.filter(function(x){return ['report','accounting','docs'].indexOf(x[0])<0;})});}).filter(function(g){return g.items.length;});
+  /* These are navigation shortcuts, not new stock, rental or scheduling modules. */
+  var extras=[
+    ['contract','งานรับเหมา','เปิดโครงการ','menuGo','projects','','','build'],
+    ['house-materials','รายการวัสดุสร้างบ้าน','ดู BOQ','menuGo','boq','','','materials'],
+    ['equipment','เครื่องจักร / เครื่องมือ','รายการค่าเช่า','menuExpenseShortcut','','ค่าเช่าอื่นๆ','','equipment'],
+    ['scaffolding','นั่งร้าน / ไม้แบบ','ค้นหารายการค่าเช่า','menuExpenseShortcut','','ค่าเช่าอื่นๆ','นั่งร้าน','equipment'],
+    ['materials','วัสดุก่อสร้าง','รายการค่าวัสดุ','menuExpenseShortcut','','ค่าของ','','materials'],
+    ['schedule','ตารางงาน / วางแผน','กำหนดงานในโครงการ','menuGo','projects','','','progress']
+  ];
+  var extraHtml='<details class="area-shortcuts"><summary>หมวดงานเพิ่มเติม · ทางลัด<small>เชื่อมไปยังหน้าที่ระบบรองรับอยู่แล้ว</small></summary><div class="area-shortcuts-grid">'+extras.map(function(x){
+    return '<button data-act="'+x[3]+'"'+(x[4]?' data-v="'+x[4]+'"':'')+(x[5]?' data-cat="'+x[5]+'"':'')+(x[6]?' data-q="'+x[6]+'"':'')+'>'+areaMenuIcon(x[0],x[7])+'<span>'+x[1]+'<small>'+x[2]+'</small></span></button>';
+  }).join('')+'</div></details>';
   var active=U.view==='project'?'projects':(['doclist','quoteprint'].indexOf(U.view)>=0?'docs':U.view);
   function itemHtml(x){
     var act=x[5]||'menuGo',nav=act==='menuGo'?' data-v="'+x[0]+'"':'';
-    return '<button data-act="'+act+'"'+nav+' class="'+(active===x[0]?'on':'')+'"'+(active===x[0]?' aria-current="page"':'')+'><span class="app-drawer-ico nav-icon-'+x[0]+'">'+ic(x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[4]?'<i>'+Math.min(x[4],99)+'</i>':'')+'<strong>›</strong></button>';
+    return '<button data-act="'+act+'"'+nav+' class="'+(active===x[0]?'on':'')+'"'+(active===x[0]?' aria-current="page"':'')+'><span class="app-drawer-ico nav-icon-'+x[0]+'">'+areaMenuIcon(x[0],x[1])+'</span><span><b>'+x[2]+'</b><small>'+x[3]+'</small></span>'+(x[4]?'<i>'+Math.min(x[4],99)+'</i>':'')+'<strong>›</strong></button>';
   }
   return '<div class="app-drawer-wrap"><button class="app-drawer-scrim" data-act="appMenuClose" aria-label="ปิดเมนู"></button><aside class="app-drawer" role="dialog" aria-modal="true" aria-label="เมนูหลัก">'+
     '<div class="app-drawer-head"><div class="app-drawer-logo">AREA</div><div><b>AREA MAIBAB</b><small>บัญชีหน้างาน</small></div><button data-act="appMenuClose" aria-label="ปิด">×</button></div>'+
-    '<div class="app-drawer-menu">'+groups.map(function(g){return '<div class="app-drawer-group-label"><span>'+g.label+'</span><small>'+g.hint+'</small></div>'+g.items.map(itemHtml).join('');}).join('')+'</div>'+
+    '<div class="app-drawer-menu">'+groups.map(function(g){return '<div class="app-drawer-group-label"><span>'+g.label+'</span><small>'+g.hint+'</small></div>'+g.items.map(itemHtml).join('');}).join('')+'</div>'+extraHtml+
     '<div class="app-drawer-docs"><b>สร้างเอกสารด่วน</b><div><button data-act="drawerDocList" data-kind="quote">'+ic('quote')+'<span>ใบเสนอราคา</span></button><button data-act="drawerDocList" data-kind="bill">'+ic('bill')+'<span>ใบวางบิล</span></button><button data-act="drawerDocList" data-kind="receipt">'+ic('receipt')+'<span>ใบเสร็จ</span></button></div></div>'+
     '<div class="app-drawer-quick"><button data-act="newTx">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button data-act="settings">'+ic('settings')+'<span>ตั้งค่า / ระบบ</span></button></div>'+
     '</aside></div>';
@@ -8606,7 +8629,7 @@ function render(){
   tabs.forEach(function(t){
     if(t[0]==='x')return;
     if(t[0]==='add')nav+='<button class="add preview-add'+(v==='add'?' on':'')+'" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>'+(v==='add'?'กำลังเพิ่ม':'เพิ่มรายการ')+'</span></button>';
-    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='home'?urgentCount():0),act=t[0]==='boq'?'bottomBoq':(t[0]==='list'?'openList':'go');nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+ic(t[1])+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
+    else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='home'?urgentCount():0),act=t[0]==='boq'?'bottomBoq':(t[0]==='list'?'openList':'go');nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+(t[0]==='profile'?ic(t[1]):areaMenuIcon(t[0],t[1]))+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
   var nonav=(v==='print'||v==='quoteprint'||!!U.sheet);if(nonav)nav='';
@@ -8929,6 +8952,11 @@ document.addEventListener('click',function(e){
   if(a==='payrollOpen'){window.location.assign('/payroll.html');return;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='menuGo'){U.appMenu=false;if(v==='docs')U.docProjectPid='';go(v);return;}
+  if(a==='menuExpenseShortcut'){
+    U.appMenu=false;
+    U.filter={type:'out',pid:'',cat:el.dataset.cat||'',sub:'',status:'all',paidOnly:false,q:el.dataset.q||''};
+    go('list');return;
+  }
   if(a==='docSection'){U.docProjectPid='';U.docBillFilter='all';U.docQuery='';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='projectDocList'){U.docProjectPid=id||'';U.docListKind=el.dataset.kind||'quote';go('doclist');return;}
   if(a==='openList'){U.sheet=null;U.appMenu=false;U.filter=U.filter||{type:'all',pid:'',cat:'',status:'all',sub:''};go('list');return;}
@@ -9484,7 +9512,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1090&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1091&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
