@@ -17,6 +17,70 @@ function action(a,id='p',fields={}){for(const [k,v] of Object.entries(fields))el
 (async()=>{
 test('JS syntax',()=>assert(scripts.length));
 test('storage keys remain unchanged',()=>{assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db')});
+reset();test('issue219 rejected AP and contractor writes restore audit including rollover',()=>{
+ const originalPersist=c.persist;c.persist=()=>false;
+ try{
+  c.S.auditLog=Array.from({length:1000},(_,i)=>({id:'audit-'+i,at:i+1,action:'synthetic',entity:'tx'}));
+  let audit=JSON.stringify(c.S.auditLog);
+  action('contractorPackageNew','p');action('contractorPackageSave','p',{contractorName:'SYNTHETIC',contractorScope:'test',contractorAmount:'50000'});
+  assert.equal(c.S.tx.length,0);assert.equal(JSON.stringify(c.S.auditLog),audit);
+  c.S.tx=[{id:'ap-safety',pid:'p',type:'out',amount:50000,date:'2026-10-01',cat:'ค่าแรง',paid:false,pay:'',payments:[],contractorPackage:true}];
+  const before=JSON.stringify(c.S.tx);action('apPaySave','ap-safety',{apPayAmount:'30000',apPayDate:'2026-10-14',apPayMethod:'transfer'});
+  assert.equal(JSON.stringify(c.S.tx),before);assert.equal(JSON.stringify(c.S.auditLog),audit);
+ }finally{c.persist=originalPersist;}
+});
+reset();test('issue219 bank and reopened period rollback preserve records and audit',()=>{
+ const originalPersist=c.persist;c.persist=()=>false;
+ try{
+  let before=JSON.stringify(c.S);
+  action('bankReconcile','',{acctPeriod:'2026-10',bankStatement:'0'});
+  assert.equal(JSON.stringify(c.S),before);
+  c.S.accountingPeriods=[{id:'closed',period:'2026-10',status:'closed',closedAt:1}];before=JSON.stringify(c.S);
+  action('periodReopen','',{acctPeriod:'2026-10'});assert.equal(JSON.stringify(c.S),before);
+ }finally{c.persist=originalPersist;}
+});
+reset();test('issue219 foreman cannot settle edit delete or reopen accounting through direct actions',()=>{
+ c.S.tx=[{id:'protected',pid:'p',type:'out',amount:50000,date:'2026-10-01',cat:'ค่าแรง',paid:false,pay:'',payments:[],contractorPackage:true}];
+ c.S.accountingPeriods=[{id:'closed',period:'2026-10',status:'closed',closedAt:1}];c.S.role='foreman';
+ const before=JSON.stringify(c.S);c.U.confirm='txprotected';
+ for(const a of ['apPaySave','markPaid','editTx','delTx','periodReopen']){c.U.runtimeActionStamps=Object.create(null);action(a,'protected',{apPayAmount:'30000',apPayDate:'2026-11-14',apPayMethod:'transfer',acctPeriod:'2026-10'});assert.equal(JSON.stringify(c.S),before,a);}
+ c.U.draft=Object.assign(c.newDraft('in','p'),{amount:'100',date:'2026-11-01'});c.saveTx(false);assert.equal(JSON.stringify(c.S),before);
+ c.U.draft=Object.assign(c.newDraft('out','p'),{id:'protected',amount:'40000',date:'2026-11-01'});c.saveTx(false);assert.equal(JSON.stringify(c.S),before);
+});
+reset();test('issue219 actual first-write failure leaves AP audit and IndexedDB untouched',()=>{
+ c.S.tx=[{id:'first-ap',pid:'p',type:'out',amount:100,date:'2026-10-01',cat:'ค่าของ',paid:false,pay:'',payments:[]}];
+ const before=JSON.stringify(c.S),writeCount=writes.length;fail=true;
+ action('apPaySave','first-ap',{apPayAmount:'40',apPayDate:'2026-10-14',apPayMethod:'cash'});
+ assert.equal(JSON.stringify(c.S),before);assert.equal(storage.has(c.KEY),false);assert.equal(writes.length,writeCount);fail=false;
+});
+reset();test('issue219 foreman retains new expense entry while owner controls protected actions',()=>{
+ c.S.role='foreman';c.U.draft=Object.assign(c.newDraft('out','p'),{amount:'50',date:'2026-11-01',cat:'ค่าของ',sub:'SYNTHETIC',pay:'cash',paid:true});
+ c.saveTx(false);assert.equal(c.S.tx.length,1);assert.equal(c.S.tx[0].type,'out');assert.equal(c.S.tx[0].amount,50);
+});
+reset();test('issue219 journal and period close reject persistence without audit residue',()=>{
+ const persist=c.persist,checklist=c.monthEndCloseChecklist;c.persist=()=>false;
+ try{
+  const before=JSON.stringify(c.S);
+  action('manualJournalSave','',{mjDate:'2026-11-01',mjPid:'',mjNote:'SYNTHETIC',mjAcc0:'1010',mjDr0:'100',mjCr0:'0',mjAcc1:'3000',mjDr1:'0',mjCr1:'100'});
+  assert.equal(JSON.stringify(c.S),before);
+  // Isolate failed persistence after a successful month-end gate; gate correctness has separate coverage.
+  c.monthEndCloseChecklist=()=>({ok:true,gate:{health:{},trialBalance:{debit:0,credit:0},tax:{}}});
+  action('periodClose','',{acctPeriod:'2026-11'});assert.equal(JSON.stringify(c.S),before);
+ }finally{c.persist=persist;c.monthEndCloseChecklist=checklist;}
+});
+reset();test('issue219 six synthetic projects backup dry run preserves totals and performs no writes',()=>{
+ c.S.projects=Array.from({length:6},(_,i)=>({id:'synthetic-'+i,name:'SYNTHETIC ONLY '+i,contract:50000,status:'active'}));
+ c.S.tx=c.S.projects.map((p,i)=>({id:'synthetic-t'+i,pid:p.id,type:'out',amount:1000*(i+1),date:'2026-10-01',cat:'ค่าแรง',sub:'synthetic',paid:true,pay:'cash'}));
+ const before=JSON.stringify(c.S),ls=JSON.stringify([...storage]),writeCount=writes.length;
+ const raw=c.backupJson(),parsed=c.restoreParse(raw),drill=c.migrationDrill(parsed);
+ assert(parsed.ok);assert(drill.ok);assert.equal(drill.summary.projects,6);assert.equal(drill.summary.tx,6);
+ assert.equal(drill.digest,c.migrationBusinessDigest(c.migrate(copy(c.S))));
+ for(const p of c.S.projects)assert.equal(parsed.state.tx.filter(t=>t.pid===p.id).reduce((s,t)=>s+t.amount,0),c.S.tx.find(t=>t.pid===p.id).amount);
+ assert.equal(JSON.stringify(c.S),before);assert.equal(JSON.stringify([...storage]),ls);assert.equal(writes.length,writeCount);
+ const corrupt=JSON.parse(raw);corrupt.state.tx[0].amount++;
+ assert.equal(c.restoreParse(JSON.stringify(corrupt)).ok,false);
+ assert.equal(JSON.stringify(c.S),before);assert.equal(writes.length,writeCount);
+});
 reset();test('contractor package 50000 advance 30000 leaves 20000 without duplicate expense',()=>{
   assert(c.vProject().includes('ค่าเหมาช่าง / เบิกเงินค่างวด'));
   action('contractorPackageNew','p');
@@ -49,6 +113,18 @@ reset();test('contractor package 50000 advance 30000 leaves 20000 without duplic
   const persisted=JSON.parse(storage.get(c.KEY));
   assert.equal(persisted.tx.filter(x=>x.contractorPackage===true).length,1);
   assert.equal(persisted.tx.find(x=>x.id===tx.id).payments[0].amount,30000);
+});
+reset();test('issue219 contractor final payment, roles, closed period and storage failure keep one expense',()=>{
+ action('contractorPackageNew','p');action('contractorPackageSave','p',{contractorName:'SYNTHETIC',contractorScope:'test',contractorAmount:'50000'});
+ const id=c.S.tx[0].id,pay=amount=>{c.U.runtimeActionStamps=Object.create(null);action('apPayOpen',id);action('apPaySave',id,{apPayAmount:String(amount),apPayDate:'2026-10-14',apPayMethod:'cash'});};
+ pay(30000);assert.equal(c.txOutstandingNet(c.S.tx[0]),20000);
+ c.S.role='site';pay(20000);assert.equal(c.txOutstandingNet(c.S.tx[0]),20000);c.S.role='owner';
+ c.S.accountingPeriods=[{period:'2026-10',status:'closed'}];pay(20000);assert.equal(c.txOutstandingNet(c.S.tx[0]),20000);c.S.accountingPeriods=[];
+ const originalPersist=c.persist,before=JSON.stringify(c.S.tx);c.persist=()=>false;
+ try{pay(20000);assert.equal(JSON.stringify(c.S.tx),before);}finally{c.persist=originalPersist;}
+ pay(20000);assert.equal(c.txOutstandingNet(c.S.tx[0]),0);assert.equal(c.S.tx.length,1);assert.equal(c.S.tx[0].payments.length,2);
+ assert.equal(c.stats('p').outB,50000);assert.equal(c.contractorPackageSummary('q').remaining,0);
+ const parsed=c.restoreParse(c.backupJson());assert(parsed.ok);assert.equal(parsed.state.tx[0].payments.length,2);
 });
 reset();test('contractor package rejects duplicate and invalid amounts',()=>{
   action('contractorPackageNew','p');
@@ -500,7 +576,7 @@ reset();test('v831 BOQ visual refresh is page-scoped and preserves section/searc
 reset();test('v832 BOQ exposes Google Workspace project controls without replacing Ledger source',()=>{var s=c.vBoq.toString();assert(s.includes('googleWorkspaceOpen'));assert(s.includes('Google Drive / Sheets'));assert(c.googleWorkspaceSync.toString().includes("/v1/google/sync"));assert(c.googleWorkspaceSync.toString().includes('boqRows(pid)'));});
 reset();test('v832 Google Workspace sheet shows connect sync and one-way safety copy',()=>{c.U.sheet={kind:'googleWorkspace',pid:'p'};c.U.googleWorkspace={loading:false,status:{configured:true,connected:false},error:''};var out=c.sheetHtml();assert(out.includes('Google Workspace'));assert(out.includes('เชื่อม Google'));assert(out.includes('AREA Ledger ยังเป็นข้อมูลหลัก'));assert(out.includes('ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger'));});
 reset();test('v832 Google Workspace client creates ledger identity but never stores Google tokens in browser',()=>{var a=c.googleWorkspaceConnect.toString(),s=c.googleWorkspaceState.toString();assert(a.includes('cloudLedgerKey(true)'));assert(a.includes('/v1/google/oauth/start'));assert(!a.includes('refresh_token'));assert(!s.includes('access_token'));});
-reset();test('v833 Google Drive source backup UI keeps Ledger as source of truth',()=>{var html=fs.readFileSync('gateway/public/index.html','utf8');assert(html.includes('googleWorkspaceUploadFiles'));assert(html.includes('id="googleDriveFiles"'));assert(html.includes('/v1/google/file-upload'));assert(html.includes('เก็บไฟล์ต้นฉบับใน Google Drive'));assert(html.includes('v1089 รองรับ Ledger → Google Sheets'));});
+reset();test('v833 Google Drive source backup UI keeps Ledger as source of truth',()=>{var html=fs.readFileSync('gateway/public/index.html','utf8');assert(html.includes('googleWorkspaceUploadFiles'));assert(html.includes('id="googleDriveFiles"'));assert(html.includes('/v1/google/file-upload'));assert(html.includes('เก็บไฟล์ต้นฉบับใน Google Drive'));assert(html.includes('v1090 รองรับ Ledger → Google Sheets'));});
 reset();test('v833 Google Drive upload flow caps source files and refreshes status',()=>{var s=c.googleWorkspaceUploadFiles.toString();assert(s.includes('8*1024*1024'));assert(s.includes("cloudGateway('POST','/v1/google/file-upload'"));assert(s.includes('googleWorkspaceRefresh(pid)'));assert(!s.includes('S.boq='));});
 
 reset();test('v836-v850 drawer and settings preserve categorized navigation',()=>{var s=c.appMenuHtml.toString();for(const x of ['งานประจำวัน','โครงการและต้นทุน','เอกสารและงานราชการ','รายงานและควบคุม','ศูนย์บัญชี'])assert(s.includes(x));var html=fs.readFileSync('gateway/public/index.html','utf8');for(const x of ['ทั่วไปและหน้าจอ','กิจการและภาษี','ธนาคารและยอดยกมา','AI / OCR','ข้อมูล สำรอง และระบบ'])assert(html.includes(x));});
@@ -919,7 +995,7 @@ reset();test('legacy retention import uses Gregorian dates, exact project matchi
 reset();test('legacy retention import saves tracking records without retroactive ledger entries or double-counting',()=>{const rows=c.legacyRetentionImportRows();c.S.projects=rows.map((r,i)=>({id:'legacy-'+i,name:r.name,contract:360000,status:'closed'}));c.U.sheet={kind:'legacyRetentionImport',rows:rows.map((r,i)=>({...r,pid:'legacy-'+i}))};action('saveLegacyRetentionImport');assert.equal(c.S.guarantees.length,5);assert.equal(JSON.stringify(c.S.guarantees.map(g=>g.amount)),JSON.stringify([18000,30000,24900,67895,18000]));assert.equal(JSON.stringify(c.S.guarantees.map(g=>g.dueDate)),JSON.stringify(['2028-03-25','2028-07-27','2028-07-07','2028-07-27','2028-09-30']));assert(c.S.guarantees.every(g=>g.trackingOnly&&g.followupBase==='income'));assert.deepEqual(c.S.guarantees.map(g=>g.legacySourceId),rows.map(r=>r.sourceId));assert.equal(c.S.tx.length,0);assert.equal(c.guaranteeCostEligible(c.S.guarantees[0]),false);assert.equal(c.syncGuaranteeRecord(c.S.guarantees[0]),false);assert.equal(c.U.sheet,null);assert.equal(c.vGuarantees().includes('newLegacyRetentionImport'),false);});
 reset();test('legacy retention import offers only rows not already imported',()=>{const rows=c.legacyRetentionImportRows();c.S.projects=rows.map((r,i)=>({id:'legacy-'+i,name:r.name}));c.S.guarantees=[{id:'existing',trackingOnly:true,legacySourceId:'1'}];action('newLegacyRetentionImport');assert.equal(c.U.sheet.kind,'legacyRetentionImport');assert.equal(c.U.sheet.rows.length,4);assert.equal(c.U.sheet.rows[0].sourceId,'2');assert(c.vGuarantees().includes('นำเข้า 4 รายการ'));});
 reset();test('legacy retention import refuses duplicates without partial writes',()=>{const rows=c.legacyRetentionImportRows();c.S.projects=rows.map((r,i)=>({id:'legacy-'+i,name:r.name}));c.S.guarantees=[{id:'existing',pid:'legacy-0',type:'ประกันผลงาน',amount:18000,paidDate:rows[0].depositDate,followupBaseDate:rows[0].paymentDate}];c.U.sheet={kind:'legacyRetentionImport',rows:rows.map((r,i)=>({...r,pid:'legacy-'+i}))};const before=JSON.stringify(c.S);action('saveLegacyRetentionImport');assert.equal(JSON.stringify(c.S),before);assert.equal(c.U.sheet.kind,'legacyRetentionImport');});
-reset();test('v1067 premium transaction entry keeps stable accounting identifiers',()=>{assert(html.includes('--color-primary:#FFC928'));assert(html.includes('--color-primary-hover:#F2BA16'));assert(html.includes('--color-primary-soft:#FFF7D6'));assert(html.includes('--color-background:#F7F8FA'));assert(html.includes('--color-surface:#FFFFFF'));assert(html.includes('--color-text:#20242B'));assert(html.includes('--color-text-secondary:#667085'));assert(html.includes('--color-border:#E5E7EB'));assert(html.includes('--radius-card:18px'));assert(html.includes('--radius-control:12px'));assert(html.includes('--shadow-card:0 4px 20px rgba(16,24,40,0.04)'));assert(html.includes('.add-quick-chips{display:flex;flex-wrap:wrap!important'));assert(html.includes('.add-savebar{position:static!important'));assert.equal(c.APP_BUILD.version,1089);assert.equal(c.APP_RELEASE,800);assert(c.appBuildLabel().includes('v1089'));c.U.sheet={kind:'settings'};assert(c.sheetHtml().includes('data-build-info'));const sw=fs.readFileSync('gateway/public/sw.js','utf8');assert(sw.includes('source-candidate-1089'));assert(code.includes('sw.js?v=800&source=1089&project-keyboard=1'));assert(code.includes('if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0)'));assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db');});
+reset();test('v1067 premium transaction entry keeps stable accounting identifiers',()=>{assert(html.includes('--color-primary:#FFC928'));assert(html.includes('--color-primary-hover:#F2BA16'));assert(html.includes('--color-primary-soft:#FFF7D6'));assert(html.includes('--color-background:#F7F8FA'));assert(html.includes('--color-surface:#FFFFFF'));assert(html.includes('--color-text:#20242B'));assert(html.includes('--color-text-secondary:#667085'));assert(html.includes('--color-border:#E5E7EB'));assert(html.includes('--radius-card:18px'));assert(html.includes('--radius-control:12px'));assert(html.includes('--shadow-card:0 4px 20px rgba(16,24,40,0.04)'));assert(html.includes('.add-quick-chips{display:flex;flex-wrap:wrap!important'));assert(html.includes('.add-savebar{position:static!important'));assert.equal(c.APP_BUILD.version,1090);assert.equal(c.APP_RELEASE,800);assert(c.appBuildLabel().includes('v1090'));c.U.sheet={kind:'settings'};assert(c.sheetHtml().includes('data-build-info'));const sw=fs.readFileSync('gateway/public/sw.js','utf8');assert(sw.includes('source-candidate-1090'));assert(code.includes('sw.js?v=800&source=1090&project-keyboard=1'));assert(code.includes('if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0)'));assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db');});
 reset();test('v1067 normal save and save-more create exactly one ledger row and retain failure input',()=>{c.U.draft=Object.assign(c.newDraft('out','p'),{amount:'1250',cat:'ค่าของ',sub:'เหล็กเส้น',date:'2026-10-04'});c.saveTx(false);assert.equal(c.S.tx.length,1);assert.equal(c.S.tx[0].amount,1250);assert.equal(c.S.tx[0].sub,'เหล็กเส้น');assert.equal(JSON.parse(storage.get(c.KEY)).tx.length,1);reset();c.U.draft=Object.assign(c.newDraft('in','p'),{amount:'2500',cat:'รายรับ',date:'2026-10-04'});c.saveTx(true);assert.equal(c.S.tx.length,1);assert.equal(JSON.parse(storage.get(c.KEY)).tx.length,1);assert(c.U.draft);assert.equal(c.S.tx[0].type,'in');reset();c.U.draft=Object.assign(c.newDraft('out','p'),{amount:'900',date:'2026-10-04'});fail=true;c.saveTx(false);assert.equal(c.S.tx.length,0);assert.equal(c.U.draft.amount,'900');assert.equal(storage.has(c.KEY),false);assert(toasts.some(x=>x.includes('บันทึกไม่สำเร็จ')));});
 
 reset();test('BOQ AI coverage escalates rows with missing price or visible amount to local OCR',()=>{
@@ -976,7 +1052,7 @@ reset();test('v1045 Profile renders private creditor and debtor cards only for o
 reset();test('v1045 loan detail and payment sheets expose outstanding workflow',()=>{c.S.loans=[{id:'l2',kind:'payable',party:'ธนาคาร',principal:5000,date:'2026-10-01',dueDate:'2027-10-01',interestRate:4,payments:[]}];c.U.sheet={kind:'loanDetail',id:'l2'};var d=c.sheetHtml();assert(d.includes('ชำระคืนเจ้าหนี้'));assert(d.includes('5,000'));c.U.sheet={kind:'loanPayment',id:'l2'};var p=c.sheetHtml();assert(p.includes('loanPayAmount'));assert(p.includes('max=\"5000\"'));});
 reset();test('v1045 loan state health rejects overpayment and accepts valid register',()=>{var e=c.emptyState();e.loans=[{id:'l3',kind:'receivable',party:'A',principal:100,date:'2026-10-01',dueDate:'',payments:[{id:'x',date:'2026-10-02',amount:50,method:'transfer'}]}];assert.equal(c.stateHealth(e).ok,true);e.loans[0].payments.push({id:'y',date:'2026-10-03',amount:60,method:'cash'});assert.equal(c.stateHealth(e).ok,false);});
 reset();test('v1045 loans survive backup digest and stay outside public Portfolio',()=>{c.S.loans=[{id:'secret-loan',kind:'payable',party:'PRIVATE',principal:999,date:'2026-10-05',payments:[]}];var parsed=c.restoreParse(c.backupJson());assert(parsed.ok);assert.equal(parsed.state.loans.length,1);assert.equal(c.migrationCoreSnapshot(c.S).loans.length,1);var pub=c.profileBuildPublicSnapshot();assert.equal(pub.loans,undefined);assert(!JSON.stringify(pub).includes('PRIVATE'));});
-reset();test('v1048 D1 mirror and refreshed PWA cache retain the private loan release',()=>{var worker=fs.readFileSync('gateway/src/worker.js','utf8'),sw=fs.readFileSync('gateway/public/sw.js','utf8');assert(worker.includes("'guarantees','loans','materialApprovals'"));assert(sw.includes('source-candidate-1089'));assert(code.includes('sw.js?v=800&source=1089&project-keyboard=1'));assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db');});
+reset();test('v1048 D1 mirror and refreshed PWA cache retain the private loan release',()=>{var worker=fs.readFileSync('gateway/src/worker.js','utf8'),sw=fs.readFileSync('gateway/public/sw.js','utf8');assert(worker.includes("'guarantees','loans','materialApprovals'"));assert(sw.includes('source-candidate-1090'));assert(code.includes('sw.js?v=800&source=1090&project-keyboard=1'));assert.equal(c.KEY,'site-ledger-v1');assert.equal(c.IDB_NAME,'site-ledger-db');});
 
 reset();test('Facebook-inspired app bar keeps menu and real add, search and due shortcuts on every view',()=>{const bar=c.appTopBar('เพิ่มรายการ');assert(bar.includes('class="app-social-topbar"'));assert(bar.includes('app-topbar-menu'));assert(bar.includes('data-act="appMenu"'));assert(bar.includes('AREA <strong>Ledger</strong>'));assert(bar.includes('data-act="newTx"'));assert(bar.includes('data-act="openList"'));assert(bar.includes('data-act="go" data-v="due"'));assert(bar.includes('aria-label="ค้นหารายการ"'));assert(html.includes('.app-social-topbar{'));assert(html.includes('grid-template-columns:44px minmax(78px,1fr) auto'));assert(html.includes('safe-area-inset-top'));assert(html.includes("appTopBar(title)+'<main"));const before=JSON.stringify(c.S);c.U.appMenu=true;assert(c.appMenuHtml().includes('aria-label="เมนูหลัก"'));c.U.appMenu=false;assert.equal(c.directAction({getAttribute:k=>k==='data-act'?'appMenu':null}),true);assert.equal(c.U.appMenu,true);assert.equal(JSON.stringify(c.S),before);});
 reset();test('Facebook-style profile menu floats over the cover with working edit search and share actions',()=>{const bar=c.appTopBar('โปรไฟล์บริษัท');assert(bar.includes('profile-overlay-topbar'));assert(bar.includes('data-act="appMenu"'));assert(bar.includes('data-act="profileEdit"'));assert(bar.includes('data-act="openList"'));assert(bar.includes('data-act="profileShareCompany"'));assert(!bar.includes('data-act="newTx"'));assert(html.includes('body.view-profile .app-social-topbar{position:absolute'));assert(html.includes('body.view-profile .app-topbar-menu span{background:#fff}'));assert(html.includes("classList.toggle('view-profile',v==='profile')"));});

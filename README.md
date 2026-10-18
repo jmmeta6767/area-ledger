@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1090 Accounting write safety (candidate)
+
+- Enforces the existing owner/foreman workflow at financial action dispatch and transaction save; foremen retain new expense entry. This is a local UI role policy, not server authentication or multi-user RBAC.
+- Rejected contractor/AP, bank reconciliation, manual journal and period writes restore their audit history, including the 1,000-entry rollover case. Failed reopen also removes the unsaved reopen timestamp.
+- Preserves storage identities, projects, accounting calculations, Google and D1/R2 contracts. Advances the PWA cache identity without deleting ledger storage.
+- See QA-accounting-write-safety-219.md. No production release is authorized by this candidate.
+
 ## v1089 Full system UX and accessible forms
 
 - Unifies page headings, dialog headers, forms, labels, tables, selected states, validation feedback and navy/yellow/white styling across 15 views and 70 dialog types. Existing actions and accounting logic remain in place.
