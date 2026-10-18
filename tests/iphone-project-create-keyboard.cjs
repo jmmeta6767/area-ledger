@@ -19,7 +19,7 @@ const html=fs.readFileSync(path.join(root,'gateway/public/index.html'),'utf8').r
     S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'existing',name:'โครงการเดิม',contract:100000,budget:80000,status:'active'}];
     U.view='projects';U.sheet={kind:'proj',id:null};render();
     window.readGeometry=function(field){
-     const sheet=field.closest('.project-sheet'),scrim=document.querySelector('.project-edit-scrim'),head=sheet.querySelector('.project-form-head'),save=sheet.querySelector('.project-form-savebar');
+     const sheet=field.closest('.project-sheet'),scrim=document.querySelector('.project-edit-scrim'),head=sheet.querySelector('.system-dialog-header'),save=sheet.querySelector('.project-form-savebar');
      const r=field.getBoundingClientRect(),sr=sheet.getBoundingClientRect(),cr=scrim.getBoundingClientRect(),hr=head.getBoundingClientRect(),fr=save.getBoundingClientRect();
      return {fieldTop:r.top,fieldBottom:r.bottom,headerBottom:hr.bottom,saveTop:fr.top,saveBottom:fr.bottom,sheetTop:sr.top,sheetBottom:sr.bottom,
       scrimTop:cr.top,scrimBottom:cr.bottom,viewportTop:visualViewport.offsetTop,viewportBottom:visualViewport.offsetTop+parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ledger-vvh')),
@@ -27,7 +27,7 @@ const html=fs.readFileSync(path.join(root,'gateway/public/index.html'),'utf8').r
       saveButtons:[...save.querySelectorAll('button')].map(b=>{const q=b.getBoundingClientRect();return {width:q.width,height:q.height};})};
     };
    });
-   assert((await page.locator('.project-form-head h3').innerText()).includes('เพิ่มโครงการ'));
+   assert((await page.locator('.system-dialog-header h2').innerText()).includes('เพิ่มโครงการ'));
    const before=await page.evaluate(()=>JSON.stringify(S.projects));
    const fullHeight=height;
    await page.locator('#pn').fill('ร่างชื่อโครงการที่ยังไม่บันทึก');

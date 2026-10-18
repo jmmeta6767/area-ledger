@@ -24,7 +24,7 @@
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
-  --display:'Prompt','Sarabun',sans-serif; --body:'Sarabun','Noto Sans Thai',system-ui,sans-serif;
+  --display:'Prompt','Sarabun','Tahoma',sans-serif; --body:'Sarabun','Noto Sans Thai','Tahoma',system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
@@ -3800,6 +3800,63 @@ body[data-view] .due-command-grid .in{color:#B9F3CE}body[data-view] .due-command
 }
 
 @media print{.workspace-context,.workspace-tasks,.workspace-skip{display:none!important}}
+/* Interactive product system. Document paper and payroll keep their existing contracts. */
+@media screen {
+body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]){--bg:#F7F8FA;--surface:#fff;--ink:#20242B;--muted:#475467;--m-bg:#F7F8FA;--m-card:#fff;--m-ink:#20242B;--m-mut:#475467;--warn:#854D0E;--bar:#E4E7EC;background:#F7F8FA!important;color:#20242B}
+body[data-view] :where(main,.master-sheet,.field,.stack,.two,.row,.acct-grid,.doc-editor-grid,.loan-form-grid)>*{min-width:0}
+body[data-view] :is(.card,.sec.master-detail-card,.add-core-card,.add-payment-card,.settings-group,.boq-search-card){border-color:#E4E7EC;border-radius:18px;box-shadow:0 4px 20px rgba(16,24,40,.04)}
+.system-page-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px}.system-page-intro h1,.system-page-heading{margin:0;font-family:var(--display);font-size:24px;line-height:1.5;font-weight:700;color:#20242B;overflow-wrap:anywhere}
+body[data-view] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),select,textarea){box-sizing:border-box;max-width:100%;min-width:0;font-size:16px;border-radius:12px;border-color:#98A2B3;line-height:1.5}
+body[data-view] textarea{resize:vertical}body[data-view] :is(input,select,textarea):disabled{background:#F2F4F7;color:#475467;opacity:1}
+body[data-view] .system-input-label{display:block;margin:8px 0 5px;font-size:14px;line-height:1.5;font-weight:600;color:#344054}
+body[data-view] :is(.boq-meta span,.boq-row-amount small,.loan-sheet-summary small,.loan-detail-money small,.loan-detail-meta span,.loan-row small,.loan-row em,.loan-history-head>span,.profile-cover-edit>span,.profile-public-toggle small,.profile-photos-upload small,.dash-manager-head small,.dash-manager-section>b,.dash-manager-list small,.settings-intro,.settings-group summary small){color:#475467!important}
+body[data-view] .btn.dng{background:#fff!important;border-color:#B42318!important;color:#B42318!important;box-shadow:none!important}body[data-view] .btn.dng.sure{background:#B42318!important;color:#fff!important}
+body[data-view] .acct-grid>div{background:#F7F8FA!important;border:1px solid #E4E7EC;border-radius:12px;padding:12px}
+body[data-view] .acct-grid .in{color:#166534!important}body[data-view] .acct-grid .out{color:#B42318!important}
+body[data-view] .master-scrim{padding:12px 0 0;background:rgba(16,24,40,.48);backdrop-filter:blur(3px)}
+body[data-view] .master-sheet.system-dialog{width:100%!important;max-width:100%!important;max-height:calc(var(--ledger-vvh,100dvh) - max(env(safe-area-inset-top,0px),12px))!important;padding:0 20px max(24px,env(safe-area-inset-bottom,0px))!important;border-radius:22px 22px 0 0!important;background:#fff!important;color:#20242B!important;scroll-padding-block:100px 36px;overscroll-behavior:contain;box-shadow:0 -12px 40px rgba(16,24,40,.16)}
+.system-dialog .master-sheet-handle{display:none}
+.system-dialog-header{position:sticky;top:0;z-index:35;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:72px;padding:14px 20px;margin:0 -20px 18px;background:#fff;border-bottom:1px solid #E4E7EC;box-shadow:0 4px 12px rgba(16,24,40,.025)}
+.system-dialog-header h2{flex:1;min-width:0;margin:0;font-family:var(--display);font-size:21px;line-height:1.5;color:#20242B;overflow-wrap:anywhere}
+.system-dialog-close{flex:none;width:44px;min-width:44px!important;min-height:44px;border:1px solid #D0D5DD!important;border-radius:12px!important;background:#F7F8FA!important;color:#344054!important;padding:10px!important}.system-dialog-close svg{display:block;width:22px;height:22px}
+.system-dialog>h3[hidden],.system-dialog [hidden]{display:none!important}
+.system-dialog .field{margin-block:16px}.system-dialog label:not(.btn),.system-dialog .lbl{line-height:1.5;color:#344054}.system-dialog .field>label{display:block;margin-bottom:6px;font-size:14px;font-weight:600}
+.system-dialog :is(.field>input:not([type=checkbox]):not([type=radio]),.field>select,.field>textarea){width:100%;min-height:48px;padding:11px 12px;background:#fff;color:#20242B}
+.system-dialog :is(.two,.loan-form-grid,.doc-editor-grid){grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.system-dialog .stack{position:static!important;inset:auto!important;background:transparent;box-shadow:none!important;gap:10px}
+.system-dialog .system-dialog-actions{margin-top:22px;padding-top:16px;border-top:1px solid #E4E7EC;background:#fff!important;display:flex;flex-wrap:wrap;gap:10px}
+.system-dialog-actions>button{flex:1 1 180px;min-height:48px;white-space:normal;overflow-wrap:anywhere}
+.system-dialog .btn{padding:10px 14px;line-height:1.5;font-size:15px;font-weight:600;border-width:1px}.system-dialog .btn.pri,.system-dialog .primary{background:#FFC928!important;border-color:#E2AD14!important;color:#20242B!important}
+.system-dialog :is(.btn.pri,.primary):hover{background:#F2BA16!important}.system-dialog button:disabled{cursor:wait;opacity:.65}
+.system-table-scroll{max-width:100%;overflow:auto;border:1px solid #E4E7EC;border-radius:12px;margin-block:12px}.system-table-scroll table{margin:0;min-width:100%;border-collapse:collapse}.system-table-scroll th{background:#F2F4F7;color:#344054;font-size:13px}.system-table-scroll :is(th,td){padding:12px 10px;border-color:#E4E7EC;line-height:1.5;text-align:left}.system-table-scroll tbody tr:nth-child(even){background:#FAFBFC}
+.system-dialog .acct-table-wrap{scroll-padding:8px}.system-dialog .acct-table-wrap input,.system-dialog .acct-table-wrap select{min-height:44px;width:100%}
+.system-feedback{margin:10px 0 16px;padding:12px 14px;border:1px solid #FDA29B;border-left:4px solid #B42318;border-radius:12px;background:#FFF1F0;color:#912018;font-size:15px;line-height:1.6;overflow-wrap:anywhere}.system-field-error{display:block;margin-top:6px;color:#B42318!important;font-size:14px;line-height:1.5}body[data-view] [aria-invalid="true"]{border:2px solid #B42318!important}
+body[data-view] :is(button,input,select,textarea,summary,a,[tabindex]):focus-visible{outline:3px solid #083F79!important;outline-offset:3px;scroll-margin-block:110px 130px}
+@media(min-width:760px){body[data-view] .master-scrim{display:flex;align-items:center;justify-content:center;padding:28px}body[data-view] .master-sheet.system-dialog{width:min(100%,720px)!important;max-height:calc(var(--ledger-vvh,100dvh) - 56px)!important;border-radius:22px!important;box-shadow:0 20px 80px rgba(16,24,40,.2)}body[data-view] .master-sheet.system-dialog-wide{width:min(100%,1080px)!important}}
+@media(max-width:430px){.system-dialog-header h2{font-size:19px}.system-dialog :is(.two,.loan-form-grid,.doc-editor-grid){grid-template-columns:minmax(0,1fr)}.system-dialog .acct-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.system-dialog .system-dialog-actions>button{flex-basis:100%}.system-page-intro h1,.system-page-heading{font-size:22px}}
+@media(prefers-reduced-motion:reduce){.master-scrim,.system-dialog{animation:none!important;transition:none!important}}
+}
+
+@media screen {
+body[data-view] :is(label[for="profileCoverInput"],label[for="profileAvatarInput"]){color:#fff!important;min-height:44px;display:inline-flex;align-items:center}
+.system-document-toolbar{max-width:100%;padding:16px;margin-bottom:16px;border:1px solid #E4E7EC;border-radius:18px;background:#fff;color:#20242B}.system-document-heading{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}.system-document-heading button{display:flex;align-items:center;gap:6px}.system-document-heading svg{width:18px;height:18px}.system-document-toolbar h1{font-size:22px;margin:14px 0 4px}.system-document-toolbar p{color:#475467;font-size:14px;margin:0 0 12px}.system-document-toolbar .stack{position:static!important;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;background:#fff}.system-document-toolbar .doc-output-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.system-document-toolbar button{min-width:0;white-space:normal}.system-document-preview{max-width:100%;overflow:auto;padding:0;border:1px solid #E4E7EC;border-radius:8px;background:#E4E7EC;scroll-padding:8px}.system-document-preview .rd-paper{width:210mm;max-width:none!important;min-height:297mm;margin:0!important;box-sizing:border-box}
+}
+.rd-paper .rd-corner{border-top-color:#FFC928}.rd-paper :is(.rd-dochead h1,.rd-docmeta span,.rd-customer>b,.rd-tax-flag,.quote-total .grand){color:#083F79!important}.rd-paper .rd-tax-flag{border-color:#083F79}.rd-paper :is(.rd-dochead>small,.rd-customer-tax span,.rd-legal-note){color:#475467!important}.rd-paper.pdf-export{zoom:1!important}
+@media print{.system-document-toolbar{display:none!important}.system-document-preview{overflow:visible!important;border:0!important;background:#fff!important}.rd-paper{zoom:1!important}}
+
+@media screen {
+body[data-view] .mfc-head small{color:#475467!important}
+.system-field-wrap{display:grid!important;align-content:start;gap:6px;min-width:0;max-width:100%}.system-field-wrap>.system-input-label{margin:0!important}.system-field-wrap>:is(input,select,textarea){width:100%;min-height:44px;padding:9px 10px;background:#fff;color:#20242B}.system-dialog .mj-line{padding:12px;border:1px solid #E4E7EC;border-radius:12px;margin-top:12px;align-items:start;grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(0,1fr))}
+@media(max-width:430px){.system-dialog .mj-line{grid-template-columns:repeat(2,minmax(0,1fr))}.system-dialog .mj-line>.system-field-wrap:first-child{grid-column:1/-1}}
+}
+
+
+@media screen {
+body[data-view] :is(.profile-editor-sheet,.feedback-editor-sheet).system-dialog .system-dialog-actions{position:sticky!important;bottom:0!important;inset:auto auto 0!important;z-index:36;margin:12px 0 0!important;padding:10px 0!important;background:#fff!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;box-shadow:0 -8px 12px #fff!important}
+body.project-keyboard-focus .system-dialog-header{min-height:56px;padding-block:6px;margin-bottom:12px}
+}
+
+@media screen and (orientation:landscape) and (max-width:1000px){body.project-keyboard-focus .master-scrim{padding:6px!important}body.project-keyboard-focus .master-sheet.system-dialog{max-height:calc(var(--ledger-vvh,100dvh) - 12px)!important;padding-bottom:8px!important}}
 </style>
 
 </head>
@@ -4088,7 +4145,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1088,"sha":"","environment":"source"};
+var APP_BUILD={"version":1089,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5109,6 +5166,7 @@ async function disasterRecoverySelfCheck(){var st=disasterRecoveryStaticCheck(),
 function disasterRecoveryEvidence(){var x=S.ops&&S.ops.disasterRecovery||null,age=x&&x.at?Date.now()-x.at:Infinity;return {ok:!!(x&&x.ok&&age>=0&&age<=24*60*60*1000),fresh:age>=0&&age<=24*60*60*1000,evidence:x,ageMs:age};}
 function isStandalone(){var nav=(window&&window.navigator)||{};return !!(nav.standalone||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));}
 function toast(msg){
+  systemShowFeedback(msg);
   var old=document.querySelector('.toast');if(old)old.remove();
   var d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.setAttribute('aria-live','polite');d.setAttribute('aria-atomic','true');d.textContent=msg;document.body.appendChild(d);
   setTimeout(function(){d.remove();},2200);
@@ -5350,6 +5408,113 @@ function homeUrgentAlert(allMode,active,all){
   return '<button class="urgent-alert '+a.tone+'"'+attrs+'><span class="urgent-ico">'+(a.tone==='critical'?'!':'⏱')+'</span><span class="urgent-copy"><b>'+esc(a.title)+'</b><small>'+esc(a.detail)+(extra?' · อีก '+extra+' เรื่องเร่งด่วน':'')+'</small></span><strong>›</strong></button>';
 }
 
+IC.close='M6 6l12 12M18 6 6 18';
+/* Presentation only. Existing data-act handlers remain responsible for validation and writes. */
+var systemUI={lastAction:'',actionAt:0};
+var systemFieldNames={boqImportPid:'โครงการที่รับรายการ BOQ',govDraftText:'ร่างหนังสือ',glAccount:'บัญชีแยกประเภท',pcPid:'โครงการ',appOrigin:'ที่อยู่เว็บแอป',cloudKeyBox:'รหัสเชื่อมข้อมูล Cloud',csvbox:'ข้อมูล CSV สำหรับส่งออก'};
+function systemFieldLabel(control,root,index){
+  if(control.labels&&control.labels.length)return;
+  var label=control.previousElementSibling;
+  if(!label||!label.matches('label,.lbl')){var field=control.closest('.field');label=field&&field.querySelector('label,.lbl');}
+  if(label&&!label.contains(control)&&(!label.hasAttribute('for')||label.getAttribute('for')===control.id)){
+    if(!control.id)control.id='system-field-'+index;
+    if(label.tagName==='LABEL')label.htmlFor=control.id;
+    else{if(!label.id)label.id='system-label-'+index;control.setAttribute('aria-labelledby',label.id);}
+    return;
+  }
+  if(control.hasAttribute('aria-label')||control.hasAttribute('aria-labelledby'))return;
+  var cell=control.closest('td'),table=cell&&cell.closest('table'),head=table&&table.querySelector('thead tr');
+  if(head&&head.children[cell.cellIndex]){var th=head.children[cell.cellIndex];if(!th.id)th.id='system-column-'+index;control.setAttribute('aria-labelledby',th.id);return;}
+  var id=control.id||'',name=systemFieldNames[id]||'';
+  if(!name&&/^mj(Acc|Dr|Cr)\d+$/.test(id))name=(id.indexOf('Acc')>=0?'บัญชี':id.indexOf('Dr')>=0?'เดบิต (บาท)':'เครดิต (บาท)')+' แถว '+(+id.match(/\d+$/)[0]+1);
+  if(!name&&/^(q|d)(desc|qty|unit|price|lineDisc)\d+$/.test(id)){var key=id.match(/^(?:q|d)([a-zA-Z]+)/)[1];name=({desc:'รายละเอียดรายการ',qty:'จำนวน',unit:'หน่วย',price:'ราคาต่อหน่วย',lineDisc:'ส่วนลด'})[key]+' แถว '+(+id.match(/\d+$/)[0]+1);}
+  if(!name&&control.placeholder&&/^ค้น/.test(control.placeholder))name=control.placeholder;
+  if(!name)return;
+  if(!control.id)control.id='system-field-'+index;
+  var wrap=document.createElement('label');wrap.className='system-field-wrap';wrap.htmlFor=control.id;var column=getComputedStyle(control).gridColumn;if(column&&column!=='auto / auto')wrap.style.gridColumn=column;
+  var visible=document.createElement('span');visible.className='system-input-label';visible.textContent=name;control.before(wrap);wrap.appendChild(visible);wrap.appendChild(control);
+}
+function systemReadableTerms(root){
+  var terms={'ACCOUNTING CONTROL':'บัญชีและตรวจสอบ','Month-End Checklist':'รายการตรวจปิดงวด','Month-End':'ตรวจปิดงวด','Bank Reconciliation':'กระทบยอดธนาคาร','Data Health':'สุขภาพข้อมูล','AR / AP Aging':'อายุลูกหนี้ / เจ้าหนี้','Owner Operations 1.1':'ดูแลข้อมูลและระบบ','Integrity Gate':'ตรวจความครบถ้วนข้อมูล','Advanced / System Diagnostics':'เครื่องมือดูแลระบบขั้นสูง','Diagnostics':'ตรวจสถานะระบบ','PROJECT':'ข้อมูลโครงการ','PRIVATE FINANCE':'ทะเบียนเงินกู้','RECEIVE PAYMENT':'รับชำระเงิน','BOQ RECONCILIATION':'จับคู่ต้นทุนกับ BOQ'};
+  Object.assign(terms,{'Chart of Accounts':'ผังบัญชี','General Ledger':'บัญชีแยกประเภท','Trial Balance':'งบทดลอง','Financial Statements · Management':'งบการเงินสำหรับบริหาร','Month-End Close Checklist':'ตรวจความพร้อมปิดงวด','Tax / Document Reconciliation':'กระทบยอดภาษีและเอกสาร','Tax / Document Register':'ทะเบียนภาษีและเอกสาร','Document Flow Integrity':'ตรวจความเชื่อมโยงเอกสาร','Audit Trail':'ประวัติการเปลี่ยนแปลง','Project Cost Accounting':'บัญชีต้นทุนโครงการ','Accounting Control Center 2.0':'ตรวจสอบบัญชีและโครงการ','Executive Accounting Report':'รายงานบัญชีสำหรับผู้บริหาร','Variation / เพิ่ม-ลดงาน':'งานเพิ่ม–ลดตามสัญญา','Extension of Time':'ขอขยายเวลาสัญญา','Contract Follow-up':'ติดตามงานตามสัญญา','Contract Risk Assistant':'ตรวจความเสี่ยงของสัญญา','RC2 Production Candidate':'ตรวจความพร้อมก่อนปล่อยระบบ','Disaster Recovery Certification':'ผลทดสอบการกู้คืนข้อมูล','Deployment Control Center':'สถานะการขึ้นระบบ','Migration Acceptance Certificate':'ผลตรวจการย้ายข้อมูล','กลับ Accounting Control':'กลับศูนย์บัญชี'});
+  var dynamic=['tx','loanDetail','cloudPhoto','govDraft'].indexOf(U.sheet&&U.sheet.kind)>=0;
+  root.querySelectorAll('.system-dialog-header h2,.doc-editor-head small,.acct-command-head small,.acct-task-list b,.acct-quick-grid b,.acct-bank-card .acct-section-title b,.acct-fold summary b,.acct-nav-card b,button[data-act]').forEach(function(el){if(el.children.length)return;if(dynamic&&el.closest('.system-dialog-header'))return;if(el.tagName==='BUTTON'&&!/^(accounting|ownerOps|systemAdvanced|healthCheck|integrityOpen|monthEnd|bankReconcile|saveOpen)/.test(el.dataset.act||''))return;var text=el.textContent.trim();if(terms[text])el.textContent=terms[text];});
+}
+function systemDialogPresentation(panel){
+  var heading=panel.querySelector('h1,h2,h3');if(!heading)return;
+  var kind=U.sheet&&U.sheet.kind||'',header=document.createElement('header');header.className='system-dialog-header';
+  var title=document.createElement('h2'),copy=heading.cloneNode(true);copy.querySelectorAll('button').forEach(function(b){b.remove();});title.textContent=copy.textContent.trim();title.id='system-dialog-heading';header.appendChild(title);heading.hidden=true;
+  var closes=Array.from(panel.querySelectorAll('[data-act="closeSheet"]')),close=closes[0];
+  if(!close){close=document.createElement('button');close.dataset.act='closeSheet';close.setAttribute('aria-label','ปิดหน้าต่าง');}
+  else if(!close.getAttribute('aria-label')){var closeName=close.textContent.trim();close.setAttribute('aria-label',!closeName||/^[×x]$/i.test(closeName)?'ปิดหน้าต่าง':closeName);}
+  close.type='button';close.className='system-dialog-close';close.innerHTML=ic('close');header.appendChild(close);panel.prepend(header);
+  panel.classList.add('system-dialog');
+  if(/^accounting|manualJournal|boqImportPreview|expenseBatch|quote|bizdoc/.test(kind))panel.classList.add('system-dialog-wide');
+  var groups=Array.from(panel.querySelectorAll('.stack,.doc-editor-save,.quote-editor-save'));
+  var last=groups.filter(function(g){return !!g.querySelector('.pri,.primary');}).pop();if(last)last.classList.add('system-dialog-actions');
+  panel.querySelectorAll('.project-form-head,.doc-editor-head,.quote-editor-head,.boq-link-head').forEach(function(el){if(!el.querySelector('button,input,select,textarea')&&el.querySelector('h3[hidden]'))el.hidden=true;});
+}
+function systemTablePresentation(root){
+  root.querySelectorAll('.acct-table,.wrapx').forEach(function(region){region.tabIndex=0;region.setAttribute('role','region');var h=root.querySelector('h1,h2,h3');region.setAttribute('aria-label','ข้อมูล '+(h?h.textContent:'ตาราง'));});
+  root.querySelectorAll('table').forEach(function(table,i){
+    var parent=table.parentElement,style=getComputedStyle(parent);
+    if(!/auto|scroll/.test(style.overflowX)){var wrap=document.createElement('div');wrap.className='system-table-scroll';table.before(wrap);wrap.appendChild(table);parent=wrap;}
+    parent.tabIndex=0;parent.setAttribute('role','region');var caption=table.querySelector('caption'),title=root.querySelector('h1,h2,h3');parent.setAttribute('aria-label','ตาราง '+(caption?caption.textContent:title?title.textContent:'ข้อมูล')+' '+(i+1));
+    if(/auto|scroll/.test(getComputedStyle(table).overflowX)){table.tabIndex=0;table.setAttribute('aria-label',parent.getAttribute('aria-label'));}
+    table.querySelectorAll('thead th').forEach(function(th){if(!th.getAttribute('scope'))th.setAttribute('scope','col');});
+  });
+}
+function systemPagePresentation(root,title,view){
+  if(view==='profile'||view==='home')return;
+  if(!root.querySelector('h1')){var first=root.querySelector('h2');if(first&&first.textContent.trim()===title){var h=document.createElement('h1');h.className=first.className+' system-page-heading';h.innerHTML=first.innerHTML;first.replaceWith(h);}else{var header=document.createElement('header');header.className='system-page-intro';var h1=document.createElement('h1');h1.textContent=title;header.appendChild(h1);root.prepend(header);}}
+}
+function systemSelectionPresentation(root){
+  root.querySelectorAll('.tog').forEach(function(button){button.setAttribute('aria-pressed',String(button.classList.contains('on')));});
+  var actions=['setRole','setViewMode','viewMode','aiMode','docBillFilter','docFilter','projectHubFilter','boqMode','boqCostFilter','loanKind'];
+  root.querySelectorAll('.seg button,.chips button,.doc-bill-tabs button').forEach(function(button){if(!button.hasAttribute('aria-pressed')&&actions.indexOf(button.dataset.act)>=0)button.setAttribute('aria-pressed',String(button.classList.contains('on')));});
+  root.querySelectorAll('[role="progressbar"]').forEach(function(bar){if(!bar.getAttribute('aria-label')&&!bar.getAttribute('aria-labelledby'))bar.setAttribute('aria-label','ความคืบหน้าการตรวจรายการ');});
+}
+function systemFitDocument(){
+  var wrap=document.querySelector('.system-document-preview'),paper=wrap&&wrap.querySelector('.rd-paper');if(!paper)return;
+  var full=wrap.dataset.fullsize==='true',scale=full?1:Math.min(1,Math.max(.1,(wrap.clientWidth-2)/paper.offsetWidth));paper.style.zoom=String(scale);
+  var button=document.querySelector('[data-system-document-scale]');if(button){button.textContent=full?'พอดีหน้าจอ':'ดูเต็มขนาด';button.setAttribute('aria-pressed',String(full));}
+}
+function systemDocumentPresentation(main,title){
+  var paper=main.querySelector('.rd-paper');if(!paper)return;
+  var toolbar=document.createElement('section');toolbar.className='system-document-toolbar no-print';toolbar.innerHTML='<div class="system-document-heading"><button class="btn" data-act="go" data-v="doclist">'+ic('back')+'<span>กลับรายการเอกสาร</span></button><button class="btn" data-system-document-scale aria-pressed="false">ดูเต็มขนาด</button></div><h1>'+esc(title)+'</h1><p>ตัวอย่างเอกสาร A4 · ขยายเพื่ออ่านรายละเอียดได้</p>';
+  var actions=paper.querySelector('.stack.no-print');if(actions)toolbar.appendChild(actions);paper.before(toolbar);
+  var wrap=document.createElement('div');wrap.className='system-document-preview';wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','ตัวอย่างเอกสาร A4');paper.before(wrap);wrap.appendChild(paper);systemFitDocument();
+}
+function systemPresentation(title,view){
+  var main=document.getElementById('workspace-main');if(!main)return;
+  if(view==='print'){systemTablePresentation(main);return;}
+  if(view==='quoteprint'){systemDocumentPresentation(main,title);return;}
+  var panel=document.querySelector('.master-sheet');if(panel)systemDialogPresentation(panel);else systemPagePresentation(main,title,view);
+  var root=panel||main;
+  root.querySelectorAll('input:not([type=hidden]),select,textarea').forEach(function(control,index){systemFieldLabel(control,root,index);});
+  systemTablePresentation(root);systemReadableTerms(root);systemSelectionPresentation(root);
+}
+function systemClearFeedback(control){
+  if(control&&control.dataset&&control.dataset.systemInvalid){control.removeAttribute('aria-invalid');delete control.dataset.systemInvalid;var description=(control.getAttribute('aria-describedby')||'').split(' ').filter(function(x){return x!=='system-field-error';});if(description.length)control.setAttribute('aria-describedby',description.join(' '));else control.removeAttribute('aria-describedby');}
+  var error=document.getElementById('system-field-error');if(error)error.remove();var summary=document.getElementById('system-feedback');if(summary)summary.remove();
+}
+function systemShowFeedback(message){
+  if(!systemUI.lastAction||Date.now()-systemUI.actionAt>60000||!/save|doRestore/i.test(systemUI.lastAction))return;
+  if(!/กรุณา|กรอก|ใส่.+ก่อน|เลือก.+ก่อน|ตรวจวันที่|ยังไม่ได้|ไม่สำเร็จ|ไม่ถูกต้อง|ไม่ตรง|ต้องระบุ|ต้องเลือก|ไม่พอ|เกินยอด|ต่ำกว่า/.test(String(message)))return;
+  var root=document.querySelector('.master-sheet')||document.getElementById('workspace-main');if(!root)return;
+  var old=root.querySelector('[data-system-invalid]');systemClearFeedback(old);
+  var controls=Array.from(root.querySelectorAll('input:not([type=hidden]),select,textarea')).filter(function(e){return !e.disabled&&e.type!=='file';});
+  var target=controls.find(function(e){return e.validity&&!e.validity.valid;});
+  if(!target)target=controls.filter(function(e){var label=e.labels&&e.labels[0],name=(label?label.textContent:e.getAttribute('aria-label')||'').replace(/\([^)]*\)/g,'').trim();return name.length>2&&String(message).indexOf(name)>=0;}).sort(function(a,b){return (b.labels&&b.labels[0]?b.labels[0].textContent.length:0)-(a.labels&&a.labels[0]?a.labels[0].textContent.length:0);})[0];
+  var summary=document.createElement('div');summary.className='system-feedback';summary.id='system-feedback';summary.setAttribute('role','alert');summary.textContent=String(message);var header=root.querySelector('.system-dialog-header');if(header)header.after(summary);else root.prepend(summary);
+  if(target){for(var parent=target.parentElement;parent&&parent!==root;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;target.setAttribute('aria-invalid','true');target.dataset.systemInvalid='true';var error=document.createElement('small');error.id='system-field-error';error.className='system-field-error';error.textContent=String(message);var anchor=target.closest(".amt,.pf-money")||target;anchor.after(error);target.setAttribute('aria-describedby',((target.getAttribute('aria-describedby')||'')+' system-field-error').trim());target.focus();target.scrollIntoView({block:'center',behavior:'instant'});}
+  else{summary.tabIndex=-1;summary.focus();summary.scrollIntoView({block:'center',behavior:'instant'});}
+}
+window.addEventListener('resize',systemFitDocument);
+document.addEventListener('click',function(e){var scale=e.target&&e.target.closest&&e.target.closest('[data-system-document-scale]');if(scale&&scale.hasAttribute&&scale.hasAttribute("data-system-document-scale")){var wrap=document.querySelector('.system-document-preview');if(wrap){wrap.dataset.fullsize=String(wrap.dataset.fullsize!=='true');systemFitDocument();}return;}var button=e.target&&e.target.closest&&e.target.closest('[data-act]');if(button){systemUI.lastAction=button.getAttribute('data-act')||'';systemUI.actionAt=Date.now();}},true);
+document.addEventListener('input',function(e){if(e.target&&e.target.dataset&&e.target.dataset.systemInvalid)systemClearFeedback(e.target);});
+document.addEventListener('change',function(e){if(e.target&&e.target.dataset&&e.target.dataset.systemInvalid)systemClearFeedback(e.target);});
+
 /* Shared workspace presentation. Roles describe the existing local mode, not server authorization. */
 function workspaceProject(){
   var pid=U.view==='home'?(U.homePid==='__all'?'__all':(proj(U.homePid)||S.projects[0]||{}).id):U.view==='add'&&U.draft?U.draft.pid:U.view==='boq'?U.boqProjectPid:U.view==='list'&&U.filter?U.filter.pid:U.view==='project'?U.pid:'';
@@ -5406,6 +5571,7 @@ function workspaceRestoreFocus(d){
   el.focus({preventScroll:true});if(d.start!==null&&typeof el.setSelectionRange==='function')try{el.setSelectionRange(d.start,d.end);}catch(_){}return true;
 }
 function workspaceApplyAccessibility(previous,title,view){
+  systemPresentation(title,view);
   var panel=document.querySelector('.master-sheet[role="dialog"],.app-drawer[role="dialog"]'),key=panel?(U.appMenu?'drawer':String(U.sheet&&U.sheet.kind||'sheet')):'',changed=key!==workspaceA11y.modal,was=workspaceA11y.modal;
   document.title=(title||'ภาพรวม')+' · AREA Ledger';
   Array.from(document.querySelectorAll('.app-social-topbar,main,.nav,.workspace-skip')).forEach(function(el){el.inert=!!panel;});
@@ -8180,7 +8346,7 @@ function sheetHtml(){
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
       (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect"'+(gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ยกเลิกการเชื่อม Google</button>':'')+
       '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
-      '<p class="muted" style="margin-top:10px">v1088 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
+      '<p class="muted" style="margin-top:10px">v1089 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -8529,9 +8695,7 @@ function render(){
   var sheetRestorePosition=syncSheetScrollLock(!!U.sheet);
   document.body.classList.toggle('sheet-open',!!U.sheet);
   document.getElementById('app').className=nonav?'nonav':'';
-  document.getElementById('app').innerHTML='<a class="workspace-skip" href="#workspace-main">ข้ามไปยังเนื้อหา</a>'+appTopBar(title)+'<main id="workspace-main" tabindex="-1"'+(U.anim?' class="enter"':'')+'>'+(v==='profile'||v==='print'||v==='quoteprint'?'':workspaceContext)+body+'</main>'+nav+sheetHtml()+appMenuHtml();workspaceApplyAccessibility(workspacePreviousFocus,title,v);U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
-  var workspaceContext=workspaceContextHtml();
-  document.getElementById('app').innerHTML='<a class="workspace-skip" href="#workspace-main">ข้ามไปยังเนื้อหา</a>'+appTopBar(title)+'<main id="workspace-main" tabindex="-1"'+(U.anim?' class="enter"':'')+'>'+(v==='profile'||v==='print'||v==='quoteprint'?'':workspaceContext)+body+'</main>'+nav+sheetHtml()+appMenuHtml();workspaceApplyAccessibility(workspacePreviousFocus,title,v);U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
+  document.getElementById('app').innerHTML='<a class="workspace-skip" href="#workspace-main">ข้ามไปยังเนื้อหา</a>'+appTopBar(title)+'<main id="workspace-main" tabindex="-1"'+(U.anim?' class="enter"':'')+'>'+body+'</main>'+nav+sheetHtml()+appMenuHtml();workspaceApplyAccessibility(workspacePreviousFocus,title,v);U.anim=0;if(U.sheet&&U.sheet.kind==='expenseBatch')expenseBatchMarkUncertain();if(U.sheet&&U.sheet.kind==='quote')setTimeout(quoteFormCalc,0);saveNavSession();if(v==='boq'&&!U.sheet)boqRestorePosition();if(U.pwaUpdatePending)setTimeout(pwaApplyPendingUpdate,0);
   if(sheetRestorePosition){var oldScrollBehavior=document.documentElement.style.scrollBehavior;document.documentElement.style.scrollBehavior='auto';window.scrollTo(sheetRestorePosition.x,sheetRestorePosition.y);document.documentElement.style.scrollBehavior=oldScrollBehavior;}
   var renderMs=Math.max(0,runtimeNow()-runtimeStart);runtimeState.renders=(+runtimeState.renders||0)+1;runtimeState.lastRenderMs=renderMs;runtimeState.maxRenderMs=Math.max(+runtimeState.maxRenderMs||0,renderMs);
 }
@@ -9384,7 +9548,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1088&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1089&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
@@ -9412,7 +9576,7 @@ function keepProjectFieldVisible(){
   var field=document.activeElement;if(!field||!field.matches('input:not([type="file"]):not([type="checkbox"]),textarea,select'))return;
   var sheet=field.closest('.master-sheet.project-sheet,.master-sheet.profile-editor-sheet,.master-sheet.feedback-editor-sheet,.master-sheet.expense-review-sheet');if(!sheet)return;
   var scrim=sheet.closest('.mobile-editor-scrim'),view=scrim?scrim.getBoundingClientRect():null,viewTop=view?view.top:((window.visualViewport&&window.visualViewport.offsetTop)||0),viewBottom=view?view.bottom:viewTop+((window.visualViewport&&window.visualViewport.height)||window.innerHeight),sr=sheet.getBoundingClientRect();
-  var head=sheet.querySelector('.project-form-head,.profile-editor>.doc-editor-head,.feedback-editor>.doc-editor-head'),save=sheet.querySelector('.project-form-savebar,.profile-editor>.stack,.feedback-editor>.stack,.expense-batch-actions');
+  var head=sheet.querySelector('.system-dialog-header,.project-form-head,.profile-editor>.doc-editor-head,.feedback-editor>.doc-editor-head'),save=sheet.querySelector('.project-form-savebar,.profile-editor>.stack,.feedback-editor>.stack,.expense-batch-actions');
   var safeTop=Math.max(sr.top,viewTop)+(head?head.getBoundingClientRect().height:0)+8;
   var safeBottom=Math.min(sr.bottom,viewBottom,save?save.getBoundingClientRect().top:Infinity)-16,fr=field.getBoundingClientRect(),delta=0;
   if(fr.bottom>safeBottom)delta=fr.bottom-safeBottom;else if(fr.top<safeTop)delta=fr.top-safeTop;
