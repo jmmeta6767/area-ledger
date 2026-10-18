@@ -3778,8 +3778,60 @@ body[data-view] :is(.profile-editor-sheet,.feedback-editor-sheet).system-dialog 
 /* The application shell fills the viewport even when legacy mobile density is selected. */
 @media screen {body[data-view] #app:not(.nonav),body[data-view] #app.nonav{width:100%!important;max-width:none!important;margin:0!important}}
 @media screen and (min-width:1024px){body[data-view] #app>main#workspace-main{width:calc(100% - 64px)!important;max-width:1160px!important;margin-inline:auto!important;padding-inline:0!important}body[data-view="add"] #app>main#workspace-main{max-width:720px!important}body[data-view="profile"] #app>main#workspace-main{max-width:1040px!important}body[data-view="projects"] .project-directory-focus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}body[data-view="projects"] .project-directory-focus>:not(.project-hub-card){grid-column:1/-1}body[data-view="projects"] .project-directory-focus>.project-hub-card{margin:0!important}body[data-view="projects"] .project-hub-card{display:flex;flex-direction:column}body[data-view="projects"] .project-hub-card .project-hub-main{flex:1}body[data-view="projects"] .project-hub-card .project-hub-actions{margin-top:auto}}
-</style>
 
+/* v1092 Color depth: screen-only finish, no layout or financial logic changes. */
+@media screen {
+body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]){
+ --color-background:#F1F5FC;--bg:#F1F5FC;--m-bg:#F1F5FC;--radius-card:18px;
+ --depth-card:0 2px 3px rgba(23,57,105,.03),0 9px 24px rgba(23,57,105,.07),inset 0 1px 0 #fff;
+ background:radial-gradient(ellipse at 0 0,#E1EDFF 0,transparent 55%),#F1F5FC!important;
+}
+body[data-view] .app-social-topbar{background:linear-gradient(115deg,#12396F,#18599A 65%,#137C8A)!important;border-bottom-color:#265F96!important;box-shadow:0 4px 16px rgba(17,54,103,.17)}
+body[data-view] .app-topbar-action{box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 5px rgba(8,35,72,.12);border-radius:14px}
+body[data-view] .app-topbar-menu{background:rgba(255,255,255,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.14);border-radius:14px}
+body[data-view] main :is(.card,.sec.master-detail-card,.home-fold,.dash-chart-card,.project-hub-card,.boq-summary-card,.due-command-card,.proc-card,.profile-card,.profile-featured-card,.profile-post-card,.profile-public-card,.add-core-card,.add-payment-card){border-color:#DDE6F3!important;box-shadow:var(--depth-card)!important;border-radius:18px!important}
+body[data-view] .system-page-intro h1,body[data-view] .system-page-heading{color:#153F73}
+/* The dashboard keeps its existing project identity and accounting values. */
+body[data-view="home"] .master-ref-project{border:1px solid #D5E3F4!important;border-radius:20px!important;box-shadow:0 10px 26px rgba(17,54,103,.12)!important;overflow:hidden}
+body[data-view="home"] .master-ref-body{background:linear-gradient(125deg,#143B72,#176C8C)!important}
+body[data-view="home"] .master-ref-photo{background:linear-gradient(145deg,#D3E8FC,#92BADF)!important}
+body[data-view="home"] .master-ref-building{filter:drop-shadow(0 6px 3px rgba(18,63,112,.18))}
+body[data-view] .project-finance-kpis>div{border:1px solid #D8E5F4!important;border-top:3px solid #377CC1!important;border-radius:16px!important;background:linear-gradient(140deg,#fff,#EEF5FF)!important;box-shadow:0 4px 12px rgba(24,65,110,.06)!important}
+body[data-view] .project-finance-kpis>div:nth-child(2){border-top-color:#CB6D35!important;background:linear-gradient(140deg,#fff,#FFF3E9)!important}
+body[data-view] .project-finance-kpis>div:nth-child(3){border-top-color:#23866B!important;background:linear-gradient(140deg,#fff,#EAF8F1)!important}
+body[data-view] .project-finance-kpis>div:nth-child(4){border-top-color:#8060BA!important;background:linear-gradient(140deg,#fff,#F3EEFC)!important}
+body[data-view] .project-finance-kpis>div>small{color:#34445D!important}
+body[data-view] .project-lifecycle-grid>button{border-color:#CFDEF0!important;background:linear-gradient(145deg,#fff,#EAF3FF)!important;box-shadow:0 3px 9px rgba(27,63,108,.06)}
+body[data-view] .project-lifecycle-grid>button:nth-child(2){background:linear-gradient(145deg,#fff,#EDF8F2)!important;border-color:#CBE5D8!important}
+/* Raised controls keep readable solid borders, focus rings and original states. */
+body[data-view] .btn.pri:not(.dng):not(.sure),body[data-view] .system-dialog .btn.pri,body[data-view] .boq-action.primary{background:linear-gradient(180deg,#FFDE68,#FFC52D)!important;border-color:#CAA02D!important;color:#3E300C!important;box-shadow:inset 0 1px 0 #FFF2B7,0 3px 0 #D8A62B,0 6px 12px rgba(158,110,9,.13)!important}
+body[data-view] .btn:not(.pri):not(.dng){background:linear-gradient(180deg,#fff,#F6F9FE)!important;box-shadow:inset 0 1px 0 #fff,0 2px 3px rgba(24,59,107,.04)}
+body[data-view] .seg button.on,body[data-view] .chip.on{box-shadow:inset 0 1px 0 #FFF6CA,0 2px 4px rgba(113,80,17,.07)}
+body[data-view] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),select,textarea){box-shadow:inset 0 2px 3px rgba(29,62,103,.035)}
+body[data-view] :is(input,select,textarea):focus-visible{box-shadow:0 0 0 5px rgba(45,111,187,.10)}
+body[data-view] .system-dialog-header{background:linear-gradient(105deg,#EFF5FF,#F4FBFA);border-bottom-color:#D4E2F3}
+body[data-view] .system-dialog-header h2{color:#153F73}
+body[data-view] .system-dialog-close{background:#fff!important;box-shadow:0 2px 5px rgba(24,59,107,.06)}
+/* Category badges share the same palette as the supplied 3D artwork. */
+body[data-view] :is(.ledger-icon,.tx-cat-icon,.mico){background:linear-gradient(145deg,#F5F9FF,#DCEBFC)!important;border-color:#C8DBF1!important;color:#19558D!important;box-shadow:inset 0 1px 0 #fff,0 3px 5px rgba(25,75,122,.10)!important}
+body[data-view] :is(.ledger-icon,.tx-cat-icon,.mico)[class*="category-tone-"]{background:linear-gradient(145deg,var(--icon-bg),var(--icon-end,var(--icon-bg)))!important;border-color:transparent!important;color:var(--icon-ink)!important;box-shadow:inset 0 1px 0 #ffffff66,0 3px 5px rgba(25,75,122,.16)!important}
+body[data-view] .app-drawer{background:linear-gradient(155deg,#F5F9FF,#fff 60%);box-shadow:12px 0 45px rgba(15,44,87,.22)}
+body[data-view] .app-drawer-menu>button{border-radius:14px;margin-block:3px}
+body[data-view] .app-drawer-menu>button.on{background:linear-gradient(105deg,#E7F0FF,#ECF9F7)!important;border-color:#C5D9F2!important;color:#174D85!important;box-shadow:inset 0 1px 0 #fff,0 3px 8px rgba(20,65,110,.06)}
+body[data-view] .app-drawer-ico:has(.area-menu-art){background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+body[data-view] .area-menu-art{filter:drop-shadow(0 2px 2px rgba(24,59,107,.13))}
+body[data-view] .area-shortcuts-grid button{background:linear-gradient(145deg,#fff,#F0F6FF);border-color:#D5E2F4;box-shadow:inset 0 1px 0 #fff,0 3px 8px rgba(24,59,107,.05)}
+body[data-view] .nav{background:linear-gradient(180deg,#fff,#F3F7FE)!important;border-top-color:#D3E0F0!important;box-shadow:0 -5px 22px rgba(24,59,107,.09)}
+body[data-view] .nav button.on{background:linear-gradient(145deg,#E6F1FF,#F0F8FF)!important;color:#194F87!important;border-color:#C5DCF4!important;box-shadow:inset 0 1px 0 #fff}
+body[data-view] .nav button.add{background:linear-gradient(145deg,#FFE47E,#FFC526)!important;color:#46330A!important;box-shadow:inset 0 2px 0 #FFF2AF,0 4px 0 #D6A52A,0 7px 15px rgba(159,111,13,.19)!important}
+body[data-view] .nav button.on .area-menu-art{outline-color:#3675B4}
+body[data-view="profile"] :is(.workspace-context,.workspace-tasks){border-color:#D7E4F4;box-shadow:var(--depth-card);background:linear-gradient(145deg,#fff,#F5F9FF)}
+body[data-view="profile"] .workspace-task-grid button{box-shadow:inset 0 1px 0 #fff,0 4px 9px rgba(23,57,105,.07)}
+/* Hover is only decorative. No moving targets, parallax or animated counters. */
+@media(hover:hover){body[data-view] .app-drawer-menu>button:hover,body[data-view] .area-shortcuts-grid button:hover{background:#EAF3FF!important}body[data-view] .btn.pri:not(.dng):not(:disabled):hover{background:linear-gradient(180deg,#FFE684,#FFD044)!important}}
+@media(prefers-reduced-motion:reduce){body[data-view] :is(.area-menu-art,.btn,.nav button){animation:none!important;transition:none!important}}
+}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -4076,7 +4128,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1091,"sha":"","environment":"source"};
+var APP_BUILD={"version":1092,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -8287,7 +8339,7 @@ function sheetHtml(){
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
       (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect"'+(gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ยกเลิกการเชื่อม Google</button>':'')+
       '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
-      '<p class="muted" style="margin-top:10px">v1091 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
+      '<p class="muted" style="margin-top:10px">v1092 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -9512,7 +9564,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1091&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1092&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;

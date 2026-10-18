@@ -1,5 +1,10 @@
 # AREA Ledger V2 — Master v800
 
+## v1092 Color and depth UI
+
+- Adds a coordinated blue/teal shell, raised cards, golden primary controls and memorable category colors around the supplied 3D menu art.
+- Preserves control sizes, accounting handlers, readable financial values, printed documents, payroll and storage identities. See QA-ui-color-depth-v1092.md.
+
 ## v1090 Accounting write safety (candidate)
 
 - Enforces the existing owner/foreman workflow at financial action dispatch and transaction save; foremen retain new expense entry. This is a local UI role policy, not server authentication or multi-user RBAC.
