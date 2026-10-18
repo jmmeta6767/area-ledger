@@ -1,5 +1,13 @@
 # AREA Ledger V2 — Master v800
 
+## v1089 Full system UX and accessible forms
+
+- Unifies page headings, dialog headers, forms, labels, tables, selected states, validation feedback and navy/yellow/white styling across 15 views and 70 dialog types. Existing actions and accounting logic remain in place.
+- Completes v1088 workspace relocation to Company Profile and removes a duplicate app DOM replacement from every render.
+- Fits A4 document previews to mobile screens, with full-size viewing and separate print/PDF controls; printed dimensions and totals are preserved.
+- Preserves mobile keyboard and safe-area behavior, including short landscape screens and sticky project/profile actions.
+- Adds a six-width browser catalogue, axe checks, keyboard isolation and synthetic save/payment/document workflows. See [QA-v1089.md](QA-v1089.md).
+
 ## v1088 Profile Workspace UX and Review Shortcuts
 
 - Moves the company, selected project, local/cloud backup status, and role-specific review shortcuts from Dashboard to the top of Company Profile, reducing dashboard clutter while keeping backup access one tap away.

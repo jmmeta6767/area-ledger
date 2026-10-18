@@ -44,6 +44,8 @@ jobs:
           node tests/expense-entry-e2e.cjs
           node tests/ux-ui-v1080-e2e.cjs
           node tests/workspace-ux-v1087.cjs
+          node tests/full-system-ux.cjs
+          QA_COLOR_SCHEME=dark QA_WIDTHS=390 LAYOUT_OUTPUT=layout-evidence/dark-os node tests/full-system-ux.cjs
       - name: Upload before and after layout evidence
         if: always()
         uses: actions/upload-artifact@v4

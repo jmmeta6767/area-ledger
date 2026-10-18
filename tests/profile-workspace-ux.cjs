@@ -11,4 +11,5 @@ assert(src.includes("['ocrReviewQueue','','receipt','ตรวจเอกสา
 for(const selector of ['body[data-view="profile"] .workspace-context','body[data-view="profile"] .workspace-tasks','body[data-view="profile"] .workspace-task-grid button>svg','@media(max-width:430px)','@media(max-width:360px)']) assert(src.includes(selector),'profile responsive/icon style missing '+selector);
 assert(src.includes("data-act=\"backup\" aria-label=\"'+esc(sync.label)+' เปิดการสำรองและซิงค์ข้อมูล\""),'backup status action no longer opens backup panel');
 assert(src.includes("KEY='site-ledger-v1'")&&src.includes("IDB_NAME='site-ledger-db'"),'accounting storage contract changed');
+const render=src.slice(src.indexOf('function render('),src.indexOf('/* ---------- Mobile/iOS direct navigation'));assert.equal((render.match(/document\.getElementById\('app'\)\.innerHTML=/g)||[]).length,1,'render must replace the app DOM only once');assert(!render.includes('workspaceContextHtml()'),'global renderer must not duplicate profile context on every page');
 console.log('PASS profile workspace relocation, role shortcuts, backup access, responsive cards and icons');
