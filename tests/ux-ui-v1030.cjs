@@ -10,7 +10,7 @@ assert(src.includes('max-height:min(92dvh,920px)!important'),'sheet must honor d
 assert(src.includes('overscroll-behavior:contain!important'),'sheet scrolling must stay contained');
 assert(!src.includes(':root[data-theme="dark"] .nav,\n@media'),'invalid comma-before-media dark-mode syntax');
 assert(src.includes(':root[data-theme="dark"] .profile-hero'),'manual dark mode must style profile');
-assert(src.includes(':root:not([data-theme="light"]) .profile-hero'),'system dark mode must style profile');
+assert(src.includes('color-scheme:light;')&&!/@media\s*\(prefers-color-scheme\s*:\s*dark\)/.test(src),'Yellow and White product theme must stay consistent with OS dark mode; browser coverage lives in full-system-ux');
 assert(src.includes("['home','home','ภาพรวม'],['boq','documents','BOQ'],['add','plus',''],['projects','build','โครงการ'],['profile','profile','โปรไฟล์']"),'primary nav order/profile bottom-right changed');
 assert(src.includes("const KEY='site-ledger-v1'")||src.includes("KEY='site-ledger-v1'"),'storage key contract missing');
 assert(src.includes("DB='site-ledger-db'")||src.includes("'site-ledger-db'"),'IndexedDB contract missing');
