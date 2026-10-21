@@ -1,5 +1,10 @@
 # AREA Ledger V2 — Master v800
 
+## v1093 All-page visual consistency
+
+- Extends page accents and raised surfaces across 15 Ledger views, dialog sections and payroll while retaining financial statuses and printed paper.
+- Payroll uses 44px actions and 16px inputs with isolated six-width browser coverage for four tabs, dialogs, totals, print and unchanged storage. See QA-all-pages-v1093.md.
+
 ## v1092 Color and depth UI
 
 - Adds a coordinated blue/teal shell, raised cards, golden primary controls and memorable category colors around the supplied 3D menu art.
