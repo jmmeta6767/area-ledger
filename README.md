@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1094 Release, correction and recovery verification
+
+- Names the running and server build, protects active voice/Google work from reload, and adds a read-only release inventory.
+- Shows voice field changes with guarded undo; previews per-project recovery values and binds confirmation to the file/current data with a single atomic local commit.
+- Reads Google Sheets managed ranges back before marking sync verified; local changes pause bulk sync. Existing financial helpers, private data, user tabs/charts and storage keys remain unchanged.
+- Single-user operation is retained by user choice. Team access is deferred; physical iPhone and real customer backup/Google acceptance remain separate. See QA-reliability-v1094.md and TEAM-READINESS.md.
+
 ## v1093 All-page visual consistency
 
 - Extends page accents and raised surfaces across 15 Ledger views, dialog sections and payroll while retaining financial statuses and printed paper.

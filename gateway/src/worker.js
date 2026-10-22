@@ -210,7 +210,7 @@ async function googleWriteProjectSnapshot(token,id,tabs,project){
       order.forEach((value,to)=>{const from=current.indexOf(value);if(from!==to){requests.push({moveDimension:{source:{sheetId:sheet.sheetId,dimension:'COLUMNS',startIndex:from,endIndex:from+1},destinationIndex:to}});current.splice(to,0,current.splice(from,1)[0]);}});
     }
     requests.push({updateCells:{range:{sheetId:sheet.sheetId,startRowIndex:0,endRowIndex:sheet.gridProperties.rowCount,startColumnIndex:0,endColumnIndex:width},rows:tab.values.map((row,r)=>({values:row.map((value,c)=>{
-      if(r>0&&c===0&&['ค่าใช้จ่าย','รายรับ'].includes(tab.title)&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value)return {userEnteredValue:{numberValue:Date.parse(value)/86400000+25569}};
+      value=googleStoredCell(tab,r,c,value);
       return {userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value??'')}};
     })})),fields:'userEnteredValue'}});
     requests.push(...googleSheetStyleRequests(tab,sheet,detail));
@@ -241,13 +241,29 @@ async function googleEnsureProjectAssets(env,ledgerHash,project,token){
   return {folderId,spreadsheetId,driveUrl,sheetUrl};
 }
 async function googleWriteRange(token,id,range,values){await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+':clear',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});return googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+'?valueInputOption=RAW',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values})});}
+function googleColumnName(index){let name='';for(let n=index;n>0;n=Math.floor((n-1)/26))name=String.fromCharCode(65+(n-1)%26)+name;return name;}
+function googleStoredCell(tab,row,col,value){
+  if(row>0&&col===0&&['ค่าใช้จ่าย','รายรับ'].includes(tab.title)&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value)return Date.parse(value)/86400000+25569;
+  return value??'';
+}
+async function googleVerifyProjectSnapshot(token,spreadsheetId,tabs){
+ const query=new URLSearchParams({majorDimension:'ROWS',valueRenderOption:'UNFORMATTED_VALUE',dateTimeRenderOption:'SERIAL_NUMBER'});
+ for(const tab of tabs){const width=Math.max(...tab.values.map(row=>row.length));query.append('ranges',"'"+tab.title.replace(/'/g,"''")+"'!A1:"+googleColumnName(width)+tab.values.length);}
+ const result=await googleJson('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(spreadsheetId)+'/values:batchGet?'+query.toString(),{headers:{Authorization:'Bearer '+token}}),ranges=result.valueRanges;
+ if(!Array.isArray(ranges)||ranges.length!==tabs.length)throw Error('GOOGLE_SYNC_VERIFY_FAILED');
+ for(let i=0;i<tabs.length;i++){const expected=tabs[i].values,actual=ranges[i].values||[];for(let row=0;row<expected.length;row++)for(let col=0;col<expected[row].length;col++){const a=(actual[row]||[])[col]??'',e=googleStoredCell(tabs[i],row,col,expected[row][col]);if(typeof e==='number'?typeof a!=='number'||!Number.isFinite(a)||Math.abs(a-e)>0.000001:String(a)!==String(e))throw Error('GOOGLE_SYNC_VERIFY_FAILED');}}
+ const count=title=>Math.max(0,(tabs.find(tab=>tab.title===title)?.values.length||1)-1);
+ return {matched:true,counts:{boq:count('BOQ'),expenses:count('ค่าใช้จ่าย'),income:count('รายรับ')}};
+}
 async function googleSyncProject(env,ledgerHash,body){
   const project=googleCleanProject(body),token=await googleAccessToken(env,ledgerHash),asset=await googleEnsureProjectAssets(env,ledgerHash,project,token),data=googleSheetRows(project,project.rows);
   const tabs=[{title:'BOQ',values:data.boq},{title:'สรุปหมวด',values:data.summary},{title:'ค่าวัสดุ',values:data.material},{title:'ค่าแรง',values:data.labor}];
   if(project.finance)for(const [key,title] of [['expenses','ค่าใช้จ่าย'],['income','รายรับ'],['costs','ต้นทุน'],['profit','กำไร']])tabs.push({title,values:project.finance[key]});
-  await googleWriteProjectSnapshot(token,asset.spreadsheetId,googlePresentationTabs(project,tabs),project);
+  const presentedTabs=googlePresentationTabs(project,tabs);
+  await googleWriteProjectSnapshot(token,asset.spreadsheetId,presentedTabs,project);
+  const verification=body&&body.verify===true?await googleVerifyProjectSnapshot(token,asset.spreadsheetId,presentedTabs):null;
   const hash=await sha256Hex(JSON.stringify({id:project.id,name:project.name,rows:project.rows,finance:project.finance})),now=new Date().toISOString();await env.LEDGER_DB.prepare('UPDATE google_project_links SET last_sync_hash=?,last_sync_at=?,updated_at=? WHERE ledger_hash=? AND project_id=?').bind(hash,now,now,ledgerHash,project.id).run();
-  return {ok:true,projectId:project.id,rows:data.boq.length-1,expenseRows:project.finance?project.finance.expenses.length-1:0,financeSynced:!!project.finance,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
+  return {ok:true,verification,projectId:project.id,rows:data.boq.length-1,expenseRows:project.finance?project.finance.expenses.length-1:0,financeSynced:!!project.finance,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
 }
 
 function parseGoogleUploadDataUrl(value){
