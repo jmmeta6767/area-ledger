@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1095 Microphone stop and repeated speech
+
+- The microphone stop button now requests a final result instead of aborting the capture. Speech-end also stops gracefully, and results arriving during closure remain attached to that session.
+- Collects all final result rows and applies them once when the native session ends. Interim text is visible while listening but never changes financial values. Missing end is bounded, releases the microphone and preserves any confirmed final result for review.
+- Tests `ค่าทราย500`, twenty manual stop/final/new-tap cycles, delayed and segmented results, cancellation, errors and pending-result save protection. Uses browser emulation and synthetic speech events; physical iPhone audio remains unverified. See QA-voice-finalization-v1095.md.
+
 ## v1094 Release, correction and recovery verification
 
 - Names the running and server build, protects active voice/Google work from reload, and adds a read-only release inventory.

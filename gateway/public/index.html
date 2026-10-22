@@ -4168,7 +4168,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1094,"sha":"","environment":"source"};
+var APP_BUILD={"version":1095,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5385,9 +5385,9 @@ function expenseVoiceButtonText(){return U.expenseVoiceState==='starting'?'ก�
 function expenseVoiceStatusText(){
   var x=U.expenseVoiceDiagnostic;if(!x)return '';
   if(U.expenseVoiceState==='starting')return 'กำลังเปิดไมค์ · รอเบราว์เซอร์ยืนยัน';
-  if(U.expenseVoiceState==='listening')return 'กำลังฟังอยู่ · พูดรายการสั้น ๆ แล้วหยุดพูด';
-  if(U.expenseVoiceEnding)return 'รับข้อความแล้ว · กำลังปิดไมค์รอบนี้';
-  if(x.code){var messages={NO_START_EVENT:'เบราว์เซอร์ยังไม่เริ่มรับเสียง',NO_RESULT:'ยังไม่ได้รับข้อความจากเสียง',NO_SPEECH:'ไม่ได้ยินคำสั่ง',END_TIMEOUT:'ไมค์รอบก่อนยังไม่ตอบกลับ',ERROR_NOT_ALLOWED:'ยังไม่ได้รับอนุญาตใช้ไมค์',ERROR_AUDIO_CAPTURE:'เบราว์เซอร์เปิดไมค์ไม่ได้',ERROR_NETWORK:'บริการรับเสียงเชื่อมต่อไม่ได้'};return (messages[x.code]||'รับเสียงไม่สำเร็จ')+' · แตะพูดรายการเพื่อลองใหม่ ('+x.code+')';}
+  if(U.expenseVoiceState==='listening')return 'กำลังฟังอยู่ · '+(U.expenseVoiceCapture&&U.expenseVoiceCapture.liveText?'ได้ยิน: '+U.expenseVoiceCapture.liveText:'พูดรายการแล้วหยุดพูด หรือแตะหยุดฟัง');
+  if(U.expenseVoiceEnding)return 'กำลังประมวลผลเสียง · รอผลรอบนี้สักครู่';
+  if(x.code){var messages={NO_START_EVENT:'เบราว์เซอร์ยังไม่เริ่มรับเสียง',NO_RESULT:'ยังไม่ได้รับข้อความจากเสียง',NO_SPEECH:'ไม่ได้ยินคำสั่ง',NO_FINAL_RESULT:'เบราว์เซอร์ยังไม่ยืนยันข้อความเสียง · ข้อมูลเดิมยังอยู่',END_TIMEOUT:'ไมค์รอบก่อนยังไม่ตอบกลับ',ERROR_NOT_ALLOWED:'ยังไม่ได้รับอนุญาตใช้ไมค์',ERROR_AUDIO_CAPTURE:'เบราว์เซอร์เปิดไมค์ไม่ได้',ERROR_NETWORK:'บริการรับเสียงเชื่อมต่อไม่ได้'};return (messages[x.code]||'รับเสียงไม่สำเร็จ')+' · แตะพูดรายการเพื่อลองใหม่ ('+x.code+')';}
   return x.results?'พร้อมพูดใหม่ · ข้อมูลที่อ่านได้ยังอยู่ในฟอร์ม':'หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่';
 }
 function expenseVoiceDiagnosticText(){var x=U.expenseVoiceDiagnostic;return x?'v'+APP_BUILD.version+' · รอบ '+x.attempt+' · start='+(x.started?1:0)+' audio='+(x.audio?1:0)+' speech='+(x.speech?1:0)+' result='+x.results+' end='+(x.ended?1:0)+' · '+(x.code||'OK')+' · '+x.events.join(' > '):'';}
@@ -5399,39 +5399,61 @@ function expenseVoiceUiUpdate(){
   var detail=document.getElementById('expenseVoiceDiagnostic');if(detail)detail.textContent=expenseVoiceDiagnosticText();
 }
 function expenseVoiceEvent(event,code){var x=U.expenseVoiceDiagnostic;if(!x)return;if(event==='start')x.started=true;if(event==='audio')x.audio=true;if(event==='speech')x.speech=true;if(event==='result')x.results++;if(event==='end')x.ended=true;if(code)x.code=code;x.events=x.events.concat(event).slice(-12);expenseVoiceUiUpdate();}
+function expenseVoiceDetach(recognition){
+  recognition.onresult=recognition.onerror=recognition.onend=recognition.onspeechend=recognition.onstart=recognition.onaudiostart=recognition.onspeechstart=recognition.onnomatch=null;
+}
 function expenseVoiceStop(){
-  var engines=[U.expenseVoiceRecognition,U.expenseVoiceEnding];U.expenseVoiceSession=(+U.expenseVoiceSession||0)+1;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceEngine=null;U.expenseVoiceEngineSpeech=null;U.expenseVoiceRestartDraft=null;U.expenseVoiceState='';
+  // Cancellation on navigation/error deliberately discards pending audio. The mic button uses stop(), below.
+  var engines=[U.expenseVoiceRecognition,U.expenseVoiceEnding];U.expenseVoiceSession=(+U.expenseVoiceSession||0)+1;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceCapture=null;U.expenseVoiceEngine=null;U.expenseVoiceEngineSpeech=null;U.expenseVoiceRestartDraft=null;U.expenseVoiceState='';
   if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;if(U.expenseVoiceReleaseTimer)clearTimeout(U.expenseVoiceReleaseTimer);U.expenseVoiceReleaseTimer=null;
-  engines.forEach(function(r,i){if(!r||engines.indexOf(r)!==i)return;r.onresult=r.onerror=r.onend=r.onspeechend=r.onstart=r.onaudiostart=r.onspeechstart=null;try{r.abort();}catch(_){}});expenseVoiceUiUpdate();
+  engines.forEach(function(r,i){if(!r||engines.indexOf(r)!==i)return;expenseVoiceDetach(r);try{r.abort();}catch(_){}});expenseVoiceUiUpdate();
 }
 function expenseVoiceFail(code){expenseVoiceStop();U.expenseVoiceState='error';expenseVoiceEvent('failure',code);render();toast(expenseVoiceStatusText());}
-function expenseVoiceEnded(recognition){
+function expenseVoiceEnded(recognition,timedOut){
   if(U.expenseVoiceRecognition!==recognition&&U.expenseVoiceEnding!==recognition)return;
+  var capture=U.expenseVoiceCapture;
   if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;if(U.expenseVoiceReleaseTimer)clearTimeout(U.expenseVoiceReleaseTimer);U.expenseVoiceReleaseTimer=null;
-  U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceEngine=null;U.expenseVoiceRestartDraft=null;recognition.onresult=recognition.onerror=recognition.onend=recognition.onspeechend=recognition.onstart=recognition.onaudiostart=recognition.onspeechstart=null;
-  var x=U.expenseVoiceDiagnostic;U.expenseVoiceState=x&&x.results?'recognized':'error';expenseVoiceEvent('end',x&&!x.results?'NO_SPEECH':'');
+  U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceCapture=null;U.expenseVoiceEngine=null;U.expenseVoiceRestartDraft=null;expenseVoiceDetach(recognition);
+  if(timedOut){try{recognition.abort();}catch(_){}}
+  if(!capture||capture.draft!==U.draft||capture.view!==U.view){U.expenseVoiceState='';expenseVoiceUiUpdate();return;}
+  // Commit once, from the complete FINAL result set. Interim hypotheses never change financial fields.
+  var parsed=expenseVoiceParse(capture.finalText),hasFinal=!!parsed.transcript;
+  if(hasFinal)expenseVoiceApply(parsed,capture.draft);
+  U.expenseVoiceState=hasFinal?'recognized':'error';
+  expenseVoiceEvent(timedOut?'release-timeout':'end',timedOut?'END_TIMEOUT':hasFinal?'':capture.liveText?'NO_FINAL_RESULT':'NO_SPEECH');
+  render();toast(hasFinal?'อ่านเสียงแล้ว · ตรวจข้อมูลก่อนบันทึก':expenseVoiceStatusText());
   // Never start from onend: every new capture is created by a fresh button tap.
 }
 function expenseVoiceFinish(recognition){
-  if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=recognition;U.expenseVoiceState='closing';
-  U.expenseVoiceReleaseTimer=setTimeout(function(){if(U.expenseVoiceEnding===recognition)expenseVoiceFail('END_TIMEOUT');},2000);
-  if(typeof recognition.stop==='function'){try{recognition.stop();}catch(_){}}else expenseVoiceEnded(recognition);
+  if(U.expenseVoiceEnding===recognition)return;
+  if(U.expenseVoiceRecognition!==recognition)return;
+  if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=recognition;U.expenseVoiceState='closing';expenseVoiceUiUpdate();
+  U.expenseVoiceReleaseTimer=setTimeout(function(){if(U.expenseVoiceEnding===recognition)expenseVoiceEnded(recognition,true);},6000);
+  if(typeof recognition.stop==='function'){try{recognition.stop();}catch(_){expenseVoiceFail('STOP_FAILED');}}else expenseVoiceEnded(recognition);
 }
 function expenseVoiceSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
 function expenseVoiceStart(){
   var Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(U.expenseVoiceRecognition){expenseVoiceEvent('cancel');expenseVoiceStop();render();toast('หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่');return true;}
-  if(U.expenseVoiceEnding){expenseVoiceUiUpdate();toast('กำลังปิดไมค์รอบก่อน · แตะพูดรายการอีกครั้งเมื่อพร้อม');return true;}
+  if(U.expenseVoiceRecognition){expenseVoiceEvent('stop-request');expenseVoiceFinish(U.expenseVoiceRecognition);return true;}
+  if(U.expenseVoiceEnding){expenseVoiceUiUpdate();toast('กำลังประมวลผลเสียงรอบก่อน · รอปุ่มพูดรายการแล้วแตะอีกครั้ง');return true;}
   if(!Speech){toast('อุปกรณ์นี้ยังไม่รองรับการสั่งงานด้วยเสียง · กรอกข้อมูลในฟอร์มได้ตามปกติ');return false;}
   if(!U.draft)U.draft=newDraft('out',quickEntryProject()||U.pid||null);
   U.expenseVoiceAttempt=(+U.expenseVoiceAttempt||0)+1;U.expenseVoiceDiagnostic={attempt:U.expenseVoiceAttempt,started:false,audio:false,speech:false,results:0,ended:false,code:'',events:[]};
   try{
-    var draft=U.draft,view=U.view,recognition=new Speech(),session=(+U.expenseVoiceSession||0)+1;U.expenseVoiceSession=session;U.expenseVoiceRecognition=recognition;U.expenseVoiceState='starting';recognition.lang='th-TH';recognition.continuous=false;recognition.interimResults=false;recognition.maxAlternatives=1;
-    function current(){return U.expenseVoiceRecognition===recognition&&U.expenseVoiceSession===session;}
-    recognition.onstart=function(){if(!current())return;U.expenseVoiceState='listening';expenseVoiceEvent('start');clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=setTimeout(function(){if(current())expenseVoiceFail('NO_RESULT');},20000);};
-    recognition.onaudiostart=function(){if(current())expenseVoiceEvent('audio');};recognition.onspeechstart=function(){if(current())expenseVoiceEvent('speech');};recognition.onspeechend=function(){if(current())expenseVoiceEvent('speech-end');};
-    recognition.onresult=function(event){if(!current())return;if(U.draft!==draft||U.view!==view){expenseVoiceStop();return;}var index=event&&Number.isInteger(event.resultIndex)?event.resultIndex:0,row=event&&event.results&&event.results[index];if(row&&row.isFinal===false){expenseVoiceEvent('interim');return;}var parsed=expenseVoiceParse(row&&row[0]&&row[0].transcript||'');if(!parsed.transcript){expenseVoiceFail('NO_SPEECH');return;}expenseVoiceEvent('result');expenseVoiceFinish(recognition);expenseVoiceApply(parsed,U.draft);render();toast('อ่านเสียงแล้ว · ตรวจข้อมูลก่อนบันทึก');};
+    var draft=U.draft,view=U.view,recognition=new Speech(),session=(+U.expenseVoiceSession||0)+1,capture={draft:draft,view:view,finalText:'',liveText:''};U.expenseVoiceCapture=capture;U.expenseVoiceSession=session;U.expenseVoiceRecognition=recognition;U.expenseVoiceState='starting';recognition.lang='th-TH';recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=1;
+    function current(){return (U.expenseVoiceRecognition===recognition||U.expenseVoiceEnding===recognition)&&U.expenseVoiceSession===session;}
+    recognition.onstart=function(){if(!current()||U.expenseVoiceEnding===recognition)return;U.expenseVoiceState='listening';expenseVoiceEvent('start');clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=setTimeout(function(){if(current()){expenseVoiceEvent('capture-timeout');expenseVoiceFinish(recognition);}},20000);};
+    recognition.onaudiostart=function(){if(current())expenseVoiceEvent('audio');};recognition.onspeechstart=function(){if(current())expenseVoiceEvent('speech');};
+    recognition.onspeechend=function(){if(current()){expenseVoiceEvent('speech-end');expenseVoiceFinish(recognition);}};
+    recognition.onresult=function(event){
+      if(!current())return;if(U.draft!==draft||U.view!==view){expenseVoiceStop();return;}
+      var results=event&&event.results,finals=[],live=[];
+      for(var i=0;results&&i<results.length;i++){var row=results[i],text=row&&row[0]&&String(row[0].transcript||'').trim();if(!text)continue;live.push(text);if(row.isFinal!==false)finals.push(text);}
+      capture.finalText=finals.join(' ');capture.liveText=live.join(' ');expenseVoiceEvent(finals.length?'result':'interim');
+      if(finals.length)expenseVoiceFinish(recognition);
+    };
     recognition.onerror=function(event){if(!current())return;var known={'not-allowed':'ERROR_NOT_ALLOWED','service-not-allowed':'ERROR_NOT_ALLOWED','audio-capture':'ERROR_AUDIO_CAPTURE','no-speech':'NO_SPEECH','network':'ERROR_NETWORK','aborted':'ERROR_ABORTED'};expenseVoiceFail(known[event&&event.error]||'ERROR_UNKNOWN');};
+    recognition.onnomatch=function(){if(current())expenseVoiceFail('NO_SPEECH');};
     recognition.onend=function(){if(U.expenseVoiceSession===session)expenseVoiceEnded(recognition);};
     U.expenseVoiceTimer=setTimeout(function(){if(current())expenseVoiceFail('NO_START_EVENT');},6000);expenseVoiceEvent('request');render();recognition.start();return true;
   }catch(err){expenseVoiceFail('START_FAILED');return false;}
@@ -9555,7 +9577,7 @@ async function txRecoverQuota(d,more){
 }
 function saveTx(more,quotaRetried){
   if(S.role!=='owner'&&U.draft&&(U.draft.id||U.draft.type!=='out')){toast('หัวหน้าไซต์เพิ่มรายจ่ายใหม่ได้เท่านั้น');return;}
-  if(U.expenseVoiceRecognition){toast('กำลังฟังเสียง · รออ่านเสียงเสร็จหรือแตะไมค์เพื่อหยุดก่อนบันทึก');return;}
+  if(U.expenseVoiceRecognition||U.expenseVoiceEnding){toast('กำลังรับผลเสียง · รออ่านเสียงเสร็จก่อนบันทึก');return;}
   if(U.saveLock){toast('กำลังบันทึก กรุณารอสักครู่');return;}
   if(U.expenseScanBusy){toast('รอ OCR เสร็จก่อนบันทึก');return;}var d=U.draft;if(!d)return;syncDraftProjectFromForm();syncDraftAmountFromForm();U.txSaveError='';var a=Number(d.amount);
   if(!isFinite(a)||!(a>0)){toast('กรอกจำนวนเงินก่อน');var el=document.getElementById('amt');if(el)el.focus();return;}
@@ -9665,7 +9687,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1094&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1095&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
