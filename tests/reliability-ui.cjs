@@ -20,7 +20,7 @@ const html=fs.readFileSync(path.join(web,'index.html'),'utf8').replace(/\nboot\(
   if(width===390){await page.locator('.restore-comparison').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'reliability-restore-review.png')});}
   if(process.env.AXE_SOURCE&&width===390){await page.addScriptTag({path:process.env.AXE_SOURCE});const violations=await page.evaluate(async()=>{const result=await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}});return result.violations.map(x=>x.id);});assert.deepEqual(violations,[]);}
   await page.evaluate(()=>{U.sheet=null;U.draft=newDraft('out','p');U.runtimeActionStamps=Object.create(null);window.recognizers=[];window.SpeechRecognition=function(){recognizers.push(this);this.stops=0;this.start=()=>this.onstart();this.stop=()=>{this.stops++;};this.abort=()=>{throw Error('A successful manual stop must not abort');};};render();});
-  for(const text of ['ค่าทราย500','แก้ยอดเป็น 700']){
+  for(const text of ['ทราย 500','แก้ยอดเป็น 700']){
    await page.waitForFunction(()=>Object.values(U.runtimeActionStamps||{}).every(t=>Date.now()-t>800));await page.locator('[data-act=expenseVoiceStart]').click();await page.waitForFunction(()=>U.expenseVoiceState==='listening');
    const previous=await page.locator('#amt').inputValue();await page.evaluate(text=>{const row=[{transcript:text}];row.isFinal=false;recognizers.at(-1).onresult({results:[row]});},text);
    assert.equal(await page.locator('#amt').inputValue(),previous);assert(await page.locator('#expenseVoiceStatus').textContent().then(t=>t.includes(text)));
@@ -29,6 +29,7 @@ const html=fs.readFileSync(path.join(web,'index.html'),'utf8').replace(/\nboot\(
    await page.evaluate(text=>recognizers.at(-1).onresult({results:[[{transcript:text}]]}),text);assert.equal(await page.locator('#amt').inputValue(),previous);
    await page.evaluate(()=>recognizers.at(-1).onend());await page.waitForFunction(()=>!U.expenseVoiceRecognition&&!U.expenseVoiceEnding);
    assert.equal(await page.evaluate(()=>recognizers.at(-1).stops),1);assert.equal(await page.locator('#amt').inputValue(),text.includes('700')?'700':'500');
+   if(width===390&&text==='ทราย 500'){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(out,'voice-bare-material-500.png')});}
   }
   assert.equal(await page.locator('#amt').inputValue(),'700');assert.equal(await page.evaluate(()=>recognizers.length),2);assert.equal(await page.evaluate(()=>S.tx.length),0);
   if(width===390){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(out,'reliability-voice-correction.png')});}

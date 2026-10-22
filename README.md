@@ -1,5 +1,10 @@
 # AREA Ledger V2 — Master v800
 
+## v1096 Bare material speech amounts
+
+- Accepts the actual recognized text `ทราย 500` and `ทราย500`, without requiring either the expense prefix or baht. A small allowlist covers short material names and preserves the existing accounting category.
+- Keeps quantity, dimension, product code, phone, date, malformed amount and multiple-number guards. Browser correction tests now start with the exact bare transcript from the supplied iPhone screenshot. See QA-bare-material-voice-v1096.md.
+
 ## v1095 Microphone stop and repeated speech
 
 - The microphone stop button now requests a final result instead of aborting the capture. Speech-end also stops gracefully, and results arriving during closure remain attached to that session.

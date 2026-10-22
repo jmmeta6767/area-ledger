@@ -8,12 +8,20 @@ function fixture(){
  return {...x,engines,get stops(){return stops;},get aborts(){return aborts;}};
 }
 function result(engine,text,final=true){const row=[{transcript:text}];row.isFinal=final;engine.onresult({resultIndex:0,results:[row]});}
+test('bare material transcripts fill item and amount without the word cost or baht',()=>{
+ const {c}=fixture();
+ for(const [text,item,amount] of [['ทราย 500','ทราย','500'],['ทราย500','ทราย','500'],['ทราย ๕๐๐','ทราย','500'],['ทรายห้าร้อย','ทราย','500'],['ทรายหยาบ 500','ทรายหยาบ','500'],['ทรายละเอียด 500','ทรายละเอียด','500'],['ปูน 1,250','ปูน','1250'],['ปูนซีเมนต์ 1250','ปูนซีเมนต์','1250'],['เหล็ก 2500','เหล็ก','2500'],['อิฐ 500','อิฐ','500'],['สุขภัณฑ์ 500','สุขภัณฑ์','500'],['ท่อ 500','ท่อ','500']]){
+  const p=c.expenseVoiceParse(text);assert.equal(p.amount,amount,text);assert.equal(p.sub,item,text);assert.equal(p.cat,'ค่าของ',text);assert.equal(p.amountIssue,false,text);
+ }
+ for(const text of ['ทราย 5 คิว','ทราย 5 คิว 500','เหล็ก 12 มม. 50 เส้น','ทรายเบอร์ 500','ท่อขนาด 500','เหล็กรุ่น 500','ปูนรหัส 500','ทราย 500 600','ทราย 50,00','ทราย -500','ทราย วันที่ 22/10/2569','ทราย โทร 000-9876543','ร้านทราย 500','โครงการ 500','ทราย 500 กิโล'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
+ assert.equal(c.S.tx.length,0);
+});
 test('manual stop accepts the delayed final, then 20 new taps replace the amount without saving',()=>{
  const x=fixture(),{c}=x,before=JSON.stringify(c.S);c.U.draft.paid=false;c.U.draft.pay='cash';const date=c.U.draft.date;
  for(let i=0;i<20;i++){
   c.expenseVoiceStart();const engine=x.engines.at(-1),stale=engine.onresult;
   c.expenseVoiceStart();assert.equal(x.aborts,0,'stop must finalize rather than discard audio');assert.equal(c.U.expenseVoiceState,'closing');
-  result(engine,'ค่าทราย'+(500+i));assert.notEqual(c.U.draft.amount,String(500+i),'wait for the complete native result set');engine.onend();
+  result(engine,(i%2?'ค่าทราย':'ทราย')+(500+i));assert.notEqual(c.U.draft.amount,String(500+i),'wait for the complete native result set');engine.onend();
   assert.equal(c.U.draft.amount,String(500+i));assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.draft.cat,'ค่าของ');
   assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.expenseVoiceButtonText(),'พูดรายการ');
   stale({results:[[{transcript:'ค่าทราย9999'}]]});assert.equal(c.U.draft.amount,String(500+i));
