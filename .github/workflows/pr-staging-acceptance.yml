@@ -72,6 +72,8 @@ jobs:
         run: node --check tests/stamp-build.mjs
       - name: Live acceptance script syntax
         run: node --check tests/live-cloudflare-acceptance.mjs
+      - name: Exact-build propagation fail-closed tests
+        run: node tests/wait-exact-app-build.test.mjs
       - name: Cloudflare service worker syntax
         run: node --check gateway/public/sw.js
       - name: Payroll calculations and navigation contract
