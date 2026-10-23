@@ -32,6 +32,6 @@ test('empty state and invalid state are deterministic',()=>{
 });
 test('Thai descriptions and numeric fields survive round trip',()=>{
  const s={tx:[{photo:jpg,sub:'เครื่องตบดิน',amount:500,category:'ค่าเช่าอื่นๆ'}],auditLog:[{action:'keep'}]};
- const before=JSON.stringify(s),r=simulate(s);assert.equal(before,JSON.stringify(s));assert(r.estimatedUtf16SavingsBytes>0);
+ const before=JSON.stringify(s),r=simulate(s);assert.equal(before,JSON.stringify(s));assert(r.roundTripExact);
 });
 console.log(n+' simulation tests passed');
