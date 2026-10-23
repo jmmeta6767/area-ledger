@@ -8,10 +8,10 @@ The production app now requires:
 2. Write **original data URL** to IndexedDB `site-ledger-db/kv` under `receipt-original-v1:<tx-id>` and verify exact readback.
 3. Upload using the existing R2 endpoint, retrieve the resulting object with the same ledger identity and compare **all decoded image bytes** to the original (JPEG/PNG/WebP; capped at 16 MiB).
 4. Recheck Cloud ledger identity, `S` state snapshot and localStorage committed state before switching the receipt to `photoRef`.
-5. If any check fails, **keep original embedded receipt** and keep the IDB copy. Existing optimistic localStorage `persist()` rollback applies when commit fails. Concurrent attempts to migrate all receipts are blocked.
+5. When the R2 object is unreachable, opening an offloaded receipt first tries the local IndexedDB original and rejects missing/modified evidence via the recorded fingerprint. This is an offline read fallback, not a replacement for portable export.\n6. If any check fails, **keep original embedded receipt** and keep the IDB copy. Existing optimistic localStorage `persist()` rollback applies when commit fails. Concurrent attempts to migrate all receipts are blocked.
 
 ## Validation
-- `node tests/r2-receipt-readback.cjs` exercises actual app function in isolated Node VM with 12 synthetic receipts and failures: IDB write/read, R2 upload/object mismatch/404, cloud-identity change, another-tab update, same-tab edits, storage quota, concurrent invocation, successful readback.
+- `node tests/r2-receipt-readback.cjs` exercises actual app function in isolated Node VM with 15 synthetic acceptance cases and failures: IDB write/read, R2 upload/object mismatch/404, cloud-identity change, another-tab update, same-tab edits, storage quota, concurrent invocation, successful readback.
 - All other Release QA + simulated iPhone layout + exact-head PR Staging acceptance required.
 - **No real customer records/images used in CI.**
 
