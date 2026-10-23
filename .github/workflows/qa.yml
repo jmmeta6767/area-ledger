@@ -17,7 +17,7 @@ concurrency:
 jobs:
   iphone-layout:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -68,6 +68,8 @@ jobs:
         run: node --check tests/stamp-build.mjs
       - name: Live acceptance script syntax
         run: node --check tests/live-cloudflare-acceptance.mjs
+      - name: Exact-build propagation fail-closed tests
+        run: node tests/wait-exact-app-build.test.mjs
       - name: Cloudflare service worker syntax
         run: node --check gateway/public/sw.js
       - name: Payroll calculations and navigation contract
@@ -148,6 +150,8 @@ jobs:
         run: node --check tests/capture-production-bindings.mjs
       - name: Storage headroom privacy and sizing regression
         run: node tests/storage-headroom-audit.cjs
+      - name: Lossless receipt evidence archive synthetic tests
+        run: python3 tests/receipt_evidence_archive_test.py
       - name: PR staging safety regression
         run: node tests/pr-staging-guard-test.cjs
       - name: Gateway staging preflight
