@@ -154,6 +154,8 @@ jobs:
         run: python3 tests/receipt_evidence_archive_test.py
       - name: Reversible receipt reference dry-run tests
         run: node tests/receipt-ref-dryrun.cjs
+      - name: Actual browser R2 receipt offload safety regression
+        run: node tests/r2-receipt-readback.cjs
       - name: PR staging safety regression
         run: node tests/pr-staging-guard-test.cjs
       - name: Gateway staging preflight
