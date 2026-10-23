@@ -146,6 +146,8 @@ jobs:
         run: node --check tests/live-cloudflare-acceptance.mjs
       - name: Production binding capture syntax
         run: node --check tests/capture-production-bindings.mjs
+      - name: Storage headroom privacy and sizing regression
+        run: node tests/storage-headroom-audit.cjs
       - name: PR staging safety regression
         run: node tests/pr-staging-guard-test.cjs
       - name: Gateway staging preflight
