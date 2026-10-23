@@ -1,0 +1,22 @@
+/* Scoped reliability surfaces. Original financial status colors and print stay intact. */
+@media screen {
+  .restore-comparison,.voice-changes {min-width:0;margin-block:12px;padding:14px;border:1px solid var(--color-border,#E5E7EB);border-radius:var(--radius-control,12px);background:var(--color-surface,#fff)}
+  .restore-comparison p,.restore-comparison small,.voice-changes small,.update-panel small {display:block;line-height:1.6;color:var(--color-text-secondary,#667085);overflow-wrap:anywhere}
+  .restore-comparison dl,.release-builds {margin:12px 0}
+  .restore-comparison dl>div,.release-builds>div {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:8px;padding-block:9px;border-bottom:1px solid var(--color-border,#E5E7EB)}
+  .restore-comparison dt,.restore-comparison dd,.release-builds dt,.release-builds dd {min-width:0;margin:0;line-height:1.5;overflow-wrap:anywhere}
+  .restore-comparison dd,.release-builds dd {font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+  .restore-comparison ul,.voice-changes ul {padding:0;list-style:none}
+  .restore-comparison li {display:grid;gap:4px;padding:12px 0;border-bottom:1px solid var(--color-border,#E5E7EB)}
+  .restore-comparison summary {min-height:44px;padding-block:10px;cursor:pointer;font-weight:600}
+  .voice-changes {background:var(--color-primary-soft,#FFF7D6)}
+  .voice-last-command>.voice-changes {padding:0;margin:8px 0 0;border:0;background:transparent}
+  .voice-last-command>.voice-changes>b {font-size:14px}
+  .voice-changes .btn {margin-top:10px;min-height:44px;width:100%;white-space:normal}
+  .google-sync-receipt {display:grid;gap:6px;margin-block:12px;padding:14px;border:1px solid #B8DCC9;border-radius:12px;background:#F1FAF5;overflow-wrap:anywhere}
+  .google-sync-receipt small {color:#355B45;line-height:1.5}
+  .google-sync-receipt.pending {border-color:#E6CF81;background:#FFF9E7}
+  .google-sync-results li {min-width:0;overflow-wrap:anywhere}
+  .google-sync-results li small {display:block;line-height:1.6}
+  @media(max-width:359px){.release-builds>div {grid-template-columns:minmax(0,1fr)}.release-builds dd {text-align:left}}
+}

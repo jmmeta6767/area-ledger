@@ -3,6 +3,8 @@ gateway/.env
 gateway/.env.*
 !gateway/.env.example
 node_modules/
+__pycache__/
+*.py[cod]
 /expense-document-quality.json
 /layout-evidence/*
 !/layout-evidence/v1052/

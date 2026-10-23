@@ -1,5 +1,23 @@
 # AREA Ledger V2 — Master v800
 
+## v1096 Bare material speech amounts
+
+- Accepts the actual recognized text `ทราย 500` and `ทราย500`, without requiring either the expense prefix or baht. A small allowlist covers short material names and preserves the existing accounting category.
+- Keeps quantity, dimension, product code, phone, date, malformed amount and multiple-number guards. Browser correction tests now start with the exact bare transcript from the supplied iPhone screenshot. See QA-bare-material-voice-v1096.md.
+
+## v1095 Microphone stop and repeated speech
+
+- The microphone stop button now requests a final result instead of aborting the capture. Speech-end also stops gracefully, and results arriving during closure remain attached to that session.
+- Collects all final result rows and applies them once when the native session ends. Interim text is visible while listening but never changes financial values. Missing end is bounded, releases the microphone and preserves any confirmed final result for review.
+- Tests `ค่าทราย500`, twenty manual stop/final/new-tap cycles, delayed and segmented results, cancellation, errors and pending-result save protection. Uses browser emulation and synthetic speech events; physical iPhone audio remains unverified. See QA-voice-finalization-v1095.md.
+
+## v1094 Release, correction and recovery verification
+
+- Names the running and server build, protects active voice/Google work from reload, and adds a read-only release inventory.
+- Shows voice field changes with guarded undo; previews per-project recovery values and binds confirmation to the file/current data with a single atomic local commit.
+- Reads Google Sheets managed ranges back before marking sync verified; local changes pause bulk sync. Existing financial helpers, private data, user tabs/charts and storage keys remain unchanged.
+- Single-user operation is retained by user choice. Team access is deferred; physical iPhone and real customer backup/Google acceptance remain separate. See QA-reliability-v1094.md and TEAM-READINESS.md.
+
 ## v1093 All-page visual consistency
 
 - Extends page accents and raised surfaces across 15 Ledger views, dialog sections and payroll while retaining financial statuses and printed paper.
