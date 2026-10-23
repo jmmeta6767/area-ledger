@@ -18,7 +18,7 @@ const ctx={console,Date,Math,JSON,Number,String,Array,Object,Promise,Set,Map,Reg
 };
 vm.createContext(ctx);vm.runInContext(code,ctx);
 ctx.render=()=>{};ctx.toast=t=>messages.push(String(t));
-ctx.cloudPhotoThumb=async()=>'';ctx.expensePhotoFingerprint=()=> 'synthetic-photo-fp';
+ctx.cloudPhotoThumb=async()=>'';ctx.expensePhotoFingerprint=photo=>photo===png?'synthetic-photo-fp':'incorrect-image-fingerprint';
 ctx.gatewayApiUrl=p=>'https://ledger.test'+p;
 ctx.cloudHeaders=()=>({'Content-Type':'application/json','X-AREA-Ledger-Key':'synthetic-key'});
 ctx.idbSet=async()=>true;
@@ -29,7 +29,7 @@ function init(){
   ctx.S=ctx.emptyState();
   ctx.S.projects=[{id:'project',name:'Synthetic project'}];
   ctx.S.tx=[{id:'synthetic-1',pid:'project',type:'out',date:'2026-10-23',amount:500,photo:png,photoRef:''}];
-  ctx.U.receiptOffloadBusy=false;ctx.U.storageReadBlocked=false;ctx.U.storageWriteError='';ctx.U.storageConflict=false;
+  ctx.U.sheet=null;ctx.U.receiptOffloadBusy=false;ctx.U.storageReadBlocked=false;ctx.U.storageWriteError='';ctx.U.storageConflict=false;
   ctx.cloudSyncEnabled=()=>enabled;ctx.cloudLedgerKey=()=>ledgerKey;
   ctx.cloudFileStatus=async()=>({ok:true,data:{configured:true}});
   ctx.cloudFileUpload=async()=>{uploadCalls++;return {ok:true,data:{key:'r2/synthetic',mime:'image/png'}}};
@@ -108,6 +108,23 @@ await test('double migration command cannot run concurrently',async()=>{
  const duplicate=await ctx.cloudOffloadAllTxPhotos();assert.equal(duplicate.error,'IN_PROGRESS');
  unblock();const done=await running;
  assert.equal(done.moved,1);assert.equal(uploadCalls,1);
+});
+await test('verified receipt opens offline via original IDB copy',async()=>{
+  assert.equal(await ctx.cloudOffloadOneTxPhoto('synthetic-1',true),true);
+  fetchStatus=404;
+  assert.equal(await ctx.cloudFileOpen('r2/synthetic','image/png'),true);
+  assert.equal(ctx.U.sheet.url,png);
+  assert.equal(ctx.U.sheet.kind,'cloudPhoto');
+});
+await test('missing original IDB copy does not show a fake offline receipt',async()=>{
+  assert.equal(await ctx.cloudOffloadOneTxPhoto('synthetic-1',true),true);
+  fetchStatus=404;localEvidence.clear();
+  assert.equal(await ctx.cloudFileOpen('r2/synthetic','image/png'),false);
+});
+await test('altered original IDB copy cannot open wrong offline evidence',async()=>{
+  assert.equal(await ctx.cloudOffloadOneTxPhoto('synthetic-1',true),true);
+  fetchStatus=404;localEvidence.set('receipt-original-v1:synthetic-1','data:image/png;base64,QUJD');
+  assert.equal(await ctx.cloudFileOpen('r2/synthetic','image/png'),false);
 });
 console.log(passed+' receipt offload integrity tests passed');
 })().catch(e=>{console.error(e);process.exitCode=1;});
