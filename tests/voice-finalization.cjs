@@ -30,6 +30,21 @@ test('manual stop accepts the delayed final, then 20 new taps replace the amount
  assert.equal(JSON.stringify(c.S),before);assert.equal(x.writes.length,0);
  c.expenseVoiceUndo();assert.equal(c.U.draft.amount,'518');
 });
+test('later manual edits survive pending voice completion, timeout and the next correction undo',()=>{
+ const edits={type:'in',amount:'700',cat:'ค่าแรง',sub:'รายการที่กรอกเอง',subCustom:'รายละเอียดที่กรอกเอง',partner:'ร้านที่กรอกเอง',date:'2026-01-02'};
+ for(const stage of ['listening','closing'])for(const [field,value]of Object.entries(edits)){
+  const x=fixture(),{c}=x;c.U.draft.amount='100';c.U.draft.sub='รายการเดิม';const ledger=JSON.stringify(c.S);c.expenseVoiceStart();const engine=x.engines[0];
+  if(stage==='closing')result(engine,'ค่าทราย500');c.U.draft[field]=value;const manual=JSON.stringify(c.U.draft);if(stage==='listening')result(engine,'ค่าทราย500');engine.onend();
+  assert.equal(JSON.stringify(c.U.draft),manual,stage+' '+field);assert.equal(c.U.expenseVoiceDiagnostic.code,'DRAFT_CHANGED');assert(c.expenseVoiceStatusText().includes('เก็บค่าที่กรอกเองไว้'));assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
+ }
+ const x=fixture(),{c,timers}=x;c.U.draft.amount='100';c.U.draft.sub='รายการเดิม';c.expenseVoiceStart();result(x.engines[0],'ค่าทราย500');c.U.draft.amount='700';timers.get(c.U.expenseVoiceReleaseTimer)();
+ assert.equal(c.U.draft.amount,'700');assert.equal(c.U.draft.sub,'รายการเดิม');assert.equal(c.U.expenseVoiceDiagnostic.code,'DRAFT_CHANGED');assert.equal(x.aborts,1);
+ assert(c.expenseVoiceStart());result(x.engines.at(-1),'ค่าทราย900');x.engines.at(-1).onend();assert.equal(c.U.draft.amount,'900');assert(c.expenseVoiceUndo());assert.equal(c.U.draft.amount,'700');assert.equal(c.U.draft.sub,'รายการเดิม');assert.equal(c.S.tx.length,0);assert.equal(x.writes.length,0);
+});
+test('changing only project and payment choices does not discard a valid pending voice result',()=>{
+ const x=fixture(),{c}=x;c.S.projects.push({id:'q',name:'โครงการใหม่',status:'active'});c.expenseVoiceStart();result(x.engines[0],'ทราย500');c.U.draft.pid='q';c.U.draft.paid=false;c.U.draft.pay='cash';x.engines[0].onend();
+ assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.draft.pid,'q');assert.equal(c.U.draft.paid,false);assert.equal(c.U.draft.pay,'cash');assert.equal(c.U.expenseVoiceDiagnostic.code,'');assert.equal(c.S.tx.length,0);assert.equal(x.writes.length,0);
+});
 test('speechend requests a final result, accepts all final rows and ignores interim amounts',()=>{
  const x=fixture(),{c}=x;c.expenseVoiceStart();const engine=x.engines[0];assert.equal(engine.interimResults,true);
  result(engine,'ค่าทราย900',false);assert.equal(c.U.draft.amount,'');assert(c.expenseVoiceStatusText().includes('ค่าทราย900'));
