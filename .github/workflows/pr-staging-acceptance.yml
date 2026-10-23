@@ -154,6 +154,8 @@ jobs:
         run: node --check tests/capture-production-bindings.mjs
       - name: Lossless receipt evidence archive synthetic tests
         run: python3 tests/receipt_evidence_archive_test.py
+      - name: Reversible receipt reference dry-run tests
+        run: node tests/receipt-ref-dryrun.cjs
       - name: PR staging safety regression
         run: node tests/pr-staging-guard-test.cjs
       - name: Gateway staging preflight
