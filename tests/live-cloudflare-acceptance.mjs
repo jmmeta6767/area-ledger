@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import {waitForExactAppBuild} from './wait-exact-app-build.mjs';
 
 const base=(process.env.AREA_LEDGER_LIVE_BASE||'https://area-ledger-ai-gateway-staging.areamaibab.workers.dev').replace(/\/$/,'');
 const declaredTarget=String(process.env.AREA_LEDGER_ACCEPTANCE_TARGET||'').trim().toLowerCase();
@@ -62,12 +63,10 @@ try{
   if(workflowRun)assert.match(workflowRun,/^[0-9]+$/);
   evidence.checks.provenance=true;
   if(sourceSha){
+    evidence.checks.exactAppBuildAttempts={};
     for(const origin of (target==='production'?[base,appBase]:[base])){
-      const response=await fetch(origin+'/?build='+sourceSha,{cache:'no-store'});
-      assert(response.ok,'app shell unavailable');
-      const text=await response.text(),match=text.match(/var APP_BUILD=(\{[^\n]+\});/);
-      assert(match,'deployed build identity missing');
-      const build=JSON.parse(match[1]);assert.equal(build.sha,sourceSha);assert.equal(build.environment,target);
+      const verified=await waitForExactAppBuild({origin,sha:sourceSha,environment:target});
+      evidence.checks.exactAppBuildAttempts[origin]=verified.attempt;
     }
     evidence.checks.exactAppBuild=true;
   }
