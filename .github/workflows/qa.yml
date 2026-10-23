@@ -148,6 +148,8 @@ jobs:
         run: node --check tests/capture-production-bindings.mjs
       - name: Storage headroom privacy and sizing regression
         run: node tests/storage-headroom-audit.cjs
+      - name: Lossless receipt evidence archive synthetic tests
+        run: python3 tests/receipt_evidence_archive_test.py
       - name: PR staging safety regression
         run: node tests/pr-staging-guard-test.cjs
       - name: Gateway staging preflight
