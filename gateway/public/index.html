@@ -4168,7 +4168,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1096,"sha":"","environment":"source"};
+var APP_BUILD={"version":1097,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5349,6 +5349,7 @@ function expenseVoiceParse(transcript){
   else if(!partnerMatch&&!bareMoney&&!/^(?:ยอด|จำนวนเงิน|เป็นเงิน|วันที่|วันนี้|เมื่อวาน)/.test(text)&&!/^\s*(?:฿\s*)?(?:(?:[0-9๐-๙.,]+|ศูนย์|หนึ่ง|เอ็ด|สอง|ยี่|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า|สิบ|ร้อย|พัน|หมื่น|แสน|ล้าน|บาท|สตางค์)\s*)+$/.test(text)){var trailing=out.amount&&expenseVoiceTrailingMoney(text),clean=(trailing?trailing.prefix:text).replace(/(?:จ่าย|รายจ่าย|รายรับ|รับเงิน|ซื้อ|บาท|วันนี้|เมื่อวาน|ค่าแรง|ค่าช่าง|ค่าวัสดุ|วัสดุ|ค่าของ|ค่าประกันผลงาน|ค่าประกัน|ค่างานเอกสาร|ค่าเอกสาร|ค่าแบบ|ค่าธรรมเนียม|ค่าเช่า|เช่า)/g,' ').replace(/[0-9,๐-๙]+(?:\.[0-9]+)?/g,' ').replace(/\s+/g,' ').trim();clean=clean.replace(/^ค่า(?=[ก-๙])/,'');if(clean)out.sub=clean.slice(0,240);}
   var date=expenseVoiceDate(text);out.date=date.date;out.dateIssue=date.invalid;if((out.amountIssue||out.dateIssue)&&!subMatch)out.sub='';return out;
 }
+function expenseVoiceDraftStamp(d){return JSON.stringify(['type','amount','cat','sub','subCustom','partner','date'].map(function(k){return d[k];}));}
 function expenseVoiceApply(parsed,d){
   var priorIssues=U.expenseVoiceIssuesDraft===d?(U.expenseVoiceIssues||[]).slice():[],priorTranscript=U.expenseVoiceTranscriptDraft===d?U.expenseVoiceTranscript||'':'';
   var before={};['type','amount','cat','sub','subCustom','partner','date'].forEach(function(k){before[k]=d[k];});
@@ -5390,7 +5391,7 @@ function expenseVoiceStatusText(){
   if(U.expenseVoiceState==='starting')return 'กำลังเปิดไมค์ · รอเบราว์เซอร์ยืนยัน';
   if(U.expenseVoiceState==='listening')return 'กำลังฟังอยู่ · '+(U.expenseVoiceCapture&&U.expenseVoiceCapture.liveText?'ได้ยิน: '+U.expenseVoiceCapture.liveText:'พูดรายการแล้วหยุดพูด หรือแตะหยุดฟัง');
   if(U.expenseVoiceEnding)return 'กำลังประมวลผลเสียง · รอผลรอบนี้สักครู่';
-  if(x.code){var messages={NO_START_EVENT:'เบราว์เซอร์ยังไม่เริ่มรับเสียง',NO_RESULT:'ยังไม่ได้รับข้อความจากเสียง',NO_SPEECH:'ไม่ได้ยินคำสั่ง',NO_FINAL_RESULT:'เบราว์เซอร์ยังไม่ยืนยันข้อความเสียง · ข้อมูลเดิมยังอยู่',END_TIMEOUT:'ไมค์รอบก่อนยังไม่ตอบกลับ',ERROR_NOT_ALLOWED:'ยังไม่ได้รับอนุญาตใช้ไมค์',ERROR_AUDIO_CAPTURE:'เบราว์เซอร์เปิดไมค์ไม่ได้',ERROR_NETWORK:'บริการรับเสียงเชื่อมต่อไม่ได้'};return (messages[x.code]||'รับเสียงไม่สำเร็จ')+' · แตะพูดรายการเพื่อลองใหม่ ('+x.code+')';}
+  if(x.code){var messages={NO_START_EVENT:'เบราว์เซอร์ยังไม่เริ่มรับเสียง',NO_RESULT:'ยังไม่ได้รับข้อความจากเสียง',NO_SPEECH:'ไม่ได้ยินคำสั่ง',NO_FINAL_RESULT:'เบราว์เซอร์ยังไม่ยืนยันข้อความเสียง · ข้อมูลเดิมยังอยู่',DRAFT_CHANGED:'คุณแก้ข้อมูลระหว่างรับเสียง · เก็บค่าที่กรอกเองไว้',END_TIMEOUT:'ไมค์รอบก่อนยังไม่ตอบกลับ',ERROR_NOT_ALLOWED:'ยังไม่ได้รับอนุญาตใช้ไมค์',ERROR_AUDIO_CAPTURE:'เบราว์เซอร์เปิดไมค์ไม่ได้',ERROR_NETWORK:'บริการรับเสียงเชื่อมต่อไม่ได้'};return (messages[x.code]||'รับเสียงไม่สำเร็จ')+' · แตะพูดรายการเพื่อลองใหม่ ('+x.code+')';}
   return x.results?'พร้อมพูดใหม่ · ข้อมูลที่อ่านได้ยังอยู่ในฟอร์ม':'หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่';
 }
 function expenseVoiceDiagnosticText(){var x=U.expenseVoiceDiagnostic;return x?'v'+APP_BUILD.version+' · รอบ '+x.attempt+' · start='+(x.started?1:0)+' audio='+(x.audio?1:0)+' speech='+(x.speech?1:0)+' result='+x.results+' end='+(x.ended?1:0)+' · '+(x.code||'OK')+' · '+x.events.join(' > '):'';}
@@ -5421,6 +5422,7 @@ function expenseVoiceEnded(recognition,timedOut){
   if(!capture||capture.draft!==U.draft||capture.view!==U.view){U.expenseVoiceState='';expenseVoiceUiUpdate();return;}
   // Commit once, from the complete FINAL result set. Interim hypotheses never change financial fields.
   var parsed=expenseVoiceParse(capture.finalText),hasFinal=!!parsed.transcript;
+  if(hasFinal&&capture.fields!==expenseVoiceDraftStamp(capture.draft)){U.expenseVoiceState='error';expenseVoiceEvent(timedOut?'release-timeout':'end','DRAFT_CHANGED');render();toast(expenseVoiceStatusText());return;}
   if(hasFinal)expenseVoiceApply(parsed,capture.draft);
   U.expenseVoiceState=hasFinal?'recognized':'error';
   expenseVoiceEvent(timedOut?'release-timeout':'end',timedOut?'END_TIMEOUT':hasFinal?'':capture.liveText?'NO_FINAL_RESULT':'NO_SPEECH');
@@ -5443,7 +5445,7 @@ function expenseVoiceStart(){
   if(!U.draft)U.draft=newDraft('out',quickEntryProject()||U.pid||null);
   U.expenseVoiceAttempt=(+U.expenseVoiceAttempt||0)+1;U.expenseVoiceDiagnostic={attempt:U.expenseVoiceAttempt,started:false,audio:false,speech:false,results:0,ended:false,code:'',events:[]};
   try{
-    var draft=U.draft,view=U.view,recognition=new Speech(),session=(+U.expenseVoiceSession||0)+1,capture={draft:draft,view:view,finalText:'',liveText:''};U.expenseVoiceCapture=capture;U.expenseVoiceSession=session;U.expenseVoiceRecognition=recognition;U.expenseVoiceState='starting';recognition.lang='th-TH';recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=1;
+    var draft=U.draft,view=U.view,recognition=new Speech(),session=(+U.expenseVoiceSession||0)+1,capture={draft:draft,view:view,fields:expenseVoiceDraftStamp(draft),finalText:'',liveText:''};U.expenseVoiceCapture=capture;U.expenseVoiceSession=session;U.expenseVoiceRecognition=recognition;U.expenseVoiceState='starting';recognition.lang='th-TH';recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=1;
     function current(){return (U.expenseVoiceRecognition===recognition||U.expenseVoiceEnding===recognition)&&U.expenseVoiceSession===session;}
     recognition.onstart=function(){if(!current()||U.expenseVoiceEnding===recognition)return;U.expenseVoiceState='listening';expenseVoiceEvent('start');clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=setTimeout(function(){if(current()){expenseVoiceEvent('capture-timeout');expenseVoiceFinish(recognition);}},20000);};
     recognition.onaudiostart=function(){if(current())expenseVoiceEvent('audio');};recognition.onspeechstart=function(){if(current())expenseVoiceEvent('speech');};
@@ -9690,7 +9692,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1096&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1097&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
