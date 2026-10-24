@@ -85,6 +85,8 @@ jobs:
         run: node --check sw.js
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
+      - name: Banking UI presentation and PWA safety
+        run: node tests/ui-banking-design.cjs
       - name: Menu artwork regression
         run: node tests/menu-icons.cjs
       - name: Native store package contract
