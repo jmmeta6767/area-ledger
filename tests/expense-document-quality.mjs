@@ -34,7 +34,7 @@ export async function requestExpenseFixture({base,imageBase64,id,fetchImpl=fetch
   }
   // A 502 response is retryable only when the upstream provider explicitly
   // identified a transient failure. Do not hide gateway or validation errors.
-  const providerTransient=response.status===502&&/^PROVIDER_HTTP_(408|429|5\\d\\d)$/.test(data?.error||'');
+  const providerTransient=response.status===502&&/^PROVIDER_HTTP_(408|429|5[0-9][0-9])$/.test(data?.error||'');
   const retryable=providerTransient||[429,503,504].includes(response.status);
   if(!retryable||attempt===maxAttempts)throw Error(id+' OCR HTTP '+response.status+' '+JSON.stringify(data)+'; attempts='+JSON.stringify(history));
   await pause(2500*attempt);
