@@ -26,3 +26,220 @@
   .voice-command-fallback .btn{width:100%;min-height:44px;margin-top:10px;white-space:normal}
   @media(max-width:359px){.release-builds>div {grid-template-columns:minmax(0,1fr)}.release-builds dd {text-align:left}}
 }
+
+
+/* AREA Ledger banking UI finish — screen only; no ledger values, statuses,
+   routes, handlers, storage, print documents or master logo are changed. */
+@media screen {
+  :root:not([data-theme="dark"]) {
+    --area-ui-navy:#123a68;
+    --area-ui-deep:#102b4b;
+    --area-ui-teal:#087985;
+    --area-ui-gold:#efb932;
+    --area-ui-text:#1a304a;
+    --area-ui-muted:#52677d;
+    --area-ui-border:#d8e4f1;
+    --area-ui-paper:#ffffff;
+    --area-ui-shadow:0 3px 6px rgba(19,51,89,.035),0 13px 28px rgba(19,51,89,.065);
+    --m-bg:#eff4fb;
+    --m-card:#ffffff;
+    --m-ink:#1a304a;
+    --m-mut:#52677d;
+    --m-line:#d8e4f1;
+    --m-soft:#e9f3ff;
+    --m-gold:#dc9f13;
+    --bg:#eff4fb;
+    --surface:#ffffff;
+    --ink:#1a304a;
+    --muted:#52677d;
+    --line:#d8e4f1;
+  }
+  :root:not([data-theme="dark"]) body:not(.wallpaper-on),
+  :root:not([data-theme="dark"]) #app,
+  :root:not([data-theme="dark"]) main {
+    background-color:var(--m-bg);
+  }
+  /* Navigation: one visual language from phone to desktop. */
+  :root:not([data-theme="dark"]) :is(.master-ref-header,.mheader,.hd) {
+    background:linear-gradient(115deg,#102f58 0%,#17548e 76%,#0f7583 100%)!important;
+    color:#fff;
+    box-shadow:0 3px 13px rgba(13,47,84,.17);
+  }
+  :root:not([data-theme="dark"]) .master-ref-header {
+    border-bottom:2px solid #efbd47!important;
+  }
+  :root:not([data-theme="dark"]) :is(.master-ref-header,.mheader,.hd) :is(small,.muted) {
+    color:#d7e9f5;
+  }
+  :root:not([data-theme="dark"]) :is(.app-drawer,.app-drawer-panel,.nav) {
+    border-color:var(--area-ui-border);
+    box-shadow:0 6px 28px rgba(18,50,91,.11);
+  }
+  :root:not([data-theme="dark"]) .nav {
+    background:rgba(255,255,255,.97)!important;
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+  }
+  :root:not([data-theme="dark"]) .nav button.on {
+    color:var(--area-ui-navy)!important;
+    background:#e6f1fc;
+  }
+  :root:not([data-theme="dark"]) .nav .add {
+    background:linear-gradient(145deg,#ffe581,#f2bf32)!important;
+    color:#3b2d05!important;
+    box-shadow:0 5px 15px rgba(152,103,11,.22);
+  }
+  /* Reusable financial panels. Keep positive/negative/warning classes untouched. */
+  :root:not([data-theme="dark"]) :is(
+    .mdash-stats>button,.mstats>button,.preview-kpis>button,
+    .master-report-card,.dash-chart-card,.project-hub-card,
+    .master-project-row,.master-detail-card,.master-due-card,
+    .due-group,.guarantee-summary>div,.project-lifecycle-overview,
+    .master-doc-row,.doc-list-head,.doc-type-grid>button,.proc-grid>button,
+    .mgroup,.worker-card,.master-profile-card,.tx-modern
+  ) {
+    background-color:#fff!important;
+    border:1px solid var(--area-ui-border)!important;
+    border-radius:17px!important;
+    box-shadow:var(--area-ui-shadow)!important;
+  }
+  :root:not([data-theme="dark"]) :is(
+    .mdash-stats>button,.mstats>button,.preview-kpis>button,
+    .master-report-card,.dash-chart-card
+  ) {
+    background-image:linear-gradient(145deg,#fff 38%,#f5f9ff)!important;
+  }
+  :root:not([data-theme="dark"]) .mdash-stats>button:nth-child(2),
+  :root:not([data-theme="dark"]) .mstats>button:nth-child(2) {
+    border-top:3px solid #168477!important;
+  }
+  :root:not([data-theme="dark"]) .mdash-stats>button:nth-child(3),
+  :root:not([data-theme="dark"]) .mstats>button:nth-child(3) {
+    border-top:3px solid #ce8737!important;
+  }
+  :root:not([data-theme="dark"]) :is(.mdash-stats,.mstats,.master-report-grid,.dash-charts)>* {
+    min-width:0;
+  }
+  :root:not([data-theme="dark"]) :is(
+    .mdash-stats>button>b,.mstats>button>b,.project-hub-kpis b,
+    .project-finance-kpis b,.master-report-card b,.mamt,.row .r .num
+  ) {
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.025em;
+  }
+  :root:not([data-theme="dark"]) :is(.master-ref-project,.mproj,.project-hero) {
+    background:linear-gradient(120deg,#102b4b,#174c7e)!important;
+    border:1px solid #3c668a!important;
+    border-radius:18px!important;
+    box-shadow:0 12px 30px rgba(15,48,88,.16)!important;
+  }
+  :root:not([data-theme="dark"]) :is(.mbal,.balance-card) {
+    border:1px solid var(--area-ui-border)!important;
+    border-left:5px solid var(--area-ui-gold)!important;
+    box-shadow:var(--area-ui-shadow)!important;
+    border-radius:17px!important;
+  }
+  :root:not([data-theme="dark"]) :is(.dash-chart-card,.master-report-card,.master-doc-row) {
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  /* Lists and task groups remain semantically distinct. */
+  :root:not([data-theme="dark"]) :is(.tx-modern,.master-doc-row,.master-project-row) {
+    margin-block:8px!important;
+  }
+  :root:not([data-theme="dark"]) .due-group-head {
+    border-bottom:1px solid var(--area-ui-border);
+  }
+  :root:not([data-theme="dark"]) .due-in .due-group-head{background:#ecf8f1}
+  :root:not([data-theme="dark"]) .due-out .due-group-head{background:#fff2ef}
+  :root:not([data-theme="dark"]) .due-guarantee .due-group-head{background:#fff7e7}
+  :root:not([data-theme="dark"]) :is(.master-list-chips,.list-status-filter,.doc-list-head,.master-month-nav) {
+    border:1px solid var(--area-ui-border)!important;
+    box-shadow:0 4px 14px rgba(18,51,88,.045)!important;
+  }
+  :root:not([data-theme="dark"]) :is(.master-list-chips .chip.on,.list-status-filter button.on,.dash-tab.on) {
+    background:#fff0bd!important;
+    color:#694a08!important;
+    border-color:#ebcc6e!important;
+  }
+  :root:not([data-theme="dark"]) :is(.master-action,.project-hub-actions button,.doc-list-head .btn) {
+    border-radius:12px!important;
+  }
+  /* Forms: structured, crisp boundaries and visible focus for accounting entry. */
+  :root:not([data-theme="dark"]) :is(
+    .master-form-page>.field,.quote-item-card,.master-sheet .field,
+    .expense-review-sheet .field,.google-sync-scope,.voice-command-fallback,
+    .restore-comparison,.voice-changes,.update-panel
+  ) {
+    border-color:var(--area-ui-border)!important;
+    border-radius:14px!important;
+  }
+  :root:not([data-theme="dark"]) :is(
+    .master-form-page,.master-sheet,.expense-review-sheet,.quote-editor,.google-workspace-sheet
+  ) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+    background-color:#fff;
+    border-color:#b7c9dc;
+    border-radius:11px;
+    color:var(--area-ui-text);
+    font-size:16px!important;
+  }
+  :root:not([data-theme="dark"]) :is(
+    .master-form-page,.master-sheet,.expense-review-sheet,.quote-editor,.google-workspace-sheet
+  ) :is(input,select,textarea):focus-visible {
+    outline:3px solid #3d9ca5;
+    outline-offset:1px;
+    border-color:#237c8b!important;
+  }
+  :root:not([data-theme="dark"]) :is(.master-form-page>.field,.master-sheet .field):focus-within {
+    outline:2px solid rgba(30,125,153,.24)!important;
+    outline-offset:2px;
+  }
+  :root:not([data-theme="dark"]) :is(.btn.pri,.master-action.primary) {
+    background:linear-gradient(180deg,#ffe27b,#f2bd31)!important;
+    border-color:#d4a732!important;
+    color:#49360a!important;
+    box-shadow:inset 0 1px 0 #fff1af,0 4px 13px rgba(153,104,13,.12)!important;
+  }
+  :root:not([data-theme="dark"]) :is(.master-sheet,.expense-review-sheet) {
+    background:#f8fbff;
+    border:1px solid var(--area-ui-border);
+    box-shadow:0 -14px 48px rgba(9,35,69,.18);
+  }
+  :root:not([data-theme="dark"]) .master-sheet>h3 {
+    background:#f8fbff;
+  }
+  :root:not([data-theme="dark"]) .savebar {
+    background:rgba(245,249,255,.96)!important;
+    border-top:1px solid var(--area-ui-border)!important;
+  }
+  :root:not([data-theme="dark"]) :is(.master-ref-header,.nav,.master-sheet,.app-drawer) :is(button,a):focus-visible {
+    outline:3px solid #f4c85b;
+    outline-offset:2px;
+  }
+  :root:not([data-theme="dark"]) :is(.master-ref-header,.nav,.master-sheet) button:disabled {
+    box-shadow:none!important;
+  }
+  /* Preserve A4 paper and exact dimensions in printing, export and PDFs. */
+  @media(max-width:430px) {
+    :root:not([data-theme="dark"]) :is(.master-ref-header,.mheader) {
+      box-shadow:0 2px 9px rgba(13,47,84,.16);
+    }
+    :root:not([data-theme="dark"]) :is(.dash-chart-card,.master-report-card,.project-hub-card,.due-group) {
+      border-radius:15px!important;
+    }
+    :root:not([data-theme="dark"]) :is(.project-hub-kpis,.project-finance-kpis) {
+      min-width:0;
+    }
+    :root:not([data-theme="dark"]) :is(.project-hub-kpis b,.project-finance-kpis b) {
+      overflow-wrap:anywhere;
+    }
+  }
+  @media(prefers-reduced-motion:no-preference) {
+    :root:not([data-theme="dark"]) :is(.master-action,.master-doc-row,.project-hub-card,.tx-modern) {
+      transition:box-shadow .15s ease,background-color .15s ease;
+    }
+    :root:not([data-theme="dark"]) :is(.master-action,.master-doc-row,.project-hub-card,.tx-modern):focus-within {
+      box-shadow:0 2px 8px rgba(19,51,89,.07),0 0 0 2px #a8cbe8!important;
+    }
+  }
+}

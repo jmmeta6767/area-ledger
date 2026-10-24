@@ -48,7 +48,81 @@ body{background:radial-gradient(ellipse at 0 0,#E1EDFF,transparent 55%),#F1F5FC}
 @media(max-width:590px){.tabs{background:linear-gradient(180deg,#fff,#F3F7FE);border-top:1px solid #D3E0F0}.hero{flex-wrap:wrap}.hero>.btn{min-height:44px}.modal-panel{scroll-padding-bottom:24px}.topbar-inner{padding-top:max(12px,env(safe-area-inset-top,0px))}}
 @media(prefers-reduced-motion:reduce){.btn,.tab,.stat{animation:none!important;transition:none!important}}
 }
-  </style>
+  
+
+/* Banking UI consistency pass: presentation only. Payroll state, rates,
+   monthly retention, calculations and printing remain unchanged. */
+@media screen {
+  :root {
+    --navy:#123a68;
+    --teal:#087985;
+    --muted:#52677d;
+    --stroke:#d8e4f1;
+    --shadow:0 3px 6px rgba(19,51,89,.035),0 12px 27px rgba(19,51,89,.065);
+    background:#eff4fb;
+    color:#1a304a;
+  }
+  body{background:radial-gradient(ellipse at 3% 1%,#e1edff 0,transparent 50%),#eff4fb}
+  .topbar{background:linear-gradient(115deg,#102f58,#17548e 76%,#0f7583)!important;border-bottom:2px solid #efbd47}
+  .brandmark{background:linear-gradient(145deg,#ffe581,#f2bf32);color:#473809}
+  .hero{padding-top:22px}
+  .hero h1,.panel h2{color:#17436f;letter-spacing:-.025em}
+  .stats{gap:11px}
+  .stat,.panel,.worker-card,.person-row,.instruction:not(.danger-zone){
+    border-color:#d8e4f1;
+    background-color:#fff;
+    box-shadow:var(--shadow);
+    border-radius:17px;
+  }
+  .stat:not(.emphasis){background-image:linear-gradient(145deg,#fff 45%,#f6f9ff)}
+  .stat.emphasis{background:linear-gradient(120deg,#153c70,#166c87);border-color:#31688c}
+  .stat .value,.month-table .numeric{font-variant-numeric:tabular-nums;letter-spacing:-.025em}
+  .panel-head{gap:12px}
+  .panel-head h2{line-height:1.35}
+  .tabs{border:1px solid #d8e4f1;background:#e6effa}
+  .tab.active{color:#174875;background:#fff}
+  .btn{border-radius:12px}
+  .btn-primary{
+    border-color:#d4a732;
+    color:#47360b;
+    background:linear-gradient(180deg,#ffe27b,#f2bd31);
+    box-shadow:inset 0 1px 0 #fff1af,0 4px 13px rgba(153,104,13,.12);
+  }
+  .btn-primary:hover{background:linear-gradient(180deg,#ffe78b,#f6c74b)}
+  .btn-danger{color:#9e2937;border-color:#eac1c7;background:#fff7f8}
+  .form-control,.day-wage input{
+    border:1.5px solid #b7c9dc;
+    background:#fff;
+    color:#1a304a;
+    border-radius:11px;
+    font-size:16px;
+    min-height:44px;
+  }
+  :is(.form-control,.day-wage input,.btn,.tab,.status-btn):focus-visible{
+    outline:3px solid #3198a4;
+    outline-offset:2px;
+  }
+  .month-table th{background:#eef4fb;color:#4f6075}
+  .month-table tbody tr:nth-child(even){background:#f7faff}
+  .month-table tfoot td{background:#e9f5f3}
+  .table-scroll{border-color:#d8e4f1}
+  .modal-panel{border:1px solid #d8e4f1;box-shadow:0 23px 65px rgba(16,48,84,.24)}
+  .worker-list,.history{min-width:0}
+  .worker-card,.stat,.panel{overflow-wrap:anywhere}
+  @media(max-width:590px){
+    .tabs{background:linear-gradient(180deg,#fff,#f3f8ff)}
+    .tab.active{background:#e6f1fb;color:#174875}
+    .stat{padding:13px}
+    .stat .value{font-size:clamp(19px,5vw,24px)}
+    .hero h1{line-height:1.28}
+    .panel{padding:14px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .stat,.panel,.worker-card,.btn,.tab{animation:none!important;transition:none!important}
+  }
+}
+
+</style>
 </head>
 <body>
 <header class="topbar no-print"><div class="topbar-inner"><div class="brand"><div class="brandmark">A</div><div><strong>AREA LEDGER</strong><span>เงินเดือนพนักงานรายวัน · Payroll</span></div></div><a class="btn btn-small btn-soft back-to-ledger" href="/" aria-label="กลับหน้าหลัก AREA Ledger">← กลับหน้าบัญชีหลัก</a></div></header>
