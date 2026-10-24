@@ -4241,8 +4241,31 @@ async function cloudFileStatus(){return cloudGateway('GET','/v1/files/status');}
 async function cloudFileDelete(key){if(!key)return false;var x=await cloudGateway('POST','/v1/files/delete',{key:key});return !!(x&&x.ok&&x.data&&x.data.ok);}
 async function cloudFileUpload(dataUrl,entityType,entityId,name){return cloudGateway('POST','/v1/files/upload',{dataUrl:dataUrl,entityType:entityType||'attachment',entityId:entityId||'',name:name||'attachment'});}
 async function cloudFileOpen(key,mime){
-  if(!key||!cloudLedgerKey(false))return false;var headers=cloudHeaders();if(!headers)return false;delete headers['Content-Type'];
-  try{var r=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(key)),{method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});if(!r.ok)return false;var b=await r.blob(),u=URL.createObjectURL(b);runtimeReleaseCloudPhoto();U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};render();return true;}catch(_){return false;}
+  if(!key)return false;
+  if(cloudLedgerKey(false)){
+    var headers=cloudHeaders();
+    if(headers){
+      delete headers['Content-Type'];
+      try{
+        var r=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(key)),
+          {method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});
+        if(r.ok){
+          var b=await r.blob(),u=URL.createObjectURL(b);
+          runtimeReleaseCloudPhoto();U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};
+          render();return true;
+        }
+      }catch(_){}
+    }
+  }
+  // Fall back to the verified original copy when offline or R2 cannot be reached.
+  var row=(S.tx||[]).find(function(t){return t.photoRef===key;});
+  if(!row)return false;
+  var saved=await idbRead('receipt-original-v1:'+String(row.id));
+  if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(String(saved||'')))return false;
+  if(row.photoHash&&expensePhotoFingerprint(saved)!==row.photoHash)return false;
+  runtimeReleaseCloudPhoto();
+  U.sheet={kind:'cloudPhoto',url:saved,mime:mime||row.photoMime||'image/jpeg',title:'รูปใบเสร็จจากเครื่อง (ออฟไลน์)'};
+  render();return true;
 }
 function cloudPhotoThumb(dataUrl){
   return new Promise(function(resolve){
@@ -4254,20 +4277,71 @@ function cloudPhotoThumb(dataUrl){
     im.src=dataUrl;
   });
 }
+/* Read the R2 object back byte-for-byte before replacing the only in-ledger image. */
+async function cloudVerifyUploadedReceipt(original,key){
+  if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(String(original||''))||!key)return false;
+  var headers=cloudHeaders();if(!headers)return false;delete headers['Content-Type'];
+  try{
+    var res=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(key)),
+      {method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});
+    if(!res.ok)return false;
+    var received=new Uint8Array(await res.arrayBuffer());
+    var base64=original.slice(original.indexOf(',')+1);
+    if(received.length===0||received.length>16*1024*1024||base64.length>24*1024*1024)return false;
+    var decoded=atob(base64);
+    if(decoded.length!==received.length)return false;
+    for(var i=0;i<received.length;i++)if(decoded.charCodeAt(i)!==received[i])return false;
+    return true;
+  }catch(_){return false;}
+}
 async function cloudOffloadOneTxPhoto(id,silent){
-  var t=(S.tx||[]).find(function(x){return x.id===id;});if(!t||!/^data:image\//i.test(String(t.photo||''))||!cloudSyncEnabled())return false;
-  var st=await cloudFileStatus();if(!st.ok||!st.data||!st.data.configured){if(!silent)toast('R2 ยังไม่พร้อม · รูปยังเก็บในเครื่อง');return false;}
-  var original=t.photo,thumb=await cloudPhotoThumb(original),hash=expensePhotoFingerprint(original),up=await cloudFileUpload(original,'tx',t.id,'receipt-'+(t.date||today())+'-'+t.id+'.jpg');
-  if(!up.ok||!up.data||!up.data.key){if(!silent)toast('ย้ายรูปเข้า R2 ไม่สำเร็จ · รูปเดิมยังอยู่');return false;}
+  var t=(S.tx||[]).find(function(x){return x.id===id;});
+  if(!t||!/^data:image\//i.test(String(t.photo||''))||!cloudSyncEnabled())return false;
+  var original=t.photo,cloudKey=cloudLedgerKey(false),source=JSON.stringify(S);
+  var st=await cloudFileStatus();
+  if(!st.ok||!st.data||!st.data.configured){if(!silent)toast('R2 ยังไม่พร้อม · รูปยังเก็บในเครื่อง');return false;}
+  // Write and read back a separate, locally recoverable original before any offload.
+  // No keys or originals are ever deleted automatically during this operation.
+  var copyKey='receipt-original-v1:'+String(t.id);
+  var copied=await idbPut(copyKey,original);
+  if(!copied||await idbRead(copyKey)!==original){
+    if(!silent)toast('สำรองรูปใน IndexedDB ไม่สำเร็จ · รูปเดิมยังอยู่');return false;
+  }
+  if(!cloudSyncEnabled()||cloudLedgerKey(false)!==cloudKey||JSON.stringify(S)!==source){
+    if(!silent)toast('ข้อมูลเปลี่ยนระหว่างสำรองรูป · หยุดย้ายรูป');return false;
+  }
+  var thumb=await cloudPhotoThumb(original),hash=expensePhotoFingerprint(original);
+  var up=await cloudFileUpload(original,'tx',t.id,'receipt-'+(t.date||today())+'-'+t.id+'.jpg');
+  if(!up.ok||!up.data||!up.data.key){
+    if(!silent)toast('อัปโหลดรูปเข้า R2 ไม่สำเร็จ · รูปเดิมยังอยู่');return false;
+  }
+  if(!await cloudVerifyUploadedReceipt(original,up.data.key)){
+    if(!silent)toast('ตรวจรูปที่ R2 ไม่ตรงต้นฉบับ · ไม่ลบรูปในบัญชี');return false;
+  }
+  // Detect same-tab edits and other-tab writes before changing the ledger state.
+  var current='';
+  try{current=localStorage.getItem(KEY)||'';}catch(_){return false;}
+  if(!cloudSyncEnabled()||cloudLedgerKey(false)!==cloudKey||JSON.stringify(S)!==source||current!==committedState){
+    if(!silent)toast('ข้อมูลเปลี่ยนระหว่างย้ายรูป · ไม่แก้บัญชี');return false;
+  }
   var snap={photo:t.photo,photoRef:t.photoRef||'',photoThumb:t.photoThumb||'',photoHash:t.photoHash||'',photoMime:t.photoMime||''};
   t.photo='';t.photoRef=up.data.key;t.photoThumb=thumb;t.photoHash=hash;t.photoMime=up.data.mime||'image/jpeg';
-  if(!persist()){Object.assign(t,snap);if(!silent)toast('บันทึกอ้างอิง R2 ไม่สำเร็จ · รูปเดิมยังอยู่');return false;}
-  if(!silent)toast('ย้ายรูปใบเสร็จเข้า Cloudflare R2 แล้ว');return true;
+  if(!persist()){
+    Object.assign(t,snap);
+    if(!silent)toast('บันทึกอ้างอิง R2 ไม่สำเร็จ · สำเนารูปยังเก็บใน IndexedDB');return false;
+  }
+  if(!silent)toast('ตรวจรูป R2 ตรงกับต้นฉบับแล้ว · สำรองรูปใน IndexedDB พร้อมใช้งาน');
+  return true;
 }
 async function cloudOffloadAllTxPhotos(){
-  if(!cloudSyncEnabled())return {ok:false,error:'SYNC_DISABLED',moved:0};var rows=(S.tx||[]).filter(function(t){return /^data:image\//i.test(String(t.photo||''));}),moved=0;
-  for(var i=0;i<rows.length;i++){if(await cloudOffloadOneTxPhoto(rows[i].id,true))moved++;}
-  return {ok:true,total:rows.length,moved:moved};
+  if(U.receiptOffloadBusy)return {ok:false,error:'IN_PROGRESS',moved:0};
+  if(!cloudSyncEnabled())return {ok:false,error:'SYNC_DISABLED',moved:0};
+  U.receiptOffloadBusy=true;
+  try{
+    var rows=(S.tx||[]).filter(function(t){return /^data:image\//i.test(String(t.photo||''));}),moved=0;
+    for(var i=0;i<rows.length;i++){if(await cloudOffloadOneTxPhoto(rows[i].id,true))moved++;}
+    return {ok:true,total:rows.length,moved:moved};
+  }finally{U.receiptOffloadBusy=false;}
 }
 
 function googleWorkspaceState(){if(!U.googleWorkspace||typeof U.googleWorkspace!=='object')U.googleWorkspace={loading:false,status:null,error:''};return U.googleWorkspace;}
