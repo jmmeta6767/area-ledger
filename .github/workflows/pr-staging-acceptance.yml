@@ -85,6 +85,8 @@ jobs:
         run: node --check sw.js
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
+      - name: Fail-closed transient OCR quality retry QA
+        run: node tests/expense-quality-retry.cjs
       - name: Banking UI presentation and PWA safety
         run: node tests/ui-banking-design.cjs
       - name: Menu artwork regression
