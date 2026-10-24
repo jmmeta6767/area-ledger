@@ -20,12 +20,12 @@ test('oversized and ambiguous money is rejected without accepting a smaller suff
 });
 test('invalid voice money/date clears stale values and displays field-specific review without saving',()=>{
  assert.equal(c.expenseVoiceParse('จ่ายหนึ่งล้านล้านบาท วันที่ 31/2/2569').sub,'');assert.equal(c.expenseVoiceParse('จ่ายหนึ่งล้านล้านบาท รายการปูน').sub,'ปูน');
- let instance;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.draft=c.newDraft('out','p');c.U.draft.amount='250';c.U.draft.date='2026-10-01';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'จ่ายหนึ่งล้านล้านบาท วันที่ 31/2/2569'}]]});assert.equal(c.U.draft.amount,'');assert.equal(c.U.draft.date,'');assert.equal(c.U.expenseVoiceIssues.length,2);assert(c.vAdd().includes('วันที่อ่านไม่ได้'));assert.equal(c.S.tx.length,0);
+ let instance;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.draft=c.newDraft('out','p');c.U.draft.amount='250';c.U.draft.date='2026-10-01';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'จ่ายหนึ่งล้านล้านบาท วันที่ 31/2/2569'}]]});instance.onend();assert.equal(c.U.draft.amount,'');assert.equal(c.U.draft.date,'');assert.equal(c.U.expenseVoiceIssues.length,2);assert(c.vAdd().includes('วันที่อ่านไม่ได้'));assert.equal(c.S.tx.length,0);
  c.U.draft.amount='500';c.expenseVoiceReviewUpdate();assert.equal(c.U.expenseVoiceIssues.length,1);c.U.draft.date='2026-10-14';c.expenseVoiceReviewUpdate();assert.equal(c.U.expenseVoiceIssues.length,0);
 });
 test('WebKit-prefixed speech can restart after silence, permission failure, timeout and thrown start',()=>{
  delete c.window.SpeechRecognition;let instance;c.window.webkitSpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');c.U.draft.amount='123';
- for(const event of ['end','denied','timeout']){assert(c.expenseVoiceStart());const timer=c.U.expenseVoiceTimer;if(event==='end')instance.onend();else if(event==='denied')instance.onerror({error:'not-allowed'});else timers.get(timer)();assert.equal(c.U.expenseVoiceRecognition,null);assert(!timers.has(timer));assert.equal(c.U.draft.amount,'123');}
+ for(const event of ['end','denied','timeout']){assert(c.expenseVoiceStart());const timer=c.U.expenseVoiceTimer;if(event==='end')instance.onend();else if(event==='denied')instance.onerror({error:'not-allowed'});else timers.get(timer)();if(c.U.expenseVoiceEnding)instance.onend();assert.equal(c.U.expenseVoiceRecognition,null);assert(!timers.has(timer));assert.equal(c.U.draft.amount,'123');}
  c.U.draft.date='2026-10-14';c.expenseVoiceStart();c.saveTx(false);assert.equal(c.S.tx.length,0);assert(c.U.expenseVoiceRecognition);assert.equal(c.U.draft.amount,'123');c.expenseVoiceStop();
  c.window.webkitSpeechRecognition=function(){this.start=()=>{throw Error('start failed');};this.abort=()=>{};};assert.equal(c.expenseVoiceStart(),false);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceTimer,null);delete c.window.webkitSpeechRecognition;assert.equal(c.S.tx.length,0);
 });
@@ -38,11 +38,11 @@ test('labor description followed by an unlabelled amount fills the amount on rep
  for(const text of ['ค่าแรงงานโครงหลัง 54,000','ค่าแรงงานโครงหลังคา 54000','ค่าแรงงานโครงหลังคา ๕๔,๐๐๐','ค่าแรงงานโครงหลังคา ห้าหมื่นสี่พัน']){const x=c.expenseVoiceParse(text);assert.equal(x.amount,'54000',text);assert.equal(x.cat,'ค่าแรง');assert(!/ห้าหมื่น|สี่พัน|54000|54,000/.test(x.sub));}
  for(const text of ['ค่าแรงงาน 12 คน','ค่าแรงงาน วันที่ 14/10/2569','ค่าแรง โทร 064 9893124','ค่าแรง 12 คน 54000','ค่าแรง ร้านสมใจ 54000','ค่าแรง -54000','ค่าแรงงานโครงหลังคา 54,00'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
  let instance;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');
- for(const text of ['ค่าแรงงานโครงหลัง 54,000','ค่าแรงงานโครงหลังคา ห้าหมื่นสี่พัน']){c.U.draft.amount='999';assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:text}]]});assert.equal(c.U.draft.amount,'54000');assert.equal(c.U.draft.cat,'ค่าแรง');assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);}
+ for(const text of ['ค่าแรงงานโครงหลัง 54,000','ค่าแรงงานโครงหลังคา ห้าหมื่นสี่พัน']){c.U.draft.amount='999';assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:text}]]});instance.onend();assert.equal(c.U.draft.amount,'54000');assert.equal(c.U.draft.cat,'ค่าแรง');assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);}
 });
 test('repeated speech edits only named fields and retains unresolved warnings and draft identity',()=>{
  let instance;c.window.webkitSpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{};};delete c.window.SpeechRecognition;c.U.view='add';c.U.draft=c.newDraft('out','p');const d=c.U.draft;d.partner='ร้านเดิม';d.date='2026-10-14';d.pay='cash';d.paid=false;
- const speak=text=>{assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:text}]]});assert.equal(c.U.draft,d);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);};
+ const speak=text=>{assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:text}]]});instance.onend();assert.equal(c.U.draft,d);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);};
  speak('ค่าแรงงานโครงหลังคา 54,000');assert.equal(d.amount,'54000');const sub=d.sub;
  for(const command of ['แก้ยอดเป็น 53,000','เปลี่ยนจำนวนเงินเป็น ห้าหมื่นสองพัน','51,000','ห้าหมื่นบาท']){speak(command);assert.equal(d.sub,sub);assert.equal(d.partner,'ร้านเดิม');assert.equal(d.date,'2026-10-14');assert.equal(d.pid,'p');assert.equal(d.pay,'cash');assert.equal(d.paid,false);}
  assert.equal(d.amount,'50000');speak('เปลี่ยนรายการเป็น ค่าแรงติดตั้งหลังคา');assert.equal(d.sub,'ค่าแรงติดตั้งหลังคา');assert.equal(d.amount,'50000');assert.equal(d.cat,'ค่าแรง');
@@ -68,7 +68,7 @@ test('fragmented Thai currency suffix from iPhone speech keeps rental amount and
  c.expenseVoiceStop();let instance;
  c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.stop=()=>{this.onend?.()};this.abort=()=>{};};
  c.U.view='add';c.U.draft=c.newDraft('out','p');assert(c.expenseVoiceStart());
- instance.onresult({results:[[{transcript:'ค่าเช่าเครื่องตบดิน 500 ย'}]]});
+ instance.onresult({results:[[{transcript:'ค่าเช่าเครื่องตบดิน 500 ย'}]]});instance.onend();
  assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'เครื่องตบดิน');assert.equal(c.U.draft.cat,'ค่าเช่าอื่นๆ');assert.equal(c.S.tx.length,0);
 });
 test('short material expenses without baht split the item and amount, including Thai number words',()=>{
@@ -82,7 +82,7 @@ test('fresh recognizer per tap waits for end and never starts automatically',()=
  c.U.draft=c.newDraft('out','p');c.expenseVoiceStart();instance.onresult({results:[[{transcript:'ค่าทราย 700'}]]});timers.get(c.U.expenseVoiceReleaseTimer)();assert.equal(c.U.draft.amount,'700');assert.equal(c.U.expenseVoiceDiagnostic.code,'END_TIMEOUT');assert(c.expenseVoiceStart());assert.equal(constructed,12);c.expenseVoiceStop();
 });
 test('missing native start and missing result release mic and expose metadata only',()=>{
- c.window.SpeechRecognition=function(){this.start=()=>{};this.stop=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');c.U.draft.amount='123';assert(c.expenseVoiceStart());assert.equal(c.U.expenseVoiceState,'starting');assert.equal(c.U.expenseVoiceDiagnostic.started,false);timers.get(c.U.expenseVoiceTimer)();assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceDiagnostic.code,'NO_START_EVENT');assert.equal(c.U.draft.amount,'123');
+ c.window.SpeechRecognition=function(){this.start=()=>{};this.stop=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');c.U.draft.amount='123';assert(c.expenseVoiceStart());assert.equal(c.U.expenseVoiceState,'starting');assert.equal(c.U.expenseVoiceDiagnostic.started,false);timers.get(c.U.expenseVoiceTimer)();assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceDiagnostic.code,'NO_START_EVENT');assert.equal(c.U.draft.amount,'123');assert(c.U.expenseVoiceEnding);c.U.expenseVoiceEnding.onend();
  assert(c.expenseVoiceStart());c.U.expenseVoiceRecognition.onstart();assert.equal(c.U.expenseVoiceState,'listening');timers.get(c.U.expenseVoiceTimer)();assert.equal(c.U.expenseVoiceState,'closing');timers.get(c.U.expenseVoiceReleaseTimer)();assert.equal(c.U.expenseVoiceDiagnostic.code,'END_TIMEOUT');assert.equal(c.U.draft.amount,'123');assert(!c.expenseVoiceDiagnosticText().includes('123'));assert(!('transcript' in c.U.expenseVoiceDiagnostic));
 });
 test('explicit monetary amounts win over dimensions, quantities, dates and phone numbers',()=>{
@@ -93,12 +93,12 @@ test('explicit monetary amounts win over dimensions, quantities, dates and phone
 test('ten voice sessions, repeated errors, stop, navigation and stale callbacks preserve draft ownership',()=>{
  let instance,aborts=0;c.window.SpeechRecognition=function(){instance=this;this.start=()=>{};this.abort=()=>{aborts++;this.onend?.();};};
  c.U.draft=c.newDraft('out','p');
- for(let i=0;i<10;i++){assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:`จ่าย ${100+i} บาท`}]]});assert.equal(c.U.draft.amount,String(100+i));assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceTimer,null);}
- for(const error of ['no-speech','not-allowed','network']){c.expenseVoiceStart();instance.onerror({error});assert.equal(c.U.expenseVoiceRecognition,null);}
+ for(let i=0;i<10;i++){assert(c.expenseVoiceStart());instance.onresult({results:[[{transcript:`จ่าย ${100+i} บาท`}]]});instance.onend();assert.equal(c.U.draft.amount,String(100+i));assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceTimer,null);}
+ for(const error of ['no-speech','not-allowed','network']){c.expenseVoiceStart();instance.onerror({error});assert(c.U.expenseVoiceEnding);instance.onend();assert.equal(c.U.expenseVoiceRecognition,null);}
  c.expenseVoiceStart();const stale=instance.onresult;const old=c.U.draft;c.U.draft=c.newDraft('out','p');stale({results:[[{transcript:'จ่าย 999 บาท'}]]});assert.equal(c.U.draft.amount,'');assert.equal(old.amount,'109');
  c.expenseVoiceStart();const late=instance.onresult;c.applyNavState({view:'home'});late({results:[[{transcript:'จ่าย 999 บาท'}]]});assert.equal(c.U.draft.amount,'');assert.equal(c.U.expenseVoiceRecognition,null);
- c.U.view='add';c.expenseVoiceStart();c.document.visibilityState='hidden';listeners.visibilitychange.forEach(f=>f());assert.equal(c.U.expenseVoiceRecognition,null);assert(aborts>=6);assert.equal(c.S.tx.length,0);
- c.U.draft=c.newDraft('out','p');c.U.draft.sub='old expense detail';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'รับเงิน 1200 บาท รับจากลูกค้า รายการงวดงาน'}]]});assert.equal(c.U.draft.type,'in');assert.equal(c.U.draft.cat,c.CAT_IN[1]);assert.equal(c.U.draft.amount,'1200');assert.equal(c.U.draft.sub,'งวดงาน');assert.equal(c.S.tx.length,0);
+ c.U.view='add';c.expenseVoiceStart();c.document.visibilityState='hidden';listeners.visibilitychange.forEach(f=>f());assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(aborts,3,'only explicit draft/navigation/visibility cancellations abort');assert.equal(c.S.tx.length,0);
+ c.U.draft=c.newDraft('out','p');c.U.draft.sub='old expense detail';c.expenseVoiceStart();instance.onresult({results:[[{transcript:'รับเงิน 1200 บาท รับจากลูกค้า รายการงวดงาน'}]]});instance.onend();assert.equal(c.U.draft.type,'in');assert.equal(c.U.draft.cat,c.CAT_IN[1]);assert.equal(c.U.draft.amount,'1200');assert.equal(c.U.draft.sub,'งวดงาน');assert.equal(c.S.tx.length,0);
 });
 const rows=[1480,2250,2700].map((amount,i)=>({amount,date:'2026-10-14',sub:'วัสดุทดสอบ '+(i+1),partner:'ร้านทดสอบ',cat:'ค่าของ',confidence:.99}));
 test('document total survives request validation, normalization, review and mismatch rejection',()=>{

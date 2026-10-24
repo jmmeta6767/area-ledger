@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1098 Native microphone completion and command fallback
+
+- Waits for native end after speech/error without redundant automatic stop or early second capture; preserves confirmed finals across aborted and retains manual-edit guards.
+- Adds an explicit keyboard/dictation command fallback after microphone errors, with draft-bound apply/undo, no automatic save/audio upload, and navigation/update protection.
+- Covers native event ordering and six-width UI flows. Physical iPhone audio still needs device verification. See QA-native-voice-end-v1098.md.
+
 ## v1096 Bare material speech amounts
 
 - Accepts the actual recognized text `ทราย 500` and `ทราย500`, without requiring either the expense prefix or baht. A small allowlist covers short material names and preserves the existing accounting category.

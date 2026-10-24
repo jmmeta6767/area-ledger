@@ -34,6 +34,29 @@ const html=fs.readFileSync(path.join(web,'index.html'),'utf8').replace(/\nboot\(
   assert.equal(await page.locator('#amt').inputValue(),'700');assert.equal(await page.evaluate(()=>recognizers.length),2);assert.equal(await page.evaluate(()=>S.tx.length),0);
   if(width===390){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(out,'reliability-voice-correction.png')});}
   await page.locator('[data-act=expenseVoiceUndo]').click();assert.equal(await page.locator('#amt').inputValue(),'500');assert.equal(await page.evaluate(()=>S.tx.length),0);
+  // Native single-shot completion may emit aborted between the final and end.
+  await page.locator('[data-act=expenseVoiceStart]').click();
+  await page.evaluate(()=>{const engine=recognizers.at(-1),row=[{transcript:'ทราย 900'}];row.isFinal=true;engine.onresult({results:[row]});engine.onspeechend();engine.onerror({error:'aborted',message:'No speech detected'});});
+  assert.equal(await page.locator('#amt').inputValue(),'500');assert.equal(await page.evaluate(()=>recognizers.at(-1).stops),0,'native completion must not be stopped again');
+  const pendingCount=await page.evaluate(()=>recognizers.length);await page.locator('[data-act=expenseVoiceStart]').click();assert.equal(await page.evaluate(()=>recognizers.length),pendingCount,'error retains native ownership until end');
+  await page.evaluate(()=>recognizers.at(-1).onend());assert.equal(await page.locator('#amt').inputValue(),'900');
+  await page.locator('[data-act=expenseVoiceStart]').click();
+  await page.evaluate(()=>{const engine=recognizers.at(-1),row=[{transcript:'แก้ยอดเป็น 950'}];row.isFinal=true;engine.onspeechend();engine.onerror({error:'aborted',message:'No speech detected'});engine.onresult({results:[row]});engine.onend();});
+  assert.equal(await page.locator('#amt').inputValue(),'950');
+  await page.locator('[data-act=expenseVoiceStart]').click();
+  await page.evaluate(()=>{recognizers.at(-1).onerror({error:'aborted',message:'Another request is started'});});
+  const interruptedCount=await page.evaluate(()=>recognizers.length);await page.locator('[data-act=expenseVoiceStart]').click();assert.equal(await page.evaluate(()=>recognizers.length),interruptedCount);
+  await page.evaluate(()=>recognizers.at(-1).onend());assert.equal(await page.locator('#amt').inputValue(),'950');
+  await page.locator('.voice-command-fallback summary').click();const commandCaptures=await page.evaluate(()=>recognizers.length);
+  await page.locator('#expenseVoiceCommand').fill('ทราย 500');assert.equal(await page.locator('#amt').inputValue(),'950','keyboard commands need explicit apply');
+  await page.locator('[data-act=expenseVoiceCommandApply]').click();assert.equal(await page.locator('#amt').inputValue(),'500');assert.equal(await page.evaluate(()=>U.draft.sub),'ทราย');
+  await page.locator('#expenseVoiceCommand').fill('แก้ยอดเป็น 700');await page.locator('[data-act=expenseVoiceCommandApply]').click();assert.equal(await page.locator('#amt').inputValue(),'700');assert.equal(await page.evaluate(()=>recognizers.length),commandCaptures);assert.equal(await page.evaluate(()=>S.tx.length),0);
+  if(width===390){await page.locator('.voice-command-fallback').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'voice-keyboard-command-fallback.png')});}
+  if(process.env.AXE_SOURCE&&width===390){const violations=await page.evaluate(async()=>{const result=await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}});return result.violations.map(x=>x.id);});assert.deepEqual(violations,[]);}
+  await page.locator('[data-act=expenseVoiceUndo]').click();assert.equal(await page.locator('#amt').inputValue(),'500');
+  await page.locator('[data-act=expenseVoiceStart]').click();await page.evaluate(()=>{const row=[{transcript:'ทราย 1000'}];row.isFinal=true;recognizers.at(-1).onresult({results:[row]});recognizers.at(-1).onerror({error:'aborted'});});
+  await page.locator('#amt').fill('777');await page.evaluate(()=>recognizers.at(-1).onend());assert.equal(await page.locator('#amt').inputValue(),'777');assert.equal(await page.evaluate(()=>S.tx.length),0);
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   await page.evaluate(()=>{expenseVoiceStop();U.draft=null;U.sheet={kind:'settings'};render();});assert(await page.locator('.release-builds').textContent().then(t=>t.includes('รุ่นที่กำลังใช้อยู่')));
   console.log('PASS reliability review, original ledger retained, two fresh mic taps/undo and release identity at',width);await context.close();
  }}finally{await browser.close();}
