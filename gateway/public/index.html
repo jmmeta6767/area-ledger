@@ -4168,7 +4168,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1097,"sha":"","environment":"source"};
+var APP_BUILD={"version":1098,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5210,7 +5210,7 @@ function toast(msg){
   var d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.setAttribute('aria-live','polite');d.setAttribute('aria-atomic','true');d.textContent=msg;document.body.appendChild(d);
   setTimeout(function(){d.remove();},2200);
 }
-function draftDirty(){var d=U.draft;if(U.view!=='add'||!d)return false;return !!(d.id||parseFloat(d.amount)>0||d.partner||d.sub||d.note||d.photo||d.photoRef);}
+function draftDirty(){var d=U.draft;if(U.view!=='add'||!d)return false;return !!(d.id||parseFloat(d.amount)>0||d.partner||d.sub||d.note||d.photo||d.photoRef||U.expenseVoiceCommandDraft===d&&String(U.expenseVoiceCommandText||'').trim());}
 function leaveAddTo(target){
   if(!draftDirty()){U.draft=null;target();return true;}
   U.sheet={kind:'leaveAdd',target:target};render();return false;
@@ -5387,19 +5387,20 @@ function expenseVoiceReviewUpdate(){
 }
 function expenseVoiceButtonText(){return U.expenseVoiceState==='starting'?'กำลังเปิดไมค์':U.expenseVoiceState==='listening'?'หยุดฟัง':U.expenseVoiceEnding?'กำลังปิดไมค์':'พูดรายการ';}
 function expenseVoiceStatusText(){
+  if(U.expenseVoiceState==='command')return 'เติมข้อมูลจากคำสั่งแล้ว · ตรวจสอบก่อนบันทึก';
   var x=U.expenseVoiceDiagnostic;if(!x)return '';
   if(U.expenseVoiceState==='starting')return 'กำลังเปิดไมค์ · รอเบราว์เซอร์ยืนยัน';
   if(U.expenseVoiceState==='listening')return 'กำลังฟังอยู่ · '+(U.expenseVoiceCapture&&U.expenseVoiceCapture.liveText?'ได้ยิน: '+U.expenseVoiceCapture.liveText:'พูดรายการแล้วหยุดพูด หรือแตะหยุดฟัง');
   if(U.expenseVoiceEnding)return 'กำลังประมวลผลเสียง · รอผลรอบนี้สักครู่';
-  if(x.code){var messages={NO_START_EVENT:'เบราว์เซอร์ยังไม่เริ่มรับเสียง',NO_RESULT:'ยังไม่ได้รับข้อความจากเสียง',NO_SPEECH:'ไม่ได้ยินคำสั่ง',NO_FINAL_RESULT:'เบราว์เซอร์ยังไม่ยืนยันข้อความเสียง · ข้อมูลเดิมยังอยู่',DRAFT_CHANGED:'คุณแก้ข้อมูลระหว่างรับเสียง · เก็บค่าที่กรอกเองไว้',END_TIMEOUT:'ไมค์รอบก่อนยังไม่ตอบกลับ',ERROR_NOT_ALLOWED:'ยังไม่ได้รับอนุญาตใช้ไมค์',ERROR_AUDIO_CAPTURE:'เบราว์เซอร์เปิดไมค์ไม่ได้',ERROR_NETWORK:'บริการรับเสียงเชื่อมต่อไม่ได้'};return (messages[x.code]||'รับเสียงไม่สำเร็จ')+' · แตะพูดรายการเพื่อลองใหม่ ('+x.code+')';}
+  if(x.code){var messages={NO_START_EVENT:'เบราว์เซอร์ยังไม่เริ่มรับเสียง',NO_RESULT:'ยังไม่ได้รับข้อความจากเสียง',NO_SPEECH:'ไม่ได้ยินคำสั่ง',NO_FINAL_RESULT:'เบราว์เซอร์ยังไม่ยืนยันข้อความเสียง · ข้อมูลเดิมยังอยู่',DRAFT_CHANGED:'คุณแก้ข้อมูลระหว่างรับเสียง · เก็บค่าที่กรอกเองไว้',END_TIMEOUT:'ไมค์รอบก่อนยังไม่ตอบกลับ',ERROR_NOT_ALLOWED:'ยังไม่ได้รับอนุญาตใช้ไมค์',ERROR_AUDIO_CAPTURE:'เบราว์เซอร์เปิดไมค์ไม่ได้',ERROR_NETWORK:'บริการรับเสียงเชื่อมต่อไม่ได้',ERROR_ABORTED:'ไมค์รอบนี้ถูกยกเลิก · ข้อมูลเดิมยังอยู่'};return (messages[x.code]||'รับเสียงไม่สำเร็จ')+' · แตะพูดรายการเพื่อลองใหม่';}
   return x.results?'พร้อมพูดใหม่ · ข้อมูลที่อ่านได้ยังอยู่ในฟอร์ม':'หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่';
 }
-function expenseVoiceDiagnosticText(){var x=U.expenseVoiceDiagnostic;return x?'v'+APP_BUILD.version+' · รอบ '+x.attempt+' · start='+(x.started?1:0)+' audio='+(x.audio?1:0)+' speech='+(x.speech?1:0)+' result='+x.results+' end='+(x.ended?1:0)+' · '+(x.code||'OK')+' · '+x.events.join(' > '):'';}
-function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-voice-status" role="status" aria-live="polite"'+(!U.expenseVoiceDiagnostic?' hidden':'')+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
+function expenseVoiceDiagnosticText(){var x=U.expenseVoiceDiagnostic;return x?'v'+APP_BUILD.version+' · รอบ '+x.attempt+' · start='+(x.started?1:0)+' audio='+(x.audio?1:0)+' speech='+(x.speech?1:0)+' result='+x.results+' end='+(x.ended?1:0)+' · '+(x.code||'OK')+(x.nativeReason?' · '+x.nativeReason:'')+' · '+x.events.join(' > '):'';}
+function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-voice-status" role="status" aria-live="polite"'+(!U.expenseVoiceDiagnostic&&U.expenseVoiceState!=='command'?' hidden':'')+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
 function expenseVoiceUiUpdate(){
   var button=document.querySelector('[data-act="expenseVoiceStart"]'),active=!!U.expenseVoiceRecognition;
   if(button){button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-label',expenseVoiceButtonText());var label=button.querySelector('span');if(label)label.textContent=expenseVoiceButtonText();var card=button.closest('.expense-voice-card');if(card)card.classList.toggle('listening',U.expenseVoiceState==='listening');}
-  var status=document.getElementById('expenseVoiceStatus');if(status){status.hidden=!U.expenseVoiceDiagnostic;status.textContent=expenseVoiceStatusText();}
+  var status=document.getElementById('expenseVoiceStatus');if(status){status.hidden=!U.expenseVoiceDiagnostic&&U.expenseVoiceState!=='command';status.textContent=expenseVoiceStatusText();}
   var detail=document.getElementById('expenseVoiceDiagnostic');if(detail)detail.textContent=expenseVoiceDiagnosticText();
 }
 function expenseVoiceEvent(event,code){var x=U.expenseVoiceDiagnostic;if(!x)return;if(event==='start')x.started=true;if(event==='audio')x.audio=true;if(event==='speech')x.speech=true;if(event==='result')x.results++;if(event==='end')x.ended=true;if(code)x.code=code;x.events=x.events.concat(event).slice(-12);expenseVoiceUiUpdate();}
@@ -5407,7 +5408,7 @@ function expenseVoiceDetach(recognition){
   recognition.onresult=recognition.onerror=recognition.onend=recognition.onspeechend=recognition.onstart=recognition.onaudiostart=recognition.onspeechstart=recognition.onnomatch=null;
 }
 function expenseVoiceStop(){
-  // Cancellation on navigation/error deliberately discards pending audio. The mic button uses stop(), below.
+  // Explicit cancellation/navigation discards pending audio. Native errors wait for end, below.
   var engines=[U.expenseVoiceRecognition,U.expenseVoiceEnding];U.expenseVoiceSession=(+U.expenseVoiceSession||0)+1;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceCapture=null;U.expenseVoiceEngine=null;U.expenseVoiceEngineSpeech=null;U.expenseVoiceRestartDraft=null;U.expenseVoiceState='';
   if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;if(U.expenseVoiceReleaseTimer)clearTimeout(U.expenseVoiceReleaseTimer);U.expenseVoiceReleaseTimer=null;
   engines.forEach(function(r,i){if(!r||engines.indexOf(r)!==i)return;expenseVoiceDetach(r);try{r.abort();}catch(_){}});expenseVoiceUiUpdate();
@@ -5421,20 +5422,45 @@ function expenseVoiceEnded(recognition,timedOut){
   if(timedOut){try{recognition.abort();}catch(_){}}
   if(!capture||capture.draft!==U.draft||capture.view!==U.view){U.expenseVoiceState='';expenseVoiceUiUpdate();return;}
   // Commit once, from the complete FINAL result set. Interim hypotheses never change financial fields.
-  var parsed=expenseVoiceParse(capture.finalText),hasFinal=!!parsed.transcript;
+  var parsed=expenseVoiceParse(capture.finalText),hasFinal=!!parsed.transcript&&(!capture.error||capture.error==='ERROR_ABORTED');
   if(hasFinal&&capture.fields!==expenseVoiceDraftStamp(capture.draft)){U.expenseVoiceState='error';expenseVoiceEvent(timedOut?'release-timeout':'end','DRAFT_CHANGED');render();toast(expenseVoiceStatusText());return;}
   if(hasFinal)expenseVoiceApply(parsed,capture.draft);
   U.expenseVoiceState=hasFinal?'recognized':'error';
-  expenseVoiceEvent(timedOut?'release-timeout':'end',timedOut?'END_TIMEOUT':hasFinal?'':capture.liveText?'NO_FINAL_RESULT':'NO_SPEECH');
+  var code=hasFinal?(timedOut?'END_TIMEOUT':''):(capture.error||(timedOut?'END_TIMEOUT':capture.liveText?'NO_FINAL_RESULT':'NO_SPEECH'));
+  if(U.expenseVoiceDiagnostic)U.expenseVoiceDiagnostic.code='';expenseVoiceEvent(timedOut?'release-timeout':'end',code);
   render();toast(hasFinal?'อ่านเสียงแล้ว · ตรวจข้อมูลก่อนบันทึก':expenseVoiceStatusText());
   // Never start from onend: every new capture is created by a fresh button tap.
 }
-function expenseVoiceFinish(recognition){
-  if(U.expenseVoiceEnding===recognition)return;
-  if(U.expenseVoiceRecognition!==recognition)return;
+function expenseVoiceClose(recognition){
+  if(U.expenseVoiceEnding===recognition)return true;
+  if(U.expenseVoiceRecognition!==recognition)return false;
   if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=recognition;U.expenseVoiceState='closing';expenseVoiceUiUpdate();
-  U.expenseVoiceReleaseTimer=setTimeout(function(){if(U.expenseVoiceEnding===recognition)expenseVoiceEnded(recognition,true);},6000);
-  if(typeof recognition.stop==='function'){try{recognition.stop();}catch(_){expenseVoiceFail('STOP_FAILED');}}else expenseVoiceEnded(recognition);
+  U.expenseVoiceReleaseTimer=setTimeout(function(){if(U.expenseVoiceEnding===recognition)expenseVoiceEnded(recognition,true);},6000);return true;
+}
+function expenseVoiceNativeReason(event){
+  var message=String(event&&event.message||'');return /no speech (?:was )?detected/i.test(message)?'NATIVE_NO_SPEECH':/another request is started/i.test(message)?'NATIVE_REQUEST_REPLACED':'NATIVE_ERROR';
+}
+function expenseVoiceError(recognition,code){
+  if(!expenseVoiceClose(recognition))return;
+  var capture=U.expenseVoiceCapture;if(capture&&(!capture.error||capture.error==='ERROR_ABORTED'))capture.error=code;
+  expenseVoiceEvent(code==='ERROR_ABORTED'?'aborted':'error',capture&&capture.error||code);
+}
+function expenseVoiceFinish(recognition){
+  if(!expenseVoiceClose(recognition))return;
+  var capture=U.expenseVoiceCapture;if(!capture||capture.stopRequested)return;capture.stopRequested=true;
+  if(typeof recognition.stop==='function'){try{recognition.stop();}catch(_){expenseVoiceError(recognition,'STOP_FAILED');}}else expenseVoiceEnded(recognition);
+}
+function expenseVoiceCommandHtml(d){
+  var code=U.expenseVoiceDiagnostic&&U.expenseVoiceDiagnostic.code||'',busy=!!(U.expenseVoiceRecognition||U.expenseVoiceEnding);
+  if(expenseVoiceSupported()&&U.expenseVoiceCommandDraft!==d&&!(U.expenseVoiceState==='error'&&['ERROR_ABORTED','NO_SPEECH','NO_FINAL_RESULT','NO_START_EVENT','END_TIMEOUT','ERROR_NETWORK','ERROR_AUDIO_CAPTURE','ERROR_NOT_ALLOWED','START_FAILED'].indexOf(code)>=0))return '';
+  if(U.expenseVoiceCommandDraft!==d){U.expenseVoiceCommandDraft=d;U.expenseVoiceCommandText='';}
+  return '<details class="voice-command-fallback"'+(U.expenseVoiceCommandText?' open':'')+'><summary>ใช้ไมค์แป้นพิมพ์หรือพิมพ์คำสั่ง</summary><p id="voiceCommandHelp">แตะช่องนี้แล้วใช้ไมค์บนแป้นพิมพ์ หรือพิมพ์ เช่น “ทราย 500” หรือ “แก้ยอดเป็น 700” จากนั้นแตะเติมข้อมูล · ยังไม่บันทึกรายการ</p><label for="expenseVoiceCommand">คำสั่งที่ต้องการเติม</label><textarea id="expenseVoiceCommand" rows="2" maxlength="1000" autocomplete="off" aria-describedby="voiceCommandHelp">'+esc(U.expenseVoiceCommandText||'')+'</textarea><button type="button" class="btn pri" data-act="expenseVoiceCommandApply"'+(busy?' disabled':'')+'>เติมข้อมูลจากคำสั่ง</button></details>';
+}
+function expenseVoiceCommandApply(){
+  var d=U.draft;if(U.expenseVoiceRecognition||U.expenseVoiceEnding){toast('รอไมค์รอบนี้จบก่อนเติมคำสั่ง');return false;}
+  if(U.view!=='add'||!d||U.expenseVoiceCommandDraft!==d){toast('ฟอร์มเปลี่ยนแล้ว · กรอกคำสั่งใหม่');return false;}
+  var input=document.getElementById('expenseVoiceCommand'),text=String(input&&input.value||'').trim().slice(0,1000);if(!text){toast('พิมพ์หรือพูดคำสั่งในช่องก่อน');return false;}
+  U.expenseVoiceCommandText=text;expenseVoiceApply(expenseVoiceParse(text),d);U.expenseVoiceState='command';render();toast('เติมข้อมูลแล้ว · ตรวจสอบก่อนบันทึก');return true;
 }
 function expenseVoiceSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
 function expenseVoiceStart(){
@@ -5449,18 +5475,19 @@ function expenseVoiceStart(){
     function current(){return (U.expenseVoiceRecognition===recognition||U.expenseVoiceEnding===recognition)&&U.expenseVoiceSession===session;}
     recognition.onstart=function(){if(!current()||U.expenseVoiceEnding===recognition)return;U.expenseVoiceState='listening';expenseVoiceEvent('start');clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=setTimeout(function(){if(current()){expenseVoiceEvent('capture-timeout');expenseVoiceFinish(recognition);}},20000);};
     recognition.onaudiostart=function(){if(current())expenseVoiceEvent('audio');};recognition.onspeechstart=function(){if(current())expenseVoiceEvent('speech');};
-    recognition.onspeechend=function(){if(current()){expenseVoiceEvent('speech-end');expenseVoiceFinish(recognition);}};
+    recognition.onspeechend=function(){if(current()){expenseVoiceEvent('speech-end');expenseVoiceClose(recognition);}};
     recognition.onresult=function(event){
       if(!current())return;if(U.draft!==draft||U.view!==view){expenseVoiceStop();return;}
       var results=event&&event.results,finals=[],live=[];
       for(var i=0;results&&i<results.length;i++){var row=results[i],text=row&&row[0]&&String(row[0].transcript||'').trim();if(!text)continue;live.push(text);if(row.isFinal!==false)finals.push(text);}
       capture.finalText=finals.join(' ');capture.liveText=live.join(' ');expenseVoiceEvent(finals.length?'result':'interim');
-      if(finals.length)expenseVoiceFinish(recognition);
+      // continuous=false completes natively; stopping again can turn a valid final into an iOS aborted error.
+      if(finals.length)expenseVoiceClose(recognition);
     };
-    recognition.onerror=function(event){if(!current())return;var known={'not-allowed':'ERROR_NOT_ALLOWED','service-not-allowed':'ERROR_NOT_ALLOWED','audio-capture':'ERROR_AUDIO_CAPTURE','no-speech':'NO_SPEECH','network':'ERROR_NETWORK','aborted':'ERROR_ABORTED'};expenseVoiceFail(known[event&&event.error]||'ERROR_UNKNOWN');};
-    recognition.onnomatch=function(){if(current())expenseVoiceFail('NO_SPEECH');};
+    recognition.onerror=function(event){if(!current())return;var known={'not-allowed':'ERROR_NOT_ALLOWED','service-not-allowed':'ERROR_NOT_ALLOWED','audio-capture':'ERROR_AUDIO_CAPTURE','no-speech':'NO_SPEECH','network':'ERROR_NETWORK','aborted':'ERROR_ABORTED'};if(U.expenseVoiceDiagnostic)U.expenseVoiceDiagnostic.nativeReason=expenseVoiceNativeReason(event);expenseVoiceError(recognition,known[event&&event.error]||'ERROR_UNKNOWN');};
+    recognition.onnomatch=function(){if(current())expenseVoiceError(recognition,'NO_SPEECH');};
     recognition.onend=function(){if(U.expenseVoiceSession===session)expenseVoiceEnded(recognition);};
-    U.expenseVoiceTimer=setTimeout(function(){if(current())expenseVoiceFail('NO_START_EVENT');},6000);expenseVoiceEvent('request');render();recognition.start();return true;
+    U.expenseVoiceTimer=setTimeout(function(){if(current()){expenseVoiceError(recognition,'NO_START_EVENT');expenseVoiceFinish(recognition);}},6000);expenseVoiceEvent('request');render();recognition.start();return true;
   }catch(err){expenseVoiceFail('START_FAILED');return false;}
 }
 
@@ -6195,7 +6222,7 @@ function vAdd(){
 
   h+='<div class="add-core-card"><h2 class="add-section-title">'+ic('receipt')+'ข้อมูลรายการ</h2>';
   h+='<div class="field add-amount"><label for="amt">จำนวนเงิน (บาท)</label><div class="amt"><span>฿</span><input id="amt" data-f="amount" type="number" inputmode="decimal" min="0" step="any" placeholder="0" value="'+esc(d.amount)+'" autofocus></div><div class="muted num" id="amtfmt">'+(parseFloat(d.amount)>0?fmt(parseFloat(d.amount),1):'')+'</div></div>';
-  h+=entryTools+expenseVoiceStatusHtml();
+  h+=entryTools+expenseVoiceStatusHtml()+(d.type==='out'?expenseVoiceCommandHtml(d):'');
   h+='<div class="field"><label for="pid">โครงการ</label><select id="pid" data-f="pid">'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(d.pid===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div>';
   if(d.type==='in'){
     h+='<div class="field"><span class="lbl">หมวด</span><div class="chips">'+cats.map(function(c){return '<button class="chip'+(d.cat===c?' on':'')+'" data-act="cat" data-v="'+esc(c)+'" aria-pressed="'+(d.cat===c)+'">'+categoryBadge(c,d.type)+'<span class="entry-category-label">'+esc(c)+'</span><span class="entry-category-check" aria-hidden="true">'+ic('check')+'</span></button>';}).join('')+'</div></div>';
@@ -8840,6 +8867,7 @@ function directAction(el){
   if(a==='expenseBatchDraftDiscard'){expenseBatchDraftDiscard();return true;}
   if(a==='expenseScanRetry'){if(U.expenseScanRetryDraft===U.draft&&U.expenseScanRetryFile&&!U.expenseScanBusy)expenseScanImage(U.expenseScanRetryFile);return true;}
   if(a==='expenseScanManual'){var amountInput=document.querySelector('.add-amount input');if(amountInput){amountInput.focus();amountInput.scrollIntoView({block:'center',behavior:'smooth'});}return true;}
+  if(a==='expenseVoiceCommandApply'){expenseVoiceCommandApply();return true;}
   if(a==='expenseVoiceStart'){expenseVoiceStart();return true;}
   if(a==='feedbackShare'){
     var feedbackNote=String((document.getElementById('feedbackText')||{}).value||'').trim(),feedbackKind=String((document.getElementById('feedbackKind')||{}).value||'ข้อเสนอแนะ');
@@ -9502,6 +9530,7 @@ function quoteFormCalc(){
 }
 function legacyRetentionImportFieldChanged(target){if(!target||!target.hasAttribute('data-legacy-row')||!U.sheet||U.sheet.kind!=='legacyRetentionImport')return;var index=Number(target.getAttribute('data-legacy-row')),key=target.getAttribute('data-legacy-key');if(!isFinite(index)||!key||!U.sheet.rows||!U.sheet.rows[index])return;U.sheet.rows[index][key]=target.value;}
 document.addEventListener('input',function(e){
+  if(e.target.id==='expenseVoiceCommand'){if(U.expenseVoiceCommandDraft===U.draft)U.expenseVoiceCommandText=String(e.target.value||'').slice(0,1000);return;}
   legacyRetentionImportFieldChanged(e.target);
   if(/^q(qty|price|lineDisc)\d+$/.test(e.target.id)||e.target.id==='qdiscount'){quoteFormCalc();}
   if(e.target.id==='boqQuickFind'){boqApplyQuickFind(e.target.value);return;}
@@ -9692,7 +9721,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1097&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1098&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;

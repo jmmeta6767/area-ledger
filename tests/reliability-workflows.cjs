@@ -12,6 +12,7 @@ const {appContext}=require('./helpers/reliability-context.cjs');
  for(let i=0;i<20;i++){
   assert(c.expenseVoiceStart());const current=recognition;
   current.onresult({results:[[{transcript:i===0?'ค่าทราย 500':'แก้ยอดเป็น '+(500+i)}]]});
+  assert.equal(c.U.expenseVoiceEnding,current);current.onend();
   assert.equal(draft.amount,String(500+i));assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceEnding,null);
   assert.equal(draft.pid,'p');assert.equal(draft.partner,'ร้านเดิม');assert.equal(draft.date,'2026-10-14');assert.equal(draft.pay,'cash');assert.equal(draft.paid,false);
  }

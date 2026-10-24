@@ -45,14 +45,37 @@ test('changing only project and payment choices does not discard a valid pending
  const x=fixture(),{c}=x;c.S.projects.push({id:'q',name:'โครงการใหม่',status:'active'});c.expenseVoiceStart();result(x.engines[0],'ทราย500');c.U.draft.pid='q';c.U.draft.paid=false;c.U.draft.pay='cash';x.engines[0].onend();
  assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.draft.pid,'q');assert.equal(c.U.draft.paid,false);assert.equal(c.U.draft.pay,'cash');assert.equal(c.U.expenseVoiceDiagnostic.code,'');assert.equal(c.S.tx.length,0);assert.equal(x.writes.length,0);
 });
-test('speechend requests a final result, accepts all final rows and ignores interim amounts',()=>{
+test('native speechend and final rows wait for end without redundant stop or interim amounts',()=>{
  const x=fixture(),{c}=x;c.expenseVoiceStart();const engine=x.engines[0];assert.equal(engine.interimResults,true);
  result(engine,'ค่าทราย900',false);assert.equal(c.U.draft.amount,'');assert(c.expenseVoiceStatusText().includes('ค่าทราย900'));
- engine.onspeechend();assert.equal(x.stops,1);assert.equal(c.U.expenseVoiceState,'closing');
+ engine.onspeechend();assert.equal(x.stops,0);assert.equal(c.U.expenseVoiceState,'closing');
  const first=[{transcript:'ค่าทราย'}];first.isFinal=true;engine.onresult({resultIndex:0,results:[first]});
  const second=[{transcript:'500'}];second.isFinal=true;engine.onresult({resultIndex:1,results:[first,second]});
- assert.equal(x.stops,1);assert.equal(c.U.draft.amount,'');engine.onend();
+ assert.equal(x.stops,0);assert.equal(c.U.draft.amount,'');engine.onend();
  assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.expenseVoiceTranscript,'ค่าทราย 500');assert.equal(c.S.tx.length,0);
+});
+test('native final and speechend survive aborted in either order until end and a fresh tap',()=>{
+ for(const order of ['final-speechend-aborted','speechend-aborted-final']){
+  const x=fixture(),{c}=x;c.U.draft.amount='123';const ledger=JSON.stringify(c.S);c.expenseVoiceStart();const engine=x.engines[0];
+  for(const event of order.split('-')){if(event==='final')result(engine,'ค่าทราย500');if(event==='speechend')engine.onspeechend();if(event==='aborted')engine.onerror({error:'aborted',message:'No speech detected'});}
+  assert.equal(c.U.draft.amount,'123');assert.equal(x.stops,0);assert.equal(x.aborts,0);assert.equal(c.U.expenseVoiceEnding,engine);
+  const releaseTimer=c.U.expenseVoiceReleaseTimer;assert(c.expenseVoiceStart());assert(c.expenseVoiceStart());assert.equal(c.U.expenseVoiceReleaseTimer,releaseTimer);assert.equal(x.engines.length,1,'no new native request before end');
+  engine.onend();assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.expenseVoiceDiagnostic.code,'');assert.equal(c.U.expenseVoiceDiagnostic.nativeReason,'NATIVE_NO_SPEECH');assert.equal(c.U.expenseVoiceEnding,null);assert.equal(x.engines.length,1);
+  assert(c.expenseVoiceStart());assert.equal(x.engines.length,2);result(x.engines[1],'แก้ยอดเป็น700');x.engines[1].onend();assert.equal(c.U.draft.amount,'700');assert.equal(x.stops,0);assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
+ }
+});
+test('native errors retain ownership until end, reject fatal-error finals and sanitize reasons',()=>{
+ for(const error of ['network','not-allowed','audio-capture','no-speech','unrecognized']){
+  const x=fixture(),{c}=x;c.U.draft.amount='321';c.expenseVoiceStart();const engine=x.engines[0],late=engine.onresult;
+  result(engine,'ทราย500');engine.onerror({error,message:'private recognizer message secret 987654'});assert.equal(c.U.expenseVoiceEnding,engine);assert.equal(x.aborts,0);assert(c.expenseVoiceStart());assert.equal(x.engines.length,1);
+  engine.onerror({error:'aborted',message:'Another request is started'});late({results:[Object.assign([{transcript:'ค่าทราย900'}],{isFinal:true})]});engine.onend();
+  assert.equal(c.U.draft.amount,'321');assert.equal(c.U.expenseVoiceEnding,null);assert.notEqual(c.U.expenseVoiceDiagnostic.code,'ERROR_ABORTED');assert.equal(c.U.expenseVoiceDiagnostic.nativeReason,'NATIVE_REQUEST_REPLACED');assert(!JSON.stringify(c.U.expenseVoiceDiagnostic).includes('private'));assert(!c.expenseVoiceDiagnosticText().includes('987654'));
+  c.expenseVoiceStart();assert.equal(x.engines.length,2);c.expenseVoiceStop();assert.equal(c.S.tx.length,0);
+ }
+ const x=fixture(),{c,timers}=x;c.U.draft.amount='321';c.expenseVoiceStart();x.engines[0].onerror({error:'aborted',message:'private service detail'});assert.equal(c.U.expenseVoiceDiagnostic.nativeReason,'NATIVE_ERROR');assert(c.expenseVoiceStart());assert.equal(x.engines.length,1);timers.get(c.U.expenseVoiceReleaseTimer)();assert.equal(c.U.draft.amount,'321');assert.equal(c.U.expenseVoiceDiagnostic.code,'ERROR_ABORTED');assert.equal(x.aborts,1);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.S.tx.length,0);
+});
+test('aborted late finals still respect manual edits and explicit stop is requested only once',()=>{
+ const x=fixture(),{c}=x;c.U.draft.amount='100';c.expenseVoiceStart();const engine=x.engines[0];c.expenseVoiceStart();assert.equal(x.stops,1);engine.onspeechend();engine.onerror({error:'aborted'});c.U.draft.amount='700';result(engine,'ค่าทราย500');assert.equal(x.stops,1);engine.onend();assert.equal(c.U.draft.amount,'700');assert.equal(c.U.expenseVoiceDiagnostic.code,'DRAFT_CHANGED');assert.equal(x.aborts,0);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.S.tx.length,0);
 });
 test('interim-only, empty and missing-end sessions release the mic without guessing a payment',()=>{
  const x=fixture(),{c,timers}=x;c.U.draft.amount='321';

@@ -18,5 +18,11 @@
   .google-sync-receipt.pending {border-color:#E6CF81;background:#FFF9E7}
   .google-sync-results li {min-width:0;overflow-wrap:anywhere}
   .google-sync-results li small {display:block;line-height:1.6}
+  .voice-command-fallback{min-width:0;margin:12px 0;padding:12px;border:1px solid var(--color-border,#E5E7EB);border-radius:12px;background:var(--color-surface,#fff)}
+  .voice-command-fallback summary{min-height:44px;display:list-item;padding:10px 0;cursor:pointer;font-weight:600;overflow-wrap:anywhere}
+  .voice-command-fallback p{color:var(--color-text-secondary,#667085);font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+  .voice-command-fallback label{display:block;margin:8px 0;font-weight:600}
+  .voice-command-fallback textarea{width:100%;max-width:100%;min-height:72px;box-sizing:border-box;padding:10px;font:inherit;font-size:16px;border:1px solid var(--color-border,#E5E7EB);border-radius:10px;color:var(--color-text,#20242B);background:var(--color-surface,#fff)}
+  .voice-command-fallback .btn{width:100%;min-height:44px;margin-top:10px;white-space:normal}
   @media(max-width:359px){.release-builds>div {grid-template-columns:minmax(0,1fr)}.release-builds dd {text-align:left}}
 }
