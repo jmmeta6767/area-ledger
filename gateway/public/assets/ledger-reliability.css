@@ -28,7 +28,7 @@
 }
 
 
-/* AREA Ledger banking UI finish — UI-next v1100. Screen only; ledger values,
+/* AREA Ledger banking UI finish — UI-next v1102. Screen only; ledger values,
    financial status colors, routes, storage, supplied artwork and A4 paper stay intact. */
 @media screen {
   :root:not([data-theme="dark"]) body[data-view] {
@@ -489,5 +489,47 @@
     :root:not([data-theme="dark"]) body[data-view] :is(.btn,.app-drawer-menu>button,.area-shortcuts-grid button) {
       transition:background-color .12s ease,border-color .12s ease;
     }
+  }
+}
+
+/* Preserve the large financial amount keyboard entry. General Safari 16px inputs must
+   never collapse the user's main amount field into a small form control. */
+@media screen {
+  :root #amt {
+    font-size:clamp(32px,8vw,40px)!important;
+  }
+}
+/* v1100: touch, focus and financial-error visibility. Screen only; no data or print rules. */
+@media screen {
+  :is(.master-sheet,.expense-review-sheet,.master-form-page,.google-workspace-sheet)
+    :is([role="alert"],.storage-error,.form-error) {
+    border-inline-start:4px solid #bc4c42;
+    padding:10px 12px;
+    border-radius:10px;
+    overflow-wrap:anywhere;
+  }
+  :is(.nav,.master-sheet,.expense-review-sheet,.master-form-page,.savebar)
+    :is(button,a,input,select,textarea):focus-visible {
+    outline:3px solid #e4b83e;
+    outline-offset:2px;
+  }
+  @media (max-width:430px) {
+    :is(.nav button,.master-sheet button,.expense-review-sheet button,.master-action,.savebar button) {
+      min-height:44px;
+    }
+    :is(.master-form-page,.master-sheet,.expense-review-sheet,.google-workspace-sheet)
+      :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+      font-size:16px;
+    }
+    :is(.master-doc-row,.master-project-row,.tx-modern,.master-due-card,.master-report-card) {
+      min-width:0;
+      overflow-wrap:anywhere;
+    }
+  }
+}
+@media screen and (prefers-reduced-motion:reduce) {
+  :is(.master-action,.master-doc-row,.project-hub-card,.tx-modern) {
+    transition:none!important;
+    animation:none!important;
   }
 }

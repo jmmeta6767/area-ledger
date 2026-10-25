@@ -4168,7 +4168,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1100,"sha":"","environment":"source"};
+var APP_BUILD={"version":1102,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4241,8 +4241,31 @@ async function cloudFileStatus(){return cloudGateway('GET','/v1/files/status');}
 async function cloudFileDelete(key){if(!key)return false;var x=await cloudGateway('POST','/v1/files/delete',{key:key});return !!(x&&x.ok&&x.data&&x.data.ok);}
 async function cloudFileUpload(dataUrl,entityType,entityId,name){return cloudGateway('POST','/v1/files/upload',{dataUrl:dataUrl,entityType:entityType||'attachment',entityId:entityId||'',name:name||'attachment'});}
 async function cloudFileOpen(key,mime){
-  if(!key||!cloudLedgerKey(false))return false;var headers=cloudHeaders();if(!headers)return false;delete headers['Content-Type'];
-  try{var r=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(key)),{method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});if(!r.ok)return false;var b=await r.blob(),u=URL.createObjectURL(b);runtimeReleaseCloudPhoto();U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};render();return true;}catch(_){return false;}
+  if(!key)return false;
+  if(cloudLedgerKey(false)){
+    var headers=cloudHeaders();
+    if(headers){
+      delete headers['Content-Type'];
+      try{
+        var r=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(key)),
+          {method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});
+        if(r.ok){
+          var b=await r.blob(),u=URL.createObjectURL(b);
+          runtimeReleaseCloudPhoto();U.sheet={kind:'cloudPhoto',url:u,mime:mime||b.type||'image/jpeg'};
+          render();return true;
+        }
+      }catch(_){}
+    }
+  }
+  // Fall back to the verified original copy when offline or R2 cannot be reached.
+  var row=(S.tx||[]).find(function(t){return t.photoRef===key;});
+  if(!row)return false;
+  var saved=await idbRead('receipt-original-v1:'+String(row.id));
+  if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(String(saved||'')))return false;
+  if(row.photoHash&&expensePhotoFingerprint(saved)!==row.photoHash)return false;
+  runtimeReleaseCloudPhoto();
+  U.sheet={kind:'cloudPhoto',url:saved,mime:mime||row.photoMime||'image/jpeg',title:'รูปใบเสร็จจากเครื่อง (ออฟไลน์)'};
+  render();return true;
 }
 function cloudPhotoThumb(dataUrl){
   return new Promise(function(resolve){
@@ -4254,20 +4277,71 @@ function cloudPhotoThumb(dataUrl){
     im.src=dataUrl;
   });
 }
+/* Read the R2 object back byte-for-byte before replacing the only in-ledger image. */
+async function cloudVerifyUploadedReceipt(original,key){
+  if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(String(original||''))||!key)return false;
+  var headers=cloudHeaders();if(!headers)return false;delete headers['Content-Type'];
+  try{
+    var res=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(key)),
+      {method:'GET',headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'});
+    if(!res.ok)return false;
+    var received=new Uint8Array(await res.arrayBuffer());
+    var base64=original.slice(original.indexOf(',')+1);
+    if(received.length===0||received.length>16*1024*1024||base64.length>24*1024*1024)return false;
+    var decoded=atob(base64);
+    if(decoded.length!==received.length)return false;
+    for(var i=0;i<received.length;i++)if(decoded.charCodeAt(i)!==received[i])return false;
+    return true;
+  }catch(_){return false;}
+}
 async function cloudOffloadOneTxPhoto(id,silent){
-  var t=(S.tx||[]).find(function(x){return x.id===id;});if(!t||!/^data:image\//i.test(String(t.photo||''))||!cloudSyncEnabled())return false;
-  var st=await cloudFileStatus();if(!st.ok||!st.data||!st.data.configured){if(!silent)toast('R2 ยังไม่พร้อม · รูปยังเก็บในเครื่อง');return false;}
-  var original=t.photo,thumb=await cloudPhotoThumb(original),hash=expensePhotoFingerprint(original),up=await cloudFileUpload(original,'tx',t.id,'receipt-'+(t.date||today())+'-'+t.id+'.jpg');
-  if(!up.ok||!up.data||!up.data.key){if(!silent)toast('ย้ายรูปเข้า R2 ไม่สำเร็จ · รูปเดิมยังอยู่');return false;}
+  var t=(S.tx||[]).find(function(x){return x.id===id;});
+  if(!t||!/^data:image\//i.test(String(t.photo||''))||!cloudSyncEnabled())return false;
+  var original=t.photo,cloudKey=cloudLedgerKey(false),source=JSON.stringify(S);
+  var st=await cloudFileStatus();
+  if(!st.ok||!st.data||!st.data.configured){if(!silent)toast('R2 ยังไม่พร้อม · รูปยังเก็บในเครื่อง');return false;}
+  // Write and read back a separate, locally recoverable original before any offload.
+  // No keys or originals are ever deleted automatically during this operation.
+  var copyKey='receipt-original-v1:'+String(t.id);
+  var copied=await idbPut(copyKey,original);
+  if(!copied||await idbRead(copyKey)!==original){
+    if(!silent)toast('สำรองรูปใน IndexedDB ไม่สำเร็จ · รูปเดิมยังอยู่');return false;
+  }
+  if(!cloudSyncEnabled()||cloudLedgerKey(false)!==cloudKey||JSON.stringify(S)!==source){
+    if(!silent)toast('ข้อมูลเปลี่ยนระหว่างสำรองรูป · หยุดย้ายรูป');return false;
+  }
+  var thumb=await cloudPhotoThumb(original),hash=expensePhotoFingerprint(original);
+  var up=await cloudFileUpload(original,'tx',t.id,'receipt-'+(t.date||today())+'-'+t.id+'.jpg');
+  if(!up.ok||!up.data||!up.data.key){
+    if(!silent)toast('อัปโหลดรูปเข้า R2 ไม่สำเร็จ · รูปเดิมยังอยู่');return false;
+  }
+  if(!await cloudVerifyUploadedReceipt(original,up.data.key)){
+    if(!silent)toast('ตรวจรูปที่ R2 ไม่ตรงต้นฉบับ · ไม่ลบรูปในบัญชี');return false;
+  }
+  // Detect same-tab edits and other-tab writes before changing the ledger state.
+  var current='';
+  try{current=localStorage.getItem(KEY)||'';}catch(_){return false;}
+  if(!cloudSyncEnabled()||cloudLedgerKey(false)!==cloudKey||JSON.stringify(S)!==source||current!==committedState){
+    if(!silent)toast('ข้อมูลเปลี่ยนระหว่างย้ายรูป · ไม่แก้บัญชี');return false;
+  }
   var snap={photo:t.photo,photoRef:t.photoRef||'',photoThumb:t.photoThumb||'',photoHash:t.photoHash||'',photoMime:t.photoMime||''};
   t.photo='';t.photoRef=up.data.key;t.photoThumb=thumb;t.photoHash=hash;t.photoMime=up.data.mime||'image/jpeg';
-  if(!persist()){Object.assign(t,snap);if(!silent)toast('บันทึกอ้างอิง R2 ไม่สำเร็จ · รูปเดิมยังอยู่');return false;}
-  if(!silent)toast('ย้ายรูปใบเสร็จเข้า Cloudflare R2 แล้ว');return true;
+  if(!persist()){
+    Object.assign(t,snap);
+    if(!silent)toast('บันทึกอ้างอิง R2 ไม่สำเร็จ · สำเนารูปยังเก็บใน IndexedDB');return false;
+  }
+  if(!silent)toast('ตรวจรูป R2 ตรงกับต้นฉบับแล้ว · สำรองรูปใน IndexedDB พร้อมใช้งาน');
+  return true;
 }
 async function cloudOffloadAllTxPhotos(){
-  if(!cloudSyncEnabled())return {ok:false,error:'SYNC_DISABLED',moved:0};var rows=(S.tx||[]).filter(function(t){return /^data:image\//i.test(String(t.photo||''));}),moved=0;
-  for(var i=0;i<rows.length;i++){if(await cloudOffloadOneTxPhoto(rows[i].id,true))moved++;}
-  return {ok:true,total:rows.length,moved:moved};
+  if(U.receiptOffloadBusy)return {ok:false,error:'IN_PROGRESS',moved:0};
+  if(!cloudSyncEnabled())return {ok:false,error:'SYNC_DISABLED',moved:0};
+  U.receiptOffloadBusy=true;
+  try{
+    var rows=(S.tx||[]).filter(function(t){return /^data:image\//i.test(String(t.photo||''));}),moved=0;
+    for(var i=0;i<rows.length;i++){if(await cloudOffloadOneTxPhoto(rows[i].id,true))moved++;}
+    return {ok:true,total:rows.length,moved:moved};
+  }finally{U.receiptOffloadBusy=false;}
 }
 
 function googleWorkspaceState(){if(!U.googleWorkspace||typeof U.googleWorkspace!=='object')U.googleWorkspace={loading:false,status:null,error:''};return U.googleWorkspace;}
@@ -7647,6 +7721,57 @@ function backupEnvelope(){
   return {backupFormat:2,exportedAt:new Date().toISOString(),sourceOrigin:String(location.origin||''),dataRevision:+S.dataRevision||0,stateChecksum:backupStateChecksum(S),state:S};
 }
 function backupJson(){return JSON.stringify(backupEnvelope(),null,2);}
+/* Portable receipt backup: never report a R2 reference-only export as a complete one.
+   Work on a JSON clone; never mutate current accounting data. */
+async function backupPortableJson(){
+  var original=JSON.stringify(S),state=JSON.parse(original);
+  var offloaded=(state.tx||[]).filter(function(t){return !!t.photoRef&&!/^data:image\//i.test(String(t.photo||''));});
+  if(!offloaded.length)return backupJson();
+  for(var i=0;i<offloaded.length;i++){
+    var row=offloaded[i],originalPhoto=await idbRead('receipt-original-v1:'+String(row.id));
+    if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(String(originalPhoto||''))||
+       !row.photoHash||expensePhotoFingerprint(originalPhoto)!==row.photoHash){
+      throw new Error('RECEIPT_EVIDENCE_MISSING_OR_CHANGED');
+    }
+    row.photo=originalPhoto;
+  }
+  var disk='';
+  try{disk=localStorage.getItem(KEY)||'';}catch(_){throw new Error('BACKUP_STORAGE_UNAVAILABLE');}
+  if(JSON.stringify(S)!==original||disk!==committedState)throw new Error('BACKUP_STATE_CHANGED');
+  var e=backupEnvelope();
+  e.state=state;
+  e.stateChecksum=backupStateChecksum(state);
+  e.portableReceiptImages=offloaded.length;
+  return JSON.stringify(e,null,2);
+}
+async function backupPortableAction(mode){
+  if(U.portableBackupBusy)return false;
+  U.portableBackupBusy=true;
+  var revision=+S.dataRevision||0;
+  try{
+    var payload=await backupPortableJson();
+    if(mode==='download'){
+      var ok=await saveFile('AREA-Ledger-backup-'+today()+'.json',new Blob([payload],{type:'application/json'}));
+      if(!ok)return false;
+      S.lastBackup=Date.now();S.lastBackupRevision=revision;
+      if(!persist({metaOnly:true}))return false;
+      render();toast('บันทึกไฟล์สำรองพร้อมรูปหลักฐานครบแล้ว · เก็บไฟล์เพื่อกู้คืนหรือย้ายเครื่อง');
+    }else{
+      var box=document.getElementById('bkbox');
+      if(!box)return false;
+      box.value=payload;
+      doCopy('bkbox',function(){
+        S.lastBackup=Date.now();S.lastBackupRevision=revision;
+        if(!persist({metaOnly:true}))return;
+        render();toast('คัดลอกข้อมูลสำรองพร้อมรูปหลักฐานครบแล้ว');
+      });
+    }
+    return true;
+  }catch(e){
+    toast('สำรองไม่ได้: รูปใบเสร็จ R2 ยังไม่ครบในเครื่อง หรือข้อมูลเปลี่ยน · ยังไม่บันทึกว่าได้สำรองแล้ว');
+    return false;
+  }finally{U.portableBackupBusy=false;}
+}
 function hostMigrationReadiness(){
   var h=stateHealth(S),rev=Math.max(0,+S.dataRevision||0),backupRev=Number.isInteger(+S.lastBackupRevision)?+S.lastBackupRevision:-1;
   var hasData=!!((S.projects||[]).length||(S.tx||[]).length||(S.boq||[]).length||(S.loans||[]).length||(S.quotes||[]).length||(S.bills||[]).length||(S.receipts||[]).length);
@@ -8481,7 +8606,7 @@ function sheetHtml(){
   }else if(sh.kind==='backup'){
     var csi=cloudSyncInfo(),csm=csi.meta;
     b='<h3>สำรองและกู้คืนข้อมูล</h3><p class="muted">เลือกวิธีเก็บสำเนาข้อมูล หรือเรียกข้อมูลที่เคยสำรองกลับมาใช้</p>'+
-      '<section class="backup-section"><h4>1. เก็บไฟล์สำรองไว้กับคุณ</h4><p>ดาวน์โหลดไฟล์ .json เก็บไว้ใน Files, iCloud หรือคอมพิวเตอร์ ใช้ย้ายเครื่องหรือกู้คืนข้อมูลภายหลัง</p><div class="stack"><button class="btn pri" data-act="backupFile">ดาวน์โหลดไฟล์สำรอง (.json)</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button></div><details><summary>ดูข้อมูลในไฟล์สำรอง</summary><label for="bkbox">ข้อมูลสำหรับคัดลอกหรือเก็บเป็นไฟล์</label><textarea class="csv" id="bkbox" readonly>'+esc(backupJson())+'</textarea></details></section>'+
+      '<section class="backup-section"><h4>1. เก็บไฟล์สำรองไว้กับคุณ</h4><p>ดาวน์โหลดไฟล์ .json เก็บไว้ใน Files, iCloud หรือคอมพิวเตอร์ ใช้ย้ายเครื่องหรือกู้คืนข้อมูลภายหลัง</p><div class="stack"><button class="btn pri" data-act="backupFile">ดาวน์โหลดไฟล์สำรอง (.json)</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button></div><details><summary>ดูข้อมูลในไฟล์สำรอง</summary><label for="bkbox">ข้อมูลสำหรับคัดลอกหรือเก็บเป็นไฟล์</label><textarea class="csv" id="bkbox" readonly>'+esc((S.tx||[]).some(function(t){return t.photoRef&&!/^data:image\//i.test(String(t.photo||''));})?'มีรูปใบเสร็จบน R2: กดดาวน์โหลดหรือคัดลอกข้อมูลสำรองเพื่อรวมรูปต้นฉบับจาก IndexedDB ให้ครบก่อนใช้งานไฟล์':backupJson())+'</textarea></details></section>'+
       '<section class="backup-section"><h4>2. สำรองและซิงก์บนคลาวด์</h4><p>เก็บสำเนาบน Cloudflare เมื่อเปิดใช้งาน ข้อมูลในเครื่องยังใช้ทำงานออฟไลน์ได้</p><div class="kv"><span>สถานะคลาวด์</span><b class="'+(U.cloudConflict?'out':csi.enabled?'in':'')+'">'+esc(csi.label)+'</b></div>'+
       (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(csm.savedAt)+'</small></div>':'')+
       '<div class="stack">'+(!csi.enabled?'<button class="btn pri" data-act="cloudEnable">เปิดสำรองบนคลาวด์</button>':'<button class="btn pri'+(U.confirm==='cloudPushForce'?' dng sure':'')+'" data-act="cloudPush">'+(U.confirm==='cloudPushForce'?'ยืนยันแทนที่ข้อมูลบนคลาวด์ด้วยข้อมูลเครื่องนี้':'ส่งข้อมูลเครื่องนี้ขึ้นคลาวด์')+'</button><button class="btn'+(U.confirm==='cloudPull'?' dng sure':'')+'" data-act="cloudPull">'+(U.confirm==='cloudPull'?'ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์':'นำข้อมูลคลาวด์มาใช้ในเครื่องนี้')+'</button><button class="btn" data-act="cloudHistory">ดูประวัติสำรองบนคลาวด์</button>')+'</div>'+
@@ -9329,9 +9454,9 @@ document.addEventListener('click',function(e){
     if(U.confirm!=='cloudRestorePrevious'){U.confirm='cloudRestorePrevious';toast('ระบบจะเก็บข้อมูล Cloud ปัจจุบันเป็นรุ่นก่อนหน้า แล้วสร้าง revision ใหม่จากชุดก่อนหน้า · แตะยืนยันอีกครั้ง');render();return true;}
     U.confirm=null;cloudSyncRestorePrevious().then(function(r){if(r.ok){render();toast('กู้ Cloudflare รุ่นก่อนหน้าแล้ว · สร้าง revision ใหม่เรียบร้อย');}else toast(r.error==='LEDGER_PREVIOUS_NOT_FOUND'?'ยังไม่มีรุ่น Cloudflare ก่อนหน้า':'กู้รุ่นก่อนหน้าไม่สำเร็จ · ข้อมูลปัจจุบันยังอยู่');});
   }
-  else if(a==='backupFile'){var backupRev=+S.dataRevision||0,payload=backupJson(),name='AREA-Ledger-backup-'+today()+'.json';saveFile(name,new Blob([payload],{type:'application/json'})).then(function(ok){if(!ok)return;S.lastBackup=Date.now();S.lastBackupRevision=backupRev;if(!persist({metaOnly:true}))return;render();toast('บันทึกไฟล์สำรองแล้ว · เก็บไฟล์นี้ไว้สำหรับกู้คืนหรือย้ายเครื่อง');});}
+  else if(a==='backupFile'){backupPortableAction('download');}
   else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.restoreInfo='';U.confirm=null;render();}
-  else if(a==='copyBk'){var copyRev=+S.dataRevision||0;doCopy('bkbox',function(){S.lastBackup=Date.now();S.lastBackupRevision=copyRev;if(!persist({metaOnly:true}))return;render();toast('คัดลอกข้อมูลสำรองแล้ว');});}
+  else if(a==='copyBk'){backupPortableAction('copy');}
   else if(a==='migrationCertificateOpen'){U.sheet={kind:'migrationCertificate'};render();}
   else if(a==='migrationDrillCheck'){var mdp=restoreParse(U.rsText||'');if(!mdp.ok){toast(mdp.error==='BACKUP_CHECKSUM'?'Migration Drill ไม่ผ่าน · checksum ไม่ตรง':'Migration Drill ไม่ผ่าน · ไฟล์ไม่ถูกต้อง');return;}var md=migrationDrill(mdp);S.ops=S.ops||{};S.ops.migrationDrill={at:Date.now(),ok:md.ok,digest:md.digest,sourceOrigin:md.sourceOrigin,sourceRevision:md.sourceRevision,summary:md.summary,healthIssues:md.health.issues.length};persist({metaOnly:true});U.restoreInfo=(md.ok?'Migration Drill ผ่าน':'Migration Drill พบปัญหา')+' · '+md.summary.projects+' โครงการ · '+md.summary.tx+' รายการ · digest '+md.digest;render();return;}
   else if(a==='doRestore'){
@@ -9752,7 +9877,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1100&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1102&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;

@@ -1,11 +1,11 @@
 # AREA Ledger V2 — Master v800
 
-## v1100 Consistent full-screen workspace
+## v1102 Consistent full-screen workspace
 
 - Uses one navy, gold and white presentation across Ledger and Payroll, with clearer headings, readable controls and consistent navigation/dialog actions.
 - Shows the company cover and identity first, keeps profile controls over the cover, and shortens BOQ summaries so actual items are reachable sooner. Import help does not imply completed processing.
 - Preserves unsaved settings text across immediate toggles, retains recovery-key confirmation in the current UI only, and keeps footer Cancel/Save alongside an independent header Close.
-- Tests render the actual local styles, artwork and images. The catalogue covers 15 views and 70 sheets at six widths, keyboard workflows, automated accessibility checks, A4 output and unchanged financial collections. See QA-ui-next-v1100.md.
+- Tests render the actual local styles, artwork and images. The catalogue covers 15 views and 70 sheets at six widths, keyboard workflows, automated accessibility checks, A4 output and unchanged financial collections. See QA-ui-next-v1102.md.
 
 ## v1098 Native microphone completion and command fallback
 

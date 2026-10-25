@@ -1,6 +1,6 @@
-# v1100 — full-screen workspace and usable forms
+# v1102 — full-screen workspace and usable forms
 
-Built on main07711de, preserving its banking/payroll presentation and fail-closed OCR retry changes. Source and cache identity advance together to1100; APP_RELEASE800 and all Ledger/Payroll storage identities remain unchanged.
+Built on main04b1766, retaining the latest verified R2 receipt offload, portable backup, OCR retry and payroll logic. Source and cache identity advance together to1102; APP_RELEASE800 and all Ledger/Payroll storage identities remain unchanged.
 
 The shared screen-only layer replaces the earlier banking finish rather than adding another decorative theme. Navy/gold controls, white surfaces, neutral backgrounds, consistent input sizes and financial number hierarchy cover the main views and dialog catalogue. User-provided menu artwork and financial status meanings remain. Print CSS and document calculations are preserved.
 
