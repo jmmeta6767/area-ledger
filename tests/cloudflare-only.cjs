@@ -23,6 +23,13 @@ assert(legacy.includes("site-ledger-v1"),'legacy recovery must be able to read o
 assert(legacy.includes("site-ledger-db"),'legacy recovery must be able to read original IndexedDB');
 assert(!legacy.includes('APP_RELEASE='),'root must not be an active AREA Ledger app');
 assert(legacySw.includes('area-ledger-legacy-recovery-v1'),'root service worker must be recovery-only');
+assert(legacy.includes('href="https://g.areamaibab.workers.dev/"'),'legacy recovery must link to canonical production app');
+assert(!legacy.includes('href="https://area-ledger-ai-gateway-staging.areamaibab.workers.dev"'),'legacy recovery must never link to staging');
+const liveHeaders=fs.readFileSync('gateway/public/_headers','utf8');
+const legacyHeaders=fs.readFileSync('_headers','utf8');
+assert(liveHeaders.includes('microphone=(self)'),'Cloudflare speech-input permission policy must allow only same-origin');
+assert(!liveHeaders.includes('microphone=()'),'Cloudflare speech-input must not be globally disabled');
+assert(legacyHeaders.includes('microphone=()'),'Render recovery-only host must keep microphone disabled');
 
 assert(qa.includes("fs.readFileSync('gateway/public/index.html','utf8')"),'regression QA must target Cloudflare runtime');
 assert(workflow.includes('node --check gateway/public/sw.js'),'workflow must syntax-check Cloudflare SW');
