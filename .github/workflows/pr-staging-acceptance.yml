@@ -39,6 +39,7 @@ jobs:
           node tests/iphone-layout.cjs
           node tests/menu-icons-visual.cjs
           node tests/payroll-layout.cjs
+          node tests/reliability-ui.cjs
           node tests/iphone-card-keyboard.cjs
           node tests/iphone-project-keyboard.cjs
           node tests/iphone-project-create-keyboard.cjs
@@ -84,6 +85,10 @@ jobs:
         run: node --check sw.js
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
+      - name: Fail-closed transient OCR quality retry QA
+        run: node tests/expense-quality-retry.cjs
+      - name: Banking UI presentation and PWA safety
+        run: node tests/ui-banking-design.cjs
       - name: Menu artwork regression
         run: node tests/menu-icons.cjs
       - name: Native store package contract
