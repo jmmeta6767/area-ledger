@@ -243,3 +243,38 @@
     }
   }
 }
+
+/* v1100: touch, focus and financial-error visibility. Screen only; no data or print rules. */
+@media screen {
+  :is(.master-sheet,.expense-review-sheet,.master-form-page,.google-workspace-sheet)
+    :is([role="alert"],.storage-error,.form-error) {
+    border-inline-start:4px solid #bc4c42;
+    padding:10px 12px;
+    border-radius:10px;
+    overflow-wrap:anywhere;
+  }
+  :is(.nav,.master-sheet,.expense-review-sheet,.master-form-page,.savebar)
+    :is(button,a,input,select,textarea):focus-visible {
+    outline:3px solid #e4b83e;
+    outline-offset:2px;
+  }
+  @media (max-width:430px) {
+    :is(.nav button,.master-sheet button,.expense-review-sheet button,.master-action,.savebar button) {
+      min-height:44px;
+    }
+    :is(.master-form-page,.master-sheet,.expense-review-sheet,.google-workspace-sheet)
+      :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+      font-size:16px;
+    }
+    :is(.master-doc-row,.master-project-row,.tx-modern,.master-due-card,.master-report-card) {
+      min-width:0;
+      overflow-wrap:anywhere;
+    }
+  }
+}
+@media screen and (prefers-reduced-motion:reduce) {
+  :is(.master-action,.master-doc-row,.project-hub-card,.tx-modern) {
+    transition:none!important;
+    animation:none!important;
+  }
+}
