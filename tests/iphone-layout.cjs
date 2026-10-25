@@ -7,7 +7,16 @@ const root=path.resolve(__dirname,'..'),out=path.resolve(process.env.LAYOUT_OUTP
 fs.mkdirSync(out,{recursive:true});
 const current=fs.readFileSync(path.join(root,'gateway/public/index.html'),'utf8');
 const before=cp.execFileSync('git',['show','86af4a50134191618ecc63eec2a14e95c01c33fd:gateway/public/index.html'],{cwd:root,encoding:'utf8',maxBuffer:8e6});
-const prepare=html=>html.replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n');
+const actualBankingCss=fs.readFileSync(path.join(root,'gateway/public/assets/ledger-reliability.css'),'utf8');
+const prepare=(html,loadBankingCss=false)=>{
+ let prepared=html.replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n');
+ if(loadBankingCss){
+  const link=/<link\b[^>]*href=["']assets\/ledger-reliability\.css["'][^>]*>/i;
+  assert.match(prepared,link,'The production app must link the actual banking stylesheet');
+  prepared=prepared.replace(link,'<style data-ledger-ui-real>'+actualBankingCss+'</style>');
+ }
+ return prepared;
+};
 async function fixture(page,view,count){
  await page.evaluate(({view,count})=>{
   S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'p',name:'โครงการก่อสร้างอาคารอเนกประสงค์และปรับปรุงภูมิทัศน์ ชื่อโครงการยาวสำหรับตรวจจอเล็ก',contract:99999999.99,budget:329236.80,status:'active',endDate:'2027-10-31'}];
@@ -25,7 +34,7 @@ async function fixture(page,view,count){
  for(const version of ['before','after']){
   for(const mode of ['browser','safe-area-simulation'])for(const [width,height] of [[320,640],[375,812],[390,844],[430,932],[768,1024],[844,390]]){
    const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,deviceScaleFactor:1,serviceWorkers:'block'});
-   const page=await context.newPage();await page.route('**/*',r=>r.abort());let html=prepare(version==='before'?before:current);
+   const page=await context.newPage();await page.route('**/*',r=>r.abort());let html=prepare(version==='before'?before:current,version==='after');
    if(mode==='safe-area-simulation')html=html.replace(/env\(safe-area-inset-top(?:,\s*0px)?\)/g,'44px').replace(/env\(safe-area-inset-bottom(?:,\s*0px)?\)/g,'34px');
    await page.setContent(html);
    for(const [view,count] of [['home',0],['projects',0],['boq',0],['print',0],['add',0],['add',1],['add',11],['add',60]]){
@@ -77,9 +86,27 @@ async function fixture(page,view,count){
      await page.screenshot({path:path.join(out,`${version}-${mode}-${width}-${view}-${count}.png`),fullPage:!count});
     }
    }
+    if(version==='after'&&width===390&&mode==='browser'){
+      const hasRealCss=await page.evaluate(()=>({
+        injected:!!document.querySelector('style[data-ledger-ui-real]'),
+        theme:getComputedStyle(document.documentElement).getPropertyValue('--area-ui-navy').trim()
+      }));
+      assert(hasRealCss.injected&&hasRealCss.theme,'Banking CSS must be applied to browser layout tests');
+      for(const v of ['home','list','add','projects','project','boq','due','guarantees','report','print','docs','procurement','doclist','quoteprint','profile']){
+        await fixture(page,v,0);
+        const x=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+        assert(x<=1,'real banking CSS overflow at '+v+': '+x);
+      }
+      await fixture(page,'add',0);
+      const touch=await page.evaluate(()=>{
+        const nav=document.querySelector('.nav button');
+        return nav?parseFloat(getComputedStyle(nav).minHeight):0;
+      });
+      assert(touch>=44,'Mobile navigation needs a 44px target with loaded banking CSS');
+    }
     if(version==='after'){
     if(width===390&&mode==='browser'){
-     await page.unroute('**/*');await page.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({status:200,contentType:'text/html',body:prepare(current)}):r.abort());await page.goto('http://area-ledger.test/');
+     await page.unroute('**/*');await page.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({status:200,contentType:'text/html',body:prepare(current,true)}):r.abort());await page.goto('http://area-ledger.test/');
      await page.evaluate(()=>{S=emptyState();S.ui.wallpaper=false;S.projects=[{id:'p',name:'โครงการทดสอบ A'},{id:'p2',name:'โครงการทดสอบ B'}];S.bank='บัญชีทดสอบจริง';S.tx=[];U.storageReadBlocked=false;U.view='add';U.pid='p';U.from='home';U.draft=newDraft('out','p');render();committedState=JSON.stringify(S);localStorage.setItem(KEY,committedState);});
      await page.locator('#pid').selectOption('p2');
      await page.locator('#amt').fill('1234.56');await page.locator('#par').fill('ร้านทดสอบ');await page.locator('#dt').fill('2026-10-13');
