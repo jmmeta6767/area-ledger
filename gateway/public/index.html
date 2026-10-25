@@ -4168,7 +4168,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1098,"sha":"","environment":"source"};
+var APP_BUILD={"version":1100,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5559,19 +5559,42 @@ function systemReadableTerms(root){
   var dynamic=['tx','loanDetail','cloudPhoto','govDraft'].indexOf(U.sheet&&U.sheet.kind)>=0;
   root.querySelectorAll('.system-dialog-header h2,.doc-editor-head small,.acct-command-head small,.acct-task-list b,.acct-quick-grid b,.acct-bank-card .acct-section-title b,.acct-fold summary b,.acct-nav-card b,button[data-act]').forEach(function(el){if(el.children.length)return;if(dynamic&&el.closest('.system-dialog-header'))return;if(el.tagName==='BUTTON'&&!/^(accounting|ownerOps|systemAdvanced|healthCheck|integrityOpen|monthEnd|bankReconcile|saveOpen)/.test(el.dataset.act||''))return;var text=el.textContent.trim();if(terms[text])el.textContent=terms[text];});
 }
+var settingsFormFields=['brn','blegal','blegalen','baddr','baddren','btax','bphone','bemail','bbranch','bnk','op','opc','aiEndpoint','aiTimeout'];
+function systemSheetDrafts(){
+  if(U.settingsFormDraft&&(U.settingsFormDraft.sheet!==U.sheet||!U.sheet||U.sheet.kind!=='settings'))U.settingsFormDraft=null;
+  if(U.cloudKeyImportDraft&&(U.cloudKeyImportDraft.sheet!==U.sheet||!U.sheet||U.sheet.kind!=='backup'))U.cloudKeyImportDraft=null;
+}
+function settingsFormCapture(){
+  if(!U.sheet||U.sheet.kind!=='settings')return;
+  var values={};settingsFormFields.forEach(function(id){var el=document.getElementById(id);if(el)values[id]=el.value;});
+  U.settingsFormDraft={sheet:U.sheet,values:values};
+}
+function systemRestoreSheetDraft(){
+  systemSheetDrafts();
+  var draft=U.settingsFormDraft;
+  if(draft&&U.sheet&&U.sheet.kind==='settings')Object.keys(draft.values).forEach(function(id){var el=document.getElementById(id);if(el)el.value=draft.values[id];});
+  var key=U.cloudKeyImportDraft,input=document.getElementById('cloudKeyImport');
+  if(key&&input&&U.sheet&&U.sheet.kind==='backup')input.value=key.value;
+}
+document.addEventListener('input',function(e){
+  if(U.sheet&&U.sheet.kind==='settings'&&settingsFormFields.indexOf(e.target.id)>=0)settingsFormCapture();
+  if(U.sheet&&U.sheet.kind==='backup'&&e.target.id==='cloudKeyImport'){
+    var previous=U.cloudKeyImportDraft;U.cloudKeyImportDraft={sheet:U.sheet,value:e.target.value,confirmedValue:previous&&previous.sheet===U.sheet?previous.confirmedValue:''};
+  }
+});
+document.addEventListener('change',function(e){if(U.sheet&&U.sheet.kind==='settings'&&settingsFormFields.indexOf(e.target.id)>=0)settingsFormCapture();});
 function systemDialogPresentation(panel){
   var heading=panel.querySelector('h1,h2,h3');if(!heading)return;
   var kind=U.sheet&&U.sheet.kind||'',header=document.createElement('header');header.className='system-dialog-header';
   var title=document.createElement('h2'),copy=heading.cloneNode(true);copy.querySelectorAll('button').forEach(function(b){b.remove();});title.textContent=copy.textContent.trim();title.id='system-dialog-heading';header.appendChild(title);heading.hidden=true;
-  var closes=Array.from(panel.querySelectorAll('[data-act="closeSheet"]')),close=closes[0];
-  if(!close){close=document.createElement('button');close.dataset.act='closeSheet';close.setAttribute('aria-label','ปิดหน้าต่าง');}
-  else if(!close.getAttribute('aria-label')){var closeName=close.textContent.trim();close.setAttribute('aria-label',!closeName||/^[×x]$/i.test(closeName)?'ปิดหน้าต่าง':closeName);}
+  var close=document.createElement('button');close.dataset.act='closeSheet';close.setAttribute('aria-label','ปิดหน้าต่าง');
   close.type='button';close.className='system-dialog-close';close.innerHTML=ic('close');header.appendChild(close);panel.prepend(header);
   panel.classList.add('system-dialog');
   if(/^accounting|manualJournal|boqImportPreview|expenseBatch|quote|bizdoc/.test(kind))panel.classList.add('system-dialog-wide');
   var groups=Array.from(panel.querySelectorAll('.stack,.doc-editor-save,.quote-editor-save'));
   var last=groups.filter(function(g){return !!g.querySelector('.pri,.primary');}).pop();if(last)last.classList.add('system-dialog-actions');
-  panel.querySelectorAll('.project-form-head,.doc-editor-head,.quote-editor-head,.boq-link-head').forEach(function(el){if(!el.querySelector('button,input,select,textarea')&&el.querySelector('h3[hidden]'))el.hidden=true;});
+  panel.querySelectorAll('.project-form-head,.doc-editor-head,.quote-editor-head,.boq-link-head').forEach(function(el){if(el.querySelector('h3[hidden]')&&!el.querySelector('button:not([data-act="closeSheet"]),input,select,textarea'))el.hidden=true;});
+  systemRestoreSheetDraft();
 }
 function systemTablePresentation(root){
   root.querySelectorAll('.acct-table,.wrapx').forEach(function(region){region.tabIndex=0;region.setAttribute('role','region');var h=root.querySelector('h1,h2,h3');region.setAttribute('aria-label','ข้อมูล '+(h?h.textContent:'ตาราง'));});
@@ -5584,7 +5607,12 @@ function systemTablePresentation(root){
   });
 }
 function systemPagePresentation(root,title,view){
-  if(view==='profile'||view==='home')return;
+  if(view==='profile')return;
+  if(view==='home'){
+    var projectHeading=root.querySelector('.master-ref-body>h2');
+    if(projectHeading){var homeHeading=document.createElement('h1');homeHeading.className=projectHeading.className+' home-project-heading';homeHeading.innerHTML=projectHeading.innerHTML;projectHeading.replaceWith(homeHeading);}
+    return;
+  }
   if(!root.querySelector('h1')){var first=root.querySelector('h2');if(first&&first.textContent.trim()===title){var h=document.createElement('h1');h.className=first.className+' system-page-heading';h.innerHTML=first.innerHTML;first.replaceWith(h);}else{var header=document.createElement('header');header.className='system-page-intro';var h1=document.createElement('h1');h1.textContent=title;header.appendChild(h1);root.prepend(header);}}
 }
 function systemSelectionPresentation(root){
@@ -5605,6 +5633,7 @@ function systemDocumentPresentation(main,title){
   var wrap=document.createElement('div');wrap.className='system-document-preview';wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','ตัวอย่างเอกสาร A4');paper.before(wrap);wrap.appendChild(paper);systemFitDocument();
 }
 function systemPresentation(title,view){
+  systemSheetDrafts();
   var main=document.getElementById('workspace-main');if(!main)return;
   if(view==='print'){systemTablePresentation(main);return;}
   if(view==='quoteprint'){systemDocumentPresentation(main,title);return;}
@@ -5665,11 +5694,11 @@ function workspaceContextHtml(){
     '<div class="workspace-project"><span>โครงการ</span><b>'+esc(p?p.name:'ทุกโครงการ')+'</b></div>'+
     '<button class="workspace-sync '+sync.tone+'" data-act="backup" aria-label="'+esc(sync.label)+' เปิดการสำรองและซิงค์ข้อมูล">'+ic(sync.tone==='success'?'check':'clock')+'<span>'+esc(sync.label)+'</span></button><span id="workspace-sync-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span></section>';
 }
-function workspaceTasksHtml(site){
+function workspaceTasksHtml(site,secondary){
   var tasks=site?[
     ['newTx','','plus','บันทึกรายจ่าย','สแกนบิล พูดรายการ หรือกรอกเอง'],['openList','','list','รายการหน้างาน','ตรวจรายการรายจ่ายที่บันทึก'],['go','projects','build','ดูโครงการ','ข้อมูลและงานในแต่ละโครงการ']
   ]:[['ocrReviewQueue','','receipt','ตรวจเอกสาร','ทบทวนข้อมูลจาก OCR ก่อนบันทึก'],['accountingOpen','','calculator','ตรวจสอบบัญชี','กระทบยอดและปิดงวด'],['go','report','chart','รายงานการเงิน','รายรับ รายจ่าย และผลโครงการ']];
-  return '<section class="workspace-tasks" aria-label="'+(site?'งานประจำวันของหัวหน้าไซต์':'งานตรวจเอกสารและบัญชีของเจ้าของ')+'"><div class="workspace-task-heading"><h1>'+(site?'งานหน้างานวันนี้':'ภาพรวมและงานตรวจสอบ')+'</h1><span>'+(site?'หัวหน้าไซต์':'เจ้าของ')+'</span></div><div class="workspace-task-grid">'+tasks.map(function(t){return '<button data-act="'+t[0]+'"'+(t[1]?' data-v="'+t[1]+'"':'')+'>'+ic(t[2])+'<span><b>'+t[3]+'</b><small>'+t[4]+'</small></span></button>';}).join('')+'</div></section>';
+  return '<section class="workspace-tasks" aria-label="'+(site?'งานประจำวันของหัวหน้าไซต์':'งานตรวจเอกสารและบัญชีของเจ้าของ')+'"><div class="workspace-task-heading"><'+(secondary?'h2':'h1')+'>'+(site?'งานหน้างานวันนี้':'ภาพรวมและงานตรวจสอบ')+'</'+(secondary?'h2':'h1')+'><span>'+(site?'หัวหน้าไซต์':'เจ้าของ')+'</span></div><div class="workspace-task-grid">'+tasks.map(function(t){return '<button data-act="'+t[0]+'"'+(t[1]?' data-v="'+t[1]+'"':'')+'>'+ic(t[2])+'<span><b>'+t[3]+'</b><small>'+t[4]+'</small></span></button>';}).join('')+'</div></section>';
 }
 function vSiteWorkspace(){
   var p=workspaceProject(),rows=S.tx.filter(function(t){return t.type==='out'&&(!p||t.pid===p.id);}),todayRows=rows.filter(function(t){return t.date===today();}),recent=rows.slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));}).slice(0,8);
@@ -7218,14 +7247,12 @@ function vBoq(){
     '<button class="boq-change-btn" data-act="boqBackProjects">เปลี่ยนโครงการ</button></div>'+
     '<div class="boq-total-block"><span>มูลค่า BOQ รวม</span><strong>'+fmt(total)+'</strong></div>'+
     '<div class="boq-summary-grid">'+
-      '<div><small>รายการ</small><b>'+rows.length+'</b></div>'+
-      '<div><small>หมวดงาน</small><b>'+sectionCount+'</b></div>'+
       '<div><small>ค่าวัสดุ</small><b>'+fmt(materialTotal)+'</b></div>'+
       '<div><small>ค่าแรง</small><b>'+fmt(laborTotal)+'</b></div>'+
     '</div>'+
     '<div class="boq-hero-actions"><button class="boq-action primary" data-act="newBoq" data-id="'+pid+'">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button class="boq-action secondary" data-act="boqImport" data-id="'+pid+'">'+ic('documents')+'<span>นำเข้าไฟล์</span></button><button class="boq-action google" data-act="googleWorkspaceOpen" data-id="'+pid+'">'+ic('box')+'<span>Google Drive / Sheets</span></button></div>'+
   '</section>';
-  h+='<div class="workspace-flow boq-flow" aria-label="ขั้นตอน BOQ"><span class="done"><i>1</i><b>นำเข้า</b></span><span class="done"><i>2</i><b>AI / OCR อ่าน</b></span><span class="done"><i>3</i><b>ตรวจสอบ</b></span><span class="active"><i>4</i><b>จัดการ BOQ</b></span></div>';
+  h+='<details class="boq-process-guide"><summary>ขั้นตอนนำเข้า BOQ</summary><div class="workspace-flow boq-flow" aria-label="ขั้นตอนเมื่อนำเข้าไฟล์ BOQ"><span><i>1</i><b>นำเข้า</b></span><span><i>2</i><b>AI / OCR อ่าน</b></span><span><i>3</i><b>ตรวจสอบ</b></span><span><i>4</i><b>จัดการ BOQ</b></span></div><p>นำเข้าไฟล์ แล้วตรวจรายการและยอดก่อนยืนยัน หรือเพิ่มรายการเองได้จากปุ่มเพิ่มรายการ</p></details>';
 
   if(!rows.length)return h+'<div class="empty boq-empty">ยังไม่มีรายการ BOQ ในโครงการนี้</div>';
 
@@ -8371,16 +8398,17 @@ function sheetHtml(){
     b='<h3>เริ่มใช้งานและทดลองระบบ</h3><ol class="pilot-steps"><li>เพิ่มโครงการและตรวจงบ BOQ</li><li>เพิ่มรายจ่ายหรือเลือกรูปเอกสาร</li><li>เทียบรูปกับยอด วันที่ และสถานะชำระก่อนกดบันทึก</li><li>เปิดรายการที่บันทึกเพื่อตรวจผล</li><li>สำรองเป็นไฟล์และตรวจไฟล์ผ่านหน้านำเข้าก่อนกู้คืน</li></ol><p>ข้อมูลที่ยังกรอกจะไม่ถูกบันทึกอัตโนมัติ เก็บไฟล์สำรองไว้ในที่ส่วนตัว</p><div class="stack"><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="feedbackOpen">ส่งความคิดเห็น / แจ้งปัญหา</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='settings'){
     var ownerSettings=S.role==='owner';
-    b='<h3 class="settings-title"><span>ตั้งค่า / ระบบ</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3>'+
-      '<p class="muted" data-build-info>'+esc(appBuildLabel())+'</p>'+pwaUpdatePanel()+ '<div class="stack"><button class="btn" data-act="pilotGuide">เริ่มใช้งาน / ทดลองระบบ</button>'+(ownerSettings?'<button class="btn" data-act="ocrReviewQueue">ตรวจข้อมูล OCR เก่า</button>':'')+'</div>'+
-      '<p class="settings-intro">จัดหมวดตามงานที่ใช้จริง · หัวข้อที่ไม่ใช้ทุกวันพับเก็บไว้เพื่อลดความรก</p><button class="settings-feedback-entry" data-act="feedbackOpen"><span><b>ส่งความคิดเห็น / แจ้งปัญหา</b><small>ช่วยให้เราปรับปรุงจากการใช้งานจริง</small></span><strong>›</strong></button>'+
-      '<details class="settings-group" open><summary><span><b>ทั่วไปและหน้าจอ</b><small>รูปแบบการแสดงผล · สิทธิ์ผู้ใช้ · พื้นหลัง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+    var settingsGeneral='<details class="settings-group"><summary><span><b>หน้าจอและโหมดผู้ใช้</b><small>รูปแบบหน้าจอ · โหมดผู้ใช้ในเครื่อง · พื้นหลัง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
         '<div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">สลับได้ทันทีโดยไม่กระทบข้อมูล</small></div>'+
         '<div class="field"><span class="lbl">ผู้ใช้งาน</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div><div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
         '<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div></div>'+
-      '</div></details>'+
+      '</div></details>';
+    var settingsSupport='<details class="settings-group"><summary><span><b>ความช่วยเหลือและรุ่นแอป</b><small>วิธีใช้งาน · แจ้งปัญหา · ตรวจอัปเดต</small></span><strong>⌄</strong></summary><div class="settings-group-body"><p class="muted" data-build-info>'+esc(appBuildLabel())+'</p>'+pwaUpdatePanel()+'<div class="stack"><button class="btn" data-act="pilotGuide">วิธีเริ่มใช้งาน</button><button class="btn" data-act="feedbackOpen">ส่งความคิดเห็น / แจ้งปัญหา</button></div></div></details>';
+    b='<h3 class="settings-title"><span>ตั้งค่า</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3>'+
+      '<p class="settings-intro">ข้อมูลกิจการ บัญชี และการสำรอง อยู่ในที่เดียวกัน</p>'+
       (ownerSettings?
-      '<details class="settings-group"><summary><span><b>กิจการและภาษี</b><small>ชื่อกิจการ · ที่อยู่ · เลขภาษี · VAT</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+      '<div class="settings-inline-actions"><button class="btn" data-act="accountingOpen">เปิดงานบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button></div><p class="muted">ช่องกรอกด้านล่างต้องกด “บันทึกข้อมูลกิจการและบัญชี” · ปุ่มตัวเลือกเปลี่ยนทันที</p>'+
+      '<details class="settings-group" open><summary><span><b>กิจการและภาษี</b><small>ชื่อกิจการ · ที่อยู่ · เลขภาษี · VAT</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
         '<div class="field"><label for="brn">ชื่อที่แสดงในแอพ</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
         '<div class="field"><label for="blegal">ชื่อธุรกิจ (TH)</label><input id="blegal" type="text" value="'+esc((S.business&&S.business.legalName)||'ห้างหุ้นส่วนจำกัด แอเรีย ไม้แบบ')+'"></div>'+
         '<div class="field"><label for="blegalen">ชื่อธุรกิจ (EN)</label><input id="blegalen" type="text" value="'+esc((S.business&&S.business.legalNameEn)||'')+'" placeholder="ถ้ามี"></div>'+
@@ -8398,6 +8426,7 @@ function sheetHtml(){
         '<div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div>'+
         '<div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>'+
       '</div></details>'+
+      settingsGeneral+
       '<details class="settings-group"><summary><span><b>AI / OCR</b><small>อ่านบิลและ BOQ · Local / Cloudflare</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
         '<div class="field"><span class="lbl">โหมด OCR</span><div class="seg"><button class="'+(aiGatewayConfig().mode==='local'?'on':'')+'" data-act="aiMode" data-v="local">Local</button><button class="'+(aiGatewayConfig().mode==='gateway'?'on':'')+'" data-act="aiMode" data-v="gateway">Cloudflare</button></div><small class="muted">Remote OCR จะไม่ส่งรูปออกจากเครื่องจนกว่าจะเปิดความยินยอม</small></div>'+
         '<div class="field"><label for="aiEndpoint">Gateway endpoint</label><input id="aiEndpoint" type="text" inputmode="url" autocapitalize="none" autocomplete="off" value="'+esc(aiGatewayConfig().endpoint)+'" placeholder="https://...workers.dev"></div>'+
@@ -8405,13 +8434,14 @@ function sheetHtml(){
         '<button class="tog '+(aiGatewayConfig().remoteOcrConsent?'on':'')+'" data-act="aiConsent"><span class="sw"></span><span><b>อนุญาต Remote OCR</b><small>'+(aiGatewayConfig().remoteOcrConsent?'เปิดแล้ว · ส่งรูปเฉพาะเมื่อเรียก OCR':'ปิดอยู่ · ระบบจะตรวจ /ready ก่อนอนุญาตส่งรูป')+'</small></span></button>'+
         '<div class="settings-inline-actions"><button class="btn" data-act="aiCheckReady">ตรวจ OCR</button><button class="btn" data-act="systemAdvanced">Diagnostics</button></div>'+
       '</div></details>'+
-      '<details class="settings-group"><summary><span><b>ข้อมูล สำรอง และระบบ</b><small>ตรวจข้อมูล · เก็บสำเนา · กู้คืน</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
-        '<div class="settings-system-grid"><button class="btn pri" data-act="ownerOps">Owner Operations 1.1</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="integrityOpen">Integrity Gate</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button><button class="btn" data-act="systemAdvanced">Advanced / System Diagnostics</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button></div>'+
+      settingsSupport+
+      '<details class="settings-group"><summary><span><b>ตรวจข้อมูลและดูแลระบบ</b><small>ตรวจความครบถ้วน · เครื่องมือขั้นสูง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+        '<div class="settings-system-grid"><button class="btn" data-act="ownerOps">ดูแลข้อมูลและระบบ</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="integrityOpen">ตรวจความครบถ้วนข้อมูล</button><button class="btn" data-act="ocrReviewQueue">ตรวจข้อมูล OCR เก่า</button><button class="btn" data-act="systemAdvanced">เครื่องมือดูแลระบบขั้นสูง</button></div><details><summary>ลบข้อมูลในเครื่อง</summary><p class="muted">สำรองข้อมูลก่อนใช้ตัวเลือกนี้</p><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button></details>'+
       '</div></details>'+
       '<div class="stack settings-save-stack"><button class="btn pri" data-act="saveOpen">บันทึกข้อมูลกิจการและบัญชี</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
       '<p class="muted settings-footnote">ข้อมูลใช้งานออฟไลน์ในเครื่องและ Cloud Sync เป็นคนละชั้น · '+(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล')+'</p>'
       :
-      '<div class="stack settings-save-stack"><button class="btn" data-act="closeSheet">ปิด</button></div>')+
+      settingsGeneral+settingsSupport+'<div class="stack settings-save-stack"><button class="btn" data-act="closeSheet">ปิด</button></div>')+
       '';
 }else if(sh.kind==='bizdoc'){
     var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind),docPid=(q&&q.pid)||U.docProjectPid||'',docProj=docPid?proj(docPid):null,di=docItems(q||{});
@@ -8716,10 +8746,10 @@ function vProfile(){
   var socials=profileSocialChip('เว็บไซต์',b.website)+profileSocialChip('Facebook',b.facebook)+profileSocialChip('Instagram',b.instagram)+profileSocialChip('TikTok',b.tiktok)+profileSocialChip('LINE',b.lineId);
   var albumMap={};posts.forEach(function(x){if(!x.pid||!proj(x.pid))return;var a=albumMap[x.pid]||(albumMap[x.pid]={p:proj(x.pid),posts:0,photos:0,last:''});a.posts++;a.photos+=(x.photos||[]).length;if(String(x.date||'')>a.last)a.last=String(x.date||'');});
   var albums=Object.keys(albumMap).map(function(k){return albumMap[k];}).sort(function(x,y){return String(y.last||'').localeCompare(String(x.last||''));}),pinned=posts.filter(function(x){return !!x.pinned;}).slice(0,3),selectedProject=projectPid&&proj(projectPid),complete=profileCompleteness(),avatar=b.profileAvatar||'area-logo-header.jpg';
-  var doneContractValue=done.reduce(function(sum,p){return sum+approvedContractValue(p.id);},0),companyGuarantees=portfolioGuaranteeSummary(S.projects),publicCount=posts.filter(function(p){return !!p.publicVisible;}).length,publicUrl=profilePublicUrl(b.publicProfileId),publicLive=!!(b.publicProfileEnabled&&publicUrl);var h=workspaceContextHtml()+workspaceTasksHtml(S.role==='foreman')+'<section class="company-profile"><div class="profile-hero"><div class="profile-cover">'+(b.profileCover?'<img class="profile-cover-img" src="'+esc(b.profileCover)+'" alt="รูปปกบริษัท">':'')+'<span>AREA WORK PROFILE</span></div><div class="profile-main"><img src="'+esc(avatar)+'" alt="AREA MAIBAB"><div class="profile-title"><small>'+esc(b.businessType||'ธุรกิจก่อสร้าง')+'</small><h2>'+esc(name)+'</h2><p>'+esc(tag)+'</p></div><div class="profile-head-actions"><button class="profile-edit-btn" data-act="profileShareCompany">แชร์</button><button class="profile-edit-btn" data-act="profileEdit">แก้ไขโปรไฟล์</button></div></div>'+(b.bio?'<p class="profile-bio">'+esc(b.bio).replace(/\n/g,'<br>')+'</p>':'<p class="profile-bio muted">เพิ่มคำแนะนำบริษัท บริการ และจุดเด่น เพื่อใช้เป็นหน้ารวมผลงานของทีม</p>')+'<div class="profile-complete"><span><b>ความพร้อมโปรไฟล์ '+complete.pct+'%</b><small>'+complete.done+'/'+complete.total+' องค์ประกอบพร้อมใช้งาน</small></span><i><em style="width:'+complete.pct+'%"></em></i></div>'+
+  var doneContractValue=done.reduce(function(sum,p){return sum+approvedContractValue(p.id);},0),companyGuarantees=portfolioGuaranteeSummary(S.projects),publicCount=posts.filter(function(p){return !!p.publicVisible;}).length,publicUrl=profilePublicUrl(b.publicProfileId),publicLive=!!(b.publicProfileEnabled&&publicUrl);var h='<section class="company-profile"><div class="profile-hero"><div class="profile-cover">'+(b.profileCover?'<img class="profile-cover-img" src="'+esc(b.profileCover)+'" alt="รูปปกบริษัท">':'')+'<span>AREA WORK PROFILE</span></div><div class="profile-main"><img src="'+esc(avatar)+'" alt="AREA MAIBAB"><div class="profile-title"><small>'+esc(b.businessType||'ธุรกิจก่อสร้าง')+'</small><h1>'+esc(name)+'</h1><p>'+esc(tag)+'</p></div><div class="profile-head-actions"><button class="profile-edit-btn" data-act="profileShareCompany">แชร์</button><button class="profile-edit-btn" data-act="profileEdit">แก้ไขโปรไฟล์</button></div></div>'+(b.bio?'<p class="profile-bio">'+esc(b.bio).replace(/\n/g,'<br>')+'</p>':'<p class="profile-bio muted">เพิ่มคำแนะนำบริษัท บริการ และจุดเด่น เพื่อใช้เป็นหน้ารวมผลงานของทีม</p>')+'<div class="profile-complete"><span><b>ความพร้อมโปรไฟล์ '+complete.pct+'%</b><small>'+complete.done+'/'+complete.total+' องค์ประกอบพร้อมใช้งาน</small></span><i><em style="width:'+complete.pct+'%"></em></i></div>'+
     '<div class="profile-contact">'+(b.phone?'<span>☎ '+esc(b.phone)+'</span>':'')+(b.email?'<span>✉ '+esc(b.email)+'</span>':'')+(b.address?'<span>⌖ '+esc(b.address)+'</span>':'')+'</div>'+(socials?'<div class="profile-socials">'+socials+'</div>':'')+
     '<div class="profile-stats"><div><b>'+active.length+'</b><small>โครงการกำลังทำ</small></div><div><b>'+done.length+'</b><small>ส่งมอบ/ปิดแล้ว</small></div><div><b>'+posts.length+'</b><small>โพสต์หน้างาน</small></div></div></div>'+
-    '<div class="profile-compose"><button data-act="profilePostNew"><span class="profile-compose-plus">＋</span><span><b>โพสต์อัปเดตหน้างาน</b><small>รูปงาน · ความคืบหน้า · ผลงาน · จัดส่ง</small></span><strong>›</strong></button></div><section class="profile-public-card '+(publicLive?'live':'')+'"><div><small>CLIENT PORTFOLIO</small><b>'+(publicLive?'Portfolio ลูกค้าเผยแพร่แล้ว':'สร้างลิงก์ Portfolio สำหรับลูกค้า')+'</b><p>เฉพาะ '+publicCount+' โพสต์ที่เปิด “แสดงใน Portfolio ลูกค้า” · ไม่รวม BOQ รายรับ รายจ่าย หรืองานบัญชี</p></div><div class="profile-public-actions">'+(publicLive?'<button data-act="profilePublicOpen">เปิด</button><button data-act="profilePublicShare">แชร์ลิงก์</button><button data-act="profilePublicPublish">อัปเดต</button><button class="danger" data-act="profilePublicRevoke">ปิดสาธารณะ</button>':'<button class="primary" data-act="profilePublicPublish">เผยแพร่ Portfolio</button>')+'</div>'+(U.profilePublicBusy?'<em>กำลังอัปโหลดและสร้างลิงก์…</em>':'')+'</section>';
+    workspaceContextHtml()+workspaceTasksHtml(S.role==='foreman',true)+'<div class="profile-compose"><button data-act="profilePostNew"><span class="profile-compose-plus">＋</span><span><b>โพสต์อัปเดตหน้างาน</b><small>รูปงาน · ความคืบหน้า · ผลงาน · จัดส่ง</small></span><strong>›</strong></button></div><section class="profile-public-card '+(publicLive?'live':'')+'"><div><small>CLIENT PORTFOLIO</small><b>'+(publicLive?'Portfolio ลูกค้าเผยแพร่แล้ว':'สร้างลิงก์ Portfolio สำหรับลูกค้า')+'</b><p>เฉพาะ '+publicCount+' โพสต์ที่เปิด “แสดงใน Portfolio ลูกค้า” · ไม่รวม BOQ รายรับ รายจ่าย หรืองานบัญชี</p></div><div class="profile-public-actions">'+(publicLive?'<button data-act="profilePublicOpen">เปิด</button><button data-act="profilePublicShare">แชร์ลิงก์</button><button data-act="profilePublicPublish">อัปเดต</button><button class="danger" data-act="profilePublicRevoke">ปิดสาธารณะ</button>':'<button class="primary" data-act="profilePublicPublish">เผยแพร่ Portfolio</button>')+'</div>'+(U.profilePublicBusy?'<em>กำลังอัปโหลดและสร้างลิงก์…</em>':'')+'</section>';
   h+='<section class="profile-company-records" aria-label="สถิติผลงานและเงินประกันบริษัท"><div class="profile-section-head"><span><small>COMPANY TRACK RECORD</small><b>สถิติผลงานบริษัท</b></span><em>คำนวณจากทะเบียนโครงการ</em></div><div class="profile-record-stats"><div class="profile-record-stat"><small>ส่งมอบ / ปิดแล้ว</small><b>'+done.length+'</b><span>โครงการ</span></div>'+(S.role==='owner'?'<div class="profile-record-stat"><small>มูลค่าสัญญาโครงการเหล่านี้</small><b>'+fmt(doneContractValue)+'</b><span>รวมมูลค่าที่อนุมัติแล้ว</span></div>':'')+'<div class="profile-record-stat"><small>โครงการทั้งหมด</small><b>'+S.projects.length+'</b><span>กำลังทำ ส่งมอบ และปิดแล้ว</span></div><div class="profile-record-stat"><small>ผลงานที่บันทึก</small><b>'+posts.filter(function(p){return p.type==='portfolio';}).length+'</b><span>โพสต์ผลงานในโปรไฟล์</span></div></div>'+(S.role==='owner'?'<button class="profile-guarantee-summary" data-act="menuGo" data-v="guarantees"><span>เงินประกันค้างรับของบริษัท</span><b>'+fmt(companyGuarantees.amount)+'</b><small>'+companyGuarantees.count+' รายการ · '+companyGuarantees.projects+' โครงการ · ยังรอรับคืน</small><em>'+companyGuarantees.ready+' ครบกำหนด · '+companyGuarantees.near+' ใกล้ครบกำหนด · '+companyGuarantees.nodue+' ยังไม่มีวันรับคืน</em><strong>เปิดทะเบียน ›</strong></button>':'')+'</section>'+
     '<section class="profile-closed-work"><div class="profile-section-head"><span><small>COMPLETED PROJECTS</small><b>โครงการส่งมอบ / ปิดแล้ว</b></span><em>'+done.length+' โครงการ</em></div>'+(done.length?'<div class="profile-closed-list">'+done.slice(0,8).map(function(p){var when=validIsoDate(p.deliveryDate)?'ส่งมอบ '+dstr(p.deliveryDate):'ยังไม่ระบุวันส่งมอบ',status=p.status==='closed'?'ปิดโครงการแล้ว':'ส่งมอบแล้ว';return '<button class="profile-closed-item" data-act="openProj" data-id="'+esc(p.id)+'"><span><b>'+esc(p.name||'โครงการไม่มีชื่อ')+'</b><small>'+(p.client?esc(p.client)+' · ':'')+(p.location?esc(p.location)+' · ':'')+when+'</small></span><em>'+status+'</em>'+(S.role==='owner'?'<strong>'+fmt(approvedContractValue(p.id))+'</strong>':'')+'</button>';}).join('')+'</div>'+(done.length>8?'<button class="profile-closed-more" data-act="projectStatusShortcut" data-v="closed">ดูโครงการส่งมอบ/ปิดแล้วทั้งหมด ('+done.length+')</button>':''):'<div class="profile-empty"><b>ยังไม่มีโครงการส่งมอบหรือปิดแล้ว</b><p>เมื่อเปลี่ยนสถานะโครงการเป็น “ส่งมอบแล้ว” หรือ “ปิด” รายการจะปรากฏที่นี่</p></div>')+'</section>';
   if(S.role==='owner')h+=profileLoanDashboardHtml();
@@ -9270,9 +9300,10 @@ document.addEventListener('click',function(e){
   else if(a==='cloudUseKey'){
     var ck=String((document.getElementById('cloudKeyImport')||{}).value||'').trim();
     if(!/^[A-Za-z0-9_-]{32,128}$/.test(ck)){toast('รหัสกู้คืน Cloud ไม่ถูกต้อง');return true;}
-    var oldKey=cloudLedgerKey(false);if(oldKey&&oldKey!==ck&&U.confirm!=='cloudUseKey'){U.confirm='cloudUseKey';toast('แตะ “ใช้รหัสกู้คืน Cloud” อีกครั้งเพื่อเปลี่ยนฐาน Cloud');render();return true;}
+    var oldKey=cloudLedgerKey(false),keyDraft=U.cloudKeyImportDraft;
+    if(oldKey&&oldKey!==ck&&(U.confirm!=='cloudUseKey'||!keyDraft||keyDraft.sheet!==U.sheet||keyDraft.confirmedValue!==ck)){U.cloudKeyImportDraft={sheet:U.sheet,value:ck,confirmedValue:ck};U.confirm='cloudUseKey';toast('แตะ “เชื่อมข้อมูลคลาวด์ด้วยรหัสนี้” อีกครั้งเพื่อยืนยัน');render();return true;}
     try{localStorage.setItem(CLOUD_KEY_NAME,ck);}catch(_){toast('บันทึกรหัส Cloud ไม่สำเร็จ');return true;}
-    cloudSetEnabled(false);cloudResetMeta();U.confirm=null;render();toast('รับรหัส Cloud แล้ว · กดเปิด Cloud Sync เพื่อตรวจฐานเดิมก่อน');
+    cloudSetEnabled(false);cloudResetMeta();U.cloudKeyImportDraft=null;U.confirm=null;render();toast('รับรหัส Cloud แล้ว · กดเปิด Cloud Sync เพื่อตรวจฐานเดิมก่อน');
   }
   else if(a==='cloudPush'){
     if(U.cloudConflict&&U.confirm!=='cloudPushForce'){U.confirm='cloudPushForce';toast('Cloudflare มีข้อมูลต่างจากเครื่องนี้ · แตะยืนยันอีกครั้งเฉพาะเมื่อต้องการใช้ข้อมูลเครื่องนี้เป็นชุดหลัก');render();return true;}
@@ -9427,8 +9458,8 @@ document.addEventListener('click',function(e){
   else if(a==='repairBilling'){var rr=safeRepairBilling('');if(rr){render();if(rr.created||rr.updated)toast('ซ่อมแล้ว: เชื่อมใหม่ '+rr.created+' · ปรับยอดค้างรับ '+rr.updated);else toast('ไม่มีรายการที่ซ่อมอัตโนมัติได้อย่างปลอดภัย');}}
   else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
-  else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;if(!persist())return;render();}
-  else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
+  else if(a==='bizType'){settingsFormCapture();S.business=S.business||{};S.business.businessType=v;if(!persist())return;render();}
+  else if(a==='bizVat'){settingsFormCapture();S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
   else if(a==='cloudflareFreshDismiss'){S.ui=S.ui||{};S.ui.cloudflareFreshDismissed=true;if(!persist({metaOnly:true}))return;render();toast('เริ่มใช้งานใหม่บน Cloudflare · ข้อมูลเว็บเดิมยังไม่ถูกลบ');}
   else if(a==='deploymentStatusOpen'){U.sheet={kind:'deploymentStatus'};render();}
   else if(a==='reliabilityCheck'){toast('กำลังตรวจ storage / IndexedDB / PWA guards…');reliabilitySelfCheck().then(function(x){S.ops=S.ops||{};S.ops.reliability=x;persist({metaOnly:true});render();toast(x.ok?'Reliability Self-Check ผ่าน':'Reliability Self-Check พบจุดต้องตรวจ');}).catch(function(){toast('Reliability Self-Check ไม่สำเร็จ');});}
@@ -9445,8 +9476,8 @@ document.addEventListener('click',function(e){
   else if(a==='aiCheckReady'){aiGatewayReadiness().then(function(x){var d=x.data||{};if(x.ok)toast('Gateway พร้อมใช้งาน · AREA Ledger protocol '+(d.protocol||'?'));else if(x.identityOk===false)toast('Gateway identity/protocol ไม่ตรง AREA Ledger');else if(d.providerConfigured===false)toast('Gateway ทำงานแล้ว · เหลือ Gemini API secret');else if(d.durableState===false)toast('Gateway ยังขาด Durable Object');else toast('Gateway ยังไม่พร้อม · HTTP '+x.status);}).catch(function(){toast('ตรวจ Gateway ไม่สำเร็จ · ใช้ Local OCR ต่อได้');});}
   else if(a==='aiSmokeTest'){toast('กำลังทดสอบ Cloudflare…');aiGatewaySmokeCheck().then(function(x){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:x.base||'',ok:!!x.ok,healthStatus:+x.health.status||0,readyStatus:+x.ready.status||0,identityOk:x.ready.identityOk===true,componentsOk:x.ready.componentsOk===true,sameBase:!!x.sameBase};persist({metaOnly:true});render();if(x.ok)toast('Cloudflare smoke ผ่าน · บันทึก live evidence แล้ว');else if(!x.health.ok)toast('Cloudflare smoke ไม่ผ่านที่ /health');else if(!x.ready.ok)toast('Cloudflare smoke ไม่ผ่านที่ /ready');else toast('Cloudflare smoke ไม่ผ่าน · endpoint ไม่ตรงกัน');}).catch(function(){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:aiGatewayBase()||aiGatewaySuggestedBase(),ok:false,error:'NETWORK_OR_FETCH'};persist({metaOnly:true});render();toast('Cloudflare smoke ล้มเหลว · ยังใช้ Local OCR ได้');});}
   else if(a==='openGatewayHealth'){var base=aiGatewayBase()||aiGatewaySuggestedBase();var health=base+'/health';try{window.open(health,'_blank','noopener');}catch(_){location.href=health;}}
-  else if(a==='viewMode'){S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!persist())return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
-  else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!persist())return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
+  else if(a==='viewMode'){settingsFormCapture();S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!persist())return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
+  else if(a==='wallpaper'){settingsFormCapture();S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!persist())return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
   else if(a==='quoteAddItem'){U.quoteItemCount=Math.min(8,(U.quoteItemCount||1)+1);render();}
   else if(a==='quoteRemoveItem'){U.quoteItemCount=Math.max(1,(U.quoteItemCount||1)-1);render();}
@@ -9721,7 +9752,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1098&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1100&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;

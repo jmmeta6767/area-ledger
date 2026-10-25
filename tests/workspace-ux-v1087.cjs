@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright'),axe=process.env.AXE_SOURCE||require.resolve('axe-core/axe.min.js');
 const html=fs.readFileSync('gateway/public/index.html','utf8').replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n'),out=path.resolve(process.env.LAYOUT_OUTPUT||'layout-evidence');fs.mkdirSync(out,{recursive:true});
-const server=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');r.end(html);});
+const {fixtureHttp}=require('./helpers/ui-fixture-assets.cjs');const server=http.createServer(fixtureHttp(html));
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://localhost:'+server.address().port,browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})}),violations=[];
 async function auditState(page,view,width){if(width!==390)return;const a=await page.evaluate(()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}}));violations.push(...a.violations.map(v=>({view,width,id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,html:n.html,summary:n.failureSummary}))})));fs.writeFileSync(path.join(out,'v1087-accessibility.json'),JSON.stringify(violations,null,2));console.log('AUDIT',view,a.violations.map(v=>v.id+':'+v.nodes.length).join(','));}
 try{for(const width of (process.env.QA_WIDTHS?process.env.QA_WIDTHS.split(',').map(Number):[320,375,390,430,768,1280])){

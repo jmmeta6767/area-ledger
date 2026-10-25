@@ -1,6 +1,7 @@
 /* Isolated app UI catalogue. Synthetic ledger only; external services are blocked. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {fixtureRoute}=require('./helpers/ui-fixture-assets.cjs');
 const source=fs.readFileSync('gateway/public/index.html','utf8');
 const html=source.replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n');
 const kinds=[...new Set([...source.slice(source.indexOf('function sheetHtml()'),source.indexOf('function appMenuHtml()')).matchAll(/sh\.kind==='([^']+)'/g)].map(x=>x[1]))];
@@ -31,6 +32,54 @@ async function inspect(page,label,width,axe){
  if(axe){result.violations=await page.evaluate(async()=>{const a=await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}});return a.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,html:n.html,summary:n.failureSummary}))}));});}
  return result;
 }
+async function uiNextChecks(page,width){
+ const findings=[];
+ for(const view of ['home','add','profile','boq','projects','report','docs']){
+  await page.evaluate(v=>{U.view=v;U.sheet=null;U.appMenu=false;render();scrollTo(0,0);document.activeElement?.blur();},view);
+  const errors=[],check=(ok,message)=>{if(!ok)errors.push(message);};
+  let geometry={};
+  if(view==='add'){
+   geometry=await page.locator('#amt').evaluate(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect(),wrap=el.closest('.amt').getBoundingClientRect();return {fontSize:parseFloat(s.fontSize),borders:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth].map(parseFloat),width:r.width,wrapperWidth:wrap.width};});
+   check(geometry.fontSize>=32,'amount must retain its large money-entry hierarchy');
+   check(geometry.borders.every(n=>n===0),'amount input must not draw another border inside its money wrapper');
+  }
+  if(view==='profile'){
+   geometry=await page.evaluate(()=>{
+    const rect=el=>{if(!el)return null;const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
+    const cover=document.querySelector('.profile-cover'),hero=document.querySelector('.profile-hero'),title=document.querySelector('.profile-title h1'),context=document.querySelector('.workspace-context');
+    return {cover:rect(cover),hero:rect(hero),title:rect(title),context:rect(context),nav:rect(document.querySelector('.nav')),buttons:[...document.querySelectorAll('.profile-overlay-topbar button')].map(el=>({action:el.dataset.act,...rect(el)})),taskCopy:[...document.querySelectorAll('.workspace-task-grid button>span')].map(el=>rect(el)),titleBeforeContext:!!(title&&context&&(title.compareDocumentPosition(context)&Node.DOCUMENT_POSITION_FOLLOWING))};
+   });
+   check(geometry.cover&&geometry.cover.y>=-1&&geometry.cover.y<=12,'profile cover must begin at the top of the page');
+   check(geometry.title&&geometry.title.height>0&&geometry.title.bottom<(geometry.nav?.y||844),'company h1 must be visible above the bottom navigation');
+   check(geometry.titleBeforeContext&&geometry.context&&geometry.hero&&geometry.context.y>=geometry.hero.bottom-1,'company identity and hero must precede workspace context');
+   check(geometry.buttons.length>=4&&geometry.buttons.every(b=>geometry.cover&&b.y>=geometry.cover.y&&b.bottom<=geometry.cover.bottom+1&&b.x>=geometry.cover.x-1&&b.right<=geometry.cover.right+1),'profile menu and actions must lie inside the cover bounds');
+   check(geometry.taskCopy.length===3&&geometry.taskCopy.every(r=>r.width>=110),'workspace task descriptions must have readable width, not narrow word columns');
+  }
+  if(view==='boq'){
+   geometry=await page.evaluate(()=>{
+    const row=document.querySelector('.boq-check-main'),nav=document.querySelector('.nav'),guide=document.querySelector('.boq-process-guide'),r=row?.getBoundingClientRect(),n=nav?.getBoundingClientRect();
+    return {guideExists:!!guide,guideOpen:!!guide?.open,claimedProgress:guide?.querySelectorAll('.done,.active').length||0,costCards:[...document.querySelectorAll('.boq-summary-grid>div')].map(el=>el.textContent.trim()),row:r?{top:r.top,bottom:r.bottom,height:r.height}:null,navTop:n?.top};
+   });
+   check(geometry.guideExists&&!geometry.guideOpen,'default BOQ import help must be collapsed');
+   check(geometry.claimedProgress===0,'default BOQ help must not claim completed or active import stages');
+   check(geometry.costCards.length===2&&geometry.costCards.some(t=>t.includes('ค่าวัสดุ'))&&geometry.costCards.some(t=>t.includes('ค่าแรง')),'BOQ cost summary must contain material and labor, with counts left in its heading');
+   if(width===390)check(geometry.row&&geometry.row.top+Math.min(44,geometry.row.height)<=geometry.navTop-8,'first BOQ action must be readable above the bottom navigation without scrolling');
+  }
+  if([390,1280].includes(width))await page.screenshot({path:path.join(out,'ui-next-default-'+view+'-'+width+'.png')});
+  if(view==='profile'){
+   try{
+    await page.locator('.profile-overlay-topbar [data-act=appMenu]').click();check(await page.locator('.app-drawer').isVisible(),'profile menu must open from the cover');await page.keyboard.press('Escape');check(await page.locator('.app-drawer').count()===0,'profile menu must close with Escape');
+    await page.locator('.profile-overlay-topbar [data-act=profileEdit]').click();check(await page.locator('.master-sheet').isVisible(),'profile edit action must still open its editor');await page.keyboard.press('Escape');check(await page.locator('.master-sheet').count()===0,'profile editor must close with Escape');
+   }catch(error){errors.push('profile cover actions: '+error.message.split('\n')[0]);await page.evaluate(()=>{U.sheet=null;U.appMenu=false;render();});}
+  }
+  if(view==='boq'&&geometry.guideExists){
+   await page.locator('.boq-process-guide>summary').click();check(await page.locator('.boq-process-guide').evaluate(el=>el.open),'BOQ process help must open on demand');await page.locator('.boq-process-guide>summary').click();check(await page.locator('.boq-process-guide').evaluate(el=>!el.open),'BOQ process help must close again');
+  }
+  findings.push({label:'ui-next-default:'+view,width,geometry,...(errors.length?{error:errors.join(' | ')}:{})});
+ }
+ assert.equal(await page.evaluate(()=>JSON.stringify({projects:S.projects,tx:S.tx,boq:S.boq,guarantees:S.guarantees,loans:S.loans})),await page.evaluate(()=>window.fixtureLedger),'default presentation and navigation must not change financial collections');
+ return findings;
+}
 async function workflowChecks(page,width){
  const waitAction=()=>page.waitForFunction(()=>Object.values(U.runtimeActionStamps||{}).every(t=>Date.now()-t>800));
  await page.evaluate(()=>{U.view='projects';U.sheet={kind:'proj'};render();});
@@ -51,8 +100,9 @@ async function workflowChecks(page,width){
 (async()=>{const origin='http://ledger.test';
  const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})});const results=[];
  try{for(const width of (process.env.QA_WIDTHS||'320,375,390,430,768,1280').split(',').map(Number)){
-  const context=await browser.newContext({viewport:{width,height:844},colorScheme:process.env.QA_COLOR_SCHEME||'light',serviceWorkers:'block',reducedMotion:'reduce'}),page=await context.newPage();await page.route('**/*',r=>r.request().url().startsWith(origin)?(r.request().url().endsWith('/assets/ledger-reliability.css')?r.fulfill({status:200,contentType:'text/css',body:fs.readFileSync('gateway/public/assets/ledger-reliability.css','utf8')}):r.fulfill({status:200,contentType:'text/html; charset=utf-8',body:html})):r.abort());await page.goto(origin);await page.evaluate(seed);
+  const context=await browser.newContext({viewport:{width,height:844},colorScheme:process.env.QA_COLOR_SCHEME||'light',serviceWorkers:'block',reducedMotion:'reduce'}),page=await context.newPage();await page.route('**/*',fixtureRoute(origin,html));await page.goto(origin);await page.evaluate(seed);
   const axe=!!process.env.AXE_SOURCE;if(axe)await page.addScriptTag({path:process.env.AXE_SOURCE});
+  results.push(...await uiNextChecks(page,width));fs.writeFileSync(path.join(out,'ui-next-defaults.json'),JSON.stringify(results.filter(x=>x.label.startsWith('ui-next-default:')),null,2));
   for(const view of ['home','profile','list','add','projects','project','boq','due','guarantees','report','docs','procurement','doclist','print','quoteprint']){
    await page.evaluate(v=>{U.view=v;U.sheet=null;render();document.querySelectorAll('main details').forEach(d=>{d.open=true;});scrollTo(0,0);},view);results.push(await inspect(page,'view:'+view,width,axe&&width===390));
    if(width===1280){const shell=await page.locator('#app').boundingBox(),client=await page.evaluate(()=>document.body.getBoundingClientRect().width);assert(Math.abs(shell.width-client)<2,view+' full desktop shell '+JSON.stringify({shell,client}));if(view==='add'){const form=await page.locator('main').boundingBox();assert(form.width>=640&&form.width<=720,'desktop entry width');assert(Math.abs(form.x+form.width/2-client/2)<2,'desktop entry centered');}}if(width===390){await page.screenshot({path:path.join(out,'system-'+view+'.png')});if(['add','profile','boq','report'].includes(view)){await page.evaluate(()=>scrollTo(0,document.documentElement.scrollHeight));await page.screenshot({path:path.join(out,'system-'+view+'-bottom.png')});}}if(width===1280&&['home','add','projects','report'].includes(view))await page.screenshot({path:path.join(out,'system-'+view+'-desktop.png')});

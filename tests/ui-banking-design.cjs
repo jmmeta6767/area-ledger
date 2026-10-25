@@ -14,10 +14,9 @@ assert.match(index, /href="assets\/ledger-reliability\.css"/);
 assert.match(css,/AREA Ledger banking UI finish/);
 assert.match(css, /@media screen/);
 assert.match(css, /:root:not\(\[data-theme="dark"\]\)/);
-for(const selector of ['.master-ref-header','.nav button.on','.mdash-stats>button',
-  '.project-hub-card','.master-due-card','.master-doc-row',
-  '.master-form-page','.expense-review-sheet','.google-sync-scope',
-  '.master-report-card','.project-lifecycle-overview']){
+// Real view coverage, geometry and interactions are exercised by full-system-ux.
+for(const selector of ['.app-social-topbar','.nav button.on','.project-finance-kpis',
+  '.master-form-page','.system-dialog','.boq-summary-grid']){
   assert.ok(css.includes(selector),'Missing scoped styling for '+selector);
 }
 assert.ok(!css.includes('@media print'),'UI layer may not alter A4 print output');
@@ -26,7 +25,8 @@ assert.match(payroll,/Banking UI consistency pass/);
 assert.match(payroll, /@media print/);
 assert.match(payroll, /@media screen/);
 assert.match(payroll, /const KEY='area-ledger-payroll-v1'/);
-assert.match(sw, /1098-native-voice-end-ui-banking-finish/);
+const version=JSON.parse(index.match(/var APP_BUILD=(\{[^\n]+\});/)[1]).version;
+assert.ok(sw.includes('source-candidate-'+version+'-'),'cache and source versions agree');
 assert.match(sw, /'assets\/ledger-reliability\.css'/);
 assert.match(sw, /'payroll\.html'/);
 console.log('PASS banking UI layer: main views, payroll, print, dark opt-out and PWA cache');

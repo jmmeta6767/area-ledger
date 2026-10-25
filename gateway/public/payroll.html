@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#102f42">
+  <meta name="theme-color" content="#083F79">
   <meta name="description" content="AREA PAYROLL — บันทึกค่าแรงพนักงานรายวัน เช็กวันทำงาน เงินเบิก และยอดคงเหลือ">
   <title>AREA Ledger | เงินเดือนพนักงานรายวัน</title>
   <style>
@@ -122,6 +122,45 @@ body{background:radial-gradient(ellipse at 0 0,#E1EDFF,transparent 55%),#F1F5FC}
   }
 }
 
+
+/* UI-next payroll: shared flat surfaces; financial, backup and print rules remain unchanged. */
+@media screen {
+  :root{--navy:#083F79;--teal:#083F79;--muted:#526176;--stroke:#D8E0EA;--shadow:0 1px 3px #172B4D0A;background:#F5F7FB;color:#172B4D}
+  body{background:#F5F7FB}
+  .topbar{position:sticky;top:0;z-index:40;background:#083F79!important;border:0;box-shadow:0 1px 0 #ffffff26}
+  .topbar-inner{padding-top:max(12px,env(safe-area-inset-top,0px));padding-bottom:12px}
+  .brandmark{background:#FFC928;color:#172B4D;box-shadow:none;border-radius:12px}
+  .brand strong{letter-spacing:.025em}.brand span{color:#DFEBF8}
+  .hero{padding:20px 0 18px}.hero h1,.panel h2{color:#172B4D;letter-spacing:-.025em}.hero h1{line-height:1.3}.eyebrow{color:#526176;letter-spacing:.06em}
+  .stat,.panel,.worker-card,.person-row,.instruction:not(.danger-zone){background:#fff!important;border:1px solid #D8E0EA;border-radius:16px;box-shadow:var(--shadow)}
+  .stat:not(.emphasis){background-image:none!important}.stat{padding:16px}.stat .kicker{font-size:13px}.stat .detail{font-size:12px;line-height:1.5}
+  .stat.emphasis{background:#083F79!important;border-color:#083F79;color:#fff}.stat.emphasis .detail,.stat.emphasis .kicker{color:#DFEBF8}
+  .stat .value{font-size:28px;font-variant-numeric:tabular-nums;letter-spacing:-.025em}
+  .btn,.status-btn{min-height:48px;border-radius:12px;box-shadow:none!important;line-height:1.45}
+  .btn-small{min-height:44px}.btn-icon{min-width:48px}.btn-primary{background:#FFC928!important;border-color:#E3B323;color:#172B4D;box-shadow:none!important}
+  .btn-primary:hover{background:#F1BC20!important}.btn-soft{background:#EDF3FB;border-color:#D8E0EA;color:#083F79}.btn-danger{background:#FFF4F3;border-color:#EDC9C6;color:#A42622}
+  .btn:hover:not(.btn-primary):not(.btn-danger){background:#F0F4F9}
+  .form-control,.day-wage input{min-height:48px;height:48px;border:1px solid #98A8BC;border-radius:12px;background:#fff;color:#172B4D;box-shadow:none;font-size:16px}
+  .field label,.day-wage{color:#172B4D}.field label{font-size:14px}.day-wage{background:#F5F7FB;padding:10px 12px;line-height:1.5}
+  .day-wage input{min-height:44px;height:44px}.worker-card{padding:16px}.worker-rate,.mini-values,.hint{color:#526176;line-height:1.65}
+  .avatar{background:#EDF3FB;color:#083F79;box-shadow:none;border-radius:12px}.daily-strip{background:#EDF3FB;border:1px solid #D8E0EA;color:#172B4D}.daily-strip span{color:#526176}
+  .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:4px;padding:4px;border:1px solid #D8E0EA;background:#fff;border-radius:16px}
+  .tab{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:48px;color:#526176;border-radius:12px;line-height:1.4}
+  .tab.active{background:#FFF4C9;color:#083F79;box-shadow:none}.payroll-icon{display:block;flex:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tabs .tab span{font:inherit}.table-scroll{border:1px solid #D8E0EA;border-radius:12px}.month-table th{background:#F0F4F9;color:#526176}.month-table tbody tr:nth-child(even){background:#FAFBFD}
+  .month-table tfoot td{background:#EDF3FB}.tag{background:#EDF3FB;color:#083F79}.tag.off{background:#FFF0EE;color:#A42622}.tag.none{background:#F0F3F7;color:#526176}
+  .modal{background:#10233D80}.modal-panel{padding:20px;border:1px solid #D8E0EA;border-radius:16px;box-shadow:0 16px 48px #10233D29;scroll-padding-block:84px 24px}
+  .modal-head{position:sticky;top:-20px;z-index:2;margin:-20px -20px 16px;padding:16px 20px;background:#fff;border-bottom:1px solid #D8E0EA}
+  .modal-head h2{color:#172B4D;line-height:1.4}.modal-head .btn{min-width:44px;padding:10px}.modal-actions{padding-top:16px;border-top:1px solid #D8E0EA}
+  .history-item{background:#fff;border-radius:12px}.toast{background:#172B4D;line-height:1.5}.foot{color:#526176}
+  :where(button,input,select,textarea,a,[tabindex]):focus-visible{outline:3px solid #083F79!important;outline-offset:3px}.topbar :where(button,a):focus-visible{outline-color:#FFC928!important}
+  .payroll-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+  @media(max-width:590px){.hero{gap:14px;padding-top:18px}.hero h1{font-size:25px}.stats{gap:10px}.stat{padding:14px}.stat .value{font-size:24px}.panel{padding:16px}
+    .tabs{padding:6px 8px calc(8px + env(safe-area-inset-bottom,0px));border-radius:0;border-width:1px 0 0;background:#fff;box-shadow:none}.tab{flex-direction:column;gap:4px;min-height:52px;padding:6px 2px;font-size:12px}
+    .modal{padding:12px}.modal-panel{max-height:calc(100dvh - 24px);border-radius:16px}.modal-actions>.btn{flex:1;white-space:normal}
+  }
+}
+
 </style>
 </head>
 <body>
@@ -129,30 +168,31 @@ body{background:radial-gradient(ellipse at 0 0,#E1EDFF,transparent 55%),#F1F5FC}
 <main class="shell">
   <div class="hero no-print"><div><div class="eyebrow">DAILY WAGES · PAYROLL</div><h1>บัญชีค่าแรงพนักงาน</h1><p class="subtitle muted">บันทึกรายวัน · สรุปแยกรายเดือน · สำรองอัตโนมัติไม่เกิน 2 เดือนล่าสุด</p></div><button class="btn btn-primary" data-action="add-employee">＋ เพิ่มพนักงาน</button></div>
   <div id="stats" class="stats no-print" aria-live="polite"></div>
-  <nav class="tabs no-print" aria-label="เมนูหลัก">
-    <button class="tab active" data-tab="day"><span>📅</span> รายวัน</button>
-    <button class="tab" data-tab="month"><span>📊</span> สรุปเดือน</button>
-    <button class="tab" data-tab="people"><span>👷</span> พนักงาน</button>
-    <button class="tab" data-tab="tools"><span>⚙️</span> ตั้งค่า</button>
+  <nav class="tabs no-print" role="tablist" aria-label="มุมมองเงินเดือน" aria-orientation="horizontal">
+    <button id="payroll-tab-day" class="tab active" type="button" role="tab" data-tab="day" aria-controls="day-view" aria-selected="true" tabindex="0"><svg class="payroll-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M8 15h2M14 15h2"/></svg><span>รายวัน</span></button>
+    <button id="payroll-tab-month" class="tab" type="button" role="tab" data-tab="month" aria-controls="month-view" aria-selected="false" tabindex="-1"><svg class="payroll-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4v16h16M8 16v-4M13 16V8M18 16V6"/></svg><span>สรุปเดือน</span></button>
+    <button id="payroll-tab-people" class="tab" type="button" role="tab" data-tab="people" aria-controls="people-view" aria-selected="false" tabindex="-1"><svg class="payroll-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M17 15a5 5 0 0 1 4 5"/></svg><span>พนักงาน</span></button>
+    <button id="payroll-tab-tools" class="tab" type="button" role="tab" data-tab="tools" aria-controls="tools-view" aria-selected="false" tabindex="-1"><svg class="payroll-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 3-1 3-3 1v4l3 1 1 3h6l1-3 3-1V7l-3-1-1-3Z"/><circle cx="12" cy="9" r="2"/><path d="M5 21h14M8 18v3M16 18v3"/></svg><span>ตั้งค่า</span></button>
   </nav>
-  <section id="day-view">
+  <div id="payrollViewStatus" class="payroll-sr-only no-print" role="status" aria-live="polite" aria-atomic="true"></div>
+  <section id="day-view" role="tabpanel" aria-labelledby="payroll-tab-day" tabindex="0">
     <div class="panel"><div class="panel-head"><div><h2>บันทึกเวลาทำงาน</h2><p class="subtitle muted">เลือกวัน จากนั้นกด มา / หยุด และบันทึกเงินเบิกของแต่ละคน</p></div><div class="toolbar"><button class="btn btn-icon" data-action="prev-day" aria-label="วันก่อนหน้า">‹</button><input id="dailyDate" aria-label="วันที่บันทึก" class="form-control" type="date"><button class="btn btn-icon" data-action="next-day" aria-label="วันถัดไป">›</button><button class="btn btn-small" data-action="today">วันนี้</button></div></div>
       <div id="dailyStrip" class="daily-strip"></div>
       <div class="toolbar" style="margin-bottom:14px"><input id="dailySearch" type="search" class="form-control search" placeholder="ค้นหาชื่อพนักงาน..." aria-label="ค้นหาชื่อพนักงาน"><span class="hint" id="dailyCount"></span></div>
       <div id="dailyWorkers" class="worker-list"></div>
     </div>
   </section>
-  <section id="month-view" hidden>
+  <section id="month-view" role="tabpanel" aria-labelledby="payroll-tab-month" tabindex="0" hidden>
     <div class="panel"><div class="panel-head"><div><h2>สรุปเงินเดือน</h2><p class="subtitle muted">ยอดค่าแรงและเงินเบิกเฉพาะเดือนที่เลือก</p></div><div class="toolbar no-print"><input id="monthInput" class="form-control" aria-label="เดือนที่สรุป" type="month"><button class="btn btn-icon" data-action="prev-month" aria-label="เดือนก่อนหน้า">‹</button><button class="btn btn-icon" data-action="next-month" aria-label="เดือนถัดไป">›</button><button class="btn btn-small" data-action="print-month">🖨 พิมพ์</button><button class="btn btn-small" data-action="export-csv">⬇ CSV</button></div></div>
       <p id="printMonthLabel" class="hint"></p><div class="table-scroll"><table class="month-table"><thead><tr><th>พนักงาน</th><th class="numeric">มาทำงาน</th><th class="numeric">ค่าแรง</th><th class="numeric">เงินเบิก</th><th class="numeric">คงเหลือ</th><th class="no-print"></th></tr></thead><tbody id="monthlyBody"></tbody><tfoot id="monthlyFoot"></tfoot></table></div><div id="monthlyEmpty"></div>
       <p class="hint">* คงเหลือรายเดือน = ค่าแรงที่บันทึกในเดือนนี้ − เงินเบิกที่ลงวันที่ในเดือนนี้ หากติดลบคือเบิกเกินค่าแรงเดือนนั้น (ไม่ใช่เงินสดคงเหลือของร้าน)</p>
     </div>
   </section>
-  <section id="people-view" hidden><div class="panel"><div class="panel-head"><div><h2>จัดการพนักงาน</h2><p class="subtitle muted">เพิ่ม แก้ไขอัตราค่าแรง พักใช้งาน หรือลบพนักงาน</p></div><button class="btn btn-primary" data-action="add-employee">＋ เพิ่มพนักงาน</button></div><div id="peopleList"></div><p class="hint">อัตราค่าแรงใหม่จะใช้กับวันที่ลงเวลาใหม่เท่านั้น ค่าแรงวันที่บันทึกไว้แล้วจะไม่เปลี่ยนย้อนหลัง</p></div></section>
-  <section id="tools-view" hidden><div class="two-col"><div class="panel"><h2>สำรองและนำเข้าข้อมูล</h2><p class="subtitle muted" style="margin:8px 0 18px">ข้อมูลเงินเดือนโมดูลนี้เก็บไว้เฉพาะในเบราว์เซอร์นี้ ยังไม่ซิงก์กับบัญชีหลักหรือ Cloudflare ไม่ซิงก์ข้ามเครื่อง และอาจหายเมื่อล้างข้อมูลเว็บไซต์ ควรสำรองเป็นประจำ</p><div class="instruction"><h3>🔒 สำรองอัตโนมัติย้อนหลัง 2 เดือน</h3><p>เก็บสำเนาก่อนการแก้ไขล่าสุดเฉพาะเดือนปัจจุบันและเดือนก่อนหน้าไว้ในเบราว์เซอร์นี้ เมื่อเปลี่ยนเดือน ระบบตัดเดือนเก่าออกจากชุดสำรองโดยอัตโนมัติ แต่ <b>ไม่ลบประวัติรายการจริง</b></p><div id="backupMonths" class="history" aria-live="polite"></div><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" data-action="backup" >⬇ ดาวน์โหลด 2 เดือนล่าสุด</button><button class="btn" data-action="backup-selected">⬇ สำรองเดือนที่เลือก</button></div><p class="hint">ไฟล์ JSON ที่ดาวน์โหลดออกไปไม่สามารถลบจากอุปกรณ์โดยแอปนี้ได้ โปรดจัดการไฟล์สำรองภายนอกด้วยตนเอง และอย่าเก็บไฟล์เงินเดือนในที่สาธารณะ</p></div><div class="instruction"><h3>⬆ กู้คืนข้อมูลรายเดือน</h3><p>นำเข้าไฟล์สำรองรายเดือน หรือไฟล์รวม 2 เดือน โดยกู้เฉพาะเดือนในไฟล์ ไม่ทับรายการของเดือนอื่น ไฟล์แบบเก่าทั้งระบบยังรองรับแต่จะแจ้งเตือนก่อนแทนที่</p><button class="btn" data-action="select-import" style="margin-top:12px">เลือกไฟล์ JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden></div></div><div class="panel"><h2>เกี่ยวกับการคำนวณ</h2><div class="instruction"><h3>✓ มาทำงาน</h3><p>ค่าจ้างของวันนั้น = ค่าแรงรายวันที่กำหนด (แก้เป็นจำนวนเฉพาะวันได้) โดยวันที่ไม่บันทึกจะไม่คิดค่าแรง</p></div><div class="instruction"><h3>− หยุด</h3><p>ไม่คิดค่าแรงสำหรับวันหยุด และสามารถบันทึกเงินเบิกในวันหยุดได้</p></div><div class="instruction"><h3>฿ เงินเบิก</h3><p>เงินเบิกแต่ละรายการแยกเก็บเป็นประวัติ สามารถเพิ่มหลายครั้งและลบรายการผิดพลาดได้</p></div><div class="instruction danger-zone"><h3>ล้างข้อมูลทั้งหมด</h3><p>ลบข้อมูลพนักงาน วันทำงาน และประวัติเงินเบิกทั้งหมดในเครื่องนี้ โปรดสำรองก่อน</p><button class="btn btn-danger" data-action="reset" style="margin-top:12px">ล้างข้อมูลถาวร</button></div></div></div></section>
+  <section id="people-view" role="tabpanel" aria-labelledby="payroll-tab-people" tabindex="0" hidden><div class="panel"><div class="panel-head"><div><h2>จัดการพนักงาน</h2><p class="subtitle muted">เพิ่ม แก้ไขอัตราค่าแรง พักใช้งาน หรือลบพนักงาน</p></div><button class="btn btn-primary" data-action="add-employee">＋ เพิ่มพนักงาน</button></div><div id="peopleList"></div><p class="hint">อัตราค่าแรงใหม่จะใช้กับวันที่ลงเวลาใหม่เท่านั้น ค่าแรงวันที่บันทึกไว้แล้วจะไม่เปลี่ยนย้อนหลัง</p></div></section>
+  <section id="tools-view" role="tabpanel" aria-labelledby="payroll-tab-tools" tabindex="0" hidden><div class="two-col"><div class="panel"><h2>สำรองและนำเข้าข้อมูล</h2><p class="subtitle muted" style="margin:8px 0 18px">ข้อมูลเงินเดือนโมดูลนี้เก็บไว้เฉพาะในเบราว์เซอร์นี้ ยังไม่ซิงก์กับบัญชีหลักหรือ Cloudflare ไม่ซิงก์ข้ามเครื่อง และอาจหายเมื่อล้างข้อมูลเว็บไซต์ ควรสำรองเป็นประจำ</p><div class="instruction"><h3>🔒 สำรองอัตโนมัติย้อนหลัง 2 เดือน</h3><p>เก็บสำเนาก่อนการแก้ไขล่าสุดเฉพาะเดือนปัจจุบันและเดือนก่อนหน้าไว้ในเบราว์เซอร์นี้ เมื่อเปลี่ยนเดือน ระบบตัดเดือนเก่าออกจากชุดสำรองโดยอัตโนมัติ แต่ <b>ไม่ลบประวัติรายการจริง</b></p><div id="backupMonths" class="history" aria-live="polite"></div><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" data-action="backup" >⬇ ดาวน์โหลด 2 เดือนล่าสุด</button><button class="btn" data-action="backup-selected">⬇ สำรองเดือนที่เลือก</button></div><p class="hint">ไฟล์ JSON ที่ดาวน์โหลดออกไปไม่สามารถลบจากอุปกรณ์โดยแอปนี้ได้ โปรดจัดการไฟล์สำรองภายนอกด้วยตนเอง และอย่าเก็บไฟล์เงินเดือนในที่สาธารณะ</p></div><div class="instruction"><h3>⬆ กู้คืนข้อมูลรายเดือน</h3><p>นำเข้าไฟล์สำรองรายเดือน หรือไฟล์รวม 2 เดือน โดยกู้เฉพาะเดือนในไฟล์ ไม่ทับรายการของเดือนอื่น ไฟล์แบบเก่าทั้งระบบยังรองรับแต่จะแจ้งเตือนก่อนแทนที่</p><button class="btn" data-action="select-import" style="margin-top:12px">เลือกไฟล์ JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden></div></div><div class="panel"><h2>เกี่ยวกับการคำนวณ</h2><div class="instruction"><h3>✓ มาทำงาน</h3><p>ค่าจ้างของวันนั้น = ค่าแรงรายวันที่กำหนด (แก้เป็นจำนวนเฉพาะวันได้) โดยวันที่ไม่บันทึกจะไม่คิดค่าแรง</p></div><div class="instruction"><h3>− หยุด</h3><p>ไม่คิดค่าแรงสำหรับวันหยุด และสามารถบันทึกเงินเบิกในวันหยุดได้</p></div><div class="instruction"><h3>฿ เงินเบิก</h3><p>เงินเบิกแต่ละรายการแยกเก็บเป็นประวัติ สามารถเพิ่มหลายครั้งและลบรายการผิดพลาดได้</p></div><div class="instruction danger-zone"><h3>ล้างข้อมูลทั้งหมด</h3><p>ลบข้อมูลพนักงาน วันทำงาน และประวัติเงินเบิกทั้งหมดในเครื่องนี้ โปรดสำรองก่อน</p><button class="btn btn-danger" data-action="reset" style="margin-top:12px">ล้างข้อมูลถาวร</button></div></div></div></section>
   <footer class="foot no-print">AREA Ledger · Payroll V1.1 · สำรองอัตโนมัติ 2 เดือนในเครื่อง · ยังไม่ซิงก์ Cloudflare D1</footer>
 </main>
-<div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-panel"><div class="modal-head"><div><h2 id="modalTitle"></h2><p id="modalDesc"></p></div><button class="btn btn-small" data-action="close-modal" aria-label="ปิดหน้าต่าง">✕</button></div><div id="modalContent"></div></div></div>
+<div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc"><div class="modal-panel" tabindex="-1"><div class="modal-head"><div><h2 id="modalTitle"></h2><p id="modalDesc"></p></div><button class="btn btn-small" data-action="close-modal" aria-label="ปิดหน้าต่าง">✕</button></div><div id="modalContent"></div></div></div>
 <div id="toast" class="toast" role="status" hidden></div>
 <script>
 (()=>{
@@ -276,6 +316,7 @@ let db,dbLoadError=false;
 try{const saved=localStorage.getItem(KEY);db=saved?validate(JSON.parse(saved)):initial()}
 catch(err){db=initial();dbLoadError=true;setTimeout(()=>toast('ข้อมูลหลักเสียหาย: ห้ามบันทึกใหม่ กรุณากู้คืนไฟล์สำรอง'),100)}
 let selectedDate=localDate(new Date()),selectedMonth=selectedDate.slice(0,7),tab='day',search='',onSubmit=null,toastTimer;
+let modalReturnFocus=null,modalFocusTimer=null,modalPreviousOverflow='',modalBackground=[];
 function toast(msg){const el=$('toast');el.textContent=msg;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,3200)}
 function save(previous){
   if(dbLoadError){toast('ข้อมูลหลักเดิมเสียหาย กรุณากู้คืนจากไฟล์ก่อนบันทึก');return false}
@@ -289,9 +330,9 @@ function transact(fn,deferRender=false){const old=JSON.stringify(db);fn();if(!sa
 function attendance(emp,date){return db.attendance[makeKey(emp,date)]}
 function getTotals(employeeId,month=null,endDate=null){let earned=0,present=0,off=0,advanced=0;for(const a of Object.values(db.attendance)){if((!employeeId||a.employeeId===employeeId)&&(!month||a.date.startsWith(month))&&(!endDate||a.date<=endDate)){if(a.status==='work'){earned+=a.wage;present++}else off++}}
 for(const a of db.advances)if((!employeeId||a.employeeId===employeeId)&&(!month||a.date.startsWith(month))&&(!endDate||a.date<=endDate))advanced+=a.amount;return{earned:decimal(earned),advanced:decimal(advanced),balance:decimal(earned-advanced),present,off}}
-function setTab(next){tab=next;render()}
+function setTab(next){if(!['day','month','people','tools'].includes(next))return;tab=next;render();$('payrollViewStatus').textContent='เปิดมุมมอง'+({day:'รายวัน',month:'สรุปเดือน',people:'พนักงาน',tools:'ตั้งค่า'})[next]}
 function render(){
-  for(const name of ['day','month','people','tools']){$(name+'-view').hidden=tab!==name;document.querySelector(`[data-tab="${name}"]`).classList.toggle('active',tab===name)}
+  for(const name of ['day','month','people','tools']){const selected=tab===name,button=document.querySelector(`[data-tab="${name}"]`);$(name+'-view').hidden=!selected;button.classList.toggle('active',selected);button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1}
   const t=getTotals(null,selectedMonth),count=db.employees.filter(e=>e.active).length;
   $('stats').innerHTML=`<div class="stat"><div class="kicker">ค่าแรงเดือนนี้</div><div class="value">${money(t.earned)}</div><div class="detail">${fmtMonth(selectedMonth)}</div></div><div class="stat"><div class="kicker">เงินเบิกเดือนนี้</div><div class="value">${money(t.advanced)}</div><div class="detail">หักจากค่าแรงเดือนนี้</div></div><div class="stat emphasis"><div class="kicker">คงเหลือเดือนนี้</div><div class="value ${t.balance<0?'negative':''}">${money(t.balance)}</div><div class="detail">ค่าแรง − เบิก</div></div><div class="stat"><div class="kicker">พนักงานปัจจุบัน</div><div class="value">${count} คน</div><div class="detail">บันทึกวันทำงาน ${t.present} วัน-คน</div></div>`;
   if(tab==='day')renderDay();if(tab==='month')renderMonth();if(tab==='people')renderPeople();if(tab==='tools')renderBackups();
@@ -324,8 +365,38 @@ function renderMonth(){
 function renderPeople(){
   $('peopleList').innerHTML=db.employees.length?db.employees.map(e=>`<div class="person-row ${!e.active?'inactive':''}"><div class="person-data"><div class="avatar">${esc(e.name.trim().charAt(0))}</div><div><div class="worker-name">${esc(e.name)} ${e.active?'':'<span class="tag off">พักใช้งาน</span>'}</div><div class="worker-rate">${money(e.rate)} / วัน · คงเหลือสะสม <b>${money(getTotals(e.id).balance)}</b></div></div></div><div class="actions"><button class="btn btn-small" data-action="edit-employee" data-id="${esc(e.id)}">แก้ไข</button><button class="btn btn-small" data-action="toggle-employee" data-id="${esc(e.id)}">${e.active?'พักใช้งาน':'เปิดใช้งาน'}</button><button class="btn btn-small btn-danger" data-action="delete-employee" data-id="${esc(e.id)}">ลบ</button></div></div>`).join(''):`<div class="empty"><h3>ยังไม่มีรายชื่อ</h3><p>เพิ่มพนักงานคนแรกเพื่อเริ่มใช้งาน</p></div>`;
 }
-function openModal(title,desc,body,submit){$('modalTitle').textContent=title;$('modalDesc').textContent=desc||'';$('modalContent').innerHTML=body;$('modal').hidden=false;onSubmit=submit;document.body.style.overflow='hidden';const el=$('modalContent').querySelector('input:not([type=hidden])');if(el)setTimeout(()=>el.focus(),30)}
-function closeModal(){$('modal').hidden=true;onSubmit=null;document.body.style.overflow=''}
+function payrollFocusDescriptor(el){return el?{element:el,id:el.id||'',action:el.getAttribute('data-action')||'',employee:el.getAttribute('data-id')||'',date:el.getAttribute('data-date')||''}:null}
+function payrollFocusables(){return [...$('modal').querySelectorAll('button:not([disabled]),a[href],input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el=>el.getClientRects().length&&!el.closest('[hidden],[inert]'))}
+function payrollFocusDialog(){const first=$('modalContent').querySelector('input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled])');(first||$('modal').querySelector('.modal-panel')).focus({preventScroll:true})}
+function openModal(title,desc,body,submit){
+  const modal=$('modal');
+  if(modal.hidden){modalReturnFocus=payrollFocusDescriptor(document.activeElement);modalPreviousOverflow=document.body.style.overflow;modalBackground=[...document.querySelectorAll('header.topbar,main.shell')].map(el=>({el,inert:el.inert}));modalBackground.forEach(x=>{x.el.inert=true})}
+  if(modalFocusTimer)clearTimeout(modalFocusTimer);
+  $('modalTitle').textContent=title;$('modalDesc').textContent=desc||'';$('modalContent').innerHTML=body;modal.hidden=false;onSubmit=submit;document.body.style.overflow='hidden';
+  modalFocusTimer=setTimeout(()=>{modalFocusTimer=null;if(!modal.hidden)payrollFocusDialog()},30);
+}
+function closeModal(){
+  if($('modal').hidden)return;
+  if(modalFocusTimer)clearTimeout(modalFocusTimer);modalFocusTimer=null;
+  $('modal').hidden=true;onSubmit=null;document.body.style.overflow=modalPreviousOverflow;modalBackground.forEach(x=>{x.el.inert=x.inert});modalBackground=[];
+  const saved=modalReturnFocus;modalReturnFocus=null;
+  const usable=el=>el&&el.isConnected&&!el.disabled&&!el.closest('[hidden],[inert]')&&el.getClientRects().length;
+  let target=saved&&saved.element;
+  if(!usable(target)&&saved&&saved.id)target=$(saved.id);
+  if(!usable(target)&&saved&&saved.action)target=[...document.querySelectorAll('[data-action]')].find(el=>el.dataset.action===saved.action&&(el.dataset.id||'')===saved.employee&&(el.dataset.date||'')===saved.date&&usable(el));
+  if(!usable(target))target=document.querySelector('[role="tab"][aria-selected="true"]');
+  if(target)target.focus({preventScroll:true});
+}
+function payrollKeyboard(ev){
+  if(!$('modal').hidden){
+    if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();closeModal();return}
+    if(ev.key==='Tab'){const items=payrollFocusables(),at=items.indexOf(document.activeElement);if(!items.length){ev.preventDefault();payrollFocusDialog()}else if(at<0||ev.shiftKey&&at===0||!ev.shiftKey&&at===items.length-1){ev.preventDefault();items[ev.shiftKey?items.length-1:0].focus()}}
+    return;
+  }
+  const current=ev.target.closest('[role="tab"][data-tab]');if(!current||!['ArrowLeft','ArrowRight','Home','End'].includes(ev.key))return;
+  const tabs=[...document.querySelectorAll('[role="tab"][data-tab]')],at=tabs.indexOf(current),next=ev.key==='Home'?0:ev.key==='End'?tabs.length-1:(at+(ev.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+  ev.preventDefault();setTab(tabs[next].dataset.tab);tabs[next].focus({preventScroll:true});
+}
 function employeeForm(e){const editing=!!e;openModal(editing?'แก้ไขพนักงาน':'เพิ่มพนักงาน',editing?'ปรับชื่อและค่าแรงสำหรับการลงเวลาใหม่':'ระบุชื่อและค่าแรงต่อวัน',`<form id="modalForm" class="modal-body"><div class="field"><label for="empName">ชื่อพนักงาน *</label><input class="form-control w-100" id="empName" name="name" maxlength="120" required value="${esc(e?.name||'')}" placeholder="เช่น สมชาย"></div><div class="field"><label for="empRate">ค่าแรงต่อวัน (บาท) *</label><input class="form-control w-100" id="empRate" name="rate" type="number" min="0" max="1000000000" step="0.01" required value="${e?e.rate:''}" placeholder="เช่น 450"></div><div class="hint">เปลี่ยนค่าแรงจะไม่แก้ไขวันเก่าที่บันทึกไปแล้ว</div><div class="modal-actions"><button class="btn" type="button" data-action="close-modal">ยกเลิก</button><button class="btn btn-primary" type="submit">${editing?'บันทึกการแก้ไข':'เพิ่มพนักงาน'}</button></div></form>`,form=>{const name=form.elements.name.value.trim(),rate=Number(form.elements.rate.value);if(!name||!validMoney(rate)){toast('กรุณากรอกชื่อและค่าแรงที่ถูกต้อง');return}if(transact(()=>{if(e){const item=db.employees.find(x=>x.id===e.id);item.name=name;item.rate=decimal(rate)}else db.employees.push({id:id(),name,rate:decimal(rate),active:true})})){closeModal();toast('บันทึกพนักงานแล้ว')}})}
 function advanceModal(e,date){const advances=db.advances.filter(a=>a.employeeId===e.id&&a.date===date).sort((a,b)=>b.id.localeCompare(a.id));const history=advances.length?advances.map(a=>`<div class="history-item"><div><b>${money(a.amount)}</b><small>${esc(a.note||'ไม่ระบุหมายเหตุ')}</small></div><button type="button" class="btn btn-small btn-danger" data-action="delete-advance" data-id="${esc(a.id)}">ลบ</button></div>`).join(''):'<p class="hint">ยังไม่มีรายการเบิกในวันนี้</p>';
 openModal('บันทึกเงินเบิก · '+e.name,fmtDate(date),`<form id="modalForm" class="modal-body"><div class="field"><label for="advanceAmount">จำนวนเงินที่เบิก (บาท) *</label><input class="form-control w-100" id="advanceAmount" name="amount" type="number" min="0.01" max="1000000000" step="0.01" required placeholder="จำนวนเงิน"></div><div class="field"><label for="advanceNote">หมายเหตุ (ไม่บังคับ)</label><input class="form-control w-100" id="advanceNote" name="note" maxlength="500" placeholder="เช่น เบิกซื้อของใช้"></div><div class="modal-actions"><button class="btn" type="button" data-action="close-modal">ปิด</button><button class="btn btn-primary" type="submit">＋ บันทึกเงินเบิก</button></div></form><hr class="divider"><h3 class="sec-title">ประวัติการเบิกวันนี้ (${advances.length} รายการ)</h3><div class="history">${history}</div>`,form=>{const amount=Number(form.elements.amount.value),note=form.elements.note.value.trim();if(!validMoney(amount,false)){toast('จำนวนเงินเบิกต้องมากกว่า 0');return}if(transact(()=>db.advances.push({id:id(),employeeId:e.id,date,amount:decimal(amount),note}))){advanceModal(e,date);toast('บันทึกเงินเบิกแล้ว')}})}
@@ -388,7 +459,8 @@ $('importFile').addEventListener('change',async ev=>{const f=ev.target.files?.[0
   if(!confirm(`ไฟล์สำรองเก่า (ทั้งระบบ) มีพนักงาน ${imported.employees.length} คน\nคำเตือน: การนำเข้าจะแทนที่ข้อมูล Payroll ทุกเดือน ต้องการดำเนินการหรือไม่?`))return;
   const previous=db;db=imported;dbLoadError=false;
   if(!save(previous)){db=previous;return}closeModal();render();toast('นำเข้าข้อมูลเก่าเรียบร้อย')}catch(err){toast('นำเข้าไม่ได้: '+err.message)}});
-$('modal').addEventListener('click',ev=>{if(ev.target===$('modal'))closeModal()});document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('modal').hidden)closeModal()});
+$('modal').addEventListener('click',ev=>{if(ev.target===$('modal'))closeModal()});document.addEventListener('keydown',payrollKeyboard);
+document.addEventListener('focusin',ev=>{if(!$('modal').hidden&&!$('modal').contains(ev.target))payrollFocusDialog()});
 if(!dbLoadError)ensureMonthlyVault();
 render();
 })();
