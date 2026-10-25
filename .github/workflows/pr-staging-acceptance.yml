@@ -163,6 +163,8 @@ jobs:
         run: node tests/receipt-ref-dryrun.cjs
       - name: Actual browser R2 receipt offload safety regression
         run: node tests/r2-receipt-readback.cjs
+      - name: Portable R2 receipt backup regression
+        run: node tests/portable-receipt-backup.cjs
       - name: PR staging safety regression
         run: node tests/pr-staging-guard-test.cjs
       - name: Gateway staging preflight
