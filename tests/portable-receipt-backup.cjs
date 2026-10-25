@@ -42,7 +42,7 @@ let n=0;async function check(name,fn){await fn();n++;console.log('PASS',name);}
  await check('embedded R2 originals create portable, checksum-valid migration JSON without mutations',async()=>{
   fixture();const before=JSON.stringify(ctx.S),out=JSON.parse(await ctx.backupPortableJson());
   assert.equal(out.portableReceiptImages,1);assert.equal(out.state.tx[0].photo,png);
-  assert.equal(out.state.tx[0].photoRef,'r2/ref1');assert.equal(ctx.restoreParse(out).ok,true);
+  assert.equal(out.state.tx[0].photoRef,'r2/ref1');const restored=ctx.restoreParse(out);assert.equal(restored.ok,true);assert.equal(restored.state.tx[0].photo,png);const tampered=JSON.parse(JSON.stringify(out));tampered.state.tx[0].photo=jpg;assert.equal(ctx.restoreParse(tampered).error,'BACKUP_CHECKSUM');
   assert.equal(JSON.stringify(ctx.S),before);assert.equal(storage.get(ctx.KEY),before);
  });
  await check('missing local evidence fails closed',async()=>{
