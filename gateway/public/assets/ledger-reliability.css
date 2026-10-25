@@ -247,8 +247,7 @@
 /* Preserve the large financial amount keyboard entry. General Safari 16px inputs must
    never collapse the user's main amount field into a small form control. */
 @media screen {
-  :root:not([data-theme="dark"]) .add-amount .amt input,
-  :root[data-theme="dark"] .add-amount .amt input {
+  :root #amt {
     font-size:clamp(32px,8vw,40px)!important;
   }
 }
