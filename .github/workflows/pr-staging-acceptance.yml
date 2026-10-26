@@ -165,6 +165,8 @@ jobs:
         run: node tests/r2-receipt-readback.cjs
       - name: Portable R2 receipt backup regression
         run: node tests/portable-receipt-backup.cjs
+      - name: Read-only backup integrity and privacy regression
+        run: node tests/backup-audit.cjs
       - name: PR staging safety regression
         run: node tests/pr-staging-guard-test.cjs
       - name: Gateway staging preflight
