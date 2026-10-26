@@ -45,6 +45,20 @@
     --m-muted:#526176;--m-line:#D9E2EE;--m-soft:#FFF7D6;--m-gold:#A87608;
     --depth-card:var(--area-ui-shadow);--bar:#E4EAF3;
   }
+  /* Keep legacy font shorthands on the shared sans fallback when web fonts are unavailable. */
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) :is(.boq-section-head span,.boq-exec-head h2,.boq-project-heading h2,.boq-exec-main strong,.boq-pro-title b,.due-command-head h2,.boq-eyebrow,.boq-hero-copy h2,.boq-change-btn,.boq-total-block strong,.boq-summary-grid b,.boq-action,.boq-clear-btn,.boq-section-code,.boq-section-name,.boq-section-stats strong,.boq-row-amount strong) {
+    font-family:var(--display);
+  }
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) :is(.boq-no,.boq-title) {
+    font-family:var(--display)!important;
+  }
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) :is(.boq-check-filters button,.boq-expense-btn,.boq-health,.boq-pro-actions button,.due-quick button,.project-list-toolbar>button,.project-status-tabs button,.list-type-tabs button,.list-status-tabs button,.guarantee-mobile-tabs button,.guarantee-register-tools button) {
+    font-family:var(--body);
+  }
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) :is(.project-fold,.due-fold,.home-fold,.add-advanced,.report-focus-fold)>summary::after,
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) .boq-section-head[data-act]::after {
+    font-family:var(--display);
+  }
   :root:not([data-theme="dark"]) body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) {
     background-color:#F5F7FB!important;color:#172B4D;line-height:1.6;
   }
