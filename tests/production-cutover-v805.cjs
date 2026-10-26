@@ -30,14 +30,19 @@ assert(!/on:\s*\n\s*push:/m.test(y),'production cutover must not deploy directly
 for(const s of ['database_name','database_id','bucket_name','PRODUCTION_BINDINGS'])assert(capture.includes(s));
 assert(capture.includes("assert(!/staging/i.test(databaseName)"));
 assert(capture.includes("assert(!/staging/i.test(bucketName)"));
-// A workflow-level success does not prove a production deploy when the gate is closed.
-assert(y.includes('name: Production gate outcome (read-only)'));
-assert(y.includes('needs: [authorize, deploy-production]'));
-assert(y.includes('if: ${{ always() }}'));
-assert(y.includes('DEPLOY_RESULT: ${{ needs.deploy-production.result }}'));
-assert(y.includes('AUTHORIZED: ${{ needs.authorize.outputs.authorized }}'));
-assert(y.includes('**Deployment not performed**'));
-assert(y.includes('verify live SHA before claiming production is current'));
-assert(y.includes('>> "$GITHUB_STEP_SUMMARY"'));
-assert(y.includes('::notice title=AREA Ledger Production Gate::Deployment not performed'));
+// Separate read-only observer: never weaken the candidate staging infrastructure guard.
+const outcome=fs.readFileSync('.github/workflows/production-outcome-report.yml','utf8');
+for(const phrase of [
+  'workflows: ["AREA Ledger Production Cutover v805"]',
+  'types: [completed]',
+  'actions: read',
+  'github.rest.actions.listJobsForWorkflowRun',
+  "job.name === 'deploy-production'",
+  "deploy?.conclusion || 'missing'",
+  'NOT DEPLOYED / NOT VERIFIED',
+  'Production deployment NOT performed',
+  'confirm actual live SHA separately'
+])assert(outcome.includes(phrase),'Missing read-only production outcome evidence: '+phrase);
+assert(!/wrangler|secret put|d1 migrations|\bdeploy\s+--env\b/i.test(outcome),'Reporter must not mutate Cloudflare');
+assert(!/\bworkflow_dispatch:|\bpush:/m.test(outcome),'Reporter only observes cutover completion');
 console.log('PASS v805 production cutover contract');
