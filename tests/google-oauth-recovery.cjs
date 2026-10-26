@@ -31,7 +31,7 @@ function serviceWorker(){
  assert.equal(ctx.googleReturnUrl(returnReq,'https://ledger.test/index.html',env),'https://ledger.test/index.html');
  // Expired state must fail before token exchange or connection writes.
  let deletedExpiredState=0,tokenRequests=0;
- env.LEDGER_DB={prepare(sql){return {bind(){return {first:async()=>sql.startsWith('SELECT ledger_hash')?{ledgerHash:'synthetic',codeVerifier:'synthetic',returnUrl:'https://ledger.test/',expiresAt:Date.now()-1000}:null,
+ env.LEDGER_DB={batch(){},prepare(sql){return {bind(){return {first:async()=>sql.startsWith('SELECT ledger_hash')?{ledgerHash:'synthetic',codeVerifier:'synthetic',returnUrl:'https://ledger.test/',expiresAt:Date.now()-1000}:null,
   run:async()=>{if(sql.startsWith('DELETE FROM google_oauth_states'))deletedExpiredState++;return {};}}}}}};
  ctx.fetch=async()=>{tokenRequests++;throw Error('OAuth token endpoint must not be called for expired state');};
  const expired=await ctx.worker.fetch(new Request('https://ledger.test/v1/google/oauth/callback?code=synthetic&state=expired'),env,{});
