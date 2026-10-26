@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1104 Account clarity and change history
+
+- Adds a profile-level account and access summary that clearly identifies the current single-user setup and the UI-only owner/site mode.
+- Makes the existing recorded audit trail readable from the profile, with Thai action labels and honest limits on actor attribution and event coverage. No team sign-in is enabled.
+- Keeps financial records, calculations, storage identities, authentication state and the existing v1103 full-screen visual system unchanged. See ORG-READINESS-v1104.md.
+
 ## v1103 Six-part shared UX/UI system
 
 - Full-screen shell and floating profile controls keep the supplied reference; primary navigation announces the selected destination.
