@@ -24,6 +24,21 @@ function serviceWorker(){
  assert.equal(status.status,503);assert.equal((await status.json()).error,'GOOGLE_CONNECTION_READ_FAILED');
  const invalid=await ctx.worker.fetch(new Request('https://ledger.test/v1/google/oauth/callback'),env,{});
  assert.equal(invalid.status,400);assert.equal(invalid.headers.get('Cache-Control'),'no-store');
+ // P2: never let an OAuth callback redirect outside approved app origins.
+ const returnReq=new Request('https://ledger.test/v1/google/oauth/start');
+ for(const unsafe of ['https://attacker.invalid/callback','https://ledger.test.attacker.invalid/','//attacker.invalid/','javascript:alert(1)','http://ledger.test/'])
+  assert.equal(ctx.googleReturnUrl(returnReq,unsafe,env),'','unsafe Google OAuth return URL must be denied');
+ assert.equal(ctx.googleReturnUrl(returnReq,'https://ledger.test/index.html',env),'https://ledger.test/index.html');
+ // Expired state must fail before token exchange or connection writes.
+ let deletedExpiredState=0,tokenRequests=0;
+ env.LEDGER_DB={prepare(sql){return {bind(){return {first:async()=>sql.startsWith('SELECT ledger_hash')?{ledgerHash:'synthetic',codeVerifier:'synthetic',returnUrl:'https://ledger.test/',expiresAt:Date.now()-1000}:null,
+  run:async()=>{if(sql.startsWith('DELETE FROM google_oauth_states'))deletedExpiredState++;return {};}}}}}};
+ ctx.fetch=async()=>{tokenRequests++;throw Error('OAuth token endpoint must not be called for expired state');};
+ const expired=await ctx.worker.fetch(new Request('https://ledger.test/v1/google/oauth/callback?code=synthetic&state=expired'),env,{});
+ assert.equal(expired.status,400);assert.equal(expired.headers.get('Cache-Control'),'no-store');
+ assert((await expired.text()).includes('GOOGLE_STATE_EXPIRED'));
+ assert.equal(deletedExpiredState,1);assert.equal(tokenRequests,0);
+ console.log('PASS Google OAuth redirect allowlist and expired state fail-closed without token exchange');
  let calls=[];env.LEDGER_DB={batch(){},prepare(sql){return {bind(...args){return {first:async()=>sql.includes('google_oauth_states')?{ledgerHash:'ledger',codeVerifier:'verifier',returnUrl:'https://ledger.test/',expiresAt:Date.now()+60000}:null,run:async()=>{calls.push(sql);return {};}}}}}};
  ctx.fetch=async()=>new Response(JSON.stringify({error:'invalid_client',error_description:'must never be echoed synthetic-secret'}),{status:401});
  const failed=await ctx.worker.fetch(new Request('https://ledger.test/v1/google/oauth/callback?code=synthetic&state=synthetic'),env,{});
