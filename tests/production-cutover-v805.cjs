@@ -30,4 +30,14 @@ assert(!/on:\s*\n\s*push:/m.test(y),'production cutover must not deploy directly
 for(const s of ['database_name','database_id','bucket_name','PRODUCTION_BINDINGS'])assert(capture.includes(s));
 assert(capture.includes("assert(!/staging/i.test(databaseName)"));
 assert(capture.includes("assert(!/staging/i.test(bucketName)"));
+// A workflow-level success does not prove a production deploy when the gate is closed.
+assert(y.includes('name: Production gate outcome (read-only)'));
+assert(y.includes('needs: [authorize, deploy-production]'));
+assert(y.includes('if: ${{ always() }}'));
+assert(y.includes('DEPLOY_RESULT: ${{ needs.deploy-production.result }}'));
+assert(y.includes('AUTHORIZED: ${{ needs.authorize.outputs.authorized }}'));
+assert(y.includes('**Deployment not performed**'));
+assert(y.includes('verify live SHA before claiming production is current'));
+assert(y.includes('>> "$GITHUB_STEP_SUMMARY"'));
+assert(y.includes('::notice title=AREA Ledger Production Gate::Deployment not performed'));
 console.log('PASS v805 production cutover contract');
