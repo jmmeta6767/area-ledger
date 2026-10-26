@@ -12,5 +12,4 @@ function reply(pathname,html){
  }catch(_){return null;}
 }
 function fixtureRoute(origin,html){return route=>{const url=new URL(route.request().url());if(url.origin!==origin)return route.abort();const result=reply(url.pathname,html);return result?route.fulfill(result):route.abort();};}
-function fixtureHttp(html){return (request,response)=>{const result=reply(new URL(request.url,'http://fixture.test').pathname,html);response.statusCode=result?result.status:404;response.setHeader('Content-Type',result?result.contentType:'text/plain');response.end(result?result.body:'Fixture asset unavailable');};}
-module.exports={fixtureRoute,fixtureHttp,reply};
+module.exports={fixtureRoute,reply};
