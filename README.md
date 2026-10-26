@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1103 Six-part shared UX/UI system
+
+- Full-screen shell and floating profile controls keep the supplied reference; primary navigation announces the selected destination.
+- Shared reading sizes and touch targets extend through working views; voice readiness is visible and examples stay collapsed.
+- Backup separates local export, cloud sync and restore, with real busy/cancel/failure/success feedback and stale-copy awareness.
+- Financial calculations, data identities, receipt verification and save guards remain unchanged. See QA-ux-system-v1103.md.
+
 ## v1102 Consistent full-screen workspace
 
 - Uses one navy, gold and white presentation across Ledger and Payroll, with clearer headings, readable controls and consistent navigation/dialog actions.

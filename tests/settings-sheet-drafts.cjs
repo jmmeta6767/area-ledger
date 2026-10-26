@@ -70,6 +70,31 @@ const origin='https://sheet-drafts.test';
   }
   assert.equal(await page.evaluate(()=>JSON.stringify(S.tx)),await page.evaluate(()=>window.fixtureTransactions));
   console.log('PASS document dialogs keep independent header Close, footer Cancel/Save, keyboard focus and Escape');
+  await page.evaluate(()=>{
+   U.view='profile';U.sheet={kind:'backup'};U.portableBackupFeedback=null;S.lastBackup=0;
+   localStorage.setItem(KEY,JSON.stringify(S));committedState=localStorage.getItem(KEY);
+   window.backupCalls=0;window.originalPortable=backupPortableJson;
+   saveFile=async()=>{window.backupCalls++;return new Promise(resolve=>window.backupRelease=resolve);};render();
+  });
+  assert(await page.getByRole('heading',{name:'1. สำรองลงเครื่อง',exact:true}).isVisible());
+  assert(await page.getByRole('heading',{name:'2. ซิงค์คลาวด์',exact:true}).isVisible());
+  assert(await page.getByRole('heading',{name:'3. กู้คืนข้อมูล',exact:true}).isVisible());
+  await click('[data-act=backupFile]');await page.waitForFunction(()=>U.portableBackupBusy&&!!window.backupRelease);
+  for(const action of ['backupFile','copyBk']){assert(await page.locator('[data-act='+action+']').isDisabled());assert.equal(await page.locator('[data-act='+action+']').getAttribute('aria-busy'),'true');}
+  assert.equal(await page.locator('#backupLocalStatus').getAttribute('data-tone'),'pending');
+  assert.equal(await page.evaluate(()=>backupPortableAction('download')),false);assert.equal(await page.evaluate(()=>backupCalls),1);
+  await page.evaluate(()=>backupRelease(false));await page.waitForFunction(()=>!U.portableBackupBusy);
+  assert.equal(await page.locator('#backupLocalStatus').getAttribute('data-tone'),'warning');
+  assert.equal(await page.evaluate(()=>S.lastBackup),0);assert(await page.locator('[data-act=backupFile]').isEnabled());assert.equal(await page.locator('[data-act=backupFile]').getAttribute('aria-busy'),null);
+  await page.evaluate(()=>{backupPortableJson=async()=>{throw Error('Synthetic incomplete evidence');};});
+  await click('[data-act=backupFile]');await page.waitForFunction(()=>!U.portableBackupBusy&&U.portableBackupFeedback?.tone==='error');
+  assert.equal(await page.locator('#backupLocalStatus').getAttribute('data-tone'),'error');assert.equal(await page.evaluate(()=>S.lastBackup),0);assert.equal(await page.evaluate(()=>backupCalls),1);
+  await page.evaluate(()=>{backupPortableJson=originalPortable;saveFile=async()=>true;});
+  await click('[data-act=backupFile]');await page.waitForFunction(()=>!U.portableBackupBusy&&S.lastBackup>0);
+  assert.equal(await page.locator('#backupLocalStatus').getAttribute('data-tone'),'success');assert(await page.locator('[data-act=backupFile]').isEnabled());
+  assert.equal(await page.evaluate(()=>JSON.stringify(S.tx)),await page.evaluate(()=>window.fixtureTransactions));
+  await page.evaluate(()=>{S.dataRevision++;render();});assert.equal(await page.locator('#backupLocalStatus').getAttribute('data-tone'),'warning');assert((await page.locator('#backupLocalStatus').textContent()).includes('ข้อมูลล่าสุด'),'a changed ledger must not keep a stale backup-success state');
+  console.log('PASS backup exposes distinct local/cloud/restore sections, actual busy/duplicate/cancel/failure/success states and preserves financial records');
   await context.close();
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

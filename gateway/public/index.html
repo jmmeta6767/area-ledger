@@ -4168,7 +4168,7 @@ function defaultChartAccounts(){return[
 
 function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1102,"sha":"","environment":"source"};
+var APP_BUILD={"version":1103,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -5462,7 +5462,7 @@ function expenseVoiceReviewUpdate(){
 function expenseVoiceButtonText(){return U.expenseVoiceState==='starting'?'กำลังเปิดไมค์':U.expenseVoiceState==='listening'?'หยุดฟัง':U.expenseVoiceEnding?'กำลังปิดไมค์':'พูดรายการ';}
 function expenseVoiceStatusText(){
   if(U.expenseVoiceState==='command')return 'เติมข้อมูลจากคำสั่งแล้ว · ตรวจสอบก่อนบันทึก';
-  var x=U.expenseVoiceDiagnostic;if(!x)return '';
+  var x=U.expenseVoiceDiagnostic;if(!x)return expenseVoiceSupported()?'พร้อมพูด · แตะไมค์เพื่อเริ่ม':'พิมพ์คำสั่งแทนเสียงได้ · แตะพูดรายการเพื่อดูทางเลือก';
   if(U.expenseVoiceState==='starting')return 'กำลังเปิดไมค์ · รอเบราว์เซอร์ยืนยัน';
   if(U.expenseVoiceState==='listening')return 'กำลังฟังอยู่ · '+(U.expenseVoiceCapture&&U.expenseVoiceCapture.liveText?'ได้ยิน: '+U.expenseVoiceCapture.liveText:'พูดรายการแล้วหยุดพูด หรือแตะหยุดฟัง');
   if(U.expenseVoiceEnding)return 'กำลังประมวลผลเสียง · รอผลรอบนี้สักครู่';
@@ -5470,11 +5470,11 @@ function expenseVoiceStatusText(){
   return x.results?'พร้อมพูดใหม่ · ข้อมูลที่อ่านได้ยังอยู่ในฟอร์ม':'หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่';
 }
 function expenseVoiceDiagnosticText(){var x=U.expenseVoiceDiagnostic;return x?'v'+APP_BUILD.version+' · รอบ '+x.attempt+' · start='+(x.started?1:0)+' audio='+(x.audio?1:0)+' speech='+(x.speech?1:0)+' result='+x.results+' end='+(x.ended?1:0)+' · '+(x.code||'OK')+(x.nativeReason?' · '+x.nativeReason:'')+' · '+x.events.join(' > '):'';}
-function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-voice-status" role="status" aria-live="polite"'+(!U.expenseVoiceDiagnostic&&U.expenseVoiceState!=='command'?' hidden':'')+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
+function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-voice-status" role="status" aria-live="polite"'+' data-state="'+esc(U.expenseVoiceState||'ready')+'"'+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
 function expenseVoiceUiUpdate(){
   var button=document.querySelector('[data-act="expenseVoiceStart"]'),active=!!U.expenseVoiceRecognition;
   if(button){button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-label',expenseVoiceButtonText());var label=button.querySelector('span');if(label)label.textContent=expenseVoiceButtonText();var card=button.closest('.expense-voice-card');if(card)card.classList.toggle('listening',U.expenseVoiceState==='listening');}
-  var status=document.getElementById('expenseVoiceStatus');if(status){status.hidden=!U.expenseVoiceDiagnostic&&U.expenseVoiceState!=='command';status.textContent=expenseVoiceStatusText();}
+  var status=document.getElementById('expenseVoiceStatus');if(status){status.hidden=false;status.dataset.state=U.expenseVoiceState||'ready';status.textContent=expenseVoiceStatusText();}
   var detail=document.getElementById('expenseVoiceDiagnostic');if(detail)detail.textContent=expenseVoiceDiagnosticText();
 }
 function expenseVoiceEvent(event,code){var x=U.expenseVoiceDiagnostic;if(!x)return;if(event==='start')x.started=true;if(event==='audio')x.audio=true;if(event==='speech')x.speech=true;if(event==='result')x.results++;if(event==='end')x.ended=true;if(code)x.code=code;x.events=x.events.concat(event).slice(-12);expenseVoiceUiUpdate();}
@@ -5715,6 +5715,7 @@ function systemPresentation(title,view){
   var root=panel||main;
   root.querySelectorAll('input:not([type=hidden]),select,textarea').forEach(function(control,index){systemFieldLabel(control,root,index);});
   systemTablePresentation(root);systemReadableTerms(root);systemSelectionPresentation(root);
+  if(U.sheet&&U.sheet.kind==='backup')backupPortableUi(!!U.portableBackupBusy);
 }
 function systemClearFeedback(control){
   if(control&&control.dataset&&control.dataset.systemInvalid){control.removeAttribute('aria-invalid');delete control.dataset.systemInvalid;var description=(control.getAttribute('aria-describedby')||'').split(' ').filter(function(x){return x!=='system-field-error';});if(description.length)control.setAttribute('aria-describedby',description.join(' '));else control.removeAttribute('aria-describedby');}
@@ -6319,7 +6320,7 @@ function vAdd(){
   if(!S.projects.length)return '<div class="empty" style="margin-top:20px">ต้องมีโครงการก่อนจึงจะบันทึกรายการได้</div><div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการ</button></div>';
   if(!foreman)h+='<div class="seg add-type-seg" role="group" aria-label="ประเภทรายการ"><button class="out-c'+(d.type==='out'?' on':'')+'" data-act="setType" data-v="out" aria-pressed="'+(d.type==='out')+'">รายจ่าย</button><button class="in-c'+(d.type==='in'?' on':'')+'" data-act="setType" data-v="in" aria-pressed="'+(d.type==='in')+'">รายรับ</button></div>';
   var entryTools='';if(d.type==='out')entryTools+='<div class="expense-action-tools"><div class="expense-scan-card"><label for="expenseScanIn" aria-label="สแกนหรือเลือกรูปใบเสร็จ" title="สแกนหรือเลือกรูปใบเสร็จ">'+ic('scan')+'<span>สแกนบิล</span></label><input id="expenseScanIn" type="file" accept="image/*" multiple aria-label="เลือกภาพใบเสร็จเพื่ออ่านข้อมูล"></div><div class="expense-voice-card'+(U.expenseVoiceState==='listening'?' listening':'')+'"><button class="expense-voice-button" type="button" data-act="expenseVoiceStart" aria-pressed="'+!!U.expenseVoiceRecognition+'" aria-label="'+(U.expenseVoiceRecognition?expenseVoiceButtonText():'สั่งงานด้วยเสียง')+'" title="'+(U.expenseVoiceState==='listening'?'กำลังฟัง · แตะเพื่อหยุด':'สั่งงานด้วยเสียง')+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"></path></svg><span>'+expenseVoiceButtonText()+'</span></button><span class="expense-voice-sr" aria-live="polite">'+(U.expenseVoiceState==='listening'?'กำลังฟังอยู่ · แตะเพื่อหยุด · แอปไม่บันทึกเสียง':'สั่งงานด้วยเสียง · พูดรายการและยอดเงิน แล้วตรวจทานก่อนบันทึก · แอปไม่บันทึกเสียง · เสียงอาจถูกประมวลผลโดยบริการรู้จำเสียงของเบราว์เซอร์หรืออุปกรณ์')+'</span></div></div>'+(U.expenseScanBusy?'<div class="expense-scan-status"><b>'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%</b> · '+esc(U.expenseScanStage||'กำลังอ่านรูปและแยกหมวด')+'<div class="bar" style="margin-top:7px"><i style="width:'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%"></i></div></div>':'')+expenseScanStatusHtml(d)+(U.expenseBatchDraftAvailable?'<div class="expense-draft-recovery"><div><b>พบร่างที่ยังไม่ได้บันทึก</b><small>'+(U.expenseBatchDraft&&U.expenseBatchDraft.items?U.expenseBatchDraft.items.length:0)+' รายการ · กู้คืนเพื่อตรวจต่อ</small></div><button class="btn pri" data-act="expenseBatchDraftResume">กู้คืน</button><button class="btn" data-act="expenseBatchDraftDiscard">ลบร่าง</button></div>':'');
-  if(d.type==='out')entryTools+='<div class="voice-edit-help">'+(U.expenseVoiceTranscriptDraft===d&&U.expenseVoiceTranscript?'<div class="voice-last-command"><b>ข้อความที่ได้ยินล่าสุด</b><span>'+esc(U.expenseVoiceTranscript)+'</span>'+expenseVoiceChangeHtml(d)+'</div>':'<p>แตะไมค์พูดซ้ำเพื่อแก้ข้อมูลได้ เช่น “แก้ยอดเป็น 53,000” หรือ “เปลี่ยนรายการเป็นค่าแรงหลังคา”</p>')+'</div>';
+  if(d.type==='out')entryTools+='<div class="voice-edit-help">'+(U.expenseVoiceTranscriptDraft===d&&U.expenseVoiceTranscript?'<div class="voice-last-command"><b>ข้อความที่ได้ยินล่าสุด</b><span>'+esc(U.expenseVoiceTranscript)+'</span>'+expenseVoiceChangeHtml(d)+'</div>':'<details class="voice-command-examples"><summary>ตัวอย่างคำสั่งและการพูดแก้ข้อมูล</summary><p>แตะไมค์พูดซ้ำเพื่อแก้ข้อมูลได้ เช่น “แก้ยอดเป็น 53,000” หรือ “เปลี่ยนรายการเป็นค่าแรงหลังคา”</p></details>')+'</div>';
   if(U.expenseVoiceIssuesDraft===d&&U.expenseVoiceIssues&&U.expenseVoiceIssues.length)h+='<div id="expenseVoiceReview" class="expense-scan-result warning" role="alert">'+esc(U.expenseVoiceIssues.join(' · '))+'</div>';
   if(d.type==='out'&&d.photo&&d.ocrSource&&(!U.expenseScanMsg||U.expenseScanMsgDraft&&U.expenseScanMsgDraft!==d))h+='<div class="expense-scan-result"><b>AI/OCR กรอกค่าจากบิลให้แล้ว</b><br><span>ตรวจรูปบิลเทียบกับข้อมูลด้านล่างก่อนบันทึก · ระบบจะไม่บันทึกอัตโนมัติ</span></div>';
 
@@ -6354,7 +6355,7 @@ function vAdd(){
   h+='<div class="field"><span class="lbl">รูปใบเสร็จ</span>'+(d.photo?'<div class="photo"><img src="'+d.photo+'" alt="รูปใบเสร็จ"></div><div class="stack" style="margin-top:10px"><button class="btn" data-act="rmphoto">ลบรูป</button></div>':d.photoRef?'<div class="photo">'+(d.photoThumb?'<img src="'+d.photoThumb+'" alt="รูปใบเสร็จย่อ">':'')+'</div><div class="stack" style="margin-top:10px"><button class="btn" data-act="cloudPhotoOpen" data-key="'+esc(d.photoRef)+'" data-mime="'+esc(d.photoMime||'image/jpeg')+'">เปิดรูปต้นฉบับจาก R2</button><button class="btn" data-act="rmphoto">ลบรูปออกจากรายการ</button></div>':'<label class="btn" for="photoIn">'+ic('cam')+'ถ่ายรูปหรือเลือกรูป</label>')+'<input id="photoIn" type="file" accept="image/*" capture="environment"></div>';
   h+='<div class="field"><label for="note">หมายเหตุ</label><input id="note" data-f="note" type="text" placeholder="ไม่บังคับ" value="'+esc(d.note)+'"></div></div></details>';
   if(U.txSaveErrorDraft===d&&U.txSaveError)h+='<div class="expense-scan-result error" role="alert">'+esc(U.txSaveError)+'</div>';
-  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save"'+(U.saveLock?' disabled aria-busy="true"':'')+'>'+(d.id?'บันทึกการแก้ไข':'บันทึกรายการ')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore"'+(U.saveLock?' disabled':'')+'>บันทึกและเพิ่มอีก</button>')+'</div>';
+  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save"'+(U.saveLock?' disabled aria-busy="true"':'')+'>'+(U.saveLock?'กำลังบันทึก…':d.id?'บันทึกการแก้ไข':'บันทึกรายการ')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore"'+(U.saveLock?' disabled aria-busy="true"':'')+'>'+(U.saveLock?'กำลังบันทึก…':'บันทึกและเพิ่มอีก')+'</button>')+'</div>';
   return h+'</section>';
 }
 function prevText(d){
@@ -7744,17 +7745,38 @@ async function backupPortableJson(){
   e.portableReceiptImages=offloaded.length;
   return JSON.stringify(e,null,2);
 }
+function backupPortableFeedback(){
+  var feedback=U.portableBackupFeedback,stale=S.lastBackup&&+S.lastBackupRevision!==+S.dataRevision;
+  if(feedback&&(feedback.tone!=='success'||feedback.revision===+S.dataRevision))return feedback;
+  return {message:S.lastBackup?'สำรองล่าสุด: '+workspaceTime(S.lastBackup)+(stale?' · ควรสร้างสำเนาใหม่เพื่อให้ครอบคลุมข้อมูลล่าสุด':''):'ยังไม่ได้สร้างไฟล์สำรอง · กดดาวน์โหลดเพื่อเก็บสำเนาไว้กับคุณ',tone:stale?'warning':'ready'};
+}
+function backupPortableStatusHtml(){
+  var feedback=backupPortableFeedback();
+  return '<p id="backupLocalStatus" class="backup-local-status" role="status" aria-live="polite" data-tone="'+esc(feedback.tone)+'">'+esc(feedback.message)+'</p>';
+}
+function backupPortableUi(busy,message,tone){
+  if(message)U.portableBackupFeedback={message:message,tone:tone||'ready',revision:tone==='success'?+S.lastBackupRevision:+S.dataRevision};
+  var feedback=backupPortableFeedback(),status=document.getElementById('backupLocalStatus');
+  if(status&&feedback){status.textContent=feedback.message;status.dataset.tone=feedback.tone;}
+  document.querySelectorAll('[data-act="backupFile"],[data-act="copyBk"]').forEach(function(button){
+    if(busy){if(!button.hasAttribute('data-backup-label')){button.dataset.backupLabel=button.textContent;button.dataset.backupDisabled=String(button.disabled);}button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='กำลังเตรียมข้อมูล…';}
+    else if(button.hasAttribute('data-backup-label')){button.textContent=button.dataset.backupLabel;button.disabled=button.dataset.backupDisabled==='true';button.removeAttribute('aria-busy');delete button.dataset.backupLabel;delete button.dataset.backupDisabled;}
+  });
+}
 async function backupPortableAction(mode){
   if(U.portableBackupBusy)return false;
   U.portableBackupBusy=true;
+  backupPortableUi(true,'กำลังเตรียมสำเนาข้อมูลและรูปใบเสร็จ…','pending');
   var revision=+S.dataRevision||0;
   try{
     var payload=await backupPortableJson();
     if(mode==='download'){
       var ok=await saveFile('AREA-Ledger-backup-'+today()+'.json',new Blob([payload],{type:'application/json'}));
+      if(!ok)backupPortableUi(true,'ยังไม่ได้บันทึกไฟล์สำรอง · กดดาวน์โหลดเพื่อลองใหม่','warning');
       if(!ok)return false;
       S.lastBackup=Date.now();S.lastBackupRevision=revision;
-      if(!persist({metaOnly:true}))return false;
+      if(!persist({metaOnly:true})){backupPortableUi(true,'ได้ไฟล์สำรองแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ · เก็บไฟล์ที่ดาวน์โหลดไว้','warning');return false;}
+      backupPortableUi(true,'บันทึกไฟล์สำรองพร้อมรูปใบเสร็จแล้ว · '+workspaceTime(S.lastBackup),'success');
       render();toast('บันทึกไฟล์สำรองพร้อมรูปหลักฐานครบแล้ว · เก็บไฟล์เพื่อกู้คืนหรือย้ายเครื่อง');
     }else{
       var box=document.getElementById('bkbox');
@@ -7762,15 +7784,18 @@ async function backupPortableAction(mode){
       box.value=payload;
       doCopy('bkbox',function(){
         S.lastBackup=Date.now();S.lastBackupRevision=revision;
-        if(!persist({metaOnly:true}))return;
+        if(!persist({metaOnly:true})){backupPortableUi(true,'คัดลอกสำเนาแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ','warning');return;}
+        backupPortableUi(true,'คัดลอกข้อมูลสำรองพร้อมรูปใบเสร็จแล้ว · '+workspaceTime(S.lastBackup),'success');
         render();toast('คัดลอกข้อมูลสำรองพร้อมรูปหลักฐานครบแล้ว');
       });
+      if(U.portableBackupFeedback&&U.portableBackupFeedback.tone==='pending')backupPortableUi(true,'เตรียมข้อมูลสำรองแล้ว · หากคัดลอกไม่ได้ ให้เลือกข้อความแล้วคัดลอกเอง','ready');
     }
     return true;
   }catch(e){
-    toast('สำรองไม่ได้: รูปใบเสร็จ R2 ยังไม่ครบในเครื่อง หรือข้อมูลเปลี่ยน · ยังไม่บันทึกว่าได้สำรองแล้ว');
+    var reason=String(e&&e.message||''),message=/RECEIPT_EVIDENCE/.test(reason)?'สำรองไม่ได้ · รูปใบเสร็จต้นฉบับยังไม่ครบในเครื่อง ตรวจรูปแล้วลองใหม่':/BACKUP_STATE_CHANGED/.test(reason)?'สำรองไม่ได้ · ข้อมูลเปลี่ยนระหว่างเตรียมสำเนา กดดาวน์โหลดอีกครั้ง':'สำรองไม่ได้ · ข้อมูลเดิมยังอยู่ กดดาวน์โหลดเพื่อลองใหม่';
+    backupPortableUi(true,message,'error');toast(message);
     return false;
-  }finally{U.portableBackupBusy=false;}
+  }finally{U.portableBackupBusy=false;backupPortableUi(false);}
 }
 function hostMigrationReadiness(){
   var h=stateHealth(S),rev=Math.max(0,+S.dataRevision||0),backupRev=Number.isInteger(+S.lastBackupRevision)?+S.lastBackupRevision:-1;
@@ -8606,13 +8631,13 @@ function sheetHtml(){
   }else if(sh.kind==='backup'){
     var csi=cloudSyncInfo(),csm=csi.meta;
     b='<h3>สำรองและกู้คืนข้อมูล</h3><p class="muted">เลือกวิธีเก็บสำเนาข้อมูล หรือเรียกข้อมูลที่เคยสำรองกลับมาใช้</p>'+
-      '<section class="backup-section"><h4>1. เก็บไฟล์สำรองไว้กับคุณ</h4><p>ดาวน์โหลดไฟล์ .json เก็บไว้ใน Files, iCloud หรือคอมพิวเตอร์ ใช้ย้ายเครื่องหรือกู้คืนข้อมูลภายหลัง</p><div class="stack"><button class="btn pri" data-act="backupFile">ดาวน์โหลดไฟล์สำรอง (.json)</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button></div><details><summary>ดูข้อมูลในไฟล์สำรอง</summary><label for="bkbox">ข้อมูลสำหรับคัดลอกหรือเก็บเป็นไฟล์</label><textarea class="csv" id="bkbox" readonly>'+esc((S.tx||[]).some(function(t){return t.photoRef&&!/^data:image\//i.test(String(t.photo||''));})?'มีรูปใบเสร็จบน R2: กดดาวน์โหลดหรือคัดลอกข้อมูลสำรองเพื่อรวมรูปต้นฉบับจาก IndexedDB ให้ครบก่อนใช้งานไฟล์':backupJson())+'</textarea></details></section>'+
-      '<section class="backup-section"><h4>2. สำรองและซิงก์บนคลาวด์</h4><p>เก็บสำเนาบน Cloudflare เมื่อเปิดใช้งาน ข้อมูลในเครื่องยังใช้ทำงานออฟไลน์ได้</p><div class="kv"><span>สถานะคลาวด์</span><b class="'+(U.cloudConflict?'out':csi.enabled?'in':'')+'">'+esc(csi.label)+'</b></div>'+
-      (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(csm.savedAt)+'</small></div>':'')+
+      '<section class="backup-section"><h4>1. สำรองลงเครื่อง</h4><p>ดาวน์โหลดไฟล์ .json พร้อมรูปใบเสร็จ เก็บใน Files, iCloud หรือคอมพิวเตอร์ เพื่อกู้คืนหรือย้ายเครื่อง</p>'+backupPortableStatusHtml()+'<div class="stack"><button class="btn pri" data-act="backupFile">ดาวน์โหลดไฟล์สำรอง (.json)</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button></div><details><summary>ดูข้อมูลในไฟล์สำรอง</summary><label for="bkbox">ข้อมูลสำหรับคัดลอกหรือเก็บเป็นไฟล์</label><textarea class="csv" id="bkbox" readonly>'+esc((S.tx||[]).some(function(t){return t.photoRef&&!/^data:image\//i.test(String(t.photo||''));})?'มีรูปใบเสร็จบน R2: กดดาวน์โหลดหรือคัดลอกข้อมูลสำรองเพื่อรวมรูปต้นฉบับจาก IndexedDB ให้ครบก่อนใช้งานไฟล์':backupJson())+'</textarea></details></section>'+
+      '<section class="backup-section"><h4>2. ซิงค์คลาวด์</h4><p>ซิงค์ข้อมูลระหว่างเครื่องนี้กับ Cloudflare เมื่อเปิดใช้งาน · ควรเก็บไฟล์สำรองลงเครื่องแยกไว้ด้วย</p><div class="kv"><span>สถานะคลาวด์</span><b class="'+(U.cloudConflict?'out':csi.enabled?'in':'')+'">'+esc(csi.label)+'</b></div>'+
+      (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(workspaceTime(csm.savedAt))+'</small></div>':'')+
       '<div class="stack">'+(!csi.enabled?'<button class="btn pri" data-act="cloudEnable">เปิดสำรองบนคลาวด์</button>':'<button class="btn pri'+(U.confirm==='cloudPushForce'?' dng sure':'')+'" data-act="cloudPush">'+(U.confirm==='cloudPushForce'?'ยืนยันแทนที่ข้อมูลบนคลาวด์ด้วยข้อมูลเครื่องนี้':'ส่งข้อมูลเครื่องนี้ขึ้นคลาวด์')+'</button><button class="btn'+(U.confirm==='cloudPull'?' dng sure':'')+'" data-act="cloudPull">'+(U.confirm==='cloudPull'?'ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์':'นำข้อมูลคลาวด์มาใช้ในเครื่องนี้')+'</button><button class="btn" data-act="cloudHistory">ดูประวัติสำรองบนคลาวด์</button>')+'</div>'+
       '<details><summary>ย้ายเครื่องและตัวเลือกคลาวด์เพิ่มเติม</summary><p>รหัสกู้คืนใช้เข้าถึงข้อมูลคลาวด์ชุดเดิม เก็บเป็นความลับและอย่าส่งให้ผู้อื่น</p><div class="stack">'+(csi.enabled?'<button class="btn" data-act="cloudCopyKey">คัดลอกรหัสสำหรับย้ายเครื่อง</button><button class="btn" data-act="cloudDisable">หยุดซิงก์อัตโนมัติ</button><button class="btn" data-act="cloudAcceptance">ตรวจการเชื่อมต่อคลาวด์</button><button class="btn" data-act="cloudFilesMigrate">เก็บรูปใบเสร็จบนคลาวด์ (R2)</button><button class="btn'+(U.confirm==='cloudRestorePrevious'?' dng sure':'')+'" data-act="cloudRestorePrevious">'+(U.confirm==='cloudRestorePrevious'?'ยืนยันย้อนข้อมูลคลาวด์เป็นรุ่นก่อนหน้า':'กู้ข้อมูลคลาวด์รุ่นก่อนหน้า')+'</button>':'')+
       '<div class="field"><label for="cloudKeyImport">รหัสกู้คืนจากเครื่องเดิม</label><input id="cloudKeyImport" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางรหัสกู้คืนที่เก็บไว้"></div><button class="btn" data-act="cloudUseKey">เชื่อมข้อมูลคลาวด์ด้วยรหัสนี้</button><input id="cloudKeyBox" value="'+esc(csi.key||'')+'" readonly style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true"></div>'+(csi.enabled&&csm.hit?'<p class="muted">รุ่นข้อมูลบนคลาวด์: '+csm.revision+'</p>':'')+'</details></section>'+
-      '<section class="backup-section"><h4>3. กู้คืนจากไฟล์สำรอง</h4><p>เลือกไฟล์ .json ที่เคยดาวน์โหลด ระบบจะให้ตรวจข้อมูลและยืนยันก่อนแทนที่ข้อมูลในเครื่องนี้</p><button class="btn" data-act="restoreOpen">เลือกไฟล์เพื่อกู้คืน</button></section><button class="btn" data-act="closeSheet">ปิด</button>';
+      '<section class="backup-section"><h4>3. กู้คืนข้อมูล</h4><p>เลือกไฟล์ .json ที่เคยดาวน์โหลด ระบบจะให้ตรวจข้อมูลและยืนยันก่อนแทนที่ข้อมูลในเครื่องนี้</p><button class="btn" data-act="restoreOpen">เลือกไฟล์เพื่อกู้คืน</button></section><button class="btn" data-act="closeSheet">ปิด</button>';
   }else if(sh.kind==='restore'){
     b='<h3>กู้คืนจากไฟล์สำรอง</h3><p class="muted">เลือกไฟล์ .json ที่เคยสำรองไว้ ระบบจะตรวจข้อมูลก่อนให้ยืนยันแทนที่ข้อมูลในเครื่องนี้</p><section class="backup-section"><h4>เลือกข้อมูลที่จะกู้คืน</h4><label class="btn pri" for="restoreFile">เลือกไฟล์สำรอง .json</label><input id="restoreFile" type="file" accept=".json,application/json"><div class="muted" role="status" style="margin-top:8px">'+esc(U.restoreInfo||'ยังไม่ได้เลือกไฟล์')+'</div><details><summary>ใช้ข้อมูลที่คัดลอกไว้แทนไฟล์</summary><label for="rsbox">วางข้อมูลสำรองทั้งหมด</label><textarea class="csv" id="rsbox" placeholder="วางข้อมูลสำรองที่คัดลอกไว้ที่นี่">'+esc(U.rsText||'')+'</textarea></details></section><details class="backup-section"><summary>ตรวจการย้ายข้อมูลเพิ่มเติม</summary><div class="stack"><button class="btn" data-act="migrationDrillCheck">ตรวจความพร้อมก่อนย้ายข้อมูล</button><button class="btn" data-act="migrationCertificateOpen">ดูผลตรวจการย้ายข้อมูล</button></div></details>'+restoreComparisonHtml()+'<div class="stack"><button class="btn" data-act="restorePreview">ตรวจเทียบข้อมูลก่อนกู้คืน</button><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'ตรวจและกู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div><p class="muted">เว็บที่จะรับข้อมูล: '+esc(location.origin)+'</p>';
   }else if(sh.kind==='migrationCertificate'){
@@ -8977,7 +9002,7 @@ function render(){
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
     if(t[0]==='x')return;
-    if(t[0]==='add')nav+='<button class="add preview-add'+(v==='add'?' on':'')+'" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>'+(v==='add'?'กำลังเพิ่ม':'เพิ่มรายการ')+'</span></button>';
+    if(t[0]==='add')nav+='<button class="add preview-add'+(v==='add'?' on':'')+'" data-act="newTx"'+(v==='add'?' aria-current="page"':'')+' aria-label="เพิ่มรายการ">'+ic('plus')+'<span>'+(v==='add'?'กำลังเพิ่ม':'เพิ่มรายการ')+'</span></button>';
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='home'?urgentCount():0),act=t[0]==='boq'?'bottomBoq':(t[0]==='list'?'openList':'go');nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+(t[0]==='profile'?ic(t[1]):areaMenuIcon(t[0],t[1]))+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
@@ -9877,7 +9902,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1102&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1103&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;

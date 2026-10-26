@@ -38,7 +38,11 @@ async function uiNextChecks(page,width){
   await page.evaluate(v=>{U.view=v;U.sheet=null;U.appMenu=false;render();scrollTo(0,0);document.activeElement?.blur();},view);
   const errors=[],check=(ok,message)=>{if(!ok)errors.push(message);};
   let geometry={};
+  check(await page.locator('body').evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16),'working pages must retain readable body typography');
+  check(await page.locator('.nav button[aria-current=page]').count()===(view==='docs'?0:1),'bottom navigation must announce its current section without falsely selecting a different page');
   if(view==='add'){
+   check(await page.locator('#expenseVoiceStatus').isVisible(),'voice must expose its ready state before the first attempt');
+   check(await page.locator('.voice-command-examples').evaluate(el=>!el.open),'voice examples must start collapsed to keep the form focused');
    geometry=await page.locator('#amt').evaluate(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect(),wrap=el.closest('.amt').getBoundingClientRect();return {fontSize:parseFloat(s.fontSize),borders:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth].map(parseFloat),width:r.width,wrapperWidth:wrap.width};});
    check(geometry.fontSize>=32,'amount must retain its large money-entry hierarchy');
    check(geometry.borders.every(n=>n===0),'amount input must not draw another border inside its money wrapper');

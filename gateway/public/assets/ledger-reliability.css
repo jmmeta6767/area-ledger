@@ -28,7 +28,7 @@
 }
 
 
-/* AREA Ledger banking UI finish — UI-next v1102. Screen only; ledger values,
+/* AREA Ledger banking UI finish — UI-next v1103. Screen only; ledger values,
    financial status colors, routes, storage, supplied artwork and A4 paper stay intact. */
 @media screen {
   :root:not([data-theme="dark"]) body[data-view] {
@@ -76,6 +76,25 @@
   }
   :root:not([data-theme="dark"]) body[data-view] :is(.muted,.voice-edit-help,.voice-mic-diagnostic,.chart-context) {
     color:#526176;
+  }
+  /* Shared reading, controls and truthful operation feedback across all working views. */
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) {font-size:16px!important}
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) :is(.field>label,.field>.lbl,.system-input-label,.add-section-title) {font-size:15px!important;line-height:1.55}
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) :is(.voice-edit-help,.expense-voice-status,.backup-section>p,.settings-group>summary small,.project-list-toolbar small) {font-size:14px!important;line-height:1.6}
+  body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]) :is(.btn,.gbtn,.chip,.seg button,.project-hub-actions button,.profile-actions button) {min-height:48px!important;touch-action:manipulation}
+  body[data-view] .backup-local-status {padding:12px;border-radius:12px;background:#F0F4FA;color:#214D79;overflow-wrap:anywhere}
+  body[data-view] .backup-local-status[data-tone="success"] {background:#EDF8F1;color:#216342;border-inline-start:4px solid #216342}
+  body[data-view] .backup-local-status:is([data-tone="error"],[data-tone="warning"]) {background:#FFF2EF;color:#973B2B;border-inline-start:4px solid #973B2B}
+  body[data-view] .voice-command-examples summary {min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+  body[data-view] .voice-command-examples summary::after {content:"⌄";margin-inline-start:auto;font-size:20px;line-height:1}
+  body[data-view] .voice-command-examples[open]>summary::after {transform:rotate(180deg)}
+  body[data-view] .expense-voice-status[data-state="listening"] {border-inline-start:4px solid #A87608}
+  body[data-view] button[aria-busy="true"] {cursor:wait;opacity:.72}
+  body[data-view="projects"] .project-status-tabs button {min-height:48px!important;font-size:14px!important}
+  body[data-view="projects"] .project-status-tabs button span {font-size:12px!important}
+  @media(min-width:360px) {
+    body[data-view="projects"] .project-status-tabs {grid-template-columns:repeat(4,minmax(0,1fr))!important}
+    body[data-view="projects"] .project-status-tabs button {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 3px!important}
   }
   /* Stable, full-width navigation. Profile controls sit over its real cover. */
   :root:not([data-theme="dark"]) body[data-view] .app-social-topbar {
