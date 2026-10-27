@@ -1687,3 +1687,11 @@ Registration: `sw.js?v=321`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
+
+## v1107 Business registers
+
+- Adds separate management registers for stock, machinery/equipment assets, and lease contracts.
+- Tracks stock receipts/issues/counts using moving-average cost; exports stock movements, assets, and leases with the accounting workbook.
+- Presents debts, receivables/payables, cash, and bank balances by linking to existing Ledger records and the private loan register.
+- New register data is migrated, backed up, restored, checked by Data Health, and mirrored through D1 collections.
+- Stock/asset values do not post journal entries, depreciation, or profit changes automatically. Actual rent payments remain expense transactions.
