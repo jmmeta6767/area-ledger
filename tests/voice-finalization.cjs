@@ -30,6 +30,19 @@ test('manual stop accepts the delayed final, then 20 new taps replace the amount
  assert.equal(JSON.stringify(c.S),before);assert.equal(x.writes.length,0);
  c.expenseVoiceUndo();assert.equal(c.U.draft.amount,'518');
 });
+test('iOS interim speech survives speechend or explicit stop as a reviewable unsaved draft',()=>{
+ for(const endMode of ['speechend','manual-stop']){
+  const x=fixture(),{c}=x,ledger=JSON.stringify(c.S);assert(c.expenseVoiceStart());const engine=x.engines[0],row=[{transcript:'ค่าทราย 500'}];row.isFinal=false;engine.onresult({results:[row]});
+  if(endMode==='speechend')engine.onspeechend();else c.expenseVoiceStart();engine.onend();
+  assert.equal(c.U.draft.amount,'500',endMode);assert.equal(c.U.draft.sub,'ทราย',endMode);assert.equal(c.U.expenseVoiceProvisional,true);assert(c.expenseVoiceStatusText().includes('ข้อความระหว่างฟัง'));assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
+ }
+});
+test('recognition considers multiple hypotheses and exposes an editable transcript for correction',()=>{
+ const x=fixture(),{c}=x,ledger=JSON.stringify(c.S);assert(c.expenseVoiceStart());const engine=x.engines[0],row=[{transcript:'ค่าทราย',confidence:.95},{transcript:'ค่าทราย 500',confidence:.1}];row.isFinal=true;engine.onresult({results:[row]});engine.onend();
+ assert.equal(engine.maxAlternatives,5);assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(JSON.stringify(c.U.expenseVoiceAlternatives),JSON.stringify(['ค่าทราย 500','ค่าทราย']));
+ const form=c.vAdd();assert(form.includes('ตรวจหรือแก้ข้อความที่ได้ยิน'));assert(form.includes('data-act="expenseVoiceAlternative"'));assert(form.includes('value="ค่าทราย 500"')||form.includes('>ค่าทราย 500</textarea>'));
+ assert(c.expenseVoiceSelectAlternative(1));assert.equal(c.U.expenseVoiceCommandText,'ค่าทราย');assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
+});
 test('later manual edits survive pending voice completion, timeout and the next correction undo',()=>{
  const edits={type:'in',amount:'700',cat:'ค่าแรง',sub:'รายการที่กรอกเอง',subCustom:'รายละเอียดที่กรอกเอง',partner:'ร้านที่กรอกเอง',date:'2026-01-02'};
  for(const stage of ['listening','closing'])for(const [field,value]of Object.entries(edits)){

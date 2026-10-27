@@ -1,5 +1,12 @@
 # AREA Ledger V2 — Master v800
 
+## v1106 Voice capture quality and transcript correction
+
+- Uses up to five browser speech hypotheses and favors alternatives that identify an amount and item; shows the heard text for correction before use.
+- Retains a parseable interim transcript when iOS ends without a final result after speech ends or a manual stop. It remains an unsaved draft for review.
+- Shows whether microphone, speech detection and transcript events are progressing. Keyboard dictation or typing can correct a misheard phrase; the app still does not record or upload audio.
+- Physical iPhone retest is required before production.
+
 ## v1105 Queued repeated voice capture
 
 - A second tap during iOS microphone shutdown queues one new capture. It starts when the previous native session ends, keeps the unsaved draft, and allows another correction without saving.
