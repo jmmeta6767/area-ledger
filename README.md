@@ -1,5 +1,11 @@
 # AREA Ledger V2 — Master v800
 
+## v1105 Queued repeated voice capture
+
+- A second tap during iOS microphone shutdown queues one new capture. It starts when the previous native session ends, keeps the unsaved draft, and allows another correction without saving.
+- Shows that the restart was queued, prevents duplicate queued sessions, and cancels the queue on timeout, navigation, cancellation, or draft replacement. Adds regression coverage for native event order and no-save behavior.
+- Physical iPhone retest remains required before production release.
+
 ## v1104 Account clarity and change history
 
 - Adds a profile-level account and access summary that clearly identifies the current single-user setup and the UI-only owner/site mode.
