@@ -1926,6 +1926,26 @@ textarea{resize:vertical}
 .review-queue-row{display:flex;flex-direction:column;gap:6px;width:100%;min-width:0;min-height:44px;text-align:left;padding:14px;margin:8px 0;border:1px solid #d5dadd;border-radius:14px;background:#fff;overflow-wrap:anywhere}.review-queue-row b{font-variant-numeric:tabular-nums}.pilot-steps li{margin:12px 0}.update-panel{padding:12px;border:1px solid #d5dadd;border-radius:14px}.update-panel button{min-height:44px}
 
 .google-workspace-sheet .stack{position:static!important;inset:auto!important}.google-sync-scope{margin-top:14px;min-width:0}.google-sync-scope .seg{margin:8px 0}.google-sync-scope .seg button{min-width:0;min-height:44px;white-space:normal;overflow-wrap:anywhere}.google-sync-scope button[aria-pressed="true"]{background:var(--color-primary-soft,#fff7d6);font-weight:700;box-shadow:inset 0 0 0 2px #D7AE30}.google-sync-results{min-width:0;margin-top:12px}.google-sync-results ul{list-style:none;padding:0;display:grid;gap:8px}.google-sync-results li{min-width:0;padding:10px;border:1px solid var(--color-border,#e5e7eb);border-radius:12px;display:grid;gap:5px;overflow-wrap:anywhere}.google-sync-results li small{overflow-wrap:anywhere}.google-sync-results .btn{white-space:normal}
+/* v1110 Facebook-inspired interaction layer: familiar mobile surfaces adapted for ledger work */
+.app-social-topbar{min-height:64px;box-shadow:0 1px 8px rgba(16,37,62,.10)}
+.app-topbar-brand{font-weight:800;letter-spacing:-.035em}
+.app-topbar-action{transition:transform .14s ease,background-color .14s ease,box-shadow .14s ease}
+.app-topbar-action:active,.app-menu-btn:active{transform:scale(.96)}
+.app-topbar-action[data-act="newTx"]{background:#fff;border:1px solid rgba(255,255,255,.42);box-shadow:0 2px 7px rgba(7,30,61,.18)}
+.mtabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:5px 2px 9px;margin:12px 0 8px;scroll-snap-type:x proximity}
+.mtabs::-webkit-scrollbar{display:none}
+.mtabs button{flex:0 0 auto;min-height:40px;padding:8px 15px;border:1px solid #dbe2e8;border-radius:999px;background:#fff;color:#354454;font-weight:700;white-space:nowrap;scroll-snap-align:start}
+.mtabs button.on{background:#e8f2ff;border-color:#8db7e8;color:#104f93;box-shadow:inset 0 0 0 1px rgba(16,79,147,.08)}
+.home-recent-head{position:sticky;top:calc(60px + env(safe-area-inset-top,0px));z-index:8;background:var(--bg);padding:12px 2px 8px}
+.mgroup{margin:8px 0 14px;padding:0 10px;background:var(--surface);border:1px solid var(--line);border-radius:17px;box-shadow:0 2px 8px rgba(22,42,62,.045);overflow:hidden}
+.mgh{margin:0 -10px;padding:12px 14px;background:color-mix(in srgb,var(--surface) 88%,var(--amber) 12%)}
+.mitem{min-height:68px;padding:11px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 72%,transparent);transition:background .14s ease}
+.mitem:last-child{border-bottom:0}
+.mitem:active{background:color-mix(in srgb,var(--surface) 88%,var(--c3) 12%)}
+.nav{box-shadow:0 -4px 18px rgba(16,37,62,.08);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.nav button.on{font-weight:750}
+@media(prefers-reduced-motion:reduce){.app-topbar-action,.mitem{transition:none}}
+@media(min-width:700px){.mgroup{padding-inline:14px}.mgh{margin-inline:-14px;padding-inline:18px}}
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
