@@ -1695,3 +1695,10 @@ use the current `main` tree. It was not used or rebuilt for this release.
 - Presents debts, receivables/payables, cash, and bank balances by linking to existing Ledger records and the private loan register.
 - New register data is migrated, backed up, restored, checked by Data Health, and mirrored through D1 collections.
 - Stock/asset values do not post journal entries, depreciation, or profit changes automatically. Actual rent payments remain expense transactions.
+
+
+## v1108 Organization expenses
+
+- Added a company-wide expense register for tax/fees, support, and other overhead, separate from project costs.
+- Tax settlements debit the selected tax liability and cash without double-counting profit-and-loss expense; unpaid tax expenses use the dedicated tax payable account.
+- Added organization summary/export and a separately verified Google Sheets target included in active-project batch sync.
