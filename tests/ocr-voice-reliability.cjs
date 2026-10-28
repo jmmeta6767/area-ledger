@@ -54,7 +54,7 @@ test('repeated speech edits only named fields and retains unresolved warnings an
 });
 test('backup choices separate file cloud and restore without changing data or removing confirmation gates',()=>{
  const info=c.cloudSyncInfo,before=JSON.stringify(c.S);c.U.sheet={kind:'backup'};
- for(const enabled of [false,true]){c.cloudSyncInfo=()=>({enabled,label:enabled?'ซิงก์แล้ว':'ปิด',meta:{hit:enabled,revision:3,savedAt:'2026-10-17'},key:''});let h=c.sheetHtml();for(const title of ['1. เก็บไฟล์สำรองไว้กับคุณ','2. สำรองและซิงก์บนคลาวด์','3. กู้คืนจากไฟล์สำรอง'])assert(h.includes(title));for(const action of ['backupFile','copyBk','restoreOpen','cloudUseKey','closeSheet'])assert(h.includes('data-act="'+action+'"'));assert(h.includes('id="bkbox"'));assert(h.includes('id="cloudKeyImport"'));if(enabled){for(const action of ['cloudPush','cloudPull','cloudHistory','cloudCopyKey','cloudDisable','cloudAcceptance','cloudFilesMigrate','cloudRestorePrevious'])assert(h.includes('data-act="'+action+'"'));c.U.confirm='cloudPull';h=c.sheetHtml();assert(h.includes('ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์'));assert(h.includes('dng sure'));}else assert(h.includes('data-act="cloudEnable"'));c.U.confirm=null;}
+ for(const enabled of [false,true]){c.cloudSyncInfo=()=>({enabled,label:enabled?'ซิงก์แล้ว':'ปิด',meta:{hit:enabled,revision:3,savedAt:'2026-10-17'},key:''});let h=c.sheetHtml();for(const title of ['1. สำรองลงเครื่อง','2. ซิงค์คลาวด์','3. กู้คืนข้อมูล'])assert(h.includes(title));for(const action of ['backupFile','copyBk','restoreOpen','cloudUseKey','closeSheet'])assert(h.includes('data-act="'+action+'"'));assert(h.includes('id="bkbox"'));assert(h.includes('id="cloudKeyImport"'));if(enabled){for(const action of ['cloudPush','cloudPull','cloudHistory','cloudCopyKey','cloudDisable','cloudAcceptance','cloudFilesMigrate','cloudRestorePrevious'])assert(h.includes('data-act="'+action+'"'));c.U.confirm='cloudPull';h=c.sheetHtml();assert(h.includes('ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์'));assert(h.includes('dng sure'));}else assert(h.includes('data-act="cloudEnable"'));c.U.confirm=null;}
  c.cloudSyncInfo=info;c.U.sheet=null;assert.equal(JSON.stringify(c.S),before);
 });
 test('fragmented Thai currency suffix from iPhone speech keeps rental amount and category',()=>{
@@ -75,13 +75,18 @@ test('short material expenses without baht split the item and amount, including 
  for(const text of ['ค่าทราย 500','ค่าทราย500','ค่าทราย ๕๐๐','ค่าทราย ห้าร้อย','ค่าปูน 1,250','ค่าเหล็ก สองพัน']){const x=c.expenseVoiceParse(text);assert.equal(x.cat,'ค่าของ');assert.equal(x.amount,/ปูน/.test(text)?'1250':/เหล็ก/.test(text)?'2000':'500');assert.equal(x.sub,/ปูน/.test(text)?'ปูน':/เหล็ก/.test(text)?'เหล็ก':'ทราย');}
  for(const text of ['ค่าทราย 5 คิว','ค่าทราย วันที่ 17/10/2569','ค่าทราย -500','ค่าทราย-500','ค่าทราย 5 คิว 500','ค่าทราย 50,00'])assert.equal(c.expenseVoiceParse(text).amount,'',text);
 });
-test('fresh recognizer per tap waits for end and never starts automatically',()=>{
+test('fresh recognizer per queued correction waits for end and never overlaps native capture',()=>{
  c.expenseVoiceStop();let instance,constructed=0,starts=0;c.window.webkitSpeechRecognition=function(){constructed++;instance=this;this.start=()=>{starts++;this.onstart();};this.stop=()=>{};this.abort=()=>{};};delete c.window.SpeechRecognition;c.U.view='add';c.U.draft=c.newDraft('out','p');
- for(let i=0;i<10;i++){assert(c.expenseVoiceStart());const result=instance.onresult;result({results:[[{transcript:'ค่าทราย '+(500+i)}]]});assert.equal(c.U.expenseVoiceState,'closing');assert(c.expenseVoiceStart());assert.equal(starts,i+1);instance.onend();assert.equal(c.U.draft.amount,String(500+i));assert.equal(starts,i+1,'end must not start a new recording');result({results:[[{transcript:'ค่าทราย 9999'}]]});assert.equal(c.U.draft.amount,String(500+i));}
- assert.equal(constructed,10);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.S.tx.length,0);
+ for(let i=0;i<10;i++){
+  if(i===0)assert(c.expenseVoiceStart());const current=instance,result=current.onresult;
+  result({results:[[{transcript:'ค่าทราย '+(500+i)}]]});assert.equal(c.U.expenseVoiceState,'closing');
+  if(i<9){assert(c.expenseVoiceStart());assert.equal(starts,i+1,'second tap queues without overlapping');assert.equal(constructed,i+1);}
+  current.onend();assert.equal(c.U.draft.amount,String(500+i));assert.equal(starts,i<9?i+2:i+1);assert.equal(c.U.expenseVoiceEnding,null);
+  result({results:[[{transcript:'ค่าทราย 9999'}]]});assert.equal(c.U.draft.amount,String(500+i));
+ }
+ assert.equal(constructed,10);assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);
  c.U.draft=c.newDraft('out','p');c.expenseVoiceStart();instance.onresult({results:[[{transcript:'ค่าทราย 700'}]]});timers.get(c.U.expenseVoiceReleaseTimer)();assert.equal(c.U.draft.amount,'700');assert.equal(c.U.expenseVoiceDiagnostic.code,'END_TIMEOUT');assert(c.expenseVoiceStart());assert.equal(constructed,12);c.expenseVoiceStop();
-});
-test('missing native start and missing result release mic and expose metadata only',()=>{
+});test('missing native start and missing result release mic and expose metadata only',()=>{
  c.window.SpeechRecognition=function(){this.start=()=>{};this.stop=()=>{};this.abort=()=>{};};c.U.view='add';c.U.draft=c.newDraft('out','p');c.U.draft.amount='123';assert(c.expenseVoiceStart());assert.equal(c.U.expenseVoiceState,'starting');assert.equal(c.U.expenseVoiceDiagnostic.started,false);timers.get(c.U.expenseVoiceTimer)();assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.U.expenseVoiceDiagnostic.code,'NO_START_EVENT');assert.equal(c.U.draft.amount,'123');assert(c.U.expenseVoiceEnding);c.U.expenseVoiceEnding.onend();
  assert(c.expenseVoiceStart());c.U.expenseVoiceRecognition.onstart();assert.equal(c.U.expenseVoiceState,'listening');timers.get(c.U.expenseVoiceTimer)();assert.equal(c.U.expenseVoiceState,'closing');timers.get(c.U.expenseVoiceReleaseTimer)();assert.equal(c.U.expenseVoiceDiagnostic.code,'END_TIMEOUT');assert.equal(c.U.draft.amount,'123');assert(!c.expenseVoiceDiagnosticText().includes('123'));assert(!('transcript' in c.U.expenseVoiceDiagnostic));
 });

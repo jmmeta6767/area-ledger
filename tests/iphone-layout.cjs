@@ -89,7 +89,7 @@ async function fixture(page,view,count){
     if(version==='after'&&width===390&&mode==='browser'){
       const hasRealCss=await page.evaluate(()=>({
         injected:!!document.querySelector('style[data-ledger-ui-real]'),
-        theme:getComputedStyle(document.documentElement).getPropertyValue('--area-ui-navy').trim()
+        theme:getComputedStyle(document.body).getPropertyValue('--area-ui-navy').trim()
       }));
       assert(hasRealCss.injected&&hasRealCss.theme,'Banking CSS must be applied to browser layout tests');
       for(const v of ['home','list','add','projects','project','boq','due','guarantees','report','print','docs','procurement','doclist','quoteprint','profile']){

@@ -39,6 +39,7 @@ jobs:
           node tests/menu-icons-visual.cjs
           node tests/payroll-layout.cjs
           node tests/reliability-ui.cjs
+          node tests/settings-sheet-drafts.cjs
           node tests/iphone-card-keyboard.cjs
           node tests/iphone-project-keyboard.cjs
           node tests/iphone-project-create-keyboard.cjs

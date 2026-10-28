@@ -7,7 +7,7 @@ function corsOrigin(r,env){const o=r.headers.get('Origin')||'';if(!o)return '';c
 function protocolOk(r){return r.headers.get('X-AREA-Gateway-Version')===PROTOCOL_VERSION;}
 function ledgerAccessKey(r){const k=String(r.headers.get('X-AREA-Ledger-Key')||'').trim();return /^[A-Za-z0-9_-]{32,128}$/.test(k)?k:'';}
 async function sha256Hex(text){const b=new TextEncoder().encode(String(text||'')),h=await crypto.subtle.digest('SHA-256',b);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
-const LEDGER_COLLECTIONS=['projects','tx','boq','guarantees','loans','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts','quotes','bills','receipts'];
+const LEDGER_COLLECTIONS=['projects','tx','boq','guarantees','loans','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts','quotes','bills','receipts','inventoryItems','inventoryMovements','businessAssets','leaseContracts'];
 function d1Ready(env){return !!(env&&env.LEDGER_DB&&typeof env.LEDGER_DB.prepare==='function'&&typeof env.LEDGER_DB.batch==='function');}
 function canonicalValue(v){if(Array.isArray(v))return v.map(canonicalValue);if(v&&typeof v==='object'){const o={};Object.keys(v).sort().forEach(k=>{o[k]=canonicalValue(v[k]);});return o;}return v;}
 function d1StateParts(state){const meta={},collections={};Object.keys(state||{}).forEach(k=>{if(LEDGER_COLLECTIONS.indexOf(k)<0)meta[k]=state[k];});LEDGER_COLLECTIONS.forEach(k=>{collections[k]=Array.isArray(state&&state[k])?state[k]:[];});return {meta,collections};}
@@ -79,13 +79,15 @@ async function googleEnsureRootFolder(env,ledgerHash,conn,token){
   await env.LEDGER_DB.prepare('UPDATE google_connections SET root_drive_folder_id=?,updated_at=? WHERE ledger_hash=?').bind(f.id,now,ledgerHash).run();return f.id;
 }
 function googleCleanProject(body){
-  const p=body&&body.project||{},id=cleanFileMeta(p.id,160),name=cleanFileMeta(p.name,180);if(!id||!name)throw Error('GOOGLE_PROJECT_INVALID');
-  const rows=Array.isArray(body&&body.rows)?body.rows:[];if(rows.length>1500)throw Error('GOOGLE_SYNC_TOO_LARGE');return {id,name,rows,finance:googleCleanFinance(body&&body.finance)};
-}
-function googleCleanFinance(finance){
-  if(finance===undefined)return null;if(!finance||finance.version!==1)throw Error('GOOGLE_FINANCE_INVALID');const out={version:1};
-  for(const [key,width,max] of [['expenses',15,10001],['income',15,10001],['costs',3,1001],['profit',3,1001]]){const rows=finance[key];if(!Array.isArray(rows)||!rows.length||rows.length>max)throw Error(rows&&rows.length>max?'GOOGLE_SYNC_TOO_LARGE':'GOOGLE_FINANCE_INVALID');out[key]=rows.map(row=>{if(!Array.isArray(row)||row.length!==width)throw Error('GOOGLE_FINANCE_INVALID');return row.map(value=>{if(typeof value==='number'&&Number.isFinite(value))return value;if(typeof value==='string'&&value.length<=4000)return value;throw Error('GOOGLE_FINANCE_INVALID');});});}return out;
-}
+   const p=body&&body.project||{},id=cleanFileMeta(p.id,160),name=cleanFileMeta(p.name,180),scope=body&&body.scope==='organization'?'organization':'project';if(!id||!name||scope==='organization'&&id!=='__organization__'||scope==='project'&&id==='__organization__')throw Error('GOOGLE_PROJECT_INVALID');
+   const rows=Array.isArray(body&&body.rows)?body.rows:[];if(rows.length>1500)throw Error('GOOGLE_SYNC_TOO_LARGE');return {id,name,scope,rows,finance:googleCleanFinance(body&&body.finance,scope)};
+ }
+function googleCleanFinance(finance,scope){
+   if(finance===undefined)return null;if(!finance||finance.version!==1)throw Error('GOOGLE_FINANCE_INVALID');const out={version:1};
+   for(const [key,width,max] of [['expenses',15,10001],['income',15,10001],['costs',3,1001],['profit',3,1001]]){const rows=finance[key];if(!Array.isArray(rows)||!rows.length||rows.length>max)throw Error(rows&&rows.length>max?'GOOGLE_SYNC_TOO_LARGE':'GOOGLE_FINANCE_INVALID');out[key]=rows.map(row=>{if(!Array.isArray(row)||row.length!==width)throw Error('GOOGLE_FINANCE_INVALID');return row.map(value=>{if(typeof value==='number'&&Number.isFinite(value))return value;if(typeof value==='string'&&value.length<=4000)return value;throw Error('GOOGLE_FINANCE_INVALID');});});}
+   if(scope==='organization'){for(const [key,width,max] of [['organizationExpenses',12,10001],['organizationSummary',3,1001]]){const rows=finance[key];if(!Array.isArray(rows)||!rows.length||rows.length>max)throw Error(rows&&rows.length>max?'GOOGLE_SYNC_TOO_LARGE':'GOOGLE_FINANCE_INVALID');out[key]=rows.map(row=>{if(!Array.isArray(row)||row.length!==width)throw Error('GOOGLE_FINANCE_INVALID');return row.map(value=>{if(typeof value==='number'&&Number.isFinite(value))return value;if(typeof value==='string'&&value.length<=4000)return value;throw Error('GOOGLE_FINANCE_INVALID');});});}}
+   return out;
+ }
 // Presentation only. Snapshot values retain their existing accounting owners.
 function googlePresentationTabs(project,tabs,at=new Date()){
   const result=tabs.map(tab=>{
@@ -95,21 +97,15 @@ function googlePresentationTabs(project,tabs,at=new Date()){
   });
   if(project.finance){
     const time=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(at);
-    result.unshift({title:'ภาพรวมโครงการ',values:[
-      ['AREA Ledger','ภาพรวมโครงการ',''],['โครงการ',project.name,''],['ซิงค์ล่าสุด',time,'เวลาไทย (UTC+7)'],
-      ['แหล่งข้อมูล','AREA Ledger','แก้ข้อมูลในแอปแล้วซิงค์ใหม่ ข้อมูลในชีทไม่ส่งกลับเข้าแอป'],
-      ['รายการ','จำนวนเงิน (บาท)','ความหมาย'],...project.finance.profit.slice(1).map(row=>[row[0],row[1]===''?'รอรับรายได้':row[1],row[2]]),
-      ['การอ่านต้นทุน','','เงินประกันทั้งหมดเป็นยอดอ้างอิง ไม่ให้นำมาบวกซ้ำกับต้นทุนรวม'],
-      ['ดูรายการเงินจริง','ค่าใช้จ่าย / รายรับ','กรองตามวันที่ หมวด ผู้รับเงิน และสถานะ'],
-      ['ดูแผนและประมาณการ','BOQ / สรุปหมวด / ค่าวัสดุ / ค่าแรง','BOQ เป็นแผน ไม่ใช่รายจ่ายที่บันทึกจริง']
-    ]});
+    if(project.scope==='organization')result.unshift({title:'ภาพรวมกิจการ',values:[['AREA Ledger','ภาพรวมกิจการ',''],['ขอบเขต','ค่าใช้จ่ายองค์กร','แยกจากต้นทุนโครงการ'],['งวดข้อมูล',project.finance.organizationSummary[1][1]||'',''],['ซิงค์ล่าสุด',time,'เวลาไทย (UTC+7)'],['แหล่งข้อมูล','AREA Ledger','แก้ข้อมูลในแอปแล้วซิงค์ใหม่ ข้อมูลในชีทไม่ส่งกลับเข้าแอป'],...project.finance.organizationSummary]});
+    else result.unshift({title:'ภาพรวมโครงการ',values:[['AREA Ledger','ภาพรวมโครงการ',''],['โครงการ',project.name,''],['ซิงค์ล่าสุด',time,'เวลาไทย (UTC+7)'],['แหล่งข้อมูล','AREA Ledger','แก้ข้อมูลในแอปแล้วซิงค์ใหม่ ข้อมูลในชีทไม่ส่งกลับเข้าแอป'],['รายการ','จำนวนเงิน (บาท)','ความหมาย'],...project.finance.profit.slice(1).map(row=>[row[0],row[1]===''?'รอรับรายได้':row[1],row[2]]),['การอ่านต้นทุน','','เงินประกันทั้งหมดเป็นยอดอ้างอิง ไม่ให้นำมาบวกซ้ำกับต้นทุนรวม'],['ดูรายการเงินจริง','ค่าใช้จ่าย / รายรับ','กรองตามวันที่ หมวด ผู้รับเงิน และสถานะ'],['ดูแผนและประมาณการ','BOQ / สรุปหมวด / ค่าวัสดุ / ค่าแรง','BOQ เป็นแผน ไม่ใช่รายจ่ายที่บันทึกจริง']]});
   }
-  if(project.finance){const order=['ภาพรวมโครงการ','กำไร','ต้นทุน','ค่าใช้จ่าย','รายรับ','BOQ','สรุปหมวด','ค่าวัสดุ','ค่าแรง'];return result.sort((a,b)=>order.indexOf(a.title)-order.indexOf(b.title)).map((tab,index)=>({...tab,index}));}
+  if(project.finance){const order=project.scope==='organization'?['ภาพรวมกิจการ','กำไร','ต้นทุน','ค่าใช้จ่ายองค์กร','สรุปองค์กร']:['ภาพรวมโครงการ','กำไร','ต้นทุน','ค่าใช้จ่าย','รายรับ','BOQ','สรุปหมวด','ค่าวัสดุ','ค่าแรง'];return result.sort((x,y)=>order.indexOf(x.title)-order.indexOf(y.title)).map((tab,index)=>({...tab,index}));}
   return result;
-}
+ }
 function googleSheetColor(hex){return {red:parseInt(hex.slice(1,3),16)/255,green:parseInt(hex.slice(3,5),16)/255,blue:parseInt(hex.slice(5,7),16)/255};}
 function googleSheetStyleRequests(tab,sheet,detail){
-  const id=sheet.sheetId,count=tab.values.length,width=tab.values[0].length,overview=tab.title==='ภาพรวมโครงการ',tx=['ค่าใช้จ่าย','รายรับ'].includes(tab.title),summary=['ต้นทุน','กำไร'].includes(tab.title);
+  const id=sheet.sheetId,count=tab.values.length,width=tab.values[0].length,overview=['ภาพรวมโครงการ','ภาพรวมกิจการ'].includes(tab.title),tx=['ค่าใช้จ่าย','รายรับ'].includes(tab.title),orgTx=tab.title==='ค่าใช้จ่ายองค์กร',summary=['ต้นทุน','กำไร','สรุปองค์กร'].includes(tab.title);
   const color=googleSheetColor,navy=color('#083F79'),yellow=color('#FFF7D6'),white=color('#FFFFFF'),text=color('#20242B'),gray=color('#F7F8FA');
   const range=(r0,r1,c0=0,c1=width)=>({sheetId:id,startRowIndex:r0,endRowIndex:r1,startColumnIndex:c0,endColumnIndex:c1}),requests=[];
   const paint=(r,format)=>{
@@ -117,14 +113,14 @@ function googleSheetStyleRequests(tab,sheet,detail){
     if(format.textFormat?.foregroundColor){format.textFormat.foregroundColorStyle={rgbColor:format.textFormat.foregroundColor};delete format.textFormat.foregroundColor;}
     if(r.endRowIndex>r.startRowIndex&&r.endColumnIndex>r.startColumnIndex)requests.push({repeatCell:{range:r,cell:{userEnteredFormat:format},fields:Object.keys(format).map(k=>'userEnteredFormat.'+k).join(',')}});
   };
-  const tabColor=overview?'#FFC928':tab.title==='ค่าใช้จ่าย'?'#D97706':tab.title==='รายรับ'?'#15803D':summary?'#083F79':'#93B4D7';
+  const tabColor=overview?'#FFC928':tab.title==='ค่าใช้จ่าย'||orgTx?'#D97706':tab.title==='รายรับ'?'#15803D':summary?'#083F79':'#93B4D7';
   const positioned=Number.isInteger(tab.index);
   requests.push({updateSheetProperties:{properties:{sheetId:id,...(positioned?{index:tab.index}:overview?{index:0}:{}),tabColorStyle:{rgbColor:color(tabColor)},gridProperties:{frozenRowCount:overview?0:1,frozenColumnCount:tx?1:0,hideGridlines:true}},fields:(positioned||overview?'index,':'')+'tabColorStyle,gridProperties.frozenRowCount,gridProperties.frozenColumnCount,gridProperties.hideGridlines'}});
   // Clear stale style only inside the managed table; preserve other columns and tabs.
   paint(range(0,sheet.gridProperties.rowCount),{backgroundColor:white,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:text,bold:false},verticalAlignment:'MIDDLE',horizontalAlignment:'LEFT',wrapStrategy:'WRAP',numberFormat:{type:'TEXT',pattern:'@'}});
   paint(range(0,1),{backgroundColor:navy,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:white,bold:true},horizontalAlignment:'CENTER'});
-  const header=overview?4:0;
-  if(overview)paint(range(4,5),{backgroundColor:navy,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:white,bold:true},horizontalAlignment:'CENTER'});
+  const orgOverview=tab.title==='ภาพรวมกิจการ',header=orgOverview?5:overview?4:0;
+  if(overview)paint(range(header,header+1),{backgroundColor:navy,textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:white,bold:true},horizontalAlignment:'CENTER'});
   const bands=detail.bandedRanges||[],overlap=bands.find(b=>(b.range.startColumnIndex||0)<width&&(b.range.endColumnIndex??width)>0);
   if(!overview&&count>1){
     const band={range:range(0,count),rowProperties:{headerColorStyle:{rgbColor:navy},firstBandColorStyle:{rgbColor:white},secondBandColorStyle:{rgbColor:gray}}};
@@ -141,14 +137,15 @@ function googleSheetStyleRequests(tab,sheet,detail){
     // Retain existing user filters/sorts when growing or shrinking the snapshot.
     requests.push({setBasicFilter:{filter:{...previous,range:range(0,Math.max(2,count),0,Math.max(width,previous.range?.endColumnIndex||0))}}});
   }
-  const sizes=overview?[265,220,440]:tx?[120,155,290,210,145,130,120,145,145,145,120,145,145,280,190]:summary?[275,180,440]:tab.title==='สรุปหมวด'?[110,280,120,150,150,150]:[110,210,300,120,110,90,145,160,260,190];
+  const sizes=overview?[265,220,440]:tx?[120,155,290,210,145,130,120,145,145,145,120,145,145,280,190]:orgTx?[120,180,260,300,240,145,140,120,135,180,280,190]:summary?[275,180,440]:tab.title==='สรุปหมวด'?[110,280,120,150,150,150]:[110,210,300,120,110,90,145,160,260,190];
   sizes.slice(0,width).forEach((pixelSize,i)=>requests.push({updateDimensionProperties:{range:{sheetId:id,dimension:'COLUMNS',startIndex:i,endIndex:i+1},properties:{pixelSize},fields:'pixelSize'}}));
   requests.push({autoResizeDimensions:{dimensions:{sheetId:id,dimension:'ROWS',startIndex:0,endIndex:count}}});
   requests.push({updateDimensionProperties:{range:{sheetId:id,dimension:'ROWS',startIndex:header,endIndex:header+1},properties:{pixelSize:40},fields:'pixelSize'}});
-  const money=overview||summary?[1]:tx?[4,7,8,9,10,11,12]:tab.title==='สรุปหมวด'?[3,4,5]:[6,7];
-  for(const col of money)if(col<width)paint(range(overview?5:1,overview?count-3:count,col,col+1),{numberFormat:{type:'NUMBER',pattern:'#,##0.00;[Red](#,##0.00)'},horizontalAlignment:'RIGHT'});
+  const money=overview||summary?[1]:tx?[4,7,8,9,10,11,12]:orgTx?[5]:tab.title==='สรุปหมวด'?[3,4,5]:[6,7];
+  const moneyStart=orgOverview?7:overview?5:1,moneyEnd=orgOverview?count:overview?count-3:count;
+  for(const col of money)if(col<width)paint(range(moneyStart,moneyEnd,col,col+1),{numberFormat:{type:'NUMBER',pattern:'#,##0.00;[Red](#,##0.00)'},horizontalAlignment:'RIGHT'});
   if(!overview&&!summary&&!tx&&width>=6){const col=tab.title==='สรุปหมวด'?2:4;paint(range(1,count,col,col+1),{numberFormat:{type:'NUMBER',pattern:col===2?'#,##0':'#,##0.00'},horizontalAlignment:'RIGHT'});}
-  if(tx&&count>1)paint(range(1,count,0,1),{numberFormat:{type:'DATE',pattern:'dd/mm/yyyy'}});
+  if((tx||orgTx)&&count>1)paint(range(1,count,0,1),{numberFormat:{type:'DATE',pattern:'dd/mm/yyyy'}});
   if(overview)paint(range(0,1),{textFormat:{fontFamily:'Arial',fontSize:15,foregroundColor:white,bold:true}});
   tab.values.forEach((row,i)=>{
     if(i<=header)return;
@@ -175,7 +172,7 @@ function googleSheetStyleRequests(tab,sheet,detail){
   return requests;
 }
 function googleProjectChartRequests(resolved){
-  const overview=resolved.find(x=>x.tab.title==='ภาพรวมโครงการ'),cost=resolved.find(x=>x.tab.title==='ต้นทุน');if(!overview)return [];
+  const overview=resolved.find(x=>['ภาพรวมโครงการ','ภาพรวมกิจการ'].includes(x.tab.title)),cost=resolved.find(x=>x.tab.title==='ต้นทุน');if(!overview)return [];
   const requests=[],existing=overview.detail.charts||[],owned=existing.filter(c=>String(c.spec?.altText||'').startsWith('AREA_LEDGER_CHART_'));
   const source=(sheetId,start,end,col)=>({sourceRange:{sources:[{sheetId,startRowIndex:start,endRowIndex:end,startColumnIndex:col,endColumnIndex:col+1}]}});
   const definitions=[],rows=overview.tab.values,row=label=>rows.findIndex(r=>r[0]===label);
@@ -183,8 +180,8 @@ function googleProjectChartRequests(resolved){
     if(start<0||end<=start)return;
     definitions.push({key,spec:{title,subtitle,altText:'AREA_LEDGER_CHART_'+key,fontName:'Arial',backgroundColorStyle:{rgbColor:googleSheetColor('#FFFFFF')},titleTextFormat:{fontSize:14,bold:true,foregroundColorStyle:{rgbColor:googleSheetColor('#083F79')}},basicChart:{chartType:type,legendPosition:'NO_LEGEND',headerCount:0,axis:[{position:'BOTTOM_AXIS',title:type==='BAR'?'จำนวนเงิน (บาท)':''},{position:'LEFT_AXIS',title:type==='BAR'?'หมวดรายจ่าย':'จำนวนเงิน (บาท)'}],domains:[{domain:source(sheetId,start,end,0)}],series:[{series:source(sheetId,start,end,1),targetAxis:type==='BAR'?'BOTTOM_AXIS':'LEFT_AXIS',colorStyle:{rgbColor:googleSheetColor(accent)},dataLabel:{type:'DATA'}}]}}});
   }
-  define('FINANCE','มูลค่าสัญญา รายรับจริง และต้นทุน','ยอดจาก AREA Ledger ณ เวลาซิงค์',overview.sheet.sheetId,row('มูลค่าสัญญารวมอนุมัติ'),row('ต้นทุนรวม')+1,'COLUMN','#083F79');
-  define('PROFIT','กำไรคาดการณ์ และกำไรสุทธิ',typeof rows[row('กำไร/ขาดทุนสุทธิ')]?.[1]==='number'?'กำไรสุทธิอ้างอิงรายรับที่ได้รับจริง':'ยังไม่มีรายรับจริง จึงยังไม่แสดงแท่งกำไรสุทธิ',overview.sheet.sheetId,row('กำไรคาดการณ์'),row('กำไร/ขาดทุนสุทธิ')+1,'COLUMN','#D99A00');
+  if(overview.tab.title==='ภาพรวมกิจการ'){define('ORGRESULTS','รายได้ ค่าใช้จ่าย และกำไรบริษัท','ผลรวมกิจการในงวด · แยกจากกำไรแต่ละโครงการ',overview.sheet.sheetId,row('รายได้บริษัท'),row('ภาษี / ค่าธรรมเนียมองค์กร'),'COLUMN','#083F79');define('ORGEXPENSES','ค่าใช้จ่ายองค์กรแยกหมวด','ค่าใช้จ่ายภาษี ค่าสนับสนุน และรายการอื่นของงวด',overview.sheet.sheetId,row('ภาษี / ค่าธรรมเนียมองค์กร'),row('ชำระภาษีค้าง'),'COLUMN','#D97706');}
+  else{define('FINANCE','มูลค่าสัญญา รายรับจริง และต้นทุน','ยอดจาก AREA Ledger ณ เวลาซิงค์',overview.sheet.sheetId,row('มูลค่าสัญญารวมอนุมัติ'),row('ต้นทุนรวม')+1,'COLUMN','#083F79');define('PROFIT','กำไรคาดการณ์ และกำไรสุทธิ',typeof rows[row('กำไร/ขาดทุนสุทธิ')]?.[1]==='number'?'กำไรสุทธิอ้างอิงรายรับที่ได้รับจริง':'ยังไม่มีรายรับจริง จึงยังไม่แสดงแท่งกำไรสุทธิ',overview.sheet.sheetId,row('กำไรคาดการณ์'),row('กำไร/ขาดทุนสุทธิ')+1,'COLUMN','#D99A00');}
   const categoryEnd=cost?.tab.values.findIndex(r=>r[0]==='รายจ่ายที่บันทึก')??-1;
   if(cost&&categoryEnd>1)define('CATEGORIES','ต้นทุนรายจ่ายแยกตามหมวด','ยอดก่อน VAT รวมรายการที่ยังค้าง ไม่รวมแถวสรุปและเงินประกันอ้างอิง',cost.sheet.sheetId,1,categoryEnd,'BAR','#267A60');
   // Place newly created charts below tables and user charts. Preserve manual positions on resync.
@@ -253,17 +250,18 @@ async function googleVerifyProjectSnapshot(token,spreadsheetId,tabs){
  if(!Array.isArray(ranges)||ranges.length!==tabs.length)throw Error('GOOGLE_SYNC_VERIFY_FAILED');
  for(let i=0;i<tabs.length;i++){const expected=tabs[i].values,actual=ranges[i].values||[];for(let row=0;row<expected.length;row++)for(let col=0;col<expected[row].length;col++){const a=(actual[row]||[])[col]??'',e=googleStoredCell(tabs[i],row,col,expected[row][col]);if(typeof e==='number'?typeof a!=='number'||!Number.isFinite(a)||Math.abs(a-e)>0.000001:String(a)!==String(e))throw Error('GOOGLE_SYNC_VERIFY_FAILED');}}
  const count=title=>Math.max(0,(tabs.find(tab=>tab.title===title)?.values.length||1)-1);
- return {matched:true,counts:{boq:count('BOQ'),expenses:count('ค่าใช้จ่าย'),income:count('รายรับ')}};
+ return {matched:true,counts:{boq:count('BOQ'),expenses:count('ค่าใช้จ่าย'),income:count('รายรับ'),organizationExpenses:count('ค่าใช้จ่ายองค์กร')}};
 }
 async function googleSyncProject(env,ledgerHash,body){
   const project=googleCleanProject(body),token=await googleAccessToken(env,ledgerHash),asset=await googleEnsureProjectAssets(env,ledgerHash,project,token),data=googleSheetRows(project,project.rows);
-  const tabs=[{title:'BOQ',values:data.boq},{title:'สรุปหมวด',values:data.summary},{title:'ค่าวัสดุ',values:data.material},{title:'ค่าแรง',values:data.labor}];
-  if(project.finance)for(const [key,title] of [['expenses','ค่าใช้จ่าย'],['income','รายรับ'],['costs','ต้นทุน'],['profit','กำไร']])tabs.push({title,values:project.finance[key]});
-  const presentedTabs=googlePresentationTabs(project,tabs);
+  const organizationScope=project.scope==='organization',tabs=organizationScope?[]:[{title:'BOQ',values:data.boq},{title:'สรุปหมวด',values:data.summary},{title:'ค่าวัสดุ',values:data.material},{title:'ค่าแรง',values:data.labor}];
+   if(project.finance&&organizationScope){tabs.push({title:'ต้นทุน',values:project.finance.costs},{title:'กำไร',values:project.finance.profit},{title:'ค่าใช้จ่ายองค์กร',values:project.finance.organizationExpenses},{title:'สรุปองค์กร',values:project.finance.organizationSummary});}
+   else if(project.finance)for(const [key,title] of [['expenses','ค่าใช้จ่าย'],['income','รายรับ'],['costs','ต้นทุน'],['profit','กำไร']])tabs.push({title,values:project.finance[key]});
+   const presentedTabs=googlePresentationTabs(project,tabs);
   await googleWriteProjectSnapshot(token,asset.spreadsheetId,presentedTabs,project);
   const verification=body&&body.verify===true?await googleVerifyProjectSnapshot(token,asset.spreadsheetId,presentedTabs):null;
   const hash=await sha256Hex(JSON.stringify({id:project.id,name:project.name,rows:project.rows,finance:project.finance})),now=new Date().toISOString();await env.LEDGER_DB.prepare('UPDATE google_project_links SET last_sync_hash=?,last_sync_at=?,updated_at=? WHERE ledger_hash=? AND project_id=?').bind(hash,now,now,ledgerHash,project.id).run();
-  return {ok:true,verification,projectId:project.id,rows:data.boq.length-1,expenseRows:project.finance?project.finance.expenses.length-1:0,financeSynced:!!project.finance,summaryRows:data.summary.length-1,lastSyncAt:now,...asset};
+  return {ok:true,verification,projectId:project.id,rows:organizationScope?0:data.boq.length-1,expenseRows:organizationScope?0:project.finance?project.finance.expenses.length-1:0,organizationExpenseRows:organizationScope&&project.finance?Math.max(0,project.finance.organizationExpenses.length-1):0,financeSynced:!!project.finance,summaryRows:organizationScope?0:data.summary.length-1,lastSyncAt:now,...asset};
 }
 
 function parseGoogleUploadDataUrl(value){

@@ -1,12 +1,12 @@
 /* Real DOM, synthetic projects, blocked external requests. No live account writes. */
-const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert/strict');
+const fs=require('fs'),path=require('path'),assert=require('assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright'),axe=process.env.AXE_SOURCE||require.resolve('axe-core/axe.min.js');
 const html=fs.readFileSync('gateway/public/index.html','utf8').replace(/<script\b[^>]*src=[^>]*><\/script>/g,'').replace(/\nboot\(\);/,'\n'),out=path.resolve(process.env.LAYOUT_OUTPUT||'layout-evidence');fs.mkdirSync(out,{recursive:true});
-const server=http.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');r.end(html);});
-(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://localhost:'+server.address().port,browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})}),violations=[];
+const {fixtureRoute}=require('./helpers/ui-fixture-assets.cjs');const origin='https://workspace-ux.test';
+(async()=>{const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})}),violations=[];
 async function auditState(page,view,width){if(width!==390)return;const a=await page.evaluate(()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}}));violations.push(...a.violations.map(v=>({view,width,id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,html:n.html,summary:n.failureSummary}))})));fs.writeFileSync(path.join(out,'v1087-accessibility.json'),JSON.stringify(violations,null,2));console.log('AUDIT',view,a.violations.map(v=>v.id+':'+v.nodes.length).join(','));}
 try{for(const width of (process.env.QA_WIDTHS?process.env.QA_WIDTHS.split(',').map(Number):[320,375,390,430,768,1280])){
- const context=await browser.newContext({viewport:{width,height:844},serviceWorkers:'block',reducedMotion:'reduce'}),page=await context.newPage();await page.route('**/*',r=>r.request().url().startsWith(origin)?r.continue():r.abort());await page.goto(origin);await page.addScriptTag({path:axe});
+ const context=await browser.newContext({viewport:{width,height:844},serviceWorkers:'block',reducedMotion:'reduce'}),page=await context.newPage();await page.route('**/*',fixtureRoute(origin,html));await page.goto(origin);await page.addScriptTag({path:axe});
  await page.evaluate(()=>{S=emptyState();S.ui.wallpaper=false;S.business.legalName='บริษัท ตัวอย่างการก่อสร้าง จำกัด';S.updatedAt=Date.parse('2026-10-17T10:00:00Z');S.projects=[{id:'p',name:'โครงการตัวอย่างสำหรับตรวจข้อความไทยยาวและการใช้งาน',status:'active',contract:90000,budget:60000}];S.tx=[{id:'t',pid:'p',type:'out',amount:54000,date:today(),cat:'ค่าแรง',sub:'ค่าแรงงานหลังคา',partner:'ช่างทดสอบ',paid:true,pay:'transfer'}];U.homePid='p';U.pid='p';U.boqProjectPid='p';U.dueProjectPid='p';U.guaranteeProjectPid='p';U.docProjectPid='p';U.draft=newDraft('out','p');U.draft.pid='p';window.originalLedger=JSON.stringify(S);});
  for(const view of ['home','list','add','projects','project','boq','due','guarantees','report','docs','procurement','doclist','profile']){
   await page.evaluate(v=>{U.view=v;U.sheet=null;U.appMenu=false;render();scrollTo(0,0);},view);
@@ -26,4 +26,4 @@ try{for(const width of (process.env.QA_WIDTHS?process.env.QA_WIDTHS.split(',').m
  }
  fs.writeFileSync(path.join(out,'v1087-accessibility.json'),JSON.stringify(violations,null,2));console.log('Axe WCAG violations:',violations.length);for(const v of violations)console.log(v.view,v.id,v.nodes.length);
  if(!process.env.A11Y_REPORT_ONLY)assert.equal(violations.length,0,'See v1087-accessibility.json');
-}finally{await browser.close();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;server.close();});
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

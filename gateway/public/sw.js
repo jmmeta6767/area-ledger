@@ -1,5 +1,5 @@
-const C='site-ledger-v800-business-stable-1-source-candidate-1098-native-voice-end-ui-banking-finish-v1100-a11y';
-const CORE=['./','index.html','icon-180.png','icon-192.png','icon-512.png','manifest.webmanifest','area-logo-header.jpg','payroll.html','assets/ledger-reliability.css','assets/area-ledger-menu-icons.css','assets/area-ledger-menu-icons.webp'];
+const C='site-ledger-v800-business-stable-1-source-candidate-1108-organization-expenses';
+const CORE=['./','index.html','icon-180.png','icon-192.png','icon-512.png','manifest.webmanifest','area-logo-header.jpg','payroll.html','assets/ledger-reliability.css','assets/area-ledger-menu-icons.css','assets/area-ledger-menu-icons.webp','assets/business-registers.js?v=1108'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('site-ledger-v')&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{

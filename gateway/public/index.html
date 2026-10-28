@@ -3681,7 +3681,7 @@ body[data-view] .nav button.add{background:var(--color-primary)!important;color:
 .voice-last-command{display:grid;gap:4px;margin-top:8px;padding:10px 12px;background:#fff;border:1px solid #D9E1EB;border-radius:8px;overflow-wrap:anywhere}.voice-last-command b{color:#214D79}.voice-last-command span{color:#20242B;font-size:16px}.voice-last-command small{color:#667085}
 .backup-section{padding:14px;margin:12px 0;background:#fff;border:1px solid #DFE5ED;border-radius:12px;min-width:0}.backup-section h4{margin:0 0 6px;color:#214D79;font-size:1rem}.backup-section p{margin:0 0 10px;color:#667085;line-height:1.6}.backup-section .stack{margin-top:10px}.backup-section details{margin-top:12px}.backup-section summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:#214D79;font-weight:600}.backup-section .csv{width:100%;box-sizing:border-box}.backup-section .field{margin-top:10px}
 
-.expense-voice-status{margin:8px 0;padding:10px 12px;background:var(--color-primary-soft);border-radius:12px;font-size:14px;overflow-wrap:anywhere}.voice-mic-diagnostic{margin:6px 0 12px;font-size:.8rem;color:#54657A}.voice-mic-diagnostic summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.voice-mic-diagnostic p{overflow-wrap:anywhere;font-family:monospace;line-height:1.6}
+.expense-voice-status{margin:8px 0;padding:10px 12px;background:var(--color-primary-soft);border-radius:12px;font-size:14px;overflow-wrap:anywhere}.voice-mic-diagnostic{margin:6px 0 12px;font-size:.8rem;color:#54657A}.voice-mic-diagnostic summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.voice-mic-diagnostic p{overflow-wrap:anywhere;font-family:monospace;line-height:1.6}.voice-command-fallback{margin:8px 0 12px;padding:0 11px;background:#fff;border:1px solid #D9E1EB;border-radius:10px}.voice-command-fallback summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:#214D79;font-weight:650}.voice-command-fallback p{margin:4px 0 9px;color:#54657A;line-height:1.55}.voice-command-fallback textarea{width:100%;min-height:62px;box-sizing:border-box;padding:10px;border:1px solid var(--color-border);border-radius:10px;font:inherit}.voice-command-fallback>.btn{width:100%;margin:8px 0 10px}.voice-alternatives{display:grid;gap:6px;margin:8px 0}.voice-alternatives>div{display:grid;gap:6px}.voice-alternatives .btn{min-height:42px;text-align:left;white-space:normal}
 /* Shared interactive controls; printed documents keep their own styles. */
 @media screen {
 body[data-view]:not([data-view="print"]):not([data-view="quoteprint"]){--color-primary:#FFC928;--color-primary-hover:#F2BA16;--color-primary-soft:#FFF7D6;--color-background:#F7F8FA;--color-text:#20242B;--color-text-secondary:#475467;--color-border:#98A2B3;--muted:#475467}
@@ -3878,6 +3878,7 @@ body[data-view] :is(.empty,.due-empty,.boq-empty,.profile-empty){border-radius:1
 <script>
 /* ---------- ค่าคงที่ ---------- */
 var CAT_OUT=['ค่าของ','ค่าแรง','ค่าประกัน/ค่างาน','ค่างานเอกสาร','ค่าเช่าอื่นๆ'];
+var ORG_EXPENSE_CATEGORIES=['tax','support','other'];
 var SUBS={
  'ค่าประกัน/ค่างาน':['ประกันสัญญา','ค่าประกันผลงาน','10%','อื่นๆ'],
  'ค่าของ':['ปูน/ทราย/หิน/อิฐ','เหล็ก','ไม้/แบบ','ท่อ/ไฟฟ้า/สุขภัณฑ์','สี/กระเบื้อง/พื้น','ค่าขนส่ง','น้ำมัน','อื่นๆ'],
@@ -3931,7 +3932,7 @@ function boqEnsureWorkSection(x){
 
 function migrate(o){
   if(!o||typeof o!=='object')o=emptyState();
-  ['projects','tx','boq','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'].forEach(function(k){if(o[k]!==undefined&&(!Array.isArray(o[k])||o[k].some(function(x){return !x||typeof x!=='object'||Array.isArray(x);})))throw new Error('Invalid collection: '+k);});
+  ['projects','tx','boq','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts','inventoryItems','inventoryMovements','businessAssets','leaseContracts'].forEach(function(k){if(o[k]!==undefined&&(!Array.isArray(o[k])||o[k].some(function(x){return !x||typeof x!=='object'||Array.isArray(x);})))throw new Error('Invalid collection: '+k);});
   o=JSON.parse(JSON.stringify(o)); /* Migrate a copy; preserve the source snapshot. */
   if(!Array.isArray(o.projects))o.projects=[];
   if(!Array.isArray(o.tx))o.tx=[];
@@ -3979,7 +3980,14 @@ function migrate(o){
     }).filter(function(p){return p.amount>0;});
     return l;
   });
-  if(!Array.isArray(o.materialApprovals))o.materialApprovals=[];
+  if(!Array.isArray(o.inventoryItems))o.inventoryItems=[];
+  o.inventoryItems=o.inventoryItems.map(function(x){x=x&&typeof x==='object'?x:{};return {id:String(x.id||uid()),name:String(x.name||'').trim().slice(0,160),unit:String(x.unit||'ชิ้น').slice(0,40),openingQty:Math.max(0,+x.openingQty||0),openingValue:Math.max(0,+x.openingValue||0),minQty:Math.max(0,+x.minQty||0),note:String(x.note||'').slice(0,500),createdAt:Math.max(0,+x.createdAt||Date.now())};});
+  if(!Array.isArray(o.inventoryMovements))o.inventoryMovements=[];
+  o.inventoryMovements=o.inventoryMovements.map(function(x){x=x&&typeof x==='object'?x:{};return {id:String(x.id||uid()),itemId:String(x.itemId||''),date:validIsoDate(x.date)?x.date:today(),kind:['in','out','count'].indexOf(x.kind)>=0?x.kind:'in',qty:Math.max(0,+x.qty||0),unitCost:Math.max(0,+x.unitCost||0),note:String(x.note||'').slice(0,500),createdAt:Math.max(0,+x.createdAt||Date.now())};});
+  if(!Array.isArray(o.businessAssets))o.businessAssets=[];
+  o.businessAssets=o.businessAssets.map(function(x){x=x&&typeof x==='object'?x:{};return {id:String(x.id||uid()),name:String(x.name||'').trim().slice(0,160),category:String(x.category||'อุปกรณ์').slice(0,80),acquiredAt:validIsoDate(x.acquiredAt)?x.acquiredAt:'',cost:Math.max(0,+x.cost||0),status:x.status==='disposed'?'disposed':'active',note:String(x.note||'').slice(0,500),createdAt:Math.max(0,+x.createdAt||Date.now())};});
+  if(!Array.isArray(o.leaseContracts))o.leaseContracts=[];
+  o.leaseContracts=o.leaseContracts.map(function(x){x=x&&typeof x==='object'?x:{};return {id:String(x.id||uid()),name:String(x.name||'').trim().slice(0,160),counterparty:String(x.counterparty||'').trim().slice(0,160),startDate:validIsoDate(x.startDate)?x.startDate:'',endDate:validIsoDate(x.endDate)?x.endDate:'',monthlyRent:Math.max(0,+x.monthlyRent||0),deposit:Math.max(0,+x.deposit||0),dueDay:Math.max(0,Math.min(31,Math.floor(+x.dueDay||0))),status:x.status==='ended'?'ended':'active',note:String(x.note||'').slice(0,500),createdAt:Math.max(0,+x.createdAt||Date.now())};});  if(!Array.isArray(o.materialApprovals))o.materialApprovals=[];
   if(!Array.isArray(o.siteEvents))o.siteEvents=[];
   if(!Array.isArray(o.contractChanges))o.contractChanges=[];
   if(!Array.isArray(o.timeExtensions))o.timeExtensions=[];
@@ -3988,6 +3996,7 @@ function migrate(o){
   if(!Array.isArray(o.auditLog))o.auditLog=[];compactLegacyAuditMedia(o);
   if(!Array.isArray(o.manualJournals))o.manualJournals=[];
   if(!Array.isArray(o.chartAccounts))o.chartAccounts=defaultChartAccounts();
+  else ['2300','5500','5600','5700'].forEach(function(code){var def=defaultChartAccounts().find(function(a){return a.code===code;});if(def&&!o.chartAccounts.some(function(a){return a&&a.code===code;}))o.chartAccounts.push(def);});
   o.siteEvents=o.siteEvents.map(function(e){if(!e)e={};if(e.id===undefined)e.id=uid();if(e.letterNo===undefined)e.letterNo='';if(e.letterStatus===undefined)e.letterStatus='none';if(e.sentDate===undefined)e.sentDate='';if(e.replyDate===undefined)e.replyDate='';if(e.replyNote===undefined)e.replyNote='';return e;});
   if(!Array.isArray(o.guarantees))o.guarantees=[];
   (o.projects||[]).forEach(function(p){if((+p.retAmt||0)>0&&!o.guarantees.some(function(g){return g.legacyPid===p.id;})){o.guarantees.push({id:'legacy-guarantee-'+p.id,legacyPid:p.id,pid:p.id,type:'ประกันสัญญา',holder:p.client||'',method:'เงินสด/โอน',amount:+p.retAmt||0,paidDate:p.retPaidDate||'',deliveryDate:p.deliveryDate||'',dueDate:p.retDue||'',returned:!!p.retRecv,returnedDate:p.retRecvDate||'',note:'ย้ายจากข้อมูลเงินประกันเดิมของโครงการ'});}});
@@ -4141,7 +4150,7 @@ function runtimePageRelease(){
 }
 
 /* ---------- ข้อมูล ---------- */
-var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',profilePostSaving:false,profilePhotoBusy:false,profileIdentityBusy:'',profilePublicBusy:false,profileFilter:'all',profileProjectPid:'',boqOcrPdf:null,runtimeDiag:{startedAt:Date.now(),renders:0,actions:0,blockedActions:0,lastRenderMs:0,maxRenderMs:0,hiddenAt:0,lastWakeAt:0,bfcacheRestores:0},runtimeActionStamps:Object.create(null),runtimeRenderRaf:0,pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
+var S=emptyState(), U={view:'home',pid:null,filter:{type:'all',pid:'',cat:'',status:'all'},month:today().slice(0,7),draft:null,sheet:null,confirm:null,pendingPid:null,navStack:[],navLock:false,saveLock:false,lastSaveSig:'',lastSaveAt:0,boqImportBusy:false,boqImportStatus:'',boqImageQueue:[],boqProjectPid:'',boqQuery:'',boqCollapsed:{},boqAnchorId:'',boqScroll:0,projectHubStatus:'',projectHubQuery:'',listFilterOpen:false,guaranteeQuery:'',reportOpen:{},docBillFilter:'all',docQuery:'',profilePostSaving:false,profilePhotoBusy:false,profileIdentityBusy:'',profilePublicBusy:false,profileFilter:'all',profileProjectPid:'',boqOcrPdf:null,expenseVoiceRestartDraft:null,expenseVoiceRestartView:null,runtimeDiag:{startedAt:Date.now(),renders:0,actions:0,blockedActions:0,lastRenderMs:0,maxRenderMs:0,hiddenAt:0,lastWakeAt:0,bfcacheRestores:0},runtimeActionStamps:Object.create(null),runtimeRenderRaf:0,pwaUpdatePending:false,cloudSyncBusy:false,cloudSyncPending:false,cloudConflict:false,cloudStatus:'off',cloudRemote:null};
 
 function defaultChartAccounts(){return[
 {id:'1000',code:'1000',name:'เงินสด',type:'asset',normal:'debit'},
@@ -4153,6 +4162,7 @@ function defaultChartAccounts(){return[
 {id:'2000',code:'2000',name:'เจ้าหนี้การค้า',type:'liability',normal:'credit'},
 {id:'2100',code:'2100',name:'ภาษีหัก ณ ที่จ่ายค้างนำส่ง',type:'liability',normal:'credit'},
 {id:'2200',code:'2200',name:'ภาษีขาย',type:'liability',normal:'credit'},
+{id:'2300',code:'2300',name:'ภาษีและค่าธรรมเนียมค้างจ่ายอื่น',type:'liability',normal:'credit'},
 {id:'3000',code:'3000',name:'ทุน/ยอดยกมา',type:'equity',normal:'credit'},
 {id:'4000',code:'4000',name:'รายได้งานก่อสร้าง',type:'revenue',normal:'credit'},
 {id:'4090',code:'4090',name:'รายได้อื่น',type:'revenue',normal:'credit'},
@@ -4161,14 +4171,17 @@ function defaultChartAccounts(){return[
 {id:'5200',code:'5200',name:'ค่าประกัน/ค่างาน',type:'expense',normal:'debit'},
 {id:'5300',code:'5300',name:'ค่าเอกสาร/บริหาร',type:'expense',normal:'debit'},
 {id:'5400',code:'5400',name:'ค่าเช่า/เครื่องมือ',type:'expense',normal:'debit'},
+{id:'5500',code:'5500',name:'ภาษีและค่าธรรมเนียมองค์กร',type:'expense',normal:'debit'},
+{id:'5600',code:'5600',name:'ค่าสนับสนุนองค์กร',type:'expense',normal:'debit'},
+{id:'5700',code:'5700',name:'ค่าใช้จ่ายองค์กรอื่น',type:'expense',normal:'debit'},
 {id:'5900',code:'5900',name:'ค่าใช้จ่ายอื่น',type:'expense',normal:'debit'},
 {id:'9990',code:'9990',name:'บัญชีพัก/รายการปรับปรุง',type:'equity',normal:'credit'}
 ];}
 
 
-function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
+function emptyState(){return {projects:[],tx:[],boq:[],guarantees:[],loans:[],inventoryItems:[],inventoryMovements:[],businessAssets:[],leaseContracts:[],profilePosts:[],materialApprovals:[],siteEvents:[],contractChanges:[],timeExtensions:[],accountingPeriods:[],bankReconciliations:[],auditLog:[],manualJournals:[],chartAccounts:defaultChartAccounts(),quotes:[],bills:[],receipts:[],docSeq:{quote:0,bill:0,receipt:0},role:'owner',opening:0,openCash:0,bank:'Krungthai Business',brand:'AREA MAIBAB',business:{legalName:'',legalNameEn:'',taxId:'',phone:'',email:'',address:'',addressEn:'',branch:'สำนักงานใหญ่',businessType:'ห้างหุ้นส่วนจำกัด',vatRegistered:false,tagline:'',bio:'',lineId:'',website:'',facebook:'',instagram:'',tiktok:'',profileAvatar:'',profileAvatarRef:'',profileCover:'',profileCoverRef:'',publicProfileId:'',publicProfileEnabled:false,publicProfilePublishedAt:''},ui:{wallpaper:true,dashboardPids:[],viewMode:'mobile'},customSubs:{},ai:{mode:'local',endpoint:'',remoteOcrConsent:false,remoteOcrConsentBase:'',timeoutMs:45000},ops:{cloudflareSmoke:null,migrationDrill:null,lastMigration:null,ocrDiagnostic:null,reliability:null,disasterRecovery:null,fullAcceptance:null,businessStable:null,fieldAcceptance:null,accountingFreeze:null,stable1:null},dataRevision:0,lastBackupRevision:-1,lastRestoreFingerprint:'',lastRestoreSourceOrigin:'',lastRestoreAt:0,updatedAt:0};}
 var APP_RELEASE=800,APP_CHANNEL='stable';
-var APP_BUILD={"version":1098,"sha":"","environment":"source"};
+var APP_BUILD={"version":1108,"sha":"","environment":"source"};
 function appBuildLabel(){return 'AREA Ledger v'+APP_BUILD.version+' · '+(APP_BUILD.environment==='production'?'เว็บหลัก':APP_BUILD.environment==='staging'?'ทดสอบ':'ซอร์ส')+' · '+(APP_BUILD.sha?APP_BUILD.sha.slice(0,8):'ยังไม่ระบุ commit');}
 
 var ACCOUNTING_POLICY_VERSION='1.0';
@@ -4387,7 +4400,12 @@ function googleProjectFinanceSnapshot(pid){
   var costs=[['รายการต้นทุน','จำนวนเงิน','คำอธิบาย']];Object.keys(st.byCat).sort().forEach(function(cat){costs.push([cat,st.byCat[cat],'รายจ่ายก่อน VAT รวมที่ยังค้าง']);});costs.push(['รายจ่ายที่บันทึก',m.bookedExpense,'ยอดตาม AREA Ledger'],['เงินประกันรอคืนทั้งหมด',m.guaranteePending,'แสดงประกอบ ไม่บวกทั้งหมดซ้ำ'],['เงินประกันเพิ่มจากทะเบียน',m.guaranteeAdd,'เฉพาะส่วนที่ยังไม่ได้ลงรายจ่าย'],['ต้นทุนรวม',m.cost,'รายจ่ายที่บันทึก + เงินประกันส่วนเพิ่ม']);
   return {version:1,expenses:rows('out'),income:rows('in'),costs:costs,profit:[['รายการ','จำนวนเงิน','คำอธิบาย'],['มูลค่าสัญญารวมอนุมัติ',m.contract,'รวมเปลี่ยนแปลงสัญญาที่อนุมัติ'],['รายรับที่ได้รับจริง',m.received,'ยอดตามการรับชำระ'],['ต้นทุนรวม',m.cost,'รวมเงินประกันโดยไม่บวกซ้ำ'],['กำไรคาดการณ์',m.forecast,'มูลค่าสัญญา − ต้นทุนรวม'],['กำไร/ขาดทุนสุทธิ',m.netProfit===null?'':m.netProfit,m.hasRevenue?'รายรับที่ได้รับจริง − ต้นทุนรวม':'รอรับรายได้'],['รายจ่ายที่จ่ายจริง',m.cashPaid,'ยอดตามการชำระ'],['กระแสเงินสดสุทธิ',m.cashBalance,'รับจริง − จ่ายจริง'],['ค้างจ่าย',st.payPend,'ยอดสุทธิที่ยังไม่ชำระ'],['ค้างรับ',st.recPend,'ยอดสุทธิที่ยังไม่ได้รับ']]};
 }
+function googleOrganizationFinanceSnapshot(period){var per=period||today().slice(0,7),tx=(S.tx||[]).filter(function(t){return t.organizationExpense===true&&periodKey(t.date)===per;}).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))||String(a.id||'').localeCompare(String(b.id||''));}),sum=organizationExpenseSummary(per),pnl=businessAccountingReport(per).profitLoss,header=['วันที่','หมวด','รายการ','ผู้รับเงิน','ยอดรวม','ยอดก่อน VAT','VAT','หัก ณ ที่จ่าย','ยอดสุทธิ','จ่ายแล้ว','ยังค้าง','สถานะ','ช่องทาง','หมายเหตุ','Ledger ID'],expenses=[header],income=[['วันที่','หมวด','รายการ','ผู้จ่ายเงิน','ยอดรวม','ยอดก่อน VAT','VAT','หัก ณ ที่จ่าย','ยอดสุทธิ','รับแล้ว','ค้างรับ','สถานะ','ช่องทาง','หมายเหตุ','Ledger ID']],orgRows=[['วันที่','หมวดองค์กร','วิธีลงบัญชี','รายละเอียด','หน่วยงาน/ผู้รับเงิน','จำนวนเงิน','สถานะชำระ','ช่องทาง','บัญชีภาษี','เลขอ้างอิง','หมายเหตุ','Ledger ID']];tx.forEach(function(t){var settlement=t.orgTaxTreatment==='settlement',label=organizationExpenseCategoryLabel(t.orgExpenseCategory),pay=txPaymentState(t),method=txPayments(t).length?Array.from(new Set(txPayments(t).map(function(x){return x.pay==='cash'?'เงินสด':x.pay==='transfer'?'โอน':String(x.pay||'ไม่ระบุ');}))).join(' / '):t.pay==='cash'?'เงินสด':t.pay==='transfer'?'โอน':'';orgRows.push([t.date||'',label,settlement?'ชำระภาษีค้าง · ไม่เพิ่มค่าใช้จ่ายซ้ำ':'บันทึกเป็นค่าใช้จ่าย',t.sub||'',t.partner||'',+t.amount||0,t.paid?'จ่ายแล้ว':'ค้างจ่าย',method,settlement?t.orgTaxAccount:'',t.taxInvoiceNo||'',t.note||'',t.id||'']);if(!settlement)expenses.push([t.date||'','องค์กร · '+label,t.sub||'',t.partner||'',+t.amount||0,base(t),vatOf(t),whtOf(t),net(t),pay.paid,pay.remain,pay.partial?'จ่ายบางส่วน':pay.settled?'จ่ายแล้ว':'ค้างจ่าย',method,t.note||'',t.id||'']);});var costs=[['หมวดองค์กร','จำนวนเงิน','คำอธิบาย'],['ภาษี / ค่าธรรมเนียม',sum.taxExpense,'ลงเป็นค่าใช้จ่ายองค์กร'],['ค่าสนับสนุน',sum.support,'ลงเป็นค่าใช้จ่ายองค์กร'],['อื่นๆ',sum.other,'ลงเป็นค่าใช้จ่ายองค์กร'],['รวมค่าใช้จ่ายองค์กร',sum.totalExpense,'ไม่รวมการชำระภาษีค้าง']];var profit=[['รายการ','จำนวนเงิน','ความหมาย'],['รายได้บริษัท',pnl.revenue,'ตามบัญชีทั้งกิจการ'],['ค่าใช้จ่ายบริษัท',pnl.expense,'รวมต้นทุนโครงการและค่าใช้จ่ายองค์กร'],['กำไร / ขาดทุนบริษัท',pnl.profit,'รวมผลของทุกโครงการและองค์กร']];var organizationSummary=[['รายการ','จำนวนเงิน (บาท)','ความหมาย'],['งวด',per,'งวดข้อมูล'],['รายได้บริษัท',pnl.revenue,'ตามบัญชีทั้งกิจการ'],['ค่าใช้จ่ายบริษัท',pnl.expense,'รวมต้นทุนโครงการและค่าใช้จ่ายองค์กร'],['กำไร / ขาดทุนบริษัท',pnl.profit,'รวมผลของทุกโครงการและองค์กร'],['ภาษี / ค่าธรรมเนียมองค์กร',sum.taxExpense,'ค่าใช้จ่ายองค์กร'],['ค่าสนับสนุนองค์กร',sum.support,'ค่าใช้จ่ายองค์กร'],['อื่นๆ ขององค์กร',sum.other,'ค่าใช้จ่ายองค์กร'],['ชำระภาษีค้าง',sum.taxSettlement,'เป็นการลดหนี้ · ไม่เพิ่มค่าใช้จ่ายซ้ำ']];return{version:1,expenses:expenses,income:income,costs:costs,profit:profit,organizationExpenses:orgRows,organizationSummary:organizationSummary};}
+function googleOrganizationPayload(){return{scope:'organization',project:{id:'__organization__',name:'ค่าใช้จ่ายองค์กร'},rows:[],finance:googleOrganizationFinanceSnapshot(today().slice(0,7)),verify:true};}
+
 function googleWorkspaceActiveProjects(){var seen=Object.create(null);return projectHubProjects().filter(function(p){if((p.status||'active')!=='active'||!p.id||seen[p.id])return false;seen[p.id]=true;return true;});}
+async function googleWorkspaceSyncOrganization(bulkToken){var st=googleWorkspaceState();if(st.syncBusy||st.bulkSyncBusy&&st.bulkSyncToken!==bulkToken)return false;var requestKey=cloudLedgerKey(false);if(!requestKey){st.error='GOOGLE_LEDGER_IDENTITY_MISSING';render();return false;}var digest=bulkToken?bulkToken.digest:migrationBusinessDigest(S),payload=bulkToken&&bulkToken.payloads?bulkToken.payloads.__organization__:googleOrganizationPayload();st.sequence=(+st.sequence||0)+1;st.syncBusy=true;st.loading=true;st.error='';if(U.sheet&&U.sheet.kind==='googleWorkspace')render();try{var r=await cloudGateway('POST','/v1/google/sync',payload);if(cloudLedgerKey(false)!==requestKey){st.error='GOOGLE_LEDGER_IDENTITY_CHANGED';return false;}if(!r.ok){st.error=String(r.data&&r.data.error||'GOOGLE_SYNC_FAILED');if(!bulkToken)toast(googleSyncErrorText(st.error));return false;}st.lastSyncResult=Object.assign({},r.data||{},{projectId:'__organization__',sourceChanged:migrationBusinessDigest(S)!==digest});if(!r.data||!r.data.verification||r.data.verification.matched!==true){st.error='GOOGLE_SYNC_UNVERIFIED';if(!bulkToken)toast(googleSyncErrorText(st.error));return false;}if(st.lastSyncResult.sourceChanged){st.error='GOOGLE_SOURCE_CHANGED';if(!bulkToken)toast(googleSyncErrorText(st.error));return false;}if(!bulkToken||U.sheet&&U.sheet.kind==='googleWorkspace'&&U.sheet.pid==='__organization__')st.status=Object.assign({},st.status||{},{configured:true,connected:true,project:Object.assign({},r.data,{projectId:'__organization__',projectName:'ค่าใช้จ่ายองค์กร'})});if(!bulkToken)toast('ซิงก์และตรวจข้อมูลค่าใช้จ่ายองค์กรกลับจาก Google Sheets แล้ว');return true;}catch(_){st.error='GOOGLE_SYNC_FAILED';if(!bulkToken)toast('ซิงก์ค่าใช้จ่ายองค์กรไม่สำเร็จ · ข้อมูลใน Ledger ยังอยู่');return false;}finally{st.loading=false;st.syncBusy=false;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();}}
+
 function googleWorkspacePayload(pid){
  var p=proj(pid);if(!p)return null;
  return {project:{id:p.id,name:p.name},rows:boqRows(pid).map(function(x){return {id:x.id,sectionCode:x.sectionCode||'',sectionName:x.sectionName||'',name:x.name||'',category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,note:x.note||''};}),finance:googleProjectFinanceSnapshot(pid),verify:true};
@@ -4396,29 +4414,29 @@ function googleSyncErrorText(code){return ({GOOGLE_SOURCE_CHANGED:'ข้อม�
 function googleSyncReceiptHtml(){
  var st=googleWorkspaceState(),r=st.lastSyncResult;if(!r||!r.projectId||r.projectId!==(U.sheet&&U.sheet.pid||U.boqProjectPid)||st.bulkSyncBusy)return '';
  var verified=r.verification&&r.verification.matched&&!r.sourceChanged,counts=r.verification&&r.verification.counts||{};
- return '<section class="google-sync-receipt '+(verified?'':'pending')+'" aria-label="ผลตรวจข้อมูลที่ส่ง"><b>'+(verified?'ส่งและอ่านกลับตรวจเทียบตรงกัน':'ส่งแล้ว · มีข้อมูลรอตรวจหรือส่งใหม่')+'</b><span>BOQ '+(+counts.boq||0)+' · ค่าใช้จ่าย '+(+counts.expenses||0)+' · รายรับ '+(+counts.income||0)+' รายการ</span><small>เวลา: '+esc(workspaceTime(r.lastSyncAt))+'</small><small>'+(r.sourceChanged?'ข้อมูลในเครื่องมีการเปลี่ยนหลังเริ่มส่ง':'ตรวจค่าทุกช่องในช่วงข้อมูลที่ระบบส่ง · ไม่รวมสูตรหรือแท็บที่คุณเพิ่มเอง')+'</small></section>';
+ return '<section class="google-sync-receipt '+(verified?'':'pending')+'" aria-label="ผลตรวจข้อมูลที่ส่ง"><b>'+(verified?'ส่งและอ่านกลับตรวจเทียบตรงกัน':'ส่งแล้ว · มีข้อมูลรอตรวจหรือส่งใหม่')+'</b>'+(r.projectId==='__organization__'?'<span>ค่าใช้จ่ายองค์กร '+(+counts.organizationExpenses||0)+' รายการ</span>':'<span>BOQ '+(+counts.boq||0)+' · ค่าใช้จ่าย '+(+counts.expenses||0)+' · รายรับ '+(+counts.income||0)+' รายการ</span>')+'<small>เวลา: '+esc(workspaceTime(r.lastSyncAt))+'</small><small>'+(r.sourceChanged?'ข้อมูลในเครื่องมีการเปลี่ยนหลังเริ่มส่ง':'ตรวจค่าทุกช่องในช่วงข้อมูลที่ระบบส่ง · ไม่รวมสูตรหรือแท็บที่คุณเพิ่มเอง')+'</small></section>';
 }
 function googleWorkspaceSyncBatchHtml(){
   var st=googleWorkspaceState(),rows=st.bulkSyncResults||[],done=rows.filter(function(x){return x.state==='success'||x.state==='error'||x.state==='skipped';}).length,failed=rows.filter(function(x){return x.state==='error';}).length;
-  if(!rows.length)return '';return '<section class="google-sync-results" aria-label="ผลซิงก์แต่ละโครงการ"><p role="status" aria-live="polite">'+(st.bulkSyncBusy?'กำลังซิงก์ '+done+'/'+rows.length:'ผลซิงก์ '+rows.filter(function(x){return x.state==='success';}).length+'/'+rows.length+' โครงการสำเร็จ')+'</p><ul>'+rows.map(function(x){return '<li><strong>'+esc(x.name)+'</strong><span>'+esc(({waiting:'รอซิงก์',syncing:'กำลังซิงก์…',success:'สำเร็จ',error:'ไม่สำเร็จ',skipped:'ข้าม'})[x.state]||x.state)+'</span>'+(x.error?'<small>'+esc(googleSyncErrorText(x.error))+'</small>':'')+(x.receipt?'<small>ตรวจกลับตรงกัน · BOQ '+x.receipt.boq+' / ค่าใช้จ่าย '+x.receipt.expenses+' / รายรับ '+x.receipt.income+'</small>':'')+(x.state==='success'&&x.sheetUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(x.sheetUrl)+'">เปิด Sheet โครงการนี้</button>':'')+'</li>';}).join('')+'</ul>'+(!st.bulkSyncBusy&&failed?'<button class="btn" data-act="googleWorkspaceRetryFailed">ลองใหม่เฉพาะที่ไม่สำเร็จ ('+failed+')</button>':'')+'</section>';
+  if(!rows.length)return '';return '<section class="google-sync-results" aria-label="ผลซิงก์แต่ละโครงการ"><p role="status" aria-live="polite">'+(st.bulkSyncBusy?'กำลังซิงก์ '+done+'/'+rows.length:'ผลซิงก์ '+rows.filter(function(x){return x.state==='success';}).length+'/'+rows.length+' เป้าหมายสำเร็จ')+'</p><ul>'+rows.map(function(x){return '<li><strong>'+esc(x.name)+'</strong><span>'+esc(({waiting:'รอซิงก์',syncing:'กำลังซิงก์…',success:'สำเร็จ',error:'ไม่สำเร็จ',skipped:'ข้าม'})[x.state]||x.state)+'</span>'+(x.error?'<small>'+esc(googleSyncErrorText(x.error))+'</small>':'')+(x.receipt?'<small>ตรวจกลับตรงกัน · '+(x.id==='__organization__'?'ค่าใช้จ่ายองค์กร '+x.receipt.organizationExpenses:'BOQ '+x.receipt.boq+' / ค่าใช้จ่าย '+x.receipt.expenses+' / รายรับ '+x.receipt.income)+'</small>':'')+(x.state==='success'&&x.sheetUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(x.sheetUrl)+'">เปิด Sheet '+(x.id==='__organization__'?'องค์กร':'โครงการนี้')+'</button>':'')+'</li>';}).join('')+'</ul>'+(!st.bulkSyncBusy&&failed?'<button class="btn" data-act="googleWorkspaceRetryFailed">ลองใหม่เฉพาะที่ไม่สำเร็จ ('+failed+')</button>':'')+'</section>';
 }
 async function googleWorkspaceSyncActive(retry){
   var st=googleWorkspaceState();if(st.syncBusy||st.bulkSyncBusy||st.loading)return false;
-  var active=googleWorkspaceActiveProjects(),ids=active.map(function(p){return p.id;}),targets=retry?(st.bulkSyncResults||[]).filter(function(x){return x.state==='error'&&ids.indexOf(x.id)>=0;}):active;
-  if(!targets.length){toast(retry?'ไม่มีโครงการที่ต้องลองซ้ำและยังดำเนินงานอยู่':'ไม่มีโครงการที่กำลังดำเนินงาน');return false;}
+  var active=googleWorkspaceActiveProjects(),ids=active.map(function(p){return p.id;}),orgTarget={id:'__organization__',name:'ค่าใช้จ่ายองค์กร'},targets=retry?(st.bulkSyncResults||[]).filter(function(x){return x.state==='error'&&(ids.indexOf(x.id)>=0||x.id==='__organization__');}).map(function(x){return x.id==='__organization__'?orgTarget:active.find(function(p){return p.id===x.id;});}).filter(Boolean):active.concat([orgTarget]);
   var key=cloudLedgerKey(false);if(!key){st.error='GOOGLE_LEDGER_IDENTITY_MISSING';render();return false;}
-  var token={digest:migrationBusinessDigest(S),payloads:{}};targets.forEach(function(t){token.payloads[t.id]=googleWorkspacePayload(t.id);});st.bulkSyncBusy=true;st.bulkSyncToken=token;st.bulkSyncSelectedPid=U.sheet&&U.sheet.pid||U.boqProjectPid||'';
-  st.bulkSyncResults=retry?(st.bulkSyncResults||[]).map(function(x){return targets.some(function(t){return t.id===x.id;})?Object.assign({},x,{state:'waiting',error:''}):x;}):targets.map(function(p){return {id:p.id,name:p.name,state:'waiting',error:''};});render();
+  var token={digest:migrationBusinessDigest(S),payloads:{}};targets.forEach(function(t){token.payloads[t.id]=t.id==='__organization__'?googleOrganizationPayload():googleWorkspacePayload(t.id);});st.bulkSyncBusy=true;st.bulkSyncToken=token;st.bulkSyncSelectedPid=U.sheet&&U.sheet.pid||U.boqProjectPid||'';
+  st.bulkSyncResults=retry?(st.bulkSyncResults||[]).map(function(x){return targets.some(function(t){return t.id===x.id;})?Object.assign({},x,{state:'waiting',error:''}):x;}):targets.map(function(t){return {id:t.id,name:t.name,state:'waiting',error:''};});render();
   try{
     for(var i=0;i<targets.length;i++){
       var target=targets[i],row=st.bulkSyncResults.find(function(x){return x.id===target.id;}),p=proj(target.id);
-      if(cloudLedgerKey(false)!==key){st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:'GOOGLE_LEDGER_IDENTITY_CHANGED'});});break;}
-      if(!p||(p.status||'active')!=='active'){row.state='skipped';row.error='โครงการไม่ได้อยู่ในสถานะกำลังดำเนินการแล้ว';continue;}
-      if(migrationBusinessDigest(S)!==token.digest){st.error='GOOGLE_SOURCE_CHANGED';st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:'GOOGLE_SOURCE_CHANGED'});});break;}
-      row.state='syncing';render();var ok=await googleWorkspaceSync(p.id,token);row.state=ok?'success':'error';row.error=ok?'':st.error||'GOOGLE_SYNC_FAILED';if(ok)Object.assign(row,{sheetUrl:st.lastSyncResult.sheetUrl||'',lastSyncAt:st.lastSyncResult.lastSyncAt||'',receipt:st.lastSyncResult.verification&&st.lastSyncResult.verification.counts});render();
-      if(!ok&&['GOOGLE_NOT_CONNECTED','GOOGLE_TOKEN_REFRESH_FAILED','GOOGLE_LEDGER_IDENTITY_CHANGED'].indexOf(row.error)>=0){st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:row.error});});break;}
+       if(cloudLedgerKey(false)!==key){st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:'GOOGLE_LEDGER_IDENTITY_CHANGED'});});break;}
+       if(target.id==='__organization__'){if(migrationBusinessDigest(S)!==token.digest){st.error='GOOGLE_SOURCE_CHANGED';st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:'GOOGLE_SOURCE_CHANGED'});});break;}row.state='syncing';render();var orgOk=await googleWorkspaceSyncOrganization(token);row.state=orgOk?'success':'error';row.error=orgOk?'':st.error||'GOOGLE_SYNC_FAILED';if(orgOk)Object.assign(row,{sheetUrl:st.lastSyncResult.sheetUrl||'',lastSyncAt:st.lastSyncResult.lastSyncAt||'',receipt:st.lastSyncResult.verification&&st.lastSyncResult.verification.counts});render();if(!orgOk&&['GOOGLE_NOT_CONNECTED','GOOGLE_TOKEN_REFRESH_FAILED','GOOGLE_LEDGER_IDENTITY_CHANGED'].indexOf(row.error)>=0){st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:row.error});});break;}continue;}
+       if(!p||(p.status||'active')!=='active'){row.state='skipped';row.error='โครงการไม่ได้อยู่ในสถานะกำลังดำเนินงานแล้ว';continue;}
+       if(migrationBusinessDigest(S)!==token.digest){st.error='GOOGLE_SOURCE_CHANGED';st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:'GOOGLE_SOURCE_CHANGED'});});break;}
+       row.state='syncing';render();var ok=await googleWorkspaceSync(p.id,token);row.state=ok?'success':'error';row.error=ok?'':st.error||'GOOGLE_SYNC_FAILED';if(ok)Object.assign(row,{sheetUrl:st.lastSyncResult.sheetUrl||'',lastSyncAt:st.lastSyncResult.lastSyncAt||'',receipt:st.lastSyncResult.verification&&st.lastSyncResult.verification.counts});render();
+       if(!ok&&['GOOGLE_NOT_CONNECTED','GOOGLE_TOKEN_REFRESH_FAILED','GOOGLE_LEDGER_IDENTITY_CHANGED'].indexOf(row.error)>=0){st.bulkSyncResults.forEach(function(x){if(x.state==='waiting')Object.assign(x,{state:'error',error:row.error});});break;}
     }
-    var success=st.bulkSyncResults.filter(function(x){return x.state==='success';}).length;toast('ซิงก์สำเร็จ '+success+'/'+st.bulkSyncResults.length+' โครงการ');return st.bulkSyncResults.every(function(x){return x.state==='success';});
+    var success=st.bulkSyncResults.filter(function(x){return x.state==='success';}).length;toast('ซิงก์สำเร็จ '+success+'/'+st.bulkSyncResults.length+' เป้าหมาย');return st.bulkSyncResults.every(function(x){return x.state==='success';});
   }finally{st.bulkSyncBusy=false;st.bulkSyncToken=null;st.loading=false;if(U.sheet&&U.sheet.kind==='googleWorkspace')render();}
 }
 async function googleWorkspaceSync(pid,bulkToken){
@@ -4536,19 +4554,22 @@ async function cloudSyncRestorePrevious(){
 }
 function loadRecovery(){try{var raw=localStorage.getItem(BACKUP_KEY);if(raw){var o=JSON.parse(raw);if(o&&Array.isArray(o.tx)&&Array.isArray(o.projects))return migrate(o);U.storageReadBlocked=true;}}catch(e){U.storageReadBlocked=true;}return null;}
 function stateHealth(o){
-  o=o||S;var issues=[],maps={},keys=['projects','boq','tx','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals'];
+  o=o||S;var issues=[],maps={},keys=['projects','boq','tx','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','inventoryItems','inventoryMovements','businessAssets','leaseContracts'];
   o=Object.assign({},o);keys.forEach(function(k){if(!Array.isArray(o[k])){issues.push(k+' ไม่ใช่รายการข้อมูล');o[k]=[];}});
   keys.forEach(function(k){var ids=Object.create(null);maps[k]=ids;if(!Array.isArray(o[k])){issues.push(k+' ไม่ใช่รายการข้อมูล');return;}(o[k]||[]).forEach(function(x){if(!x||!x.id){issues.push(k+' ไม่มี ID');return;}if(ids[x.id])issues.push(k+' ID ซ้ำ: '+x.id);else ids[x.id]=x;});});
-  keys.filter(function(k){return k!=='projects';}).forEach(function(k){var optionalPid=['loans','quotes','bills','receipts','accountingPeriods','bankReconciliations','auditLog','manualJournals'].includes(k);(Array.isArray(o[k])?o[k]:[]).forEach(function(x){if(!x)return;if(x.pid&&!maps.projects[x.pid])issues.push(k+' ไม่พบโครงการ: '+x.id);else if(!x.pid&&!optionalPid)issues.push(k+' ไม่พบโครงการ: '+x.id);});});
+  keys.filter(function(k){return k!=='projects';}).forEach(function(k){var optionalPid=['loans','quotes','bills','receipts','accountingPeriods','bankReconciliations','auditLog','manualJournals','inventoryItems','inventoryMovements','businessAssets','leaseContracts'].includes(k);(Array.isArray(o[k])?o[k]:[]).forEach(function(x){if(!x)return;var organizationTx=k==='tx'&&x.organizationExpense===true&&x.pid==='';if(x.pid&&!maps.projects[x.pid])issues.push(k+' ไม่พบโครงการ: '+x.id);else if(!x.pid&&!optionalPid&&!organizationTx)issues.push(k+' ไม่พบโครงการ: '+x.id);});});
   (o.boq||[]).forEach(function(x){if(x&&(!isFinite(+x.qty)||+x.qty<0||!isFinite(+x.unitPrice)||+x.unitPrice<0))issues.push('BOQ จำนวน/ราคาผิดรูปแบบ');});
-  (o.tx||[]).forEach(function(t){if(!t)return;if(!isFinite(+t.amount)||+t.amount<0)issues.push('จำนวนเงินผิดรูปแบบ');if(t.boqId){var bx=maps.boq[t.boqId];if(!bx)issues.push('รายการบัญชีอ้าง BOQ ที่ไม่มี');else if(bx.pid!==t.pid)issues.push('รายจ่ายผูก BOQ คนละโครงการ');if(t.type!=='out')issues.push('รายรับผูก BOQ');}
+  (o.tx||[]).forEach(function(t){if(!t)return;if(!isFinite(+t.amount)||+t.amount<0)issues.push('จำนวนเงินผิดรูปแบบ');if(t.organizationExpense===true){if(t.pid!=='')issues.push('รายการองค์กรต้องไม่มีโครงการ');if(t.type!=='out'||t.cat!=='ค่าใช้จ่ายองค์กร'||ORG_EXPENSE_CATEGORIES.indexOf(t.orgExpenseCategory)<0)issues.push('รายการค่าใช้จ่ายองค์กรผิดรูปแบบ');if(t.orgExpenseCategory==='tax'&&['expense','settlement'].indexOf(t.orgTaxTreatment)<0)issues.push('วิธีลงบัญชีภาษีผิดรูปแบบ');if(t.orgExpenseCategory==='tax'&&t.orgTaxTreatment==='settlement'&&(!t.paid||t.vat||t.wht||Array.isArray(t.payments)&&t.payments.length||!['2100','2200','2300'].includes(t.orgTaxAccount)))issues.push('รายการชำระภาษีค้างผิดรูปแบบ');if(t.orgTaxTreatment==='settlement'&&t.orgExpenseCategory!=='tax')issues.push('การชำระภาษีต้องอยู่ในหมวดภาษี');}if(t.boqId){var bx=maps.boq[t.boqId];if(!bx)issues.push('รายการบัญชีอ้าง BOQ ที่ไม่มี');else if(bx.pid!==t.pid)issues.push('รายจ่ายผูก BOQ คนละโครงการ');if(t.type!=='out')issues.push('รายรับผูก BOQ');}
     [['billId','bills'],['receiptId','receipts']].forEach(function(pair){if(t[pair[0]]){var d=maps[pair[1]][t[pair[0]]];if(!d)issues.push('รายการบัญชีอ้างเอกสารที่ไม่พบ');else if(d.pid!==t.pid)issues.push('รายการบัญชี/เอกสารคนละโครงการ');}});
   });
   ['quotes','bills','receipts'].forEach(function(k){var nos=Object.create(null);(o[k]||[]).forEach(function(d){if(!d)return;if(d.no){if(nos[d.no])issues.push('เลขเอกสารซ้ำ '+d.no);nos[d.no]=1;}if(d.sourceId){var source=maps[d.sourceKind==='bill'?'bills':'quotes'][d.sourceId];if(!source)issues.push('เอกสารอ้างต้นทางที่ไม่พบ');else if(source.pid!==d.pid)issues.push('เอกสารต้นทางคนละโครงการ');}});});
   (o.siteEvents||[]).forEach(function(e){if(e){var err=letterStateError(e);if(err)issues.push('Timeline: '+err);}});
   ['contractChanges','timeExtensions'].forEach(function(k){(o[k]||[]).forEach(function(x){if(!x)return;if(['draft','submitted','approved','rejected'].indexOf(x.status)<0)issues.push(k+' สถานะผิดรูปแบบ');if(k==='timeExtensions'?(!Number.isInteger(+x.days)||+x.days<=0):!isFinite(+x.amount))issues.push(k+' จำนวนผิดรูปแบบ');if(x.status==='approved'&&!x.ref)issues.push(k+' ไม่มีคำสั่งอนุมัติ');var eid=x.eventId||x.siteEventId||x.timelineId;if(eid&&(!maps.siteEvents[eid]||maps.siteEvents[eid].pid!==x.pid))issues.push(k+' อ้าง Timeline ที่ไม่มีหรือคนละโครงการ');});});
   (o.guarantees||[]).forEach(function(g){if(!g)return;if(!isFinite(+g.amount)||+g.amount<0)issues.push('หลักประกันยอดผิดรูปแบบ');if(g.returned&&!g.returnedDate)issues.push('หลักประกันรับคืนแต่ไม่มีวันที่');});
-  (o.loans||[]).forEach(function(l){
+  var stockIds=maps.inventoryItems||{};(o.inventoryItems||[]).forEach(function(x){if(!x||!String(x.name||'').trim())issues.push('สต็อกไม่มีชื่อรายการ');if(x&&(!isFinite(+x.openingQty)||+x.openingQty<0||!isFinite(+x.openingValue)||+x.openingValue<0))issues.push('สต็อกยอดยกมาผิดรูปแบบ');});
+  (o.inventoryMovements||[]).forEach(function(x){if(!x)return;if(!stockIds[x.itemId])issues.push('สต็อกเคลื่อนไหวอ้างรายการที่ไม่มี');if(!validIsoDate(x.date)||['in','out','count'].indexOf(x.kind)<0||!isFinite(+x.qty)||+x.qty<0||(x.kind!=='count'&&+x.qty===0)||!isFinite(+x.unitCost)||+x.unitCost<0)issues.push('สต็อกเคลื่อนไหวผิดรูปแบบ');});
+  (o.businessAssets||[]).forEach(function(x){if(x&&(!String(x.name||'').trim()||!isFinite(+x.cost)||+x.cost<0||!['active','disposed'].includes(x.status)))issues.push('ทะเบียนทรัพย์สินผิดรูปแบบ');});
+  (o.leaseContracts||[]).forEach(function(x){if(x&&(!String(x.name||'').trim()||!isFinite(+x.monthlyRent)||+x.monthlyRent<0||!isFinite(+x.deposit)||+x.deposit<0||!['active','ended'].includes(x.status)))issues.push('ทะเบียนสัญญาเช่าผิดรูปแบบ');});  (o.loans||[]).forEach(function(l){
     if(!l)return;
     if(['payable','receivable'].indexOf(l.kind)<0)issues.push('เงินกู้ประเภทผิดรูปแบบ');
     if(!(l.principal>0)||!isFinite(+l.principal))issues.push('เงินกู้เงินต้นผิดรูปแบบ');
@@ -4567,7 +4588,7 @@ function stateHealth(o){
   var periodSeen=Object.create(null);(o.accountingPeriods||[]).forEach(function(x){if(!x||!x.period)return;var k=x.period+'|'+x.status;if(periodSeen[k])issues.push('งวดบัญชีสถานะซ้ำ '+x.period);periodSeen[k]=1;});
   (o.bankReconciliations||[]).forEach(function(x){if(!x||!/^[0-9]{4}-[0-9]{2}$/.test(x.period||'')||!isFinite(+x.statementBalance)||!isFinite(+x.bookBalance))issues.push('Bank reconciliation ผิดรูปแบบ');});
   var ca=Object.create(null);(o.chartAccounts||[]).forEach(function(a){if(!a||!a.code||!a.name||['asset','liability','equity','revenue','expense'].indexOf(a.type)<0)issues.push('ผังบัญชีผิดรูปแบบ');else if(ca[a.code])issues.push('รหัสบัญชีซ้ำ '+a.code);else ca[a.code]=a;});
-  ['1000','1010','1100','1150','1200','2000','2100','2200','3000','4000','5000'].forEach(function(code){if(!ca[code])issues.push('ผังบัญชีขาดบัญชีระบบ '+code);});
+  ['1000','1010','1100','1150','1200','2000','2100','2200','2300','3000','4000','5000','5500','5600','5700'].forEach(function(code){if(!ca[code])issues.push('ผังบัญชีขาดบัญชีระบบ '+code);});
   (o.manualJournals||[]).forEach(function(j){if(!j||!validIsoDate(j.date)||!Array.isArray(j.lines)||j.lines.length<2){issues.push('สมุดรายวันปรับปรุงผิดรูปแบบ');return;}var d=0,c=0;j.lines.forEach(function(l){if(!ca[l.account])issues.push('สมุดรายวันอ้างบัญชีที่ไม่มี '+(l.account||''));d+=+l.debit||0;c+=+l.credit||0;});if(Math.abs(d-c)>.01||d<=0)issues.push('สมุดรายวันเดบิต/เครดิตไม่สมดุล');});
   /* Reconcile the supplied snapshot, including backup previews, without mutating global state. */
   (o.bills||[]).forEach(function(b){if(!b)return;var rows=(o.tx||[]).filter(function(t){return t&&t.type==='in'&&(t.billId===b.id||(t.docId===b.id&&(t.cat==='รับเงินค่างวดงาน'||(t.note||'').indexOf('ใบวางบิล')>=0)));}),items=docItems(b),gross=items.reduce(function(n,x){var v=x.qty*x.unitPrice;return n+v-Math.min(v,Math.max(0,x.discount));},0),after=Math.max(0,gross-(+b.discount||0)),total=Math.round(after*(1+((o.business||{}).vatRegistered?.07:0)-(+b.whtRate||0)/100)*100)/100,paid=Math.round(rows.reduce(function(n,t){return n+(txPayments(t).length?txPaidNet(t):(t.paid?net(t):0));},0)*100)/100,pending=rows.filter(function(t){return txOutstandingNet(t)>.01;}),remain=Math.max(0,Math.round((total-paid)*100)/100);
@@ -4847,14 +4868,15 @@ function accountingAudit(action,entity,id,before,after,note){S.auditLog=S.auditL
 function accountingLedger(pid){return (S.tx||[]).filter(function(x){return !pid||x.pid===pid;}).slice().sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))||(+a.createdAt||0)-(+b.createdAt||0);}).map(function(t){return{id:t.id,date:t.date,pid:t.pid,type:t.type,base:base(t),vat:vatOf(t),wht:whtOf(t),net:net(t),paid:!!t.paid,paidNet:txPaidNet(t),outstandingNet:txOutstandingNet(t),pay:t.pay||'',billId:t.billId||'',receiptId:t.receiptId||'',boqId:t.boqId||''};});}
 function accountChart(){return Array.isArray(S.chartAccounts)&&S.chartAccounts.length?S.chartAccounts:defaultChartAccounts();}
 function accountByCode(code){return accountChart().find(function(a){return a.code===code;})||null;}
-function expenseAccountCode(t){return t.cat==='ค่าของ'?'5000':t.cat==='ค่าแรง'?'5100':t.cat==='ค่าประกัน/ค่างาน'?'5200':t.cat==='ค่างานเอกสาร'?'5300':t.cat==='ค่าเช่าอื่นๆ'?'5400':'5900';}
+function expenseAccountCode(t){if(t&&t.organizationExpense===true)return t.orgExpenseCategory==='tax'?'5500':t.orgExpenseCategory==='support'?'5600':'5700';return t.cat==='ค่าของ'?'5000':t.cat==='ค่าแรง'?'5100':t.cat==='ค่าประกัน/ค่างาน'?'5200':t.cat==='ค่างานเอกสาร'?'5300':t.cat==='ค่าเช่าอื่นๆ'?'5400':'5900';}
 function revenueAccountCode(t){return (t.cat==='งวดงาน'||t.cat==='รับเงินค่างวดงาน'||String(t.sub||'').indexOf('ใบวางบิล')>=0)?'4000':'4090';}
 function journalLinesForTx(t){var b=base(t),v=vatOf(t),w=whtOf(t),n=net(t),cash=t.pay==='cash'?'1000':'1010',lines=[];function dr(a,x){if(x>.0001)lines.push({account:a,debit:x,credit:0});}function cr(a,x){if(x>.0001)lines.push({account:a,debit:0,credit:x});}
-  if(t.type==='out'){dr(expenseAccountCode(t),b);dr('1200',v);cr(txPayments(t).length?'2000':(t.paid?cash:'2000'),n);cr('2100',w);}
+  if(t.organizationExpense===true&&t.orgExpenseCategory==='tax'&&t.orgTaxTreatment==='settlement'){if(t.type==='out'&&t.paid&&!t.vat&&!t.wht&&['2100','2200','2300'].includes(t.orgTaxAccount)){dr(t.orgTaxAccount,n);cr(cash,n);}return lines;}
+  if(t.type==='out'){dr(expenseAccountCode(t),b);dr('1200',v);var payable=t.organizationExpense===true&&t.orgExpenseCategory==='tax'&&t.orgTaxTreatment==='expense'?'2300':'2000';cr(txPayments(t).length?payable:(t.paid?cash:payable),n);cr('2100',w);}
   else{dr(txPayments(t).length?'1100':(t.paid?cash:'1100'),n);dr('1150',w);cr(revenueAccountCode(t),b);cr('2200',v);}
   return lines;
 }
-function paymentJournalForTx(t,p){var amt=Math.max(0,+p.amount||0),cash=p.pay==='cash'?'1000':'1010',incoming=t.type==='in';return{id:'pay-'+t.id+'-'+p.id,date:p.date,pid:t.pid||'',sourceType:incoming?'ar-payment':'ap-payment',sourceId:t.id,note:(incoming?'รับชำระลูกหนี้ ':'ชำระเจ้าหนี้ ')+(t.partner||t.sub||t.cat||''),lines:incoming?[{account:cash,debit:amt,credit:0},{account:'1100',debit:0,credit:amt}]:[{account:'2000',debit:amt,credit:0},{account:cash,debit:0,credit:amt}]};}
+function paymentJournalForTx(t,p){var amt=Math.max(0,+p.amount||0),cash=p.pay==='cash'?'1000':'1010',incoming=t.type==='in',payable=t.organizationExpense===true&&t.orgExpenseCategory==='tax'&&t.orgTaxTreatment==='expense'?'2300':'2000';return{id:'pay-'+t.id+'-'+p.id,date:p.date,pid:t.pid||'',sourceType:incoming?'ar-payment':'ap-payment',sourceId:t.id,note:(incoming?'รับชำระลูกหนี้ ':'ชำระเจ้าหนี้ ')+(t.partner||t.sub||t.cat||''),lines:incoming?[{account:cash,debit:amt,credit:0},{account:'1100',debit:0,credit:amt}]:[{account:payable,debit:amt,credit:0},{account:cash,debit:0,credit:amt}]};}
 function journalEntryBalanced(j){var d=(j.lines||[]).reduce(function(n,l){return n+(+l.debit||0);},0),c=(j.lines||[]).reduce(function(n,l){return n+(+l.credit||0);},0);return d>0&&Math.abs(d-c)<=.01;}
 function accountingJournalEntries(pid){var out=[],opening=(+S.opening||0)+(+S.openCash||0);if(opening&&(!pid)){var ol=[];if(+S.openCash)ol.push({account:'1000',debit:+S.openCash,credit:0});if(+S.opening)ol.push({account:'1010',debit:+S.opening,credit:0});ol.push({account:'3000',debit:0,credit:opening});out.push({id:'opening-balance',date:'0000-00-00',pid:'',sourceType:'opening',sourceId:'',note:'ยอดยกมา',lines:ol});}
   (S.tx||[]).filter(function(t){return !pid||t.pid===pid;}).forEach(function(t){var j={id:'tx-'+t.id,date:t.date,pid:t.pid||'',sourceType:'tx',sourceId:t.id,note:(t.partner||t.cat||'รายการบัญชี')+(t.sub?' · '+t.sub:''),lines:journalLinesForTx(t)};out.push(j);if(txPayments(t).length)txPayments(t).forEach(function(p){out.push(paymentJournalForTx(t,p));});});
@@ -4865,6 +4887,9 @@ function generalLedger(code,period,pid){var rows=[];accountingJournalEntries(pid
 function trialBalance(period,pid){var map=Object.create(null);accountChart().forEach(function(a){map[a.code]={code:a.code,name:a.name,type:a.type,debit:0,credit:0};});generalLedger('',period,pid).forEach(function(l){if(!map[l.account])map[l.account]={code:l.account,name:l.account,type:'',debit:0,credit:0};map[l.account].debit+=l.debit;map[l.account].credit+=l.credit;});var rows=Object.keys(map).sort().map(function(k){var x=map[k];x.balance=x.debit-x.credit;return x;}).filter(function(x){return Math.abs(x.debit)+Math.abs(x.credit)>.0001;}),debit=rows.reduce(function(n,x){return n+x.debit;},0),credit=rows.reduce(function(n,x){return n+x.credit;},0);return{rows:rows,debit:debit,credit:credit,difference:debit-credit,ok:Math.abs(debit-credit)<=.01};}
 function manualJournalError(j){if(!validIsoDate(j.date))return 'วันที่สมุดรายวันไม่ถูกต้อง';if(isPeriodClosed(j.date))return 'งวด '+periodKey(j.date)+' ปิดบัญชีแล้ว';if(!Array.isArray(j.lines)||j.lines.length<2)return 'ต้องมีอย่างน้อย 2 บรรทัด';var codes={};accountChart().forEach(function(a){codes[a.code]=1;});for(var i=0;i<j.lines.length;i++){var l=j.lines[i];if(!codes[l.account])return 'พบบัญชีที่ไม่อยู่ในผังบัญชี';if((+l.debit||0)<0||(+l.credit||0)<0||((+l.debit||0)>0&&(+l.credit||0)>0))return 'แต่ละบรรทัดต้องเป็นเดบิตหรือเครดิตด้านเดียว';}if(!journalEntryBalanced(j))return 'เดบิตและเครดิตต้องเท่ากัน';return '';}
 function financialStatements(period,pid){var tb=trialBalance(period,pid),pl={revenue:0,expense:0,profit:0},bs={assets:0,liabilities:0,equity:0,currentEarnings:0,right:0,difference:0};tb.rows.forEach(function(x){var a=accountByCode(x.code),typ=a?a.type:x.type,bal=x.debit-x.credit;if(typ==='revenue')pl.revenue+=-bal;else if(typ==='expense')pl.expense+=bal;else if(typ==='asset')bs.assets+=bal;else if(typ==='liability')bs.liabilities+=-bal;else if(typ==='equity')bs.equity+=-bal;});pl.profit=pl.revenue-pl.expense;bs.currentEarnings=pl.profit;bs.right=bs.liabilities+bs.equity+bs.currentEarnings;bs.difference=bs.assets-bs.right;return{trial:tb,profitLoss:pl,balanceSheet:bs,ok:tb.ok&&Math.abs(bs.difference)<=.01};}
+function organizationExpenseCategoryLabel(k){return k==='tax'?'ภาษี / ค่าธรรมเนียม':k==='support'?'ค่าสนับสนุน':'อื่นๆ';}
+function organizationExpenseTreatmentLabel(t){return t&&t.orgTaxTreatment==='settlement'?'ชำระภาษีค้าง (ไม่เพิ่มค่าใช้จ่ายซ้ำ)':'บันทึกเป็นค่าใช้จ่าย';}
+function organizationExpenseSummary(period){var p=period||today().slice(0,7),out={period:p,taxExpense:0,support:0,other:0,taxSettlement:0,totalExpense:0,cashOutflow:0,count:0,settlementCount:0};(S.tx||[]).filter(function(t){return t.organizationExpense===true&&periodKey(t.date)===p;}).forEach(function(t){out.count++;if(t.orgTaxTreatment==='settlement'){out.taxSettlement+=+t.amount||0;out.settlementCount++;}else if(t.orgExpenseCategory==='tax')out.taxExpense+=+t.amount||0;else if(t.orgExpenseCategory==='support')out.support+=+t.amount||0;else out.other+=+t.amount||0;if(t.type==='out')out.cashOutflow+=txPaidNet(t);});out.totalExpense=out.taxExpense+out.support+out.other;return out;}
 function cashFlowSummary(period,pid){var o={inflow:0,outflow:0,net:0,bankIn:0,bankOut:0,cashIn:0,cashOut:0};(S.tx||[]).filter(function(t){return !pid||t.pid===pid;}).forEach(function(t){if(txPayments(t).length){txPayments(t).filter(function(p){return !period||periodKey(p.date)===period;}).forEach(function(p){var v=Math.max(0,+p.amount||0),cash=p.pay==='cash';if(t.type==='in'){o.inflow+=v;if(cash)o.cashIn+=v;else o.bankIn+=v;}else{o.outflow+=v;if(cash)o.cashOut+=v;else o.bankOut+=v;}});return;}if(!t.paid||(period&&periodKey(t.date)!==period))return;var v=net(t),cash=t.pay==='cash';if(t.type==='in'){o.inflow+=v;if(cash)o.cashIn+=v;else o.bankIn+=v;}else{o.outflow+=v;if(cash)o.cashOut+=v;else o.bankOut+=v;}});o.net=o.inflow-o.outflow;return o;}
 function taxDocumentReconcile(period,pid){var br=billingReconcile(pid||''),issues=[],checked=0;(S.tx||[]).filter(function(t){return (!period||periodKey(t.date)===period)&&(!pid||t.pid===pid);}).forEach(function(t){checked++;if(t.vat&&!isFinite(vatOf(t)))issues.push('VAT คำนวณไม่ได้ '+t.id);if(t.wht&&(!(+(t.whtRate!==undefined?t.whtRate:3)>0)||+(t.whtRate!==undefined?t.whtRate:3)>100))issues.push('WHT ไม่มีอัตรา/อัตราผิดรูปแบบ '+t.id);if(t.receiptId&&!(S.receipts||[]).some(function(x){return x.id===t.receiptId;}))issues.push('รายการรับเงินอ้างใบเสร็จที่ไม่พบ '+t.id);if(t.billId&&!(S.bills||[]).some(function(x){return x.id===t.billId;}))issues.push('รายการอ้างใบวางบิลที่ไม่พบ '+t.id);});(S.receipts||[]).filter(function(x){return (!period||periodKey(x.date)===period)&&(!pid||x.pid===pid);}).forEach(function(rc){if(rc.sourceKind==='bill'){var tx=(S.tx||[]).find(function(t){return (t.receiptId===rc.id&&t.paid)||txPayments(t).some(function(p){return p.receiptId===rc.id;});});if(!tx)issues.push('ใบเสร็จไม่มีรายการรับเงินจริง '+(rc.no||rc.id));else{var pv=txPayments(tx).filter(function(p){return p.receiptId===rc.id;}).reduce(function(n,p){return n+(+p.amount||0);},0),got=pv||net(tx);if(rc.paymentAmount!==undefined&&Math.abs((+rc.paymentAmount||0)-got)>.01)issues.push('ยอดใบเสร็จไม่ตรงเงินรับ '+(rc.no||rc.id));}}});return{checked:checked,billing:br,issues:issues,totalIssues:issues.length+br.issues,tax:taxLedger(period,pid)};}
 function taxDocumentRegister(period){var per=period||today().slice(0,7),sales=[],purchases=[];(S.receipts||[]).filter(function(r){return periodKey(r.date)===per;}).forEach(function(r){var c=docCalc(r);sales.push({date:r.date,no:r.no||r.id,party:r.customer||'',pid:r.pid||'',base:c.after,vat:c.vat,wht:c.wht,total:c.total,source:'receipt'});});(S.tx||[]).filter(function(t){return t.type==='out'&&periodKey(t.date)===per&&(t.vat||t.wht);}).forEach(function(t){purchases.push({date:t.date,no:t.taxInvoiceNo||t.id,party:t.partner||'',pid:t.pid||'',base:base(t),vat:vatOf(t),wht:whtOf(t),total:net(t),source:'expense'});});var tax=taxLedger(per,'');return {period:per,sales:sales,purchases:purchases,tax:tax,count:sales.length+purchases.length};}
@@ -5102,14 +5127,15 @@ function dueWithinDays(kind,days,pid){var lim=addDays(days),sum=0,count=0;if(kin
 function dueWithin30(kind,pid){return dueWithinDays(kind,30,pid);}
 function guaranteeDueWithinDays(days,pid){var lim=addDays(days),sum=0,count=0;(S.guarantees||[]).filter(function(g){var due=guaranteeEffectiveDueDate(g);return !g.returned&&g.method==='เงินสด/โอน'&&due&&due<=lim&&(!pid||g.pid===pid);}).forEach(function(g){sum+=+g.amount||0;count++;});return{sum:sum,count:count};}
 function cashForecastHorizon(days){var cs=cashSplit(),ar=dueWithinDays('ar',days,''),ap=dueWithinDays('ap',days,''),guarantee=guaranteeDueWithinDays(days,'');return {days:days,opening:cs.bank+cs.cash,ar:ar,ap:ap,guarantee:guarantee,ending:cs.bank+cs.cash+ar.sum+guarantee.sum-ap.sum};}
-function businessAccountingReport(period){var fs=financialStatements(period||today().slice(0,7),''),cs=cashSplit(),ar=arAging(''),ap=apAging(''),f30=cashForecastHorizon(30),f60=cashForecastHorizon(60),f90=cashForecastHorizon(90),projects=(S.projects||[]).map(function(p){var x=projectCostAccounting(p.id);return{id:p.id,name:p.name,contract:x.contract,cost:x.actualCost,profit:x.forecastProfit,margin:x.forecastMargin,etc:x.costToCompleteProxy,eac:x.estimateAtCompletion,profitAtCompletion:x.profitAtCompletion,marginAtCompletion:x.marginAtCompletion,ar:x.ar,ap:x.ap};});return{period:period||today().slice(0,7),bank:cs.bank,cash:cs.cash,liquidity:cs.bank+cs.cash,ar:ar.total,ap:ap.total,ar30:f30.ar,ap30:f30.ap,cashForecast30:f30.ending,cashForecast60:f60.ending,cashForecast90:f90.ending,guarantee30:f30.guarantee,guarantee60:f60.guarantee,guarantee90:f90.guarantee,forecast30:f30,forecast60:f60,forecast90:f90,profitLoss:fs.profitLoss,projects:projects};}
+function businessAccountingReport(period){var fs=financialStatements(period||today().slice(0,7),''),cs=cashSplit(),ar=arAging(''),ap=apAging(''),f30=cashForecastHorizon(30),f60=cashForecastHorizon(60),f90=cashForecastHorizon(90),projects=(S.projects||[]).map(function(p){var x=projectCostAccounting(p.id);return{id:p.id,name:p.name,contract:x.contract,cost:x.actualCost,profit:x.forecastProfit,margin:x.forecastMargin,etc:x.costToCompleteProxy,eac:x.estimateAtCompletion,profitAtCompletion:x.profitAtCompletion,marginAtCompletion:x.marginAtCompletion,ar:x.ar,ap:x.ap};});return{period:period||today().slice(0,7),bank:cs.bank,cash:cs.cash,liquidity:cs.bank+cs.cash,ar:ar.total,ap:ap.total,ar30:f30.ar,ap30:f30.ap,cashForecast30:f30.ending,cashForecast60:f60.ending,cashForecast90:f90.ending,guarantee30:f30.guarantee,guarantee60:f60.guarantee,guarantee90:f90.guarantee,forecast30:f30,forecast60:f60,forecast90:f90,profitLoss:fs.profitLoss,organizationExpenses:organizationExpenseSummary(period||today().slice(0,7)),projects:projects};}
 function accountingExportSheets(period){var per=period||today().slice(0,7),tb=trialBalance(per,''),fs0=financialStatements(per,''),gl=generalLedger('',per,''),projects=(S.projects||[]).map(function(p){var x=projectCostAccounting(p.id);return[p.name,x.contract,x.bac,x.actualCost,x.commitments,x.costToCompleteProxy,x.estimateAtCompletion,x.profitAtCompletion,x.marginAtCompletion,x.billed,x.received,x.ar,x.ap];}),audit=accountingAuditView(500);return[
 {name:'Trial Balance',rows:[['รหัส','บัญชี','Debit','Credit','Balance']].concat(tb.rows.map(function(x){return[x.code,x.name,x.debit,x.credit,x.balance];}))},
-{name:'General Ledger',rows:[['วันที่','บัญชี','คำอธิบาย','Debit','Credit','โครงการ','Source']].concat(gl.map(function(x){return[x.date,x.account,x.note,x.debit,x.credit,x.pid? pname(x.pid):'',x.sourceType];}))},
-{name:'Financial Statements',rows:[['งวด',per],['รายได้',fs0.profitLoss.revenue],['ค่าใช้จ่าย',fs0.profitLoss.expense],['กำไร/(ขาดทุน)',fs0.profitLoss.profit],['สินทรัพย์',fs0.balanceSheet.assets],['หนี้สิน',fs0.balanceSheet.liabilities],['ทุน+กำไรปัจจุบัน',fs0.balanceSheet.equity+fs0.balanceSheet.currentEarnings],['ผลต่างสมการบัญชี',fs0.balanceSheet.difference]]},
+{name:'General Ledger',rows:[['วันที่','บัญชี','คำอธิบาย','Debit','Credit','โครงการ','Source']].concat(gl.map(function(x){return[x.date,x.account,x.note,x.debit,x.credit,x.pid?pname(x.pid):x.sourceType==='tx'?'องค์กร':x.sourceType==='opening'?'ยอดยกมา':'',x.sourceType];}))},
+{name:'Financial Statements',rows:[['งวด',per],['รายได้',fs0.profitLoss.revenue],['ค่าใช้จ่าย',fs0.profitLoss.expense],['ในนั้น: ค่าใช้จ่ายองค์กร',organizationExpenseSummary(per).totalExpense],['ค่าใช้จ่ายอื่น/โครงการ',fs0.profitLoss.expense-organizationExpenseSummary(per).totalExpense],['กำไร/(ขาดทุน)',fs0.profitLoss.profit],['สินทรัพย์',fs0.balanceSheet.assets],['หนี้สิน',fs0.balanceSheet.liabilities],['ทุน+กำไรปัจจุบัน',fs0.balanceSheet.equity+fs0.balanceSheet.currentEarnings],['ผลต่างสมการบัญชี',fs0.balanceSheet.difference]]},
 {name:'Project Cost',rows:[['โครงการ','Contract','BAC','Actual Cost','Commitment','ETC','EAC','Profit @ Completion','Margin @ Completion','Billed','Received','AR','AP']].concat(projects)},
 {name:'Tax Register',rows:[['ประเภท','วันที่','เลขเอกสาร','คู่ค้า/ลูกค้า','โครงการ','ก่อน VAT','VAT','WHT','สุทธิ']].concat((function(){var r=taxDocumentRegister(per),rows=[];r.sales.forEach(function(x){rows.push(['ขาย',x.date,x.no,x.party,x.pid?pname(x.pid):'',x.base,x.vat,x.wht,x.total]);});r.purchases.forEach(function(x){rows.push(['ซื้อ/ค่าใช้จ่าย',x.date,x.no,x.party,x.pid?pname(x.pid):'',x.base,x.vat,x.wht,x.total]);});return rows;})())},
-{name:'Audit Trail',rows:[['วันที่','Action','Entity','ID','หมายเหตุ']].concat(audit.map(function(x){return[x.date,x.action,x.entity,x.entityId,x.note||''];}))}
+{name:'Organization Expenses',rows:[['วันที่','หมวดองค์กร','วิธีลงบัญชี','รายละเอียด','หน่วยงาน/ผู้รับเงิน','จำนวนเงิน','สถานะชำระ','ช่องทาง','บัญชีชำระภาษี','เลขอ้างอิง','หมายเหตุ','Ledger ID']].concat((S.tx||[]).filter(function(t){return t.organizationExpense===true&&periodKey(t.date)===per;}).sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''));}).map(function(t){return[t.date,organizationExpenseCategoryLabel(t.orgExpenseCategory),organizationExpenseTreatmentLabel(t),t.sub||'',t.partner||'',+t.amount||0,t.paid?'จ่ายแล้ว':'ค้างจ่าย',t.paid?(t.pay==='cash'?'เงินสด':'โอน'):'',t.orgTaxTreatment==='settlement'?t.orgTaxAccount:'',t.taxInvoiceNo||'',t.note||'',t.id||''];}))},
+ {name:'Audit Trail',rows:[['วันที่','Action','Entity','ID','หมายเหตุ']].concat(audit.map(function(x){return[x.date,x.action,x.entity,x.entityId,x.note||''];}))}
 ];}
 function exportAccountingXlsx(period){var sheets=accountingExportSheets(period);try{var blob=xlsxBuild(sheets);saveFile('AREA-Ledger-Accounting-'+(period||today().slice(0,7))+'-'+today()+'.xlsx',blob);}catch(e){toast('ส่งออก Accounting Excel ไม่สำเร็จ');}}
 function accountingProjectPnl(pid){var st=stats(pid),pc=projectCostWithGuarantees(pid),p=proj(pid),approved=approvedContractValue(pid),billed=(S.bills||[]).filter(function(b){return b.pid===pid;}).reduce(function(n,b){return n+docCalc(b).after;},0);return{contract:approved,billed:billed,cashReceived:st.recd,cost:pc.total,guaranteePending:pc.pendingGuarantee,ap:st.payPend,forecastProfit:approved-pc.total,cashMargin:st.recd-st.paidOut};}
@@ -5459,22 +5485,23 @@ function expenseVoiceReviewUpdate(){
   U.expenseVoiceIssues=U.expenseVoiceIssues.filter(function(issue){return !(issue.indexOf('ยอดเงิน')===0&&isFinite(Number(d.amount))&&Number(d.amount)>0||issue.indexOf('วันที่')===0&&validIsoDate(d.date));});
   var el=document.getElementById('expenseVoiceReview');if(el){el.textContent=U.expenseVoiceIssues.join(' · ');el.hidden=!U.expenseVoiceIssues.length;}
 }
-function expenseVoiceButtonText(){return U.expenseVoiceState==='starting'?'กำลังเปิดไมค์':U.expenseVoiceState==='listening'?'หยุดฟัง':U.expenseVoiceEnding?'กำลังปิดไมค์':'พูดรายการ';}
+function expenseVoiceButtonText(){return U.expenseVoiceState==='starting'?'กำลังเปิดไมค์':U.expenseVoiceState==='listening'?'หยุดฟัง':U.expenseVoiceRestartDraft&&U.expenseVoiceEnding?'รอเริ่มรอบใหม่':U.expenseVoiceEnding?'กำลังปิดไมค์':'พูดรายการ';}
 function expenseVoiceStatusText(){
   if(U.expenseVoiceState==='command')return 'เติมข้อมูลจากคำสั่งแล้ว · ตรวจสอบก่อนบันทึก';
-  var x=U.expenseVoiceDiagnostic;if(!x)return '';
+  var x=U.expenseVoiceDiagnostic;if(!x)return expenseVoiceSupported()?'พร้อมพูด · แตะไมค์เพื่อเริ่ม':'พิมพ์คำสั่งแทนเสียงได้ · แตะพูดรายการเพื่อดูทางเลือก';
   if(U.expenseVoiceState==='starting')return 'กำลังเปิดไมค์ · รอเบราว์เซอร์ยืนยัน';
-  if(U.expenseVoiceState==='listening')return 'กำลังฟังอยู่ · '+(U.expenseVoiceCapture&&U.expenseVoiceCapture.liveText?'ได้ยิน: '+U.expenseVoiceCapture.liveText:'พูดรายการแล้วหยุดพูด หรือแตะหยุดฟัง');
+  if(U.expenseVoiceState==='listening')return 'กำลังฟังอยู่ · '+(U.expenseVoiceCapture&&U.expenseVoiceCapture.liveText?'ได้ยินชั่วคราว: '+U.expenseVoiceCapture.liveText+' · แตะหยุดเพื่อยืนยัน':x.speech?'ได้ยินเสียงพูดแล้ว · กำลังแปลงข้อความ':x.audio?'เปิดไมค์แล้ว · พูดใกล้ไมค์ให้ชัด แล้วแตะหยุดฟัง':'เปิดไมค์แล้ว · พูดรายการและยอดเงิน');
+  if(U.expenseVoiceEnding&&U.expenseVoiceRestartDraft===U.draft&&U.expenseVoiceRestartView===U.view)return 'รับคำขอแล้ว · จะเริ่มฟังรอบใหม่ทันทีที่ไมค์รอบนี้ปิด';
   if(U.expenseVoiceEnding)return 'กำลังประมวลผลเสียง · รอผลรอบนี้สักครู่';
   if(x.code){var messages={NO_START_EVENT:'เบราว์เซอร์ยังไม่เริ่มรับเสียง',NO_RESULT:'ยังไม่ได้รับข้อความจากเสียง',NO_SPEECH:'ไม่ได้ยินคำสั่ง',NO_FINAL_RESULT:'เบราว์เซอร์ยังไม่ยืนยันข้อความเสียง · ข้อมูลเดิมยังอยู่',DRAFT_CHANGED:'คุณแก้ข้อมูลระหว่างรับเสียง · เก็บค่าที่กรอกเองไว้',END_TIMEOUT:'ไมค์รอบก่อนยังไม่ตอบกลับ',ERROR_NOT_ALLOWED:'ยังไม่ได้รับอนุญาตใช้ไมค์',ERROR_AUDIO_CAPTURE:'เบราว์เซอร์เปิดไมค์ไม่ได้',ERROR_NETWORK:'บริการรับเสียงเชื่อมต่อไม่ได้',ERROR_ABORTED:'ไมค์รอบนี้ถูกยกเลิก · ข้อมูลเดิมยังอยู่'};return (messages[x.code]||'รับเสียงไม่สำเร็จ')+' · แตะพูดรายการเพื่อลองใหม่';}
-  return x.results?'พร้อมพูดใหม่ · ข้อมูลที่อ่านได้ยังอยู่ในฟอร์ม':'หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่';
+  if(U.expenseVoiceProvisional)return 'ใช้ข้อความระหว่างฟังแล้ว · ตรวจคำและยอดให้ถูกก่อนบันทึก';return x.results?'อ่านเสียงแล้ว · ตรวจคำและยอดก่อนบันทึก':'หยุดฟังแล้ว · ข้อมูลเดิมยังอยู่';
 }
 function expenseVoiceDiagnosticText(){var x=U.expenseVoiceDiagnostic;return x?'v'+APP_BUILD.version+' · รอบ '+x.attempt+' · start='+(x.started?1:0)+' audio='+(x.audio?1:0)+' speech='+(x.speech?1:0)+' result='+x.results+' end='+(x.ended?1:0)+' · '+(x.code||'OK')+(x.nativeReason?' · '+x.nativeReason:'')+' · '+x.events.join(' > '):'';}
-function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-voice-status" role="status" aria-live="polite"'+(!U.expenseVoiceDiagnostic&&U.expenseVoiceState!=='command'?' hidden':'')+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
+function expenseVoiceStatusHtml(){return '<div id="expenseVoiceStatus" class="expense-voice-status" role="status" aria-live="polite"'+' data-state="'+esc(U.expenseVoiceState||'ready')+'"'+'>'+esc(expenseVoiceStatusText())+'</div>'+(U.expenseVoiceDiagnostic?'<details class="voice-mic-diagnostic"><summary>ตรวจไมค์ / รุ่น '+APP_BUILD.version+'</summary><p id="expenseVoiceDiagnostic">'+esc(expenseVoiceDiagnosticText())+'</p><small>แสดงเฉพาะสถานะไมค์ ไม่เก็บเสียงหรือรายละเอียดรายการ</small></details>':'');}
 function expenseVoiceUiUpdate(){
   var button=document.querySelector('[data-act="expenseVoiceStart"]'),active=!!U.expenseVoiceRecognition;
   if(button){button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-label',expenseVoiceButtonText());var label=button.querySelector('span');if(label)label.textContent=expenseVoiceButtonText();var card=button.closest('.expense-voice-card');if(card)card.classList.toggle('listening',U.expenseVoiceState==='listening');}
-  var status=document.getElementById('expenseVoiceStatus');if(status){status.hidden=!U.expenseVoiceDiagnostic&&U.expenseVoiceState!=='command';status.textContent=expenseVoiceStatusText();}
+  var status=document.getElementById('expenseVoiceStatus');if(status){status.hidden=false;status.dataset.state=U.expenseVoiceState||'ready';status.textContent=expenseVoiceStatusText();}
   var detail=document.getElementById('expenseVoiceDiagnostic');if(detail)detail.textContent=expenseVoiceDiagnosticText();
 }
 function expenseVoiceEvent(event,code){var x=U.expenseVoiceDiagnostic;if(!x)return;if(event==='start')x.started=true;if(event==='audio')x.audio=true;if(event==='speech')x.speech=true;if(event==='result')x.results++;if(event==='end')x.ended=true;if(code)x.code=code;x.events=x.events.concat(event).slice(-12);expenseVoiceUiUpdate();}
@@ -5483,27 +5510,37 @@ function expenseVoiceDetach(recognition){
 }
 function expenseVoiceStop(){
   // Explicit cancellation/navigation discards pending audio. Native errors wait for end, below.
-  var engines=[U.expenseVoiceRecognition,U.expenseVoiceEnding];U.expenseVoiceSession=(+U.expenseVoiceSession||0)+1;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceCapture=null;U.expenseVoiceEngine=null;U.expenseVoiceEngineSpeech=null;U.expenseVoiceRestartDraft=null;U.expenseVoiceState='';
+  var engines=[U.expenseVoiceRecognition,U.expenseVoiceEnding];U.expenseVoiceSession=(+U.expenseVoiceSession||0)+1;U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceCapture=null;U.expenseVoiceEngine=null;U.expenseVoiceEngineSpeech=null;U.expenseVoiceRestartDraft=null;U.expenseVoiceRestartView=null;U.expenseVoiceState='';
   if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;if(U.expenseVoiceReleaseTimer)clearTimeout(U.expenseVoiceReleaseTimer);U.expenseVoiceReleaseTimer=null;
   engines.forEach(function(r,i){if(!r||engines.indexOf(r)!==i)return;expenseVoiceDetach(r);try{r.abort();}catch(_){}});expenseVoiceUiUpdate();
 }
 function expenseVoiceFail(code){expenseVoiceStop();U.expenseVoiceState='error';expenseVoiceEvent('failure',code);render();toast(expenseVoiceStatusText());}
+function expenseVoiceRestartQueued(draft,view,timedOut){
+  if(timedOut||!draft||draft!==U.draft||view!==U.view||view!=='add')return false;
+  return expenseVoiceStart(true);
+}
 function expenseVoiceEnded(recognition,timedOut){
   if(U.expenseVoiceRecognition!==recognition&&U.expenseVoiceEnding!==recognition)return;
-  var capture=U.expenseVoiceCapture;
+  var capture=U.expenseVoiceCapture,restartDraft=U.expenseVoiceRestartDraft,restartView=U.expenseVoiceRestartView;
   if(U.expenseVoiceTimer)clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=null;if(U.expenseVoiceReleaseTimer)clearTimeout(U.expenseVoiceReleaseTimer);U.expenseVoiceReleaseTimer=null;
-  U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceCapture=null;U.expenseVoiceEngine=null;U.expenseVoiceRestartDraft=null;expenseVoiceDetach(recognition);
+  U.expenseVoiceRecognition=null;U.expenseVoiceEnding=null;U.expenseVoiceCapture=null;U.expenseVoiceEngine=null;U.expenseVoiceRestartDraft=null;U.expenseVoiceRestartView=null;expenseVoiceDetach(recognition);
   if(timedOut){try{recognition.abort();}catch(_){}}
   if(!capture||capture.draft!==U.draft||capture.view!==U.view){U.expenseVoiceState='';expenseVoiceUiUpdate();return;}
-  // Commit once, from the complete FINAL result set. Interim hypotheses never change financial fields.
-  var parsed=expenseVoiceParse(capture.finalText),hasFinal=!!parsed.transcript&&(!capture.error||capture.error==='ERROR_ABORTED');
-  if(hasFinal&&capture.fields!==expenseVoiceDraftStamp(capture.draft)){U.expenseVoiceState='error';expenseVoiceEvent(timedOut?'release-timeout':'end','DRAFT_CHANGED');render();toast(expenseVoiceStatusText());return;}
-  if(hasFinal)expenseVoiceApply(parsed,capture.draft);
+  // Prefer confirmed finals. iOS may end with an interim hypothesis only; if speech ended
+  // or the user tapped stop, use it only as a parsed, reviewable draft and never auto-save.
+  var transcript=capture.finalText,provisional=false,mayUseInterim=(capture.manualStopRequested||capture.speechEnded)&&capture.liveText&&(!capture.error||capture.error==='ERROR_ABORTED');
+  if(!transcript&&mayUseInterim){var interimParsed=expenseVoiceParse(capture.liveText);if((interimParsed.amount&&!interimParsed.amountIssue||interimParsed.sub||interimParsed.partner||interimParsed.type||interimParsed.date&&!interimParsed.dateIssue)&&!interimParsed.dateIssue){transcript=capture.liveText;provisional=true;}}
+  var parsed=expenseVoiceParse(transcript),hasFinal=!!parsed.transcript&&(!capture.error||capture.error==='ERROR_ABORTED');
+  if(hasFinal&&capture.fields!==expenseVoiceDraftStamp(capture.draft)){U.expenseVoiceState='error';expenseVoiceEvent(timedOut?'release-timeout':'end','DRAFT_CHANGED');render();toast(expenseVoiceStatusText());expenseVoiceRestartQueued(restartDraft,restartView,timedOut);return;}
+  U.expenseVoiceProvisional=provisional;U.expenseVoiceAlternatives=capture.alternatives||[];U.expenseVoiceAlternativeDraft=capture.draft;
+  if(hasFinal)expenseVoiceApply(parsed,capture.draft);else if(capture.liveText){U.expenseVoiceTranscript=capture.liveText;U.expenseVoiceTranscriptDraft=capture.draft;}
   U.expenseVoiceState=hasFinal?'recognized':'error';
   var code=hasFinal?(timedOut?'END_TIMEOUT':''):(capture.error||(timedOut?'END_TIMEOUT':capture.liveText?'NO_FINAL_RESULT':'NO_SPEECH'));
   if(U.expenseVoiceDiagnostic)U.expenseVoiceDiagnostic.code='';expenseVoiceEvent(timedOut?'release-timeout':'end',code);
-  render();toast(hasFinal?'อ่านเสียงแล้ว · ตรวจข้อมูลก่อนบันทึก':expenseVoiceStatusText());
-  // Never start from onend: every new capture is created by a fresh button tap.
+  render();toast(hasFinal?(provisional?'ใช้ข้อความเสียงเบื้องต้นแล้ว · ตรวจให้ถูกก่อนบันทึก':'อ่านเสียงแล้ว · ตรวจข้อมูลก่อนบันทึก'):expenseVoiceStatusText());
+  // A second explicit user tap queues one capture. Restart as soon as native onend
+  // releases the previous iOS recognizer, retaining the current unsaved draft.
+  expenseVoiceRestartQueued(restartDraft,restartView,timedOut);
 }
 function expenseVoiceClose(recognition){
   if(U.expenseVoiceEnding===recognition)return true;
@@ -5519,16 +5556,30 @@ function expenseVoiceError(recognition,code){
   var capture=U.expenseVoiceCapture;if(capture&&(!capture.error||capture.error==='ERROR_ABORTED'))capture.error=code;
   expenseVoiceEvent(code==='ERROR_ABORTED'?'aborted':'error',capture&&capture.error||code);
 }
-function expenseVoiceFinish(recognition){
+function expenseVoiceFinish(recognition,manualStop){
   if(!expenseVoiceClose(recognition))return;
-  var capture=U.expenseVoiceCapture;if(!capture||capture.stopRequested)return;capture.stopRequested=true;
+  var capture=U.expenseVoiceCapture;if(!capture||capture.stopRequested)return;capture.stopRequested=true;if(manualStop)capture.manualStopRequested=true;
   if(typeof recognition.stop==='function'){try{recognition.stop();}catch(_){expenseVoiceError(recognition,'STOP_FAILED');}}else expenseVoiceEnded(recognition);
 }
+function expenseVoiceBestAlternative(row){
+  var choices=[],limit=Math.max(1,Math.min(5,+((row&&row.length)||1)));
+  for(var i=0;i<limit;i++){var item=row&&row[i],text=String(item&&item.transcript||'').trim().slice(0,500);if(!text||choices.some(function(x){return x.text===text;}))continue;var parsed=expenseVoiceParse(text),confidence=Number(item&&item.confidence),score=isFinite(confidence)?Math.max(0,Math.min(1,confidence))*2:0;
+    if(parsed.amount&&!parsed.amountIssue)score+=4;if(parsed.sub)score+=1.5;if(parsed.partner)score+=.5;if(parsed.type)score+=.5;if(parsed.date&&!parsed.dateIssue)score+=.5;if(parsed.amountIssue)score-=4;if(parsed.dateIssue)score-=2;
+    choices.push({text:text,score:score,index:i});}
+  choices.sort(function(a,b){return b.score-a.score||a.index-b.index;});return {text:choices[0]?choices[0].text:'',alternatives:choices.map(function(x){return x.text;})};
+}
 function expenseVoiceCommandHtml(d){
-  var code=U.expenseVoiceDiagnostic&&U.expenseVoiceDiagnostic.code||'',busy=!!(U.expenseVoiceRecognition||U.expenseVoiceEnding);
-  if(expenseVoiceSupported()&&U.expenseVoiceCommandDraft!==d&&!(U.expenseVoiceState==='error'&&['ERROR_ABORTED','NO_SPEECH','NO_FINAL_RESULT','NO_START_EVENT','END_TIMEOUT','ERROR_NETWORK','ERROR_AUDIO_CAPTURE','ERROR_NOT_ALLOWED','START_FAILED'].indexOf(code)>=0))return '';
-  if(U.expenseVoiceCommandDraft!==d){U.expenseVoiceCommandDraft=d;U.expenseVoiceCommandText='';}
-  return '<details class="voice-command-fallback"'+(U.expenseVoiceCommandText?' open':'')+'><summary>ใช้ไมค์แป้นพิมพ์หรือพิมพ์คำสั่ง</summary><p id="voiceCommandHelp">แตะช่องนี้แล้วใช้ไมค์บนแป้นพิมพ์ หรือพิมพ์ เช่น “ทราย 500” หรือ “แก้ยอดเป็น 700” จากนั้นแตะเติมข้อมูล · ยังไม่บันทึกรายการ</p><label for="expenseVoiceCommand">คำสั่งที่ต้องการเติม</label><textarea id="expenseVoiceCommand" rows="2" maxlength="1000" autocomplete="off" aria-describedby="voiceCommandHelp">'+esc(U.expenseVoiceCommandText||'')+'</textarea><button type="button" class="btn pri" data-act="expenseVoiceCommandApply"'+(busy?' disabled':'')+'>เติมข้อมูลจากคำสั่ง</button></details>';
+  var code=U.expenseVoiceDiagnostic&&U.expenseVoiceDiagnostic.code||'',busy=!!(U.expenseVoiceRecognition||U.expenseVoiceEnding),hasTranscript=U.expenseVoiceTranscriptDraft===d&&!!U.expenseVoiceTranscript,canFallback=U.expenseVoiceState==='error'&&['ERROR_ABORTED','NO_SPEECH','NO_FINAL_RESULT','NO_START_EVENT','END_TIMEOUT','ERROR_NETWORK','ERROR_AUDIO_CAPTURE','ERROR_NOT_ALLOWED','START_FAILED'].indexOf(code)>=0;
+  if(expenseVoiceSupported()&&!hasTranscript&&!canFallback)return '';
+  if(U.expenseVoiceCommandDraft!==d){U.expenseVoiceCommandDraft=d;U.expenseVoiceCommandText='';U.expenseVoiceCommandEdited=false;U.expenseVoiceCommandOpen=false;}
+  if(hasTranscript&&!U.expenseVoiceCommandEdited&&!String(U.expenseVoiceCommandText||''))U.expenseVoiceCommandText=U.expenseVoiceTranscript;
+  var alternatives=U.expenseVoiceAlternativeDraft===d?(U.expenseVoiceAlternatives||[]):[],alternativesHtml=alternatives.length>1?'<div class="voice-alternatives"><small>ระบบรู้จำเสียงมีข้อความใกล้เคียง · แตะเลือกเพื่อแก้</small><div>'+alternatives.map(function(x,i){return '<button type="button" class="btn" data-act="expenseVoiceAlternative" data-i="'+i+'">'+esc(x)+'</button>';}).join('')+'</div></div>':'';
+  return '<details class="voice-command-fallback"'+(U.expenseVoiceCommandOpen||U.expenseVoiceCommandEdited?' open':'')+'><summary>'+(hasTranscript?'ตรวจหรือแก้ข้อความที่ได้ยิน':'ใช้ไมค์แป้นพิมพ์หรือพิมพ์คำสั่ง')+'</summary><p id="voiceCommandHelp">'+(hasTranscript?'ตรวจข้อความด้านล่าง หากฟังผิดให้แก้ไขหรือเลือกข้อความใกล้เคียง':'แตะช่องนี้แล้วใช้ไมค์บนแป้นพิมพ์ หรือพิมพ์')+' เช่น “ทราย 500” หรือ “แก้ยอดเป็น 700” จากนั้นแตะเติมข้อมูล · ยังไม่บันทึกรายการ</p>'+alternativesHtml+'<label for="expenseVoiceCommand">ข้อความเสียง / คำสั่งที่ต้องการเติม</label><textarea id="expenseVoiceCommand" rows="2" maxlength="1000" autocomplete="off" aria-describedby="voiceCommandHelp">'+esc(U.expenseVoiceCommandText||'')+'</textarea><button type="button" class="btn pri" data-act="expenseVoiceCommandApply"'+(busy?' disabled':'')+'>เติมข้อมูลจากข้อความนี้</button></details>';
+}
+function expenseVoiceSelectAlternative(index){
+  if(U.view!=='add'||!U.draft||U.expenseVoiceAlternativeDraft!==U.draft||U.expenseVoiceRecognition||U.expenseVoiceEnding)return false;
+  var alternatives=U.expenseVoiceAlternatives||[],text=alternatives[+index];if(!text){toast('ไม่พบข้อความเสียงทางเลือก');return false;}
+  U.expenseVoiceCommandDraft=U.draft;U.expenseVoiceCommandText=String(text).slice(0,1000);U.expenseVoiceCommandEdited=true;U.expenseVoiceCommandOpen=true;render();toast('เลือกข้อความแล้ว · ตรวจแก้ก่อนเติมข้อมูล');return true;
 }
 function expenseVoiceCommandApply(){
   var d=U.draft;if(U.expenseVoiceRecognition||U.expenseVoiceEnding){toast('รอไมค์รอบนี้จบก่อนเติมคำสั่ง');return false;}
@@ -5537,24 +5588,28 @@ function expenseVoiceCommandApply(){
   U.expenseVoiceCommandText=text;expenseVoiceApply(expenseVoiceParse(text),d);U.expenseVoiceState='command';render();toast('เติมข้อมูลแล้ว · ตรวจสอบก่อนบันทึก');return true;
 }
 function expenseVoiceSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
-function expenseVoiceStart(){
+function expenseVoiceStart(fromQueued){
   var Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(U.expenseVoiceRecognition){expenseVoiceEvent('stop-request');expenseVoiceFinish(U.expenseVoiceRecognition);return true;}
-  if(U.expenseVoiceEnding){expenseVoiceUiUpdate();toast('กำลังประมวลผลเสียงรอบก่อน · รอปุ่มพูดรายการแล้วแตะอีกครั้ง');return true;}
+  if(U.expenseVoiceRecognition){expenseVoiceEvent('stop-request');expenseVoiceFinish(U.expenseVoiceRecognition,true);return true;}
+  if(U.expenseVoiceEnding){
+    if(U.view==='add'&&U.draft){if(U.expenseVoiceRestartDraft!==U.draft||U.expenseVoiceRestartView!==U.view){U.expenseVoiceRestartDraft=U.draft;U.expenseVoiceRestartView=U.view;expenseVoiceEvent('restart-queued');}expenseVoiceUiUpdate();toast('รับคำขอแล้ว · จะเริ่มฟังรอบใหม่ทันทีที่รอบก่อนจบ');}
+    else{expenseVoiceUiUpdate();toast('กำลังปิดไมค์รอบก่อน · รอให้จบแล้วลองใหม่');}
+    return true;
+  }
   if(!Speech){toast('อุปกรณ์นี้ยังไม่รองรับการสั่งงานด้วยเสียง · กรอกข้อมูลในฟอร์มได้ตามปกติ');return false;}
   if(!U.draft)U.draft=newDraft('out',quickEntryProject()||U.pid||null);
-  U.expenseVoiceAttempt=(+U.expenseVoiceAttempt||0)+1;U.expenseVoiceDiagnostic={attempt:U.expenseVoiceAttempt,started:false,audio:false,speech:false,results:0,ended:false,code:'',events:[]};
+  U.expenseVoiceAttempt=(+U.expenseVoiceAttempt||0)+1;U.expenseVoiceProvisional=false;U.expenseVoiceDiagnostic={attempt:U.expenseVoiceAttempt,started:false,audio:false,speech:false,results:0,ended:false,code:'',events:fromQueued?['restart-queued','request']:['request']};
   try{
-    var draft=U.draft,view=U.view,recognition=new Speech(),session=(+U.expenseVoiceSession||0)+1,capture={draft:draft,view:view,fields:expenseVoiceDraftStamp(draft),finalText:'',liveText:''};U.expenseVoiceCapture=capture;U.expenseVoiceSession=session;U.expenseVoiceRecognition=recognition;U.expenseVoiceState='starting';recognition.lang='th-TH';recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=1;
+    var draft=U.draft,view=U.view,recognition=new Speech(),session=(+U.expenseVoiceSession||0)+1,capture={draft:draft,view:view,fields:expenseVoiceDraftStamp(draft),finalText:'',liveText:'',alternatives:[],manualStopRequested:false,speechEnded:false};U.expenseVoiceCapture=capture;U.expenseVoiceSession=session;U.expenseVoiceRecognition=recognition;U.expenseVoiceState='starting';recognition.lang='th-TH';recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=5;
     function current(){return (U.expenseVoiceRecognition===recognition||U.expenseVoiceEnding===recognition)&&U.expenseVoiceSession===session;}
     recognition.onstart=function(){if(!current()||U.expenseVoiceEnding===recognition)return;U.expenseVoiceState='listening';expenseVoiceEvent('start');clearTimeout(U.expenseVoiceTimer);U.expenseVoiceTimer=setTimeout(function(){if(current()){expenseVoiceEvent('capture-timeout');expenseVoiceFinish(recognition);}},20000);};
     recognition.onaudiostart=function(){if(current())expenseVoiceEvent('audio');};recognition.onspeechstart=function(){if(current())expenseVoiceEvent('speech');};
-    recognition.onspeechend=function(){if(current()){expenseVoiceEvent('speech-end');expenseVoiceClose(recognition);}};
+    recognition.onspeechend=function(){if(current()){capture.speechEnded=true;expenseVoiceEvent('speech-end');expenseVoiceClose(recognition);}};
     recognition.onresult=function(event){
       if(!current())return;if(U.draft!==draft||U.view!==view){expenseVoiceStop();return;}
-      var results=event&&event.results,finals=[],live=[];
-      for(var i=0;results&&i<results.length;i++){var row=results[i],text=row&&row[0]&&String(row[0].transcript||'').trim();if(!text)continue;live.push(text);if(row.isFinal!==false)finals.push(text);}
-      capture.finalText=finals.join(' ');capture.liveText=live.join(' ');expenseVoiceEvent(finals.length?'result':'interim');
+      var results=event&&event.results,finals=[],live=[],lastAlternatives=[];
+      for(var i=0;results&&i<results.length;i++){var row=results[i],choice=expenseVoiceBestAlternative(row),text=choice.text;if(!text)continue;live.push(text);if(row.isFinal!==false)finals.push(text);if(results.length===1)lastAlternatives=choice.alternatives;}
+      capture.finalText=finals.join(' ');capture.liveText=live.join(' ');capture.alternatives=lastAlternatives;expenseVoiceEvent(finals.length?'result':'interim');
       // continuous=false completes natively; stopping again can turn a valid final into an iOS aborted error.
       if(finals.length)expenseVoiceClose(recognition);
     };
@@ -5633,19 +5688,42 @@ function systemReadableTerms(root){
   var dynamic=['tx','loanDetail','cloudPhoto','govDraft'].indexOf(U.sheet&&U.sheet.kind)>=0;
   root.querySelectorAll('.system-dialog-header h2,.doc-editor-head small,.acct-command-head small,.acct-task-list b,.acct-quick-grid b,.acct-bank-card .acct-section-title b,.acct-fold summary b,.acct-nav-card b,button[data-act]').forEach(function(el){if(el.children.length)return;if(dynamic&&el.closest('.system-dialog-header'))return;if(el.tagName==='BUTTON'&&!/^(accounting|ownerOps|systemAdvanced|healthCheck|integrityOpen|monthEnd|bankReconcile|saveOpen)/.test(el.dataset.act||''))return;var text=el.textContent.trim();if(terms[text])el.textContent=terms[text];});
 }
+var settingsFormFields=['brn','blegal','blegalen','baddr','baddren','btax','bphone','bemail','bbranch','bnk','op','opc','aiEndpoint','aiTimeout'];
+function systemSheetDrafts(){
+  if(U.settingsFormDraft&&(U.settingsFormDraft.sheet!==U.sheet||!U.sheet||U.sheet.kind!=='settings'))U.settingsFormDraft=null;
+  if(U.cloudKeyImportDraft&&(U.cloudKeyImportDraft.sheet!==U.sheet||!U.sheet||U.sheet.kind!=='backup'))U.cloudKeyImportDraft=null;
+}
+function settingsFormCapture(){
+  if(!U.sheet||U.sheet.kind!=='settings')return;
+  var values={};settingsFormFields.forEach(function(id){var el=document.getElementById(id);if(el)values[id]=el.value;});
+  U.settingsFormDraft={sheet:U.sheet,values:values};
+}
+function systemRestoreSheetDraft(){
+  systemSheetDrafts();
+  var draft=U.settingsFormDraft;
+  if(draft&&U.sheet&&U.sheet.kind==='settings')Object.keys(draft.values).forEach(function(id){var el=document.getElementById(id);if(el)el.value=draft.values[id];});
+  var key=U.cloudKeyImportDraft,input=document.getElementById('cloudKeyImport');
+  if(key&&input&&U.sheet&&U.sheet.kind==='backup')input.value=key.value;
+}
+document.addEventListener('input',function(e){
+  if(U.sheet&&U.sheet.kind==='settings'&&settingsFormFields.indexOf(e.target.id)>=0)settingsFormCapture();
+  if(U.sheet&&U.sheet.kind==='backup'&&e.target.id==='cloudKeyImport'){
+    var previous=U.cloudKeyImportDraft;U.cloudKeyImportDraft={sheet:U.sheet,value:e.target.value,confirmedValue:previous&&previous.sheet===U.sheet?previous.confirmedValue:''};
+  }
+});
+document.addEventListener('change',function(e){if(U.sheet&&U.sheet.kind==='settings'&&settingsFormFields.indexOf(e.target.id)>=0)settingsFormCapture();});
 function systemDialogPresentation(panel){
   var heading=panel.querySelector('h1,h2,h3');if(!heading)return;
   var kind=U.sheet&&U.sheet.kind||'',header=document.createElement('header');header.className='system-dialog-header';
   var title=document.createElement('h2'),copy=heading.cloneNode(true);copy.querySelectorAll('button').forEach(function(b){b.remove();});title.textContent=copy.textContent.trim();title.id='system-dialog-heading';header.appendChild(title);heading.hidden=true;
-  var closes=Array.from(panel.querySelectorAll('[data-act="closeSheet"]')),close=closes[0];
-  if(!close){close=document.createElement('button');close.dataset.act='closeSheet';close.setAttribute('aria-label','ปิดหน้าต่าง');}
-  else if(!close.getAttribute('aria-label')){var closeName=close.textContent.trim();close.setAttribute('aria-label',!closeName||/^[×x]$/i.test(closeName)?'ปิดหน้าต่าง':closeName);}
+  var close=document.createElement('button');close.dataset.act='closeSheet';close.setAttribute('aria-label','ปิดหน้าต่าง');
   close.type='button';close.className='system-dialog-close';close.innerHTML=ic('close');header.appendChild(close);panel.prepend(header);
   panel.classList.add('system-dialog');
   if(/^accounting|manualJournal|boqImportPreview|expenseBatch|quote|bizdoc/.test(kind))panel.classList.add('system-dialog-wide');
   var groups=Array.from(panel.querySelectorAll('.stack,.doc-editor-save,.quote-editor-save'));
   var last=groups.filter(function(g){return !!g.querySelector('.pri,.primary');}).pop();if(last)last.classList.add('system-dialog-actions');
-  panel.querySelectorAll('.project-form-head,.doc-editor-head,.quote-editor-head,.boq-link-head').forEach(function(el){if(!el.querySelector('button,input,select,textarea')&&el.querySelector('h3[hidden]'))el.hidden=true;});
+  panel.querySelectorAll('.project-form-head,.doc-editor-head,.quote-editor-head,.boq-link-head').forEach(function(el){if(el.querySelector('h3[hidden]')&&!el.querySelector('button:not([data-act="closeSheet"]),input,select,textarea'))el.hidden=true;});
+  systemRestoreSheetDraft();
 }
 function systemTablePresentation(root){
   root.querySelectorAll('.acct-table,.wrapx').forEach(function(region){region.tabIndex=0;region.setAttribute('role','region');var h=root.querySelector('h1,h2,h3');region.setAttribute('aria-label','ข้อมูล '+(h?h.textContent:'ตาราง'));});
@@ -5658,7 +5736,12 @@ function systemTablePresentation(root){
   });
 }
 function systemPagePresentation(root,title,view){
-  if(view==='profile'||view==='home')return;
+  if(view==='profile')return;
+  if(view==='home'){
+    var projectHeading=root.querySelector('.master-ref-body>h2');
+    if(projectHeading){var homeHeading=document.createElement('h1');homeHeading.className=projectHeading.className+' home-project-heading';homeHeading.innerHTML=projectHeading.innerHTML;projectHeading.replaceWith(homeHeading);}
+    return;
+  }
   if(!root.querySelector('h1')){var first=root.querySelector('h2');if(first&&first.textContent.trim()===title){var h=document.createElement('h1');h.className=first.className+' system-page-heading';h.innerHTML=first.innerHTML;first.replaceWith(h);}else{var header=document.createElement('header');header.className='system-page-intro';var h1=document.createElement('h1');h1.textContent=title;header.appendChild(h1);root.prepend(header);}}
 }
 function systemSelectionPresentation(root){
@@ -5679,6 +5762,7 @@ function systemDocumentPresentation(main,title){
   var wrap=document.createElement('div');wrap.className='system-document-preview';wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','ตัวอย่างเอกสาร A4');paper.before(wrap);wrap.appendChild(paper);systemFitDocument();
 }
 function systemPresentation(title,view){
+  systemSheetDrafts();
   var main=document.getElementById('workspace-main');if(!main)return;
   if(view==='print'){systemTablePresentation(main);return;}
   if(view==='quoteprint'){systemDocumentPresentation(main,title);return;}
@@ -5686,6 +5770,7 @@ function systemPresentation(title,view){
   var root=panel||main;
   root.querySelectorAll('input:not([type=hidden]),select,textarea').forEach(function(control,index){systemFieldLabel(control,root,index);});
   systemTablePresentation(root);systemReadableTerms(root);systemSelectionPresentation(root);
+  if(U.sheet&&U.sheet.kind==='backup')backupPortableUi(!!U.portableBackupBusy);
 }
 function systemClearFeedback(control){
   if(control&&control.dataset&&control.dataset.systemInvalid){control.removeAttribute('aria-invalid');delete control.dataset.systemInvalid;var description=(control.getAttribute('aria-describedby')||'').split(' ').filter(function(x){return x!=='system-field-error';});if(description.length)control.setAttribute('aria-describedby',description.join(' '));else control.removeAttribute('aria-describedby');}
@@ -5739,11 +5824,11 @@ function workspaceContextHtml(){
     '<div class="workspace-project"><span>โครงการ</span><b>'+esc(p?p.name:'ทุกโครงการ')+'</b></div>'+
     '<button class="workspace-sync '+sync.tone+'" data-act="backup" aria-label="'+esc(sync.label)+' เปิดการสำรองและซิงค์ข้อมูล">'+ic(sync.tone==='success'?'check':'clock')+'<span>'+esc(sync.label)+'</span></button><span id="workspace-sync-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span></section>';
 }
-function workspaceTasksHtml(site){
+function workspaceTasksHtml(site,secondary){
   var tasks=site?[
     ['newTx','','plus','บันทึกรายจ่าย','สแกนบิล พูดรายการ หรือกรอกเอง'],['openList','','list','รายการหน้างาน','ตรวจรายการรายจ่ายที่บันทึก'],['go','projects','build','ดูโครงการ','ข้อมูลและงานในแต่ละโครงการ']
   ]:[['ocrReviewQueue','','receipt','ตรวจเอกสาร','ทบทวนข้อมูลจาก OCR ก่อนบันทึก'],['accountingOpen','','calculator','ตรวจสอบบัญชี','กระทบยอดและปิดงวด'],['go','report','chart','รายงานการเงิน','รายรับ รายจ่าย และผลโครงการ']];
-  return '<section class="workspace-tasks" aria-label="'+(site?'งานประจำวันของหัวหน้าไซต์':'งานตรวจเอกสารและบัญชีของเจ้าของ')+'"><div class="workspace-task-heading"><h1>'+(site?'งานหน้างานวันนี้':'ภาพรวมและงานตรวจสอบ')+'</h1><span>'+(site?'หัวหน้าไซต์':'เจ้าของ')+'</span></div><div class="workspace-task-grid">'+tasks.map(function(t){return '<button data-act="'+t[0]+'"'+(t[1]?' data-v="'+t[1]+'"':'')+'>'+ic(t[2])+'<span><b>'+t[3]+'</b><small>'+t[4]+'</small></span></button>';}).join('')+'</div></section>';
+  return '<section class="workspace-tasks" aria-label="'+(site?'งานประจำวันของหัวหน้าไซต์':'งานตรวจเอกสารและบัญชีของเจ้าของ')+'"><div class="workspace-task-heading"><'+(secondary?'h2':'h1')+'>'+(site?'งานหน้างานวันนี้':'ภาพรวมและงานตรวจสอบ')+'</'+(secondary?'h2':'h1')+'><span>'+(site?'หัวหน้าไซต์':'เจ้าของ')+'</span></div><div class="workspace-task-grid">'+tasks.map(function(t){return '<button data-act="'+t[0]+'"'+(t[1]?' data-v="'+t[1]+'"':'')+'>'+ic(t[2])+'<span><b>'+t[3]+'</b><small>'+t[4]+'</small></span></button>';}).join('')+'</div></section>';
 }
 function vSiteWorkspace(){
   var p=workspaceProject(),rows=S.tx.filter(function(t){return t.type==='out'&&(!p||t.pid===p.id);}),todayRows=rows.filter(function(t){return t.date===today();}),recent=rows.slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));}).slice(0,8);
@@ -5833,7 +5918,7 @@ function rowTx(t,showProj,opts){
   if(outstanding){if(d&&d.late)tags+='<span class="tag late">เลยกำหนด '+(-d.days)+' วัน</span>';else tags+='<span class="tag pend">'+(t.type==='in'?'ค้างรับ':'ค้างจ่าย')+(d?' อีก '+d.days+' วัน':'')+'</span>';}
   var shown=opts.outstanding?pst.remain:t.amount,sign=opts.outstanding?'':(t.type==='in'?'+':'−'),catText=t.type==='out'?(t.cat||'ยังไม่จัดหมวด'):(t.cat||'รายรับ');
   var audit='<div class="tx-audit-meta"><span class="tx-date-chip">'+esc(dmyFull(t.date))+'</span><span class="tx-cat-chip '+txAuditClass(t)+'">'+esc(catText)+'</span>'+(needsReview?'<span class="tx-review-chip">ควรเป็น '+esc(suggest)+'</span>':'')+(badOcrText?'<span class="tx-ocr-review-chip">ตรวจสอบข้อความ OCR</span>':'')+'</div>';
-  return '<button class="row tx-modern'+(needsReview?' tx-needs-review':'')+'" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income ':'')+'category-tone-'+categoryVisual(t.cat,t.type).tone+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+audit+(partner?'<small>'+esc(partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+sign+fmt(shown).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
+  return '<button class="row tx-modern'+(needsReview?' tx-needs-review':'')+'" data-act="openTx" data-id="'+t.id+'"><span class="tx-cat-icon '+(t.type==='in'?'income ':'')+'category-tone-'+categoryVisual(t.cat,t.type).tone+'">'+txIcon(t)+'</span><div class="l"><b>'+esc(label)+'</b>'+audit+(partner?'<small>'+esc(partner)+'</small>':'')+'<em class="tx-kind tx-project-name">'+esc(t.organizationExpense===true?'องค์กร':pname(t.pid))+'</em></div><div class="r"><span class="num '+(t.type==='in'?'in':'out')+'">'+sign+fmt(shown).replace('฿','')+'</span><span>'+tags+'</span></div><span class="tx-more">•••</span></button>';
 }
 function timelineRows(list){
   var groups={};list.forEach(function(t){var k=t.date||'undated';(groups[k]||(groups[k]=[])).push(t);});
@@ -5988,7 +6073,7 @@ function vHome(){
     h+='<section class="mgroup"><div class="mgh"><span>'+month+'<small>'+rows.length+' รายการ</small></span><b><small>ยอดรวมรายการ</small>'+fmt(tot)+'</b></div>';
     rows.forEach(function(t){
       var d=t.date?new Date(t.date+'T00:00:00'):null,label=t.sub||t.partner||t.cat;
-      h+='<button class="mitem" data-act="openTx" data-id="'+t.id+'"><div class="mdate">'+(d?'<b>'+d.getDate()+'</b><small>'+d.toLocaleDateString('th-TH',{month:'short'})+'<br>'+(d.getFullYear()+543)+'</small>':'<b>–</b><small>รอระบุ</small>')+'</div><div class="mico '+(t.type==='in'?'income ':'')+'category-tone-'+categoryVisual(t.cat,t.type).tone+'">'+txIcon(t)+'</div><div class="mtext"><b>'+esc(label)+(t.paid?'':' <i>ค้าง</i>')+'</b><em class="tx-kind tx-project-name">'+esc(pname(t.pid))+'</em></div><div class="mamt '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</div></button>';
+      h+='<button class="mitem" data-act="openTx" data-id="'+t.id+'"><div class="mdate">'+(d?'<b>'+d.getDate()+'</b><small>'+d.toLocaleDateString('th-TH',{month:'short'})+'<br>'+(d.getFullYear()+543)+'</small>':'<b>–</b><small>รอระบุ</small>')+'</div><div class="mico '+(t.type==='in'?'income ':'')+'category-tone-'+categoryVisual(t.cat,t.type).tone+'">'+txIcon(t)+'</div><div class="mtext"><b>'+esc(label)+(t.paid?'':' <i>ค้าง</i>')+'</b><em class="tx-kind tx-project-name">'+esc(t.organizationExpense===true?'องค์กร':pname(t.pid))+'</em></div><div class="mamt '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+fmt(t.amount).replace('฿','')+'</div></button>';
     });
     h+='</section>';
   });
@@ -6290,7 +6375,7 @@ function vAdd(){
   if(!S.projects.length)return '<div class="empty" style="margin-top:20px">ต้องมีโครงการก่อนจึงจะบันทึกรายการได้</div><div class="stack"><button class="btn pri" data-act="newProj">เพิ่มโครงการ</button></div>';
   if(!foreman)h+='<div class="seg add-type-seg" role="group" aria-label="ประเภทรายการ"><button class="out-c'+(d.type==='out'?' on':'')+'" data-act="setType" data-v="out" aria-pressed="'+(d.type==='out')+'">รายจ่าย</button><button class="in-c'+(d.type==='in'?' on':'')+'" data-act="setType" data-v="in" aria-pressed="'+(d.type==='in')+'">รายรับ</button></div>';
   var entryTools='';if(d.type==='out')entryTools+='<div class="expense-action-tools"><div class="expense-scan-card"><label for="expenseScanIn" aria-label="สแกนหรือเลือกรูปใบเสร็จ" title="สแกนหรือเลือกรูปใบเสร็จ">'+ic('scan')+'<span>สแกนบิล</span></label><input id="expenseScanIn" type="file" accept="image/*" multiple aria-label="เลือกภาพใบเสร็จเพื่ออ่านข้อมูล"></div><div class="expense-voice-card'+(U.expenseVoiceState==='listening'?' listening':'')+'"><button class="expense-voice-button" type="button" data-act="expenseVoiceStart" aria-pressed="'+!!U.expenseVoiceRecognition+'" aria-label="'+(U.expenseVoiceRecognition?expenseVoiceButtonText():'สั่งงานด้วยเสียง')+'" title="'+(U.expenseVoiceState==='listening'?'กำลังฟัง · แตะเพื่อหยุด':'สั่งงานด้วยเสียง')+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"></path></svg><span>'+expenseVoiceButtonText()+'</span></button><span class="expense-voice-sr" aria-live="polite">'+(U.expenseVoiceState==='listening'?'กำลังฟังอยู่ · แตะเพื่อหยุด · แอปไม่บันทึกเสียง':'สั่งงานด้วยเสียง · พูดรายการและยอดเงิน แล้วตรวจทานก่อนบันทึก · แอปไม่บันทึกเสียง · เสียงอาจถูกประมวลผลโดยบริการรู้จำเสียงของเบราว์เซอร์หรืออุปกรณ์')+'</span></div></div>'+(U.expenseScanBusy?'<div class="expense-scan-status"><b>'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%</b> · '+esc(U.expenseScanStage||'กำลังอ่านรูปและแยกหมวด')+'<div class="bar" style="margin-top:7px"><i style="width:'+Math.max(1,Math.min(100,+U.expenseScanProgress||1))+'%"></i></div></div>':'')+expenseScanStatusHtml(d)+(U.expenseBatchDraftAvailable?'<div class="expense-draft-recovery"><div><b>พบร่างที่ยังไม่ได้บันทึก</b><small>'+(U.expenseBatchDraft&&U.expenseBatchDraft.items?U.expenseBatchDraft.items.length:0)+' รายการ · กู้คืนเพื่อตรวจต่อ</small></div><button class="btn pri" data-act="expenseBatchDraftResume">กู้คืน</button><button class="btn" data-act="expenseBatchDraftDiscard">ลบร่าง</button></div>':'');
-  if(d.type==='out')entryTools+='<div class="voice-edit-help">'+(U.expenseVoiceTranscriptDraft===d&&U.expenseVoiceTranscript?'<div class="voice-last-command"><b>ข้อความที่ได้ยินล่าสุด</b><span>'+esc(U.expenseVoiceTranscript)+'</span>'+expenseVoiceChangeHtml(d)+'</div>':'<p>แตะไมค์พูดซ้ำเพื่อแก้ข้อมูลได้ เช่น “แก้ยอดเป็น 53,000” หรือ “เปลี่ยนรายการเป็นค่าแรงหลังคา”</p>')+'</div>';
+  if(d.type==='out')entryTools+='<div class="voice-edit-help">'+(U.expenseVoiceTranscriptDraft===d&&U.expenseVoiceTranscript?'<div class="voice-last-command"><b>'+(U.expenseVoiceProvisional?'ข้อความเสียงเบื้องต้น · โปรดตรวจ':'ข้อความที่ได้ยินล่าสุด')+'</b><span>'+esc(U.expenseVoiceTranscript)+'</span>'+expenseVoiceChangeHtml(d)+'</div>':'<details class="voice-command-examples"><summary>ตัวอย่างคำสั่งและการพูดแก้ข้อมูล</summary><p>แตะไมค์พูดซ้ำเพื่อแก้ข้อมูลได้ เช่น “แก้ยอดเป็น 53,000” หรือ “เปลี่ยนรายการเป็นค่าแรงหลังคา”</p></details>')+'</div>';
   if(U.expenseVoiceIssuesDraft===d&&U.expenseVoiceIssues&&U.expenseVoiceIssues.length)h+='<div id="expenseVoiceReview" class="expense-scan-result warning" role="alert">'+esc(U.expenseVoiceIssues.join(' · '))+'</div>';
   if(d.type==='out'&&d.photo&&d.ocrSource&&(!U.expenseScanMsg||U.expenseScanMsgDraft&&U.expenseScanMsgDraft!==d))h+='<div class="expense-scan-result"><b>AI/OCR กรอกค่าจากบิลให้แล้ว</b><br><span>ตรวจรูปบิลเทียบกับข้อมูลด้านล่างก่อนบันทึก · ระบบจะไม่บันทึกอัตโนมัติ</span></div>';
 
@@ -6325,7 +6410,7 @@ function vAdd(){
   h+='<div class="field"><span class="lbl">รูปใบเสร็จ</span>'+(d.photo?'<div class="photo"><img src="'+d.photo+'" alt="รูปใบเสร็จ"></div><div class="stack" style="margin-top:10px"><button class="btn" data-act="rmphoto">ลบรูป</button></div>':d.photoRef?'<div class="photo">'+(d.photoThumb?'<img src="'+d.photoThumb+'" alt="รูปใบเสร็จย่อ">':'')+'</div><div class="stack" style="margin-top:10px"><button class="btn" data-act="cloudPhotoOpen" data-key="'+esc(d.photoRef)+'" data-mime="'+esc(d.photoMime||'image/jpeg')+'">เปิดรูปต้นฉบับจาก R2</button><button class="btn" data-act="rmphoto">ลบรูปออกจากรายการ</button></div>':'<label class="btn" for="photoIn">'+ic('cam')+'ถ่ายรูปหรือเลือกรูป</label>')+'<input id="photoIn" type="file" accept="image/*" capture="environment"></div>';
   h+='<div class="field"><label for="note">หมายเหตุ</label><input id="note" data-f="note" type="text" placeholder="ไม่บังคับ" value="'+esc(d.note)+'"></div></div></details>';
   if(U.txSaveErrorDraft===d&&U.txSaveError)h+='<div class="expense-scan-result error" role="alert">'+esc(U.txSaveError)+'</div>';
-  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save"'+(U.saveLock?' disabled aria-busy="true"':'')+'>'+(d.id?'บันทึกการแก้ไข':'บันทึกรายการ')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore"'+(U.saveLock?' disabled':'')+'>บันทึกและเพิ่มอีก</button>')+'</div>';
+  h+='<div class="savebar add-savebar"><button class="btn pri" data-act="save"'+(U.saveLock?' disabled aria-busy="true"':'')+'>'+(U.saveLock?'กำลังบันทึก…':d.id?'บันทึกการแก้ไข':'บันทึกรายการ')+'</button>'+(d.id?'':'<button class="btn" data-act="saveMore"'+(U.saveLock?' disabled aria-busy="true"':'')+'>'+(U.saveLock?'กำลังบันทึก…':'บันทึกและเพิ่มอีก')+'</button>')+'</div>';
   return h+'</section>';
 }
 function prevText(d){
@@ -7292,14 +7377,12 @@ function vBoq(){
     '<button class="boq-change-btn" data-act="boqBackProjects">เปลี่ยนโครงการ</button></div>'+
     '<div class="boq-total-block"><span>มูลค่า BOQ รวม</span><strong>'+fmt(total)+'</strong></div>'+
     '<div class="boq-summary-grid">'+
-      '<div><small>รายการ</small><b>'+rows.length+'</b></div>'+
-      '<div><small>หมวดงาน</small><b>'+sectionCount+'</b></div>'+
       '<div><small>ค่าวัสดุ</small><b>'+fmt(materialTotal)+'</b></div>'+
       '<div><small>ค่าแรง</small><b>'+fmt(laborTotal)+'</b></div>'+
     '</div>'+
     '<div class="boq-hero-actions"><button class="boq-action primary" data-act="newBoq" data-id="'+pid+'">'+ic('plus')+'<span>เพิ่มรายการ</span></button><button class="boq-action secondary" data-act="boqImport" data-id="'+pid+'">'+ic('documents')+'<span>นำเข้าไฟล์</span></button><button class="boq-action google" data-act="googleWorkspaceOpen" data-id="'+pid+'">'+ic('box')+'<span>Google Drive / Sheets</span></button></div>'+
   '</section>';
-  h+='<div class="workspace-flow boq-flow" aria-label="ขั้นตอน BOQ"><span class="done"><i>1</i><b>นำเข้า</b></span><span class="done"><i>2</i><b>AI / OCR อ่าน</b></span><span class="done"><i>3</i><b>ตรวจสอบ</b></span><span class="active"><i>4</i><b>จัดการ BOQ</b></span></div>';
+  h+='<details class="boq-process-guide"><summary>ขั้นตอนนำเข้า BOQ</summary><div class="workspace-flow boq-flow" aria-label="ขั้นตอนเมื่อนำเข้าไฟล์ BOQ"><span><i>1</i><b>นำเข้า</b></span><span><i>2</i><b>AI / OCR อ่าน</b></span><span><i>3</i><b>ตรวจสอบ</b></span><span><i>4</i><b>จัดการ BOQ</b></span></div><p>นำเข้าไฟล์ แล้วตรวจรายการและยอดก่อนยืนยัน หรือเพิ่มรายการเองได้จากปุ่มเพิ่มรายการ</p></details>';
 
   if(!rows.length)return h+'<div class="empty boq-empty">ยังไม่มีรายการ BOQ ในโครงการนี้</div>';
 
@@ -7717,17 +7800,38 @@ async function backupPortableJson(){
   e.portableReceiptImages=offloaded.length;
   return JSON.stringify(e,null,2);
 }
+function backupPortableFeedback(){
+  var feedback=U.portableBackupFeedback,stale=S.lastBackup&&+S.lastBackupRevision!==+S.dataRevision;
+  if(feedback&&(feedback.tone!=='success'||feedback.revision===+S.dataRevision))return feedback;
+  return {message:S.lastBackup?'สำรองล่าสุด: '+workspaceTime(S.lastBackup)+(stale?' · ควรสร้างสำเนาใหม่เพื่อให้ครอบคลุมข้อมูลล่าสุด':''):'ยังไม่ได้สร้างไฟล์สำรอง · กดดาวน์โหลดเพื่อเก็บสำเนาไว้กับคุณ',tone:stale?'warning':'ready'};
+}
+function backupPortableStatusHtml(){
+  var feedback=backupPortableFeedback();
+  return '<p id="backupLocalStatus" class="backup-local-status" role="status" aria-live="polite" data-tone="'+esc(feedback.tone)+'">'+esc(feedback.message)+'</p>';
+}
+function backupPortableUi(busy,message,tone){
+  if(message)U.portableBackupFeedback={message:message,tone:tone||'ready',revision:tone==='success'?+S.lastBackupRevision:+S.dataRevision};
+  var feedback=backupPortableFeedback(),status=document.getElementById('backupLocalStatus');
+  if(status&&feedback){status.textContent=feedback.message;status.dataset.tone=feedback.tone;}
+  document.querySelectorAll('[data-act="backupFile"],[data-act="copyBk"]').forEach(function(button){
+    if(busy){if(!button.hasAttribute('data-backup-label')){button.dataset.backupLabel=button.textContent;button.dataset.backupDisabled=String(button.disabled);}button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='กำลังเตรียมข้อมูล…';}
+    else if(button.hasAttribute('data-backup-label')){button.textContent=button.dataset.backupLabel;button.disabled=button.dataset.backupDisabled==='true';button.removeAttribute('aria-busy');delete button.dataset.backupLabel;delete button.dataset.backupDisabled;}
+  });
+}
 async function backupPortableAction(mode){
   if(U.portableBackupBusy)return false;
   U.portableBackupBusy=true;
+  backupPortableUi(true,'กำลังเตรียมสำเนาข้อมูลและรูปใบเสร็จ…','pending');
   var revision=+S.dataRevision||0;
   try{
     var payload=await backupPortableJson();
     if(mode==='download'){
       var ok=await saveFile('AREA-Ledger-backup-'+today()+'.json',new Blob([payload],{type:'application/json'}));
+      if(!ok)backupPortableUi(true,'ยังไม่ได้บันทึกไฟล์สำรอง · กดดาวน์โหลดเพื่อลองใหม่','warning');
       if(!ok)return false;
       S.lastBackup=Date.now();S.lastBackupRevision=revision;
-      if(!persist({metaOnly:true}))return false;
+      if(!persist({metaOnly:true})){backupPortableUi(true,'ได้ไฟล์สำรองแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ · เก็บไฟล์ที่ดาวน์โหลดไว้','warning');return false;}
+      backupPortableUi(true,'บันทึกไฟล์สำรองพร้อมรูปใบเสร็จแล้ว · '+workspaceTime(S.lastBackup),'success');
       render();toast('บันทึกไฟล์สำรองพร้อมรูปหลักฐานครบแล้ว · เก็บไฟล์เพื่อกู้คืนหรือย้ายเครื่อง');
     }else{
       var box=document.getElementById('bkbox');
@@ -7735,15 +7839,18 @@ async function backupPortableAction(mode){
       box.value=payload;
       doCopy('bkbox',function(){
         S.lastBackup=Date.now();S.lastBackupRevision=revision;
-        if(!persist({metaOnly:true}))return;
+        if(!persist({metaOnly:true})){backupPortableUi(true,'คัดลอกสำเนาแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ','warning');return;}
+        backupPortableUi(true,'คัดลอกข้อมูลสำรองพร้อมรูปใบเสร็จแล้ว · '+workspaceTime(S.lastBackup),'success');
         render();toast('คัดลอกข้อมูลสำรองพร้อมรูปหลักฐานครบแล้ว');
       });
+      if(U.portableBackupFeedback&&U.portableBackupFeedback.tone==='pending')backupPortableUi(true,'เตรียมข้อมูลสำรองแล้ว · หากคัดลอกไม่ได้ ให้เลือกข้อความแล้วคัดลอกเอง','ready');
     }
     return true;
   }catch(e){
-    toast('สำรองไม่ได้: รูปใบเสร็จ R2 ยังไม่ครบในเครื่อง หรือข้อมูลเปลี่ยน · ยังไม่บันทึกว่าได้สำรองแล้ว');
+    var reason=String(e&&e.message||''),message=/RECEIPT_EVIDENCE/.test(reason)?'สำรองไม่ได้ · รูปใบเสร็จต้นฉบับยังไม่ครบในเครื่อง ตรวจรูปแล้วลองใหม่':/BACKUP_STATE_CHANGED/.test(reason)?'สำรองไม่ได้ · ข้อมูลเปลี่ยนระหว่างเตรียมสำเนา กดดาวน์โหลดอีกครั้ง':'สำรองไม่ได้ · ข้อมูลเดิมยังอยู่ กดดาวน์โหลดเพื่อลองใหม่';
+    backupPortableUi(true,message,'error');toast(message);
     return false;
-  }finally{U.portableBackupBusy=false;}
+  }finally{U.portableBackupBusy=false;backupPortableUi(false);}
 }
 function hostMigrationReadiness(){
   var h=stateHealth(S),rev=Math.max(0,+S.dataRevision||0),backupRev=Number.isInteger(+S.lastBackupRevision)?+S.lastBackupRevision:-1;
@@ -7778,7 +7885,7 @@ function restoreComparisonHtml(){
   return h+'</ul></details><p>สร้างไฟล์: '+esc(parsed.meta.exportedAt?workspaceTime(parsed.meta.exportedAt):'ไฟล์เก่าไม่ระบุเวลา')+'<br>รูปที่เป็นรหัสคลาวด์ต้องใช้รหัสกู้คืนชุดเดิม · หน้านี้ตรวจเฉพาะข้อมูลอ้างอิง ยังไม่ได้ตรวจว่าเปิดรูปได้</p></section>';
 }
 function restoreFingerprint(parsed){if(!parsed||!parsed.state)return '';return String(parsed.meta&&parsed.meta.stateChecksum||backupStateChecksum(parsed.state));}
-function migrationCoreSnapshot(o){o=o||{};var keys=['projects','tx','boq','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts'];var x={};keys.forEach(function(k){x[k]=Array.isArray(o[k])?o[k]:[];});x.business=o.business||{};x.opening=+o.opening||0;x.openCash=+o.openCash||0;x.bank=String(o.bank||'');x.docSeq=o.docSeq||{};x.customSubs=o.customSubs||{};return x;}
+function migrationCoreSnapshot(o){o=o||{};var keys=['projects','tx','boq','guarantees','loans','quotes','bills','receipts','materialApprovals','siteEvents','contractChanges','timeExtensions','accountingPeriods','bankReconciliations','auditLog','manualJournals','chartAccounts','inventoryItems','inventoryMovements','businessAssets','leaseContracts'];var x={};keys.forEach(function(k){x[k]=Array.isArray(o[k])?o[k]:[];});x.business=o.business||{};x.opening=+o.opening||0;x.openCash=+o.openCash||0;x.bank=String(o.bank||'');x.docSeq=o.docSeq||{};x.customSubs=o.customSubs||{};return x;}
 function migrationBusinessDigest(o){return backupChecksumText(JSON.stringify(migrationCoreSnapshot(o)));}
 function migrationDrill(parsed){if(!parsed||!parsed.ok||!parsed.state)return {ok:false,error:'PARSE'};var h=stateHealth(parsed.state),digest=migrationBusinessDigest(parsed.state),sm=parsed.summary||{};return {ok:h.ok,digest:digest,health:h,sourceOrigin:String(parsed.meta&&parsed.meta.sourceOrigin||''),sourceRevision:+(parsed.meta&&parsed.meta.dataRevision)||0,summary:{projects:+sm.projects||0,tx:+sm.tx||0,boq:+sm.boq||0,quotes:+sm.quotes||0,bills:+sm.bills||0,receipts:+sm.receipts||0}};}
 function migrationAcceptanceCertificate(){
@@ -8211,7 +8318,7 @@ function sheetHtml(){
     var owner=S.role==='owner',d=dueInfo(t);
     b='<h3>'+esc(t.partner||t.cat)+'</h3><div class="'+(t.type==='in'?'in':'out')+' num" style="font-size:1.8rem;font-weight:700">'+(t.type==='in'?'+':'−')+fmt(t.amount,1)+'</div>'+
      '<div style="margin-top:8px"><div class="kv"><span>ประเภท / หมวด</span><span>'+(t.type==='in'?'รายรับ':'รายจ่าย')+' / '+esc(t.cat)+'</span></div>'+(t.sub?'<div class="kv"><span>รายละเอียด</span><span>'+esc(t.sub)+'</span></div>':'')+
-     '<div class="kv"><span>โครงการ</span><span>'+esc(pname(t.pid))+'</span></div><div class="kv"><span>วันที่</span><span>'+dstr(t.date)+'</span></div>'+
+     '<div class="kv"><span>โครงการ</span><span>'+esc(t.organizationExpense===true?'องค์กร':pname(t.pid))+'</span></div><div class="kv"><span>วันที่</span><span>'+dstr(t.date)+'</span></div>'+
      (t.vat?'<div class="kv"><span>ก่อน VAT / VAT</span><span class="num">'+fmt(base(t),1)+' / '+fmt(vatOf(t),1)+'</span></div>':'')+
      (t.wht?'<div class="kv"><span>หัก ณ ที่จ่าย '+(t.whtRate!==undefined&&t.whtRate!==null&&t.whtRate!==''?(+t.whtRate||0):3)+'%</span><span class="num">'+fmt(whtOf(t),1)+'</span></div>':'')+
      '<div class="kv"><span>'+(t.type==='in'?'เงินเข้าจริง':'ยอดสุทธิที่ต้องจ่าย')+'</span><span class="num">'+fmt(net(t),1)+'</span></div>'+
@@ -8434,9 +8541,11 @@ function sheetHtml(){
     var reg=taxDocumentRegister(U.month||today().slice(0,7));b='<h3>Tax / Document Register</h3><p class="muted">ทะเบียนเพื่อการตรวจสอบภายใน · ไม่ใช่แบบยื่นภาษีอัตโนมัติ</p><div class="acct-grid"><div><small>เอกสารขาย</small><b>'+reg.sales.length+'</b></div><div><small>เอกสารซื้อ/ค่าใช้จ่าย</small><b>'+reg.purchases.length+'</b></div><div><small>VAT ขาย / ซื้อ</small><b>'+fmt(reg.tax.vatOut)+' / '+fmt(reg.tax.vatIn)+'</b></div><div><small>WHT เครดิต / นำส่ง</small><b>'+fmt(reg.tax.whtCredit)+' / '+fmt(reg.tax.whtPayable)+'</b></div></div><div class="acct-table">'+reg.sales.concat(reg.purchases).slice(0,120).map(function(x){return '<div class="kv"><span><b>'+esc(x.no)+'</b><small>'+esc(x.date+' · '+x.party)+'</small></span><span class="num">'+fmt(x.base)+' · VAT '+fmt(x.vat)+'</span></div>';}).join('')+'</div><button class="btn" data-act="accountingOpen">กลับ</button>';
   }else if(sh.kind==='accountingDocumentFlow'){
     var df=documentFlowIntegrity('');b='<h3>Document Flow Integrity</h3><p class="muted">Quote → Bill → Receipt → Payment · ตรวจ lineage, วันที่, โครงการ และยอดรับ</p><div class="acct-grid"><div><small>Bills</small><b>'+df.bills+'</b></div><div><small>Receipts</small><b>'+df.receipts+'</b></div><div><small>Issues</small><b class="'+(df.issues.length?'out':'in')+'">'+df.issues.length+'</b></div><div><small>Warnings</small><b>'+df.warnings.length+'</b></div></div>'+(df.issues.length||df.warnings.length?'<div class="acct-table">'+df.issues.map(function(x){return '<div class="kv"><span>'+esc(x)+'</span><b class="out">BLOCK</b></div>';}).join('')+df.warnings.map(function(x){return '<div class="kv"><span>'+esc(x)+'</span><b>WARN</b></div>';}).join('')+'</div>':'<div class="empty">Document flow ผ่านทุกกฎที่เปิดใช้งาน</div>')+'<button class="btn" data-act="accountingOpen">กลับ</button>';
+  }else if(sh.kind==='activityHistory'){
+    if(S.role!=='owner'){b='<h3>ประวัติการเปลี่ยนแปลง</h3><p class="muted">ส่วนนี้แสดงเฉพาะโหมดเจ้าของบัญชี</p><button class="btn" data-act="closeSheet">ปิด</button>'; }
+    else{var activityCount=Array.isArray(S.auditLog)?S.auditLog.length:0;b='<h3>ประวัติการเปลี่ยนแปลง</h3><p class="muted">'+activityCount+' รายการ · แสดงล่าสุดไม่เกิน 100 รายการ</p><div class="workspace-audit-boundary">แสดงเฉพาะรายการที่ระบบบันทึกไว้ ข้อมูลบางประเภทหรือรายการเก่าอาจไม่มีประวัติ · ขณะนี้ยังไม่แยกผู้แก้ไขรายบุคคล</div>'+workspaceAuditListHtml(100)+'<button class="btn" data-act="closeSheet">ปิด</button>'; }
   }else if(sh.kind==='accountingAudit'){
-    var av=accountingAuditView(100);
-    b='<h3>Audit Trail</h3><p class="muted">ประวัติการเปลี่ยนแปลงด้านบัญชีที่ระบบบันทึก</p><div class="acct-table">'+(av.length?av.map(function(x){return '<div class="kv"><span><b>'+esc(x.action||'')+'</b> · '+esc(x.entity||'')+' '+esc(x.entityId||'')+'<small>'+esc(x.note||'')+'</small></span><span>'+esc(x.date||'')+'</span></div>';}).join(''):'<div class="empty">ยังไม่มี Audit Trail</div>')+'</div><button class="btn" data-act="accountingOpen">กลับ</button>';
+    b='<h3>ประวัติการเปลี่ยนแปลง</h3><p class="muted">รายการที่ระบบบันทึกไว้ · ไม่แสดงผู้แก้ไขรายบุคคล</p>'+workspaceAuditListHtml(100)+'<button class="btn" data-act="accountingOpen">กลับ</button>';
   }else if(sh.kind==='accountingProjectCost'){
     var pcPid=sh.pid||U.pid||(S.projects[0]&&S.projects[0].id)||'',pc=pcPid?projectCostAccounting(pcPid):null;
     b='<h3>Project Cost Accounting</h3><div class="field"><label>โครงการ</label><select id="pcPid" data-f="pcPid">'+S.projects.map(function(p){return '<option value="'+p.id+'"'+(p.id===pcPid?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select></div>'+(pc?'<div class="acct-grid"><div><small>มูลค่าสัญญา</small><b>'+fmt(pc.contract)+'</b></div><div><small>BAC / งบต้นทุน</small><b>'+fmt(pc.bac)+'</b></div><div><small>Actual Cost</small><b>'+fmt(pc.actualCost)+'</b></div><div><small>Commitment/AP</small><b>'+fmt(pc.commitments)+'</b></div><div><small>วางบิล</small><b>'+fmt(pc.billed)+'</b></div><div><small>รับเงินจริง</small><b>'+fmt(pc.received)+'</b></div><div><small>Forecast Profit</small><b>'+fmt(pc.forecastProfit)+'</b></div><div><small>Forecast Margin</small><b>'+Math.round(pc.forecastMargin*100)+'%</b></div><div><small>ETC proxy</small><b>'+fmt(pc.costToCompleteProxy)+'</b></div><div><small>EAC proxy</small><b>'+fmt(pc.estimateAtCompletion)+'</b></div><div><small>กำไรปลายงาน</small><b>'+fmt(pc.profitAtCompletion)+'</b></div><div><small>Margin ปลายงาน</small><b>'+Math.round(pc.marginAtCompletion*100)+'%</b></div><div><small>Cost Variance @ Completion</small><b class="'+(pc.costVarianceAtCompletion<0?'out':'in')+'">'+fmt(pc.costVarianceAtCompletion)+'</b></div><div><small>Budget Utilization</small><b>'+Math.round(pc.budgetUtilization*100)+'%</b></div></div><div class="sec"><div class="kv"><span>ต้นทุนผูก BOQ</span><span>'+fmt(pc.linkedActual)+'</span></div><div class="kv"><span>ต้นทุนยังไม่ผูก BOQ</span><span>'+fmt(pc.unlinkedActual)+'</span></div><div class="kv"><span>AR / AP</span><span>'+fmt(pc.ar)+' / '+fmt(pc.ap)+'</span></div><div class="kv"><span>WIP proxy (ต้นทุนที่ยังไม่ครอบคลุมด้วยยอดวางบิล)</span><span>'+fmt(pc.wipProxy)+'</span></div></div>':'<div class="empty">ยังไม่มีโครงการ</div>')+'<p class="muted">WIP proxy เป็นตัวชี้วัดเพื่อบริหาร ไม่ใช่การรับรู้ WIP ตามมาตรฐานบัญชีโดยอัตโนมัติ</p><button class="btn" data-act="accountingOpen">กลับ</button>';
@@ -8496,16 +8605,17 @@ function sheetHtml(){
     b='<h3>เริ่มใช้งานและทดลองระบบ</h3><ol class="pilot-steps"><li>เพิ่มโครงการและตรวจงบ BOQ</li><li>เพิ่มรายจ่ายหรือเลือกรูปเอกสาร</li><li>เทียบรูปกับยอด วันที่ และสถานะชำระก่อนกดบันทึก</li><li>เปิดรายการที่บันทึกเพื่อตรวจผล</li><li>สำรองเป็นไฟล์และตรวจไฟล์ผ่านหน้านำเข้าก่อนกู้คืน</li></ol><p>ข้อมูลที่ยังกรอกจะไม่ถูกบันทึกอัตโนมัติ เก็บไฟล์สำรองไว้ในที่ส่วนตัว</p><div class="stack"><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="feedbackOpen">ส่งความคิดเห็น / แจ้งปัญหา</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }else if(sh.kind==='settings'){
     var ownerSettings=S.role==='owner';
-    b='<h3 class="settings-title"><span>ตั้งค่า / ระบบ</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3>'+
-      '<p class="muted" data-build-info>'+esc(appBuildLabel())+'</p>'+pwaUpdatePanel()+ '<div class="stack"><button class="btn" data-act="pilotGuide">เริ่มใช้งาน / ทดลองระบบ</button>'+(ownerSettings?'<button class="btn" data-act="ocrReviewQueue">ตรวจข้อมูล OCR เก่า</button>':'')+'</div>'+
-      '<p class="settings-intro">จัดหมวดตามงานที่ใช้จริง · หัวข้อที่ไม่ใช้ทุกวันพับเก็บไว้เพื่อลดความรก</p><button class="settings-feedback-entry" data-act="feedbackOpen"><span><b>ส่งความคิดเห็น / แจ้งปัญหา</b><small>ช่วยให้เราปรับปรุงจากการใช้งานจริง</small></span><strong>›</strong></button>'+
-      '<details class="settings-group" open><summary><span><b>ทั่วไปและหน้าจอ</b><small>รูปแบบการแสดงผล · สิทธิ์ผู้ใช้ · พื้นหลัง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+    var settingsGeneral='<details class="settings-group"><summary><span><b>หน้าจอและโหมดผู้ใช้</b><small>รูปแบบหน้าจอ · โหมดผู้ใช้ในเครื่อง · พื้นหลัง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
         '<div class="field"><span class="lbl">โหมดการแสดงผล</span><div class="seg"><button class="'+((!S.ui||S.ui.viewMode!=='desktop')?'on':'')+'" data-act="viewMode" data-v="mobile">โมบาย</button><button class="'+((S.ui&&S.ui.viewMode==='desktop')?'on':'')+'" data-act="viewMode" data-v="desktop">เดสท็อป</button></div><small class="muted" style="display:block;margin-top:7px">สลับได้ทันทีโดยไม่กระทบข้อมูล</small></div>'+
-        '<div class="field"><span class="lbl">ผู้ใช้งาน</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div><div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div></div>'+
+        '<div class="field"><span class="lbl">ผู้ใช้งาน</span><div class="seg"><button class="'+(S.role==='owner'?'on':'')+'" data-act="role" data-v="owner">เจ้าของ</button><button class="'+(S.role==='foreman'?'on':'')+'" data-act="role" data-v="foreman">หัวหน้าไซต์</button></div><div class="role">'+(S.role==='owner'?'เจ้าของเห็นกำไร แก้ไขและลบได้ทั้งหมด':'หัวหน้าไซต์เพิ่มและดูรายจ่ายได้อย่างเดียว ไม่เห็นกำไรและรายรับ')+'</div><small class="muted workspace-role-note">ตัวเลือกนี้เปลี่ยนเมนูและการทำงานในแอป ยังไม่ใช่ระบบเข้าสู่ระบบหรือสิทธิ์ทีมรายบุคคล</small></div>'+
         '<div class="field"><span class="lbl">พื้นหลังแอพ</span><div class="seg"><button class="'+((!S.ui||S.ui.wallpaper!==false)?'on':'')+'" data-act="wallpaper" data-v="1">เปิด</button><button class="'+((S.ui&&S.ui.wallpaper===false)?'on':'')+'" data-act="wallpaper" data-v="0">ปิด</button></div></div>'+
-      '</div></details>'+
+      '</div></details>';
+    var settingsSupport='<details class="settings-group"><summary><span><b>ความช่วยเหลือและรุ่นแอป</b><small>วิธีใช้งาน · แจ้งปัญหา · ตรวจอัปเดต</small></span><strong>⌄</strong></summary><div class="settings-group-body"><p class="muted" data-build-info>'+esc(appBuildLabel())+'</p>'+pwaUpdatePanel()+'<div class="stack"><button class="btn" data-act="pilotGuide">วิธีเริ่มใช้งาน</button><button class="btn" data-act="feedbackOpen">ส่งความคิดเห็น / แจ้งปัญหา</button></div></div></details>';
+    b='<h3 class="settings-title"><span>ตั้งค่า</span><button type="button" data-act="closeSheet" aria-label="ปิดการตั้งค่า">×</button></h3>'+
+      '<p class="settings-intro">ข้อมูลกิจการ บัญชี และการสำรอง อยู่ในที่เดียวกัน</p>'+
       (ownerSettings?
-      '<details class="settings-group"><summary><span><b>กิจการและภาษี</b><small>ชื่อกิจการ · ที่อยู่ · เลขภาษี · VAT</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+      '<div class="settings-inline-actions"><button class="btn" data-act="accountingOpen">เปิดงานบัญชี</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button></div><p class="muted">ช่องกรอกด้านล่างต้องกด “บันทึกข้อมูลกิจการและบัญชี” · ปุ่มตัวเลือกเปลี่ยนทันที</p>'+
+      '<details class="settings-group" open><summary><span><b>กิจการและภาษี</b><small>ชื่อกิจการ · ที่อยู่ · เลขภาษี · VAT</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
         '<div class="field"><label for="brn">ชื่อที่แสดงในแอพ</label><input id="brn" type="text" value="'+esc(S.brand||'AREA MAIBAB')+'"></div>'+
         '<div class="field"><label for="blegal">ชื่อธุรกิจ (TH)</label><input id="blegal" type="text" value="'+esc((S.business&&S.business.legalName)||'ห้างหุ้นส่วนจำกัด แอเรีย ไม้แบบ')+'"></div>'+
         '<div class="field"><label for="blegalen">ชื่อธุรกิจ (EN)</label><input id="blegalen" type="text" value="'+esc((S.business&&S.business.legalNameEn)||'')+'" placeholder="ถ้ามี"></div>'+
@@ -8523,6 +8633,7 @@ function sheetHtml(){
         '<div class="field"><label for="op">ยอดยกมาในบัญชี (บาท)</label><input id="op" type="number" inputmode="decimal" value="'+(+S.opening||0)+'"></div>'+
         '<div class="field"><label for="opc">เงินสดในมือยกมา (บาท)</label><input id="opc" type="number" inputmode="decimal" value="'+(+S.openCash||0)+'"></div>'+
       '</div></details>'+
+      settingsGeneral+
       '<details class="settings-group"><summary><span><b>AI / OCR</b><small>อ่านบิลและ BOQ · Local / Cloudflare</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
         '<div class="field"><span class="lbl">โหมด OCR</span><div class="seg"><button class="'+(aiGatewayConfig().mode==='local'?'on':'')+'" data-act="aiMode" data-v="local">Local</button><button class="'+(aiGatewayConfig().mode==='gateway'?'on':'')+'" data-act="aiMode" data-v="gateway">Cloudflare</button></div><small class="muted">Remote OCR จะไม่ส่งรูปออกจากเครื่องจนกว่าจะเปิดความยินยอม</small></div>'+
         '<div class="field"><label for="aiEndpoint">Gateway endpoint</label><input id="aiEndpoint" type="text" inputmode="url" autocapitalize="none" autocomplete="off" value="'+esc(aiGatewayConfig().endpoint)+'" placeholder="https://...workers.dev"></div>'+
@@ -8530,13 +8641,14 @@ function sheetHtml(){
         '<button class="tog '+(aiGatewayConfig().remoteOcrConsent?'on':'')+'" data-act="aiConsent"><span class="sw"></span><span><b>อนุญาต Remote OCR</b><small>'+(aiGatewayConfig().remoteOcrConsent?'เปิดแล้ว · ส่งรูปเฉพาะเมื่อเรียก OCR':'ปิดอยู่ · ระบบจะตรวจ /ready ก่อนอนุญาตส่งรูป')+'</small></span></button>'+
         '<div class="settings-inline-actions"><button class="btn" data-act="aiCheckReady">ตรวจ OCR</button><button class="btn" data-act="systemAdvanced">Diagnostics</button></div>'+
       '</div></details>'+
-      '<details class="settings-group"><summary><span><b>ข้อมูล สำรอง และระบบ</b><small>ตรวจข้อมูล · เก็บสำเนา · กู้คืน</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
-        '<div class="settings-system-grid"><button class="btn pri" data-act="ownerOps">Owner Operations 1.1</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="integrityOpen">Integrity Gate</button><button class="btn" data-act="backup">สำรองข้อมูล</button><button class="btn" data-act="restoreOpen">กู้คืนข้อมูล</button><button class="btn" data-act="systemAdvanced">Advanced / System Diagnostics</button><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button></div>'+
+      settingsSupport+
+      '<details class="settings-group"><summary><span><b>ตรวจข้อมูลและดูแลระบบ</b><small>ตรวจความครบถ้วน · เครื่องมือขั้นสูง</small></span><strong>⌄</strong></summary><div class="settings-group-body">'+
+        '<div class="settings-system-grid"><button class="btn" data-act="ownerOps">ดูแลข้อมูลและระบบ</button><button class="btn" data-act="healthCheck">ตรวจสุขภาพข้อมูล</button><button class="btn" data-act="integrityOpen">ตรวจความครบถ้วนข้อมูล</button><button class="btn" data-act="ocrReviewQueue">ตรวจข้อมูล OCR เก่า</button><button class="btn" data-act="systemAdvanced">เครื่องมือดูแลระบบขั้นสูง</button></div><details><summary>ลบข้อมูลในเครื่อง</summary><p class="muted">สำรองข้อมูลก่อนใช้ตัวเลือกนี้</p><button class="btn dng" data-act="resetAsk">รีเซ็ตข้อมูลทั้งหมด</button></details>'+
       '</div></details>'+
       '<div class="stack settings-save-stack"><button class="btn pri" data-act="saveOpen">บันทึกข้อมูลกิจการและบัญชี</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
       '<p class="muted settings-footnote">ข้อมูลใช้งานออฟไลน์ในเครื่องและ Cloud Sync เป็นคนละชั้น · '+(S.lastBackup?'สำรองล่าสุด '+dstr(ymd(new Date(S.lastBackup))):'ยังไม่เคยสำรองข้อมูล')+'</p>'
       :
-      '<div class="stack settings-save-stack"><button class="btn" data-act="closeSheet">ปิด</button></div>')+
+      settingsGeneral+settingsSupport+'<div class="stack settings-save-stack"><button class="btn" data-act="closeSheet">ปิด</button></div>')+
       '';
 }else if(sh.kind==='bizdoc'){
     var kind=sh.docKind||'bill',list=docCollection(kind),q=sh.id?list.find(function(x){return x.id===sh.id;}):null,tt=docTitle(kind),docPid=(q&&q.pid)||U.docProjectPid||'',docProj=docPid?proj(docPid):null,di=docItems(q||{});
@@ -8576,29 +8688,29 @@ function sheetHtml(){
   }else if(sh.kind==='backup'){
     var csi=cloudSyncInfo(),csm=csi.meta;
     b='<h3>สำรองและกู้คืนข้อมูล</h3><p class="muted">เลือกวิธีเก็บสำเนาข้อมูล หรือเรียกข้อมูลที่เคยสำรองกลับมาใช้</p>'+
-      '<section class="backup-section"><h4>1. เก็บไฟล์สำรองไว้กับคุณ</h4><p>ดาวน์โหลดไฟล์ .json เก็บไว้ใน Files, iCloud หรือคอมพิวเตอร์ ใช้ย้ายเครื่องหรือกู้คืนข้อมูลภายหลัง</p><div class="stack"><button class="btn pri" data-act="backupFile">ดาวน์โหลดไฟล์สำรอง (.json)</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button></div><details><summary>ดูข้อมูลในไฟล์สำรอง</summary><label for="bkbox">ข้อมูลสำหรับคัดลอกหรือเก็บเป็นไฟล์</label><textarea class="csv" id="bkbox" readonly>'+esc((S.tx||[]).some(function(t){return t.photoRef&&!/^data:image\//i.test(String(t.photo||''));})?'มีรูปใบเสร็จบน R2: กดดาวน์โหลดหรือคัดลอกข้อมูลสำรองเพื่อรวมรูปต้นฉบับจาก IndexedDB ให้ครบก่อนใช้งานไฟล์':backupJson())+'</textarea></details></section>'+
-      '<section class="backup-section"><h4>2. สำรองและซิงก์บนคลาวด์</h4><p>เก็บสำเนาบน Cloudflare เมื่อเปิดใช้งาน ข้อมูลในเครื่องยังใช้ทำงานออฟไลน์ได้</p><div class="kv"><span>สถานะคลาวด์</span><b class="'+(U.cloudConflict?'out':csi.enabled?'in':'')+'">'+esc(csi.label)+'</b></div>'+
-      (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(csm.savedAt)+'</small></div>':'')+
+      '<section class="backup-section"><h4>1. สำรองลงเครื่อง</h4><p>ดาวน์โหลดไฟล์ .json พร้อมรูปใบเสร็จ เก็บใน Files, iCloud หรือคอมพิวเตอร์ เพื่อกู้คืนหรือย้ายเครื่อง</p>'+backupPortableStatusHtml()+'<div class="stack"><button class="btn pri" data-act="backupFile">ดาวน์โหลดไฟล์สำรอง (.json)</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button></div><details><summary>ดูข้อมูลในไฟล์สำรอง</summary><label for="bkbox">ข้อมูลสำหรับคัดลอกหรือเก็บเป็นไฟล์</label><textarea class="csv" id="bkbox" readonly>'+esc((S.tx||[]).some(function(t){return t.photoRef&&!/^data:image\//i.test(String(t.photo||''));})?'มีรูปใบเสร็จบน R2: กดดาวน์โหลดหรือคัดลอกข้อมูลสำรองเพื่อรวมรูปต้นฉบับจาก IndexedDB ให้ครบก่อนใช้งานไฟล์':backupJson())+'</textarea></details></section>'+
+      '<section class="backup-section"><h4>2. ซิงค์คลาวด์</h4><p>ซิงค์ข้อมูลระหว่างเครื่องนี้กับ Cloudflare เมื่อเปิดใช้งาน · ควรเก็บไฟล์สำรองลงเครื่องแยกไว้ด้วย</p><div class="kv"><span>สถานะคลาวด์</span><b class="'+(U.cloudConflict?'out':csi.enabled?'in':'')+'">'+esc(csi.label)+'</b></div>'+
+      (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(workspaceTime(csm.savedAt))+'</small></div>':'')+
       '<div class="stack">'+(!csi.enabled?'<button class="btn pri" data-act="cloudEnable">เปิดสำรองบนคลาวด์</button>':'<button class="btn pri'+(U.confirm==='cloudPushForce'?' dng sure':'')+'" data-act="cloudPush">'+(U.confirm==='cloudPushForce'?'ยืนยันแทนที่ข้อมูลบนคลาวด์ด้วยข้อมูลเครื่องนี้':'ส่งข้อมูลเครื่องนี้ขึ้นคลาวด์')+'</button><button class="btn'+(U.confirm==='cloudPull'?' dng sure':'')+'" data-act="cloudPull">'+(U.confirm==='cloudPull'?'ยืนยันแทนที่ข้อมูลในเครื่องด้วยข้อมูลคลาวด์':'นำข้อมูลคลาวด์มาใช้ในเครื่องนี้')+'</button><button class="btn" data-act="cloudHistory">ดูประวัติสำรองบนคลาวด์</button>')+'</div>'+
       '<details><summary>ย้ายเครื่องและตัวเลือกคลาวด์เพิ่มเติม</summary><p>รหัสกู้คืนใช้เข้าถึงข้อมูลคลาวด์ชุดเดิม เก็บเป็นความลับและอย่าส่งให้ผู้อื่น</p><div class="stack">'+(csi.enabled?'<button class="btn" data-act="cloudCopyKey">คัดลอกรหัสสำหรับย้ายเครื่อง</button><button class="btn" data-act="cloudDisable">หยุดซิงก์อัตโนมัติ</button><button class="btn" data-act="cloudAcceptance">ตรวจการเชื่อมต่อคลาวด์</button><button class="btn" data-act="cloudFilesMigrate">เก็บรูปใบเสร็จบนคลาวด์ (R2)</button><button class="btn'+(U.confirm==='cloudRestorePrevious'?' dng sure':'')+'" data-act="cloudRestorePrevious">'+(U.confirm==='cloudRestorePrevious'?'ยืนยันย้อนข้อมูลคลาวด์เป็นรุ่นก่อนหน้า':'กู้ข้อมูลคลาวด์รุ่นก่อนหน้า')+'</button>':'')+
       '<div class="field"><label for="cloudKeyImport">รหัสกู้คืนจากเครื่องเดิม</label><input id="cloudKeyImport" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางรหัสกู้คืนที่เก็บไว้"></div><button class="btn" data-act="cloudUseKey">เชื่อมข้อมูลคลาวด์ด้วยรหัสนี้</button><input id="cloudKeyBox" value="'+esc(csi.key||'')+'" readonly style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true"></div>'+(csi.enabled&&csm.hit?'<p class="muted">รุ่นข้อมูลบนคลาวด์: '+csm.revision+'</p>':'')+'</details></section>'+
-      '<section class="backup-section"><h4>3. กู้คืนจากไฟล์สำรอง</h4><p>เลือกไฟล์ .json ที่เคยดาวน์โหลด ระบบจะให้ตรวจข้อมูลและยืนยันก่อนแทนที่ข้อมูลในเครื่องนี้</p><button class="btn" data-act="restoreOpen">เลือกไฟล์เพื่อกู้คืน</button></section><button class="btn" data-act="closeSheet">ปิด</button>';
+      '<section class="backup-section"><h4>3. กู้คืนข้อมูล</h4><p>เลือกไฟล์ .json ที่เคยดาวน์โหลด ระบบจะให้ตรวจข้อมูลและยืนยันก่อนแทนที่ข้อมูลในเครื่องนี้</p><button class="btn" data-act="restoreOpen">เลือกไฟล์เพื่อกู้คืน</button></section><button class="btn" data-act="closeSheet">ปิด</button>';
   }else if(sh.kind==='restore'){
     b='<h3>กู้คืนจากไฟล์สำรอง</h3><p class="muted">เลือกไฟล์ .json ที่เคยสำรองไว้ ระบบจะตรวจข้อมูลก่อนให้ยืนยันแทนที่ข้อมูลในเครื่องนี้</p><section class="backup-section"><h4>เลือกข้อมูลที่จะกู้คืน</h4><label class="btn pri" for="restoreFile">เลือกไฟล์สำรอง .json</label><input id="restoreFile" type="file" accept=".json,application/json"><div class="muted" role="status" style="margin-top:8px">'+esc(U.restoreInfo||'ยังไม่ได้เลือกไฟล์')+'</div><details><summary>ใช้ข้อมูลที่คัดลอกไว้แทนไฟล์</summary><label for="rsbox">วางข้อมูลสำรองทั้งหมด</label><textarea class="csv" id="rsbox" placeholder="วางข้อมูลสำรองที่คัดลอกไว้ที่นี่">'+esc(U.rsText||'')+'</textarea></details></section><details class="backup-section"><summary>ตรวจการย้ายข้อมูลเพิ่มเติม</summary><div class="stack"><button class="btn" data-act="migrationDrillCheck">ตรวจความพร้อมก่อนย้ายข้อมูล</button><button class="btn" data-act="migrationCertificateOpen">ดูผลตรวจการย้ายข้อมูล</button></div></details>'+restoreComparisonHtml()+'<div class="stack"><button class="btn" data-act="restorePreview">ตรวจเทียบข้อมูลก่อนกู้คืน</button><button class="btn pri'+(U.confirm==='restore'?' dng sure':'')+'" data-act="doRestore">'+(U.confirm==='restore'?'แตะอีกครั้งเพื่อยืนยันแทนที่ข้อมูลเดิม':'ตรวจและกู้คืนข้อมูล')+'</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div><p class="muted">เว็บที่จะรับข้อมูล: '+esc(location.origin)+'</p>';
   }else if(sh.kind==='migrationCertificate'){
     var mc=migrationAcceptanceCertificate();b='<h3>Migration Acceptance Certificate</h3><p class="muted">หลักฐานตรวจการย้ายข้อมูลจาก backup → origin ปัจจุบัน</p><div class="acct-grid"><div><small>สถานะ</small><b class="'+(mc.ok?'in':'out')+'">'+(mc.ok?'PASS':'CHECK')+'</b></div><div><small>Source revision</small><b>'+mc.sourceRevision+'</b></div><div><small>Target revision</small><b>'+mc.dataRevision+'</b></div><div><small>Digest</small><b>'+(mc.ok?'MATCH':'CHECK')+'</b></div></div><div class="sec"><div class="kv"><span>Source</span><small>'+esc(mc.sourceOrigin||'-')+'</small></div><div class="kv"><span>Target</span><small>'+esc(mc.targetOrigin||'-')+'</small></div><div class="kv"><span>Projects / Tx / BOQ</span><span>'+mc.counts.projects+' / '+mc.counts.tx+' / '+mc.counts.boq+'</span></div><div class="kv"><span>Quote / Bill / Receipt</span><span>'+mc.counts.quotes+' / '+mc.counts.bills+' / '+mc.counts.receipts+'</span></div><div class="kv"><span>Guarantees / Journals / Periods</span><span>'+mc.counts.guarantees+' / '+mc.counts.journals+' / '+mc.counts.periods+'</span></div></div><button class="btn" data-act="restoreOpen">กลับหน้ากู้คืน</button>';
   }else if(sh.kind==='googleWorkspace'){
     var gp=proj(sh.pid||U.boqProjectPid||''),gs=googleWorkspaceState(),gst=gs.status||{},gl=gst.project||null,gfiles=Array.isArray(gst.files)?gst.files:[];
-    b='<h3>Google Workspace</h3><p class="muted">เชื่อม BOQ ค่าใช้จ่าย ต้นทุน และกำไรกับ Google Sheets · AREA Ledger ยังเป็นข้อมูลหลัก</p>'+(gst.configured===false?'<div class="google-paused-note"><b>พักการเชื่อมต่อไว้</b><small>Source พร้อมแล้ว แต่ยังไม่ตั้งค่า Google OAuth ตามแผนปัจจุบัน</small></div>':'')+
+    b='<h3>Google Workspace</h3><p class="muted">เชื่อม BOQ ค่าใช้จ่าย ต้นทุน และกำไรกับ Google Sheets · AREA Ledger ยังเป็นข้อมูลหลัก · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>'+(gst.configured===false?'<div class="google-paused-note"><b>พักการเชื่อมต่อไว้</b><small>Source พร้อมแล้ว แต่ยังไม่ตั้งค่า Google OAuth ตามแผนปัจจุบัน</small></div>':'')+
       googleSyncReceiptHtml()+'<div class="card"><div class="kv"><span>สถานะระบบ</span><b>'+(gs.loading?'กำลังตรวจ…':gs.error?'ตรวจสถานะไม่สำเร็จ':gst.configured===false?'ยังไม่ได้ตั้งค่า Google OAuth':gst.connected?'เชื่อมแล้ว':'ยังไม่เชื่อม')+'</b></div>'+
       (gst.email?'<div class="kv"><span>บัญชี Google</span><span>'+esc(gst.email)+'</span></div>':'')+
-      '<div class="kv"><span>โครงการ</span><span>'+esc(gp&&gp.name||'-')+'</span></div>'+
+      '<div class="kv"><span>'+(sh.pid==='__organization__'?'ขอบเขต':'โครงการ')+'</span><span>'+esc(sh.pid==='__organization__'?'องค์กร':gp&&gp.name||'-')+'</span></div>'+
       (gl&&gl.lastSyncAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><span>'+esc(String(gl.lastSyncAt).replace('T',' ').slice(0,16))+'</span></div>':'')+
       (gs.error?'<div class="out" role="alert" style="margin-top:8px;overflow-wrap:anywhere">'+esc(gs.error==='GOOGLE_CONNECTION_NOT_FOUND'?'กลับจาก Google แล้ว แต่เซิร์ฟเวอร์ยังไม่ยืนยันการเชื่อม · ตรวจสถานะอีกครั้ง หรือเริ่มเชื่อมใหม่':gs.error==='GOOGLE_STATUS_TIMEOUT'?'ตรวจสถานะนานเกินไป · ลองตรวจสถานะอีกครั้ง':gs.error==='GOOGLE_LEDGER_IDENTITY_MISSING'||gs.error==='GOOGLE_LEDGER_IDENTITY_CHANGED'?'รหัสข้อมูลของเบราว์เซอร์ไม่ตรงกับรอบที่เชื่อม · กลับไปเชื่อมจากเบราว์เซอร์เดิม':googleSyncErrorText(gs.error))+'<small style="display:block">'+esc(gs.error)+'</small></div>':'')+'</div>'+
-      (gst.connected?'<section class="google-sync-scope"><b>เลือกโครงการที่จะซิงก์</b><div class="seg" role="group" aria-label="ขอบเขตการซิงก์"><button data-act="googleWorkspaceScope" data-v="project" aria-pressed="'+(gs.syncScope!=='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>เฉพาะโครงการนี้</button><button data-act="googleWorkspaceScope" data-v="active" aria-pressed="'+(gs.syncScope==='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')</button></div>'+(gs.syncScope==='active'?'<small>เฉพาะสถานะกำลังดำเนินการ · แยกไฟล์ตามโครงการเดิม</small><details><summary>ดูรายชื่อโครงการ</summary><ul>'+googleWorkspaceActiveProjects().map(function(p){return '<li>'+esc(p.name)+'</li>';}).join('')+'</ul></details>':'')+'</section>':'')+
+      (gst.connected&&sh.pid==='__organization__'?'<section class="google-sync-scope"><b>ขอบเขตการซิงก์</b><small>ไฟล์กิจการแยกจากทุกโครงการ · รายจ่ายองค์กรไม่ถูกรวมในต้นทุนโครงการ</small></section>':gst.connected?'<section class="google-sync-scope"><b>เลือกโครงการที่จะซิงก์</b><div class="seg" role="group" aria-label="ขอบเขตการซิงก์"><button data-act="googleWorkspaceScope" data-v="project" aria-pressed="'+(gs.syncScope!=='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>เฉพาะโครงการนี้</button><button data-act="googleWorkspaceScope" data-v="active" aria-pressed="'+(gs.syncScope==='active')+'"'+(gs.bulkSyncBusy||gs.syncBusy?' disabled':'')+'>ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')</button></div>'+(gs.syncScope==='active'?'<small>เฉพาะสถานะกำลังดำเนินการ · แยกไฟล์ตามโครงการเดิม</small><details><summary>ดูรายชื่อโครงการ</summary><ul>'+googleWorkspaceActiveProjects().map(function(p){return '<li>'+esc(p.name)+'</li>';}).join('')+'</ul></details>':'')+'</section>':'')+
       googleWorkspaceSyncBatchHtml()+
       '<div class="stack" style="margin-top:12px">'+
-      (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy||gs.syncScope==='active'&&!googleWorkspaceActiveProjects().length?' disabled':'')+'>'+(gs.bulkSyncBusy?'กำลังซิงก์หลายโครงการ…':gs.syncBusy?'กำลังซิงก์…':gs.syncScope==='active'?'ซิงก์ทุกโครงการที่ดำเนินงาน ('+googleWorkspaceActiveProjects().length+')':'ซิงก์ข้อมูลและกราฟไป Google Sheets')+'</button>')+
+      (!gst.connected?'<button class="btn pri" data-act="googleWorkspaceConnect" data-id="'+esc(sh.pid||'')+'">เชื่อม Google</button>':'<button class="btn pri" data-act="googleWorkspaceSync" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy||false?' disabled':'')+'>'+(gs.bulkSyncBusy?'กำลังซิงก์หลายโครงการ…':gs.syncBusy?'กำลังซิงก์…':gs.syncScope==='active'?'ซิงก์ทุกโครงการ + องค์กร ('+googleWorkspaceActiveProjects().length+' โครงการ)':'ซิงก์ข้อมูลและกราฟไป Google Sheets')+'</button>')+
       (gst.connected?'<label class="btn" for="googleDriveFiles">เก็บไฟล์ต้นฉบับใน Google Drive</label><input id="googleDriveFiles" type="file" multiple accept=".pdf,.xlsx,.xls,.csv,image/jpeg,image/png,image/webp,image/heic,image/heif" style="display:none">':'')+
       (gs.uploadProgress?'<div class="muted">'+esc(gs.uploadProgress)+'</div>':'')+
       (gfiles.length?'<div class="card"><div class="kv"><span>ไฟล์ใน Drive</span><b>'+gfiles.length+' ไฟล์</b></div>'+gfiles.slice(0,4).map(function(x){return '<div class="kv"><span>'+esc(x.name||'ไฟล์')+'</span><small>'+esc(String(x.createdAt||'').replace('T',' ').slice(0,16))+'</small></div>';}).join('')+'</div>':'')+
@@ -8606,7 +8718,7 @@ function sheetHtml(){
       (gl&&gl.driveUrl?'<button class="btn" data-act="googleWorkspaceOpenUrl" data-url="'+esc(gl.driveUrl)+'">เปิดโฟลเดอร์ Google Drive</button>':'')+
       (gst.connected?'<button class="btn dng" data-act="googleWorkspaceDisconnect"'+(gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ยกเลิกการเชื่อม Google</button>':'')+
       '<button class="btn" data-act="googleWorkspaceRefresh" data-id="'+esc(sh.pid||'')+'"'+(gs.loading||gs.syncBusy||gs.bulkSyncBusy?' disabled':'')+'>ตรวจสถานะการเชื่อมอีกครั้ง</button><button class="btn" data-act="closeSheet">ปิด</button></div>'+
-      '<p class="muted" style="margin-top:10px">v1094 รองรับ Ledger → Google Sheets: ภาพรวม · กราฟ · BOQ · ค่าใช้จ่าย · รายรับ · ต้นทุน · กำไร · การซิงก์จะอัปเดตแท็บระบบในไฟล์เดิม · ไม่ดึงข้อมูลจาก Sheet มาแก้ Ledger</p>';
+      '<p class="muted" style="margin-top:10px">Ledger → Google Sheets: ภาพรวมและกราฟโครงการ · ทุกโครงการที่กำลังดำเนินงาน · ไฟล์ค่าใช้จ่ายองค์กรแยกต่างหาก · Ledger เป็นข้อมูลหลัก</p>';
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
@@ -8615,7 +8727,7 @@ function sheetHtml(){
 function csvText(){
   var rows=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
   S.tx.slice().sort(function(a,b){return a.date<b.date?-1:1;}).forEach(function(t){
-    rows.push([t.date,t.type==='in'?'รายรับ':'รายจ่าย',t.cat,t.sub||'',pname(t.pid),t.partner,t.amount,base(t).toFixed(2),vatOf(t).toFixed(2),whtOf(t).toFixed(2),net(t).toFixed(2),t.paid?'ชำระแล้ว':'ค้าง',t.paid?(t.pay==='cash'?'เงินสด':'โอน'):'',t.due,t.note]);
+    rows.push([t.date,t.type==='in'?'รายรับ':'รายจ่าย',t.organizationExpense===true?(t.orgTaxTreatment==='settlement'?'ชำระภาษีค้าง (ไม่เพิ่มค่าใช้จ่ายซ้ำ)':'องค์กร · '+organizationExpenseCategoryLabel(t.orgExpenseCategory)):t.cat,t.sub||'',t.organizationExpense===true?'องค์กร':pname(t.pid),t.partner,t.amount,base(t).toFixed(2),vatOf(t).toFixed(2),whtOf(t).toFixed(2),net(t).toFixed(2),t.paid?'ชำระแล้ว':'ค้าง',t.paid?(t.pay==='cash'?'เงินสด':'โอน'):'',t.due,t.note]);
   });
   return rows.map(function(r){return r.map(function(c){var s=String(c==null?'':c);return /[",\n\t]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}).join('\n');
 }
@@ -8833,6 +8945,26 @@ function loanDetailHtml(l){
   });
   return h+'</div><div class="stack"><button class="btn dng" data-act="profileLoanDelete" data-id="'+esc(l.id)+'">'+(U.confirm==='loan:'+l.id?'ยืนยันลบรายการ':'ลบรายการ')+'</button><button class="btn" data-act="profileLoanOpen" data-v="'+esc(l.kind)+'">กลับทะเบียน</button></div></div>';
 }
+function workspaceAuditActionLabel(action){
+  var labels={'tx-create':'บันทึกรายจ่าย/รายรับ','tx-edit':'แก้ไขรายการบัญชี','ap-payment':'บันทึกจ่ายเจ้าหนี้','bill-payment':'บันทึกรับชำระและออกใบเสร็จ','bank-reconcile':'กระทบยอดธนาคาร','manual-journal':'บันทึกสมุดรายวัน','period-close':'ปิดงวดบัญชี','period-reopen':'เปิดงวดบัญชี','contractor-package':'บันทึกค่าเหมาช่าง','loan-create':'เพิ่มทะเบียนเงินกู้/ลูกหนี้','loan-edit':'แก้ไขทะเบียนเงินกู้/ลูกหนี้','loan-payment':'บันทึกชำระคืน','loan-payment-delete':'ลบประวัติชำระคืน','loan-delete':'ลบทะเบียนเงินกู้/ลูกหนี้','document-create':'สร้างเอกสาร','document-edit':'แก้ไขเอกสาร'};
+  return labels[String(action||'')]||'เปลี่ยนแปลงข้อมูล';
+}
+function workspaceAuditEntityLabel(entity){
+  var labels={tx:'รายการบัญชี',bill:'ใบวางบิล',loan:'ทะเบียนเงินกู้/ลูกหนี้',bank:'บัญชีธนาคาร',journal:'สมุดรายวัน',period:'งวดบัญชี',quote:'ใบเสนอราคา',receipt:'ใบเสร็จ'};
+  return labels[String(entity||'')]||'ข้อมูลระบบ';
+}
+function workspaceAuditListHtml(limit){
+  var rows=accountingAuditView(limit||100);
+  if(!rows.length)return '<div class="empty">ยังไม่มีประวัติการเปลี่ยนแปลงที่ระบบบันทึกไว้</div>';
+  return '<ol class="workspace-audit-list" aria-label="รายการเปลี่ยนแปลงล่าสุด">'+rows.map(function(x){
+    var stamp=+x.at||0,when=stamp?new Date(stamp).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'}):String(x.date||'ไม่ระบุวัน');
+    return '<li><span class="workspace-audit-marker" aria-hidden="true"></span><div><b>'+esc(workspaceAuditActionLabel(x.action))+'</b><small>'+esc(workspaceAuditEntityLabel(x.entity))+' · '+esc(when)+'</small>'+(x.note?'<p>'+esc(x.note)+'</p>':'')+'</div></li>';
+  }).join('')+'</ol>';
+}
+function workspaceGovernanceHtml(){
+  var role=S.role==='foreman'?'หัวหน้าไซต์':'เจ้าของบัญชี',count=Array.isArray(S.auditLog)?S.auditLog.length:0;
+  return '<section class="workspace-governance" aria-labelledby="workspace-governance-title"><div class="workspace-governance-head"><span><small>ACCOUNT ACCESS</small><h2 id="workspace-governance-title">บัญชีและสิทธิ์</h2></span><b class="workspace-single-user">บัญชีเดียว</b></div><div class="workspace-governance-row"><span>โหมดที่เลือก</span><strong>'+role+'</strong></div><p>ขณะนี้ใช้บัญชีเดียว · โหมดเจ้าของและหัวหน้าไซต์ใช้จัดเมนูและการทำงานภายในแอป ยังไม่ใช่บัญชีทีมที่ยืนยันตัวตนแยกรายบุคคล</p><div class="workspace-governance-actions"><button data-act="settings">ตั้งค่าโหมดผู้ใช้</button>'+(S.role==='owner'?'<button data-act="activityHistoryOpen">ประวัติการแก้ไข <span>'+count+'</span></button>':'')+'</div></section>';
+}
 function vProfile(){
   U.profileFilter=['all','site','portfolio','delivery','announce'].indexOf(U.profileFilter)>=0?U.profileFilter:'all';
   if(U.profileProjectPid&&!proj(U.profileProjectPid))U.profileProjectPid='';
@@ -8841,10 +8973,10 @@ function vProfile(){
   var socials=profileSocialChip('เว็บไซต์',b.website)+profileSocialChip('Facebook',b.facebook)+profileSocialChip('Instagram',b.instagram)+profileSocialChip('TikTok',b.tiktok)+profileSocialChip('LINE',b.lineId);
   var albumMap={};posts.forEach(function(x){if(!x.pid||!proj(x.pid))return;var a=albumMap[x.pid]||(albumMap[x.pid]={p:proj(x.pid),posts:0,photos:0,last:''});a.posts++;a.photos+=(x.photos||[]).length;if(String(x.date||'')>a.last)a.last=String(x.date||'');});
   var albums=Object.keys(albumMap).map(function(k){return albumMap[k];}).sort(function(x,y){return String(y.last||'').localeCompare(String(x.last||''));}),pinned=posts.filter(function(x){return !!x.pinned;}).slice(0,3),selectedProject=projectPid&&proj(projectPid),complete=profileCompleteness(),avatar=b.profileAvatar||'area-logo-header.jpg';
-  var doneContractValue=done.reduce(function(sum,p){return sum+approvedContractValue(p.id);},0),companyGuarantees=portfolioGuaranteeSummary(S.projects),publicCount=posts.filter(function(p){return !!p.publicVisible;}).length,publicUrl=profilePublicUrl(b.publicProfileId),publicLive=!!(b.publicProfileEnabled&&publicUrl);var h=workspaceContextHtml()+workspaceTasksHtml(S.role==='foreman')+'<section class="company-profile"><div class="profile-hero"><div class="profile-cover">'+(b.profileCover?'<img class="profile-cover-img" src="'+esc(b.profileCover)+'" alt="รูปปกบริษัท">':'')+'<span>AREA WORK PROFILE</span></div><div class="profile-main"><img src="'+esc(avatar)+'" alt="AREA MAIBAB"><div class="profile-title"><small>'+esc(b.businessType||'ธุรกิจก่อสร้าง')+'</small><h2>'+esc(name)+'</h2><p>'+esc(tag)+'</p></div><div class="profile-head-actions"><button class="profile-edit-btn" data-act="profileShareCompany">แชร์</button><button class="profile-edit-btn" data-act="profileEdit">แก้ไขโปรไฟล์</button></div></div>'+(b.bio?'<p class="profile-bio">'+esc(b.bio).replace(/\n/g,'<br>')+'</p>':'<p class="profile-bio muted">เพิ่มคำแนะนำบริษัท บริการ และจุดเด่น เพื่อใช้เป็นหน้ารวมผลงานของทีม</p>')+'<div class="profile-complete"><span><b>ความพร้อมโปรไฟล์ '+complete.pct+'%</b><small>'+complete.done+'/'+complete.total+' องค์ประกอบพร้อมใช้งาน</small></span><i><em style="width:'+complete.pct+'%"></em></i></div>'+
+  var doneContractValue=done.reduce(function(sum,p){return sum+approvedContractValue(p.id);},0),companyGuarantees=portfolioGuaranteeSummary(S.projects),publicCount=posts.filter(function(p){return !!p.publicVisible;}).length,publicUrl=profilePublicUrl(b.publicProfileId),publicLive=!!(b.publicProfileEnabled&&publicUrl);var h='<section class="company-profile"><div class="profile-hero"><div class="profile-cover">'+(b.profileCover?'<img class="profile-cover-img" src="'+esc(b.profileCover)+'" alt="รูปปกบริษัท">':'')+'<span>AREA WORK PROFILE</span></div><div class="profile-main"><img src="'+esc(avatar)+'" alt="AREA MAIBAB"><div class="profile-title"><small>'+esc(b.businessType||'ธุรกิจก่อสร้าง')+'</small><h1>'+esc(name)+'</h1><p>'+esc(tag)+'</p></div><div class="profile-head-actions"><button class="profile-edit-btn" data-act="profileShareCompany">แชร์</button><button class="profile-edit-btn" data-act="profileEdit">แก้ไขโปรไฟล์</button></div></div>'+(b.bio?'<p class="profile-bio">'+esc(b.bio).replace(/\n/g,'<br>')+'</p>':'<p class="profile-bio muted">เพิ่มคำแนะนำบริษัท บริการ และจุดเด่น เพื่อใช้เป็นหน้ารวมผลงานของทีม</p>')+'<div class="profile-complete"><span><b>ความพร้อมโปรไฟล์ '+complete.pct+'%</b><small>'+complete.done+'/'+complete.total+' องค์ประกอบพร้อมใช้งาน</small></span><i><em style="width:'+complete.pct+'%"></em></i></div>'+
     '<div class="profile-contact">'+(b.phone?'<span>☎ '+esc(b.phone)+'</span>':'')+(b.email?'<span>✉ '+esc(b.email)+'</span>':'')+(b.address?'<span>⌖ '+esc(b.address)+'</span>':'')+'</div>'+(socials?'<div class="profile-socials">'+socials+'</div>':'')+
     '<div class="profile-stats"><div><b>'+active.length+'</b><small>โครงการกำลังทำ</small></div><div><b>'+done.length+'</b><small>ส่งมอบ/ปิดแล้ว</small></div><div><b>'+posts.length+'</b><small>โพสต์หน้างาน</small></div></div></div>'+
-    '<div class="profile-compose"><button data-act="profilePostNew"><span class="profile-compose-plus">＋</span><span><b>โพสต์อัปเดตหน้างาน</b><small>รูปงาน · ความคืบหน้า · ผลงาน · จัดส่ง</small></span><strong>›</strong></button></div><section class="profile-public-card '+(publicLive?'live':'')+'"><div><small>CLIENT PORTFOLIO</small><b>'+(publicLive?'Portfolio ลูกค้าเผยแพร่แล้ว':'สร้างลิงก์ Portfolio สำหรับลูกค้า')+'</b><p>เฉพาะ '+publicCount+' โพสต์ที่เปิด “แสดงใน Portfolio ลูกค้า” · ไม่รวม BOQ รายรับ รายจ่าย หรืองานบัญชี</p></div><div class="profile-public-actions">'+(publicLive?'<button data-act="profilePublicOpen">เปิด</button><button data-act="profilePublicShare">แชร์ลิงก์</button><button data-act="profilePublicPublish">อัปเดต</button><button class="danger" data-act="profilePublicRevoke">ปิดสาธารณะ</button>':'<button class="primary" data-act="profilePublicPublish">เผยแพร่ Portfolio</button>')+'</div>'+(U.profilePublicBusy?'<em>กำลังอัปโหลดและสร้างลิงก์…</em>':'')+'</section>';
+    workspaceContextHtml()+workspaceTasksHtml(S.role==='foreman',true)+workspaceGovernanceHtml()+'<div class="profile-compose"><button data-act="profilePostNew"><span class="profile-compose-plus">＋</span><span><b>โพสต์อัปเดตหน้างาน</b><small>รูปงาน · ความคืบหน้า · ผลงาน · จัดส่ง</small></span><strong>›</strong></button></div><section class="profile-public-card '+(publicLive?'live':'')+'"><div><small>CLIENT PORTFOLIO</small><b>'+(publicLive?'Portfolio ลูกค้าเผยแพร่แล้ว':'สร้างลิงก์ Portfolio สำหรับลูกค้า')+'</b><p>เฉพาะ '+publicCount+' โพสต์ที่เปิด “แสดงใน Portfolio ลูกค้า” · ไม่รวม BOQ รายรับ รายจ่าย หรืองานบัญชี</p></div><div class="profile-public-actions">'+(publicLive?'<button data-act="profilePublicOpen">เปิด</button><button data-act="profilePublicShare">แชร์ลิงก์</button><button data-act="profilePublicPublish">อัปเดต</button><button class="danger" data-act="profilePublicRevoke">ปิดสาธารณะ</button>':'<button class="primary" data-act="profilePublicPublish">เผยแพร่ Portfolio</button>')+'</div>'+(U.profilePublicBusy?'<em>กำลังอัปโหลดและสร้างลิงก์…</em>':'')+'</section>';
   h+='<section class="profile-company-records" aria-label="สถิติผลงานและเงินประกันบริษัท"><div class="profile-section-head"><span><small>COMPANY TRACK RECORD</small><b>สถิติผลงานบริษัท</b></span><em>คำนวณจากทะเบียนโครงการ</em></div><div class="profile-record-stats"><div class="profile-record-stat"><small>ส่งมอบ / ปิดแล้ว</small><b>'+done.length+'</b><span>โครงการ</span></div>'+(S.role==='owner'?'<div class="profile-record-stat"><small>มูลค่าสัญญาโครงการเหล่านี้</small><b>'+fmt(doneContractValue)+'</b><span>รวมมูลค่าที่อนุมัติแล้ว</span></div>':'')+'<div class="profile-record-stat"><small>โครงการทั้งหมด</small><b>'+S.projects.length+'</b><span>กำลังทำ ส่งมอบ และปิดแล้ว</span></div><div class="profile-record-stat"><small>ผลงานที่บันทึก</small><b>'+posts.filter(function(p){return p.type==='portfolio';}).length+'</b><span>โพสต์ผลงานในโปรไฟล์</span></div></div>'+(S.role==='owner'?'<button class="profile-guarantee-summary" data-act="menuGo" data-v="guarantees"><span>เงินประกันค้างรับของบริษัท</span><b>'+fmt(companyGuarantees.amount)+'</b><small>'+companyGuarantees.count+' รายการ · '+companyGuarantees.projects+' โครงการ · ยังรอรับคืน</small><em>'+companyGuarantees.ready+' ครบกำหนด · '+companyGuarantees.near+' ใกล้ครบกำหนด · '+companyGuarantees.nodue+' ยังไม่มีวันรับคืน</em><strong>เปิดทะเบียน ›</strong></button>':'')+'</section>'+
     '<section class="profile-closed-work"><div class="profile-section-head"><span><small>COMPLETED PROJECTS</small><b>โครงการส่งมอบ / ปิดแล้ว</b></span><em>'+done.length+' โครงการ</em></div>'+(done.length?'<div class="profile-closed-list">'+done.slice(0,8).map(function(p){var when=validIsoDate(p.deliveryDate)?'ส่งมอบ '+dstr(p.deliveryDate):'ยังไม่ระบุวันส่งมอบ',status=p.status==='closed'?'ปิดโครงการแล้ว':'ส่งมอบแล้ว';return '<button class="profile-closed-item" data-act="openProj" data-id="'+esc(p.id)+'"><span><b>'+esc(p.name||'โครงการไม่มีชื่อ')+'</b><small>'+(p.client?esc(p.client)+' · ':'')+(p.location?esc(p.location)+' · ':'')+when+'</small></span><em>'+status+'</em>'+(S.role==='owner'?'<strong>'+fmt(approvedContractValue(p.id))+'</strong>':'')+'</button>';}).join('')+'</div>'+(done.length>8?'<button class="profile-closed-more" data-act="projectStatusShortcut" data-v="closed">ดูโครงการส่งมอบ/ปิดแล้วทั้งหมด ('+done.length+')</button>':''):'<div class="profile-empty"><b>ยังไม่มีโครงการส่งมอบหรือปิดแล้ว</b><p>เมื่อเปลี่ยนสถานะโครงการเป็น “ส่งมอบแล้ว” หรือ “ปิด” รายการจะปรากฏที่นี่</p></div>')+'</section>';
   if(S.role==='owner')h+=profileLoanDashboardHtml();
@@ -8947,7 +9079,7 @@ function render(){
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
     if(t[0]==='x')return;
-    if(t[0]==='add')nav+='<button class="add preview-add'+(v==='add'?' on':'')+'" data-act="newTx" aria-label="เพิ่มรายการ">'+ic('plus')+'<span>'+(v==='add'?'กำลังเพิ่ม':'เพิ่มรายการ')+'</span></button>';
+    if(t[0]==='add')nav+='<button class="add preview-add'+(v==='add'?' on':'')+'" data-act="newTx"'+(v==='add'?' aria-current="page"':'')+' aria-label="เพิ่มรายการ">'+ic('plus')+'<span>'+(v==='add'?'กำลังเพิ่ม':'เพิ่มรายการ')+'</span></button>';
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='home'?urgentCount():0),act=t[0]==='boq'?'bottomBoq':(t[0]==='list'?'openList':'go');nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+(t[0]==='profile'?ic(t[1]):areaMenuIcon(t[0],t[1]))+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
@@ -8979,6 +9111,7 @@ function accountingActionAllowed(action){
 }
 function directAction(el){
   if(!el)return false;
+  if(typeof businessRegisterAction==='function'&&businessRegisterAction(el))return true;
   var a=el.getAttribute('data-act'),v=el.getAttribute('data-v'),id=el.getAttribute('data-id');
   if(!accountingActionAllowed(a))return true;
   if(a==='pilotGuide'||a==='ocrReviewQueue'){if(a==='ocrReviewQueue'&&S.role!=='owner')return true;U.sheet={kind:a};render();return true;}
@@ -8987,12 +9120,14 @@ function directAction(el){
   if(a==='pwaCheck'){pwaCheckUpdate();return true;}
   if(a==='pwaRefresh'){if(U.sheet&&U.sheet.kind==='settings')U.sheet=null;if(!pwaCanReload()){toast('ปิดงานที่กำลังแก้ไขก่อนอัปเดต');return true;}location.reload();return true;}
   if(a==='feedbackOpen'){U.sheet={kind:'feedback'};render();return true;}
+  if(a==='activityHistoryOpen'){if(S.role!=='owner'){toast('ประวัตินี้เปิดได้ในโหมดเจ้าของบัญชี');return true;}U.appMenu=false;U.sheet={kind:'activityHistory'};render();return true;}
   if(a==='expenseOcrFeedback'){U.sheet={kind:'feedback',preset:'OCR อ่านข้อมูลผิด',text:'ขั้นตอนที่ทำ / ช่องที่อ่านผิด / สิ่งที่ควรเป็น (ไม่ต้องใส่ยอดเงินจริง)'};render();return true;}
   if(a==='expenseBatchDraftResume'){expenseBatchDraftResume();return true;}
   if(a==='expenseBatchDraftDiscard'){expenseBatchDraftDiscard();return true;}
   if(a==='expenseScanRetry'){if(U.expenseScanRetryDraft===U.draft&&U.expenseScanRetryFile&&!U.expenseScanBusy)expenseScanImage(U.expenseScanRetryFile);return true;}
   if(a==='expenseScanManual'){var amountInput=document.querySelector('.add-amount input');if(amountInput){amountInput.focus();amountInput.scrollIntoView({block:'center',behavior:'smooth'});}return true;}
   if(a==='expenseVoiceCommandApply'){expenseVoiceCommandApply();return true;}
+  if(a==='expenseVoiceAlternative'){expenseVoiceSelectAlternative(el.getAttribute('data-i'));return true;}
   if(a==='expenseVoiceStart'){expenseVoiceStart();return true;}
   if(a==='feedbackShare'){
     var feedbackNote=String((document.getElementById('feedbackText')||{}).value||'').trim(),feedbackKind=String((document.getElementById('feedbackKind')||{}).value||'ข้อเสนอแนะ');
@@ -9008,7 +9143,7 @@ function directAction(el){
   if(a==='googleWorkspaceConnect'){googleWorkspaceConnect(id||U.boqProjectPid||'');return true;}
   if(a==='googleWorkspaceScope'){var scopeState=googleWorkspaceState();if(!scopeState.syncBusy&&!scopeState.bulkSyncBusy){scopeState.syncScope=el.getAttribute('data-v')==='active'?'active':'project';render();}return true;}
   if(a==='googleWorkspaceRetryFailed'){googleWorkspaceSyncActive(true);return true;}
-  if(a==='googleWorkspaceSync'){if(googleWorkspaceState().syncScope==='active')googleWorkspaceSyncActive(false);else googleWorkspaceSync(id||U.boqProjectPid||'');return true;}
+  if(a==='googleWorkspaceSync'){if(U.sheet&&U.sheet.pid==='__organization__')googleWorkspaceSyncOrganization();else if(googleWorkspaceState().syncScope==='active')googleWorkspaceSyncActive(false);else googleWorkspaceSync(id||U.boqProjectPid||'');return true;}
   if(a==='googleWorkspaceOpenUrl'){var gu=el.getAttribute('data-url')||'';if(/^https:\/\/(?:docs|drive)\.google\.com\//.test(gu))window.open(gu,'_blank','noopener');return true;}
   if(a==='googleWorkspaceDisconnect'){googleWorkspaceDisconnect();return true;}
   if(a==='boqQuickClear'){U.boqQuery='';U.boqRenderLimit=200;var qi=document.getElementById('boqQuickFind');if(qi)qi.value='';boqApplyQuickFind('');if(qi)qi.focus();return true;}
@@ -9395,9 +9530,10 @@ document.addEventListener('click',function(e){
   else if(a==='cloudUseKey'){
     var ck=String((document.getElementById('cloudKeyImport')||{}).value||'').trim();
     if(!/^[A-Za-z0-9_-]{32,128}$/.test(ck)){toast('รหัสกู้คืน Cloud ไม่ถูกต้อง');return true;}
-    var oldKey=cloudLedgerKey(false);if(oldKey&&oldKey!==ck&&U.confirm!=='cloudUseKey'){U.confirm='cloudUseKey';toast('แตะ “ใช้รหัสกู้คืน Cloud” อีกครั้งเพื่อเปลี่ยนฐาน Cloud');render();return true;}
+    var oldKey=cloudLedgerKey(false),keyDraft=U.cloudKeyImportDraft;
+    if(oldKey&&oldKey!==ck&&(U.confirm!=='cloudUseKey'||!keyDraft||keyDraft.sheet!==U.sheet||keyDraft.confirmedValue!==ck)){U.cloudKeyImportDraft={sheet:U.sheet,value:ck,confirmedValue:ck};U.confirm='cloudUseKey';toast('แตะ “เชื่อมข้อมูลคลาวด์ด้วยรหัสนี้” อีกครั้งเพื่อยืนยัน');render();return true;}
     try{localStorage.setItem(CLOUD_KEY_NAME,ck);}catch(_){toast('บันทึกรหัส Cloud ไม่สำเร็จ');return true;}
-    cloudSetEnabled(false);cloudResetMeta();U.confirm=null;render();toast('รับรหัส Cloud แล้ว · กดเปิด Cloud Sync เพื่อตรวจฐานเดิมก่อน');
+    cloudSetEnabled(false);cloudResetMeta();U.cloudKeyImportDraft=null;U.confirm=null;render();toast('รับรหัส Cloud แล้ว · กดเปิด Cloud Sync เพื่อตรวจฐานเดิมก่อน');
   }
   else if(a==='cloudPush'){
     if(U.cloudConflict&&U.confirm!=='cloudPushForce'){U.confirm='cloudPushForce';toast('Cloudflare มีข้อมูลต่างจากเครื่องนี้ · แตะยืนยันอีกครั้งเฉพาะเมื่อต้องการใช้ข้อมูลเครื่องนี้เป็นชุดหลัก');render();return true;}
@@ -9552,8 +9688,8 @@ document.addEventListener('click',function(e){
   else if(a==='repairBilling'){var rr=safeRepairBilling('');if(rr){render();if(rr.created||rr.updated)toast('ซ่อมแล้ว: เชื่อมใหม่ '+rr.created+' · ปรับยอดค้างรับ '+rr.updated);else toast('ไม่มีรายการที่ซ่อมอัตโนมัติได้อย่างปลอดภัย');}}
   else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
-  else if(a==='bizType'){S.business=S.business||{};S.business.businessType=v;if(!persist())return;render();}
-  else if(a==='bizVat'){S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
+  else if(a==='bizType'){settingsFormCapture();S.business=S.business||{};S.business.businessType=v;if(!persist())return;render();}
+  else if(a==='bizVat'){settingsFormCapture();S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
   else if(a==='cloudflareFreshDismiss'){S.ui=S.ui||{};S.ui.cloudflareFreshDismissed=true;if(!persist({metaOnly:true}))return;render();toast('เริ่มใช้งานใหม่บน Cloudflare · ข้อมูลเว็บเดิมยังไม่ถูกลบ');}
   else if(a==='deploymentStatusOpen'){U.sheet={kind:'deploymentStatus'};render();}
   else if(a==='reliabilityCheck'){toast('กำลังตรวจ storage / IndexedDB / PWA guards…');reliabilitySelfCheck().then(function(x){S.ops=S.ops||{};S.ops.reliability=x;persist({metaOnly:true});render();toast(x.ok?'Reliability Self-Check ผ่าน':'Reliability Self-Check พบจุดต้องตรวจ');}).catch(function(){toast('Reliability Self-Check ไม่สำเร็จ');});}
@@ -9570,8 +9706,8 @@ document.addEventListener('click',function(e){
   else if(a==='aiCheckReady'){aiGatewayReadiness().then(function(x){var d=x.data||{};if(x.ok)toast('Gateway พร้อมใช้งาน · AREA Ledger protocol '+(d.protocol||'?'));else if(x.identityOk===false)toast('Gateway identity/protocol ไม่ตรง AREA Ledger');else if(d.providerConfigured===false)toast('Gateway ทำงานแล้ว · เหลือ Gemini API secret');else if(d.durableState===false)toast('Gateway ยังขาด Durable Object');else toast('Gateway ยังไม่พร้อม · HTTP '+x.status);}).catch(function(){toast('ตรวจ Gateway ไม่สำเร็จ · ใช้ Local OCR ต่อได้');});}
   else if(a==='aiSmokeTest'){toast('กำลังทดสอบ Cloudflare…');aiGatewaySmokeCheck().then(function(x){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:x.base||'',ok:!!x.ok,healthStatus:+x.health.status||0,readyStatus:+x.ready.status||0,identityOk:x.ready.identityOk===true,componentsOk:x.ready.componentsOk===true,sameBase:!!x.sameBase};persist({metaOnly:true});render();if(x.ok)toast('Cloudflare smoke ผ่าน · บันทึก live evidence แล้ว');else if(!x.health.ok)toast('Cloudflare smoke ไม่ผ่านที่ /health');else if(!x.ready.ok)toast('Cloudflare smoke ไม่ผ่านที่ /ready');else toast('Cloudflare smoke ไม่ผ่าน · endpoint ไม่ตรงกัน');}).catch(function(){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:aiGatewayBase()||aiGatewaySuggestedBase(),ok:false,error:'NETWORK_OR_FETCH'};persist({metaOnly:true});render();toast('Cloudflare smoke ล้มเหลว · ยังใช้ Local OCR ได้');});}
   else if(a==='openGatewayHealth'){var base=aiGatewayBase()||aiGatewaySuggestedBase();var health=base+'/health';try{window.open(health,'_blank','noopener');}catch(_){location.href=health;}}
-  else if(a==='viewMode'){S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!persist())return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
-  else if(a==='wallpaper'){S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!persist())return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
+  else if(a==='viewMode'){settingsFormCapture();S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!persist())return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
+  else if(a==='wallpaper'){settingsFormCapture();S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!persist())return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
   else if(a==='quoteAddItem'){U.quoteItemCount=Math.min(8,(U.quoteItemCount||1)+1);render();}
   else if(a==='quoteRemoveItem'){U.quoteItemCount=Math.max(1,(U.quoteItemCount||1)-1);render();}
@@ -9655,7 +9791,7 @@ function quoteFormCalc(){
 }
 function legacyRetentionImportFieldChanged(target){if(!target||!target.hasAttribute('data-legacy-row')||!U.sheet||U.sheet.kind!=='legacyRetentionImport')return;var index=Number(target.getAttribute('data-legacy-row')),key=target.getAttribute('data-legacy-key');if(!isFinite(index)||!key||!U.sheet.rows||!U.sheet.rows[index])return;U.sheet.rows[index][key]=target.value;}
 document.addEventListener('input',function(e){
-  if(e.target.id==='expenseVoiceCommand'){if(U.expenseVoiceCommandDraft===U.draft)U.expenseVoiceCommandText=String(e.target.value||'').slice(0,1000);return;}
+  if(e.target.id==='expenseVoiceCommand'){if(U.expenseVoiceCommandDraft===U.draft){U.expenseVoiceCommandText=String(e.target.value||'').slice(0,1000);U.expenseVoiceCommandEdited=true;U.expenseVoiceCommandOpen=true;}return;}
   legacyRetentionImportFieldChanged(e.target);
   if(/^q(qty|price|lineDisc)\d+$/.test(e.target.id)||e.target.id==='qdiscount'){quoteFormCalc();}
   if(e.target.id==='boqQuickFind'){boqApplyQuickFind(e.target.value);return;}
@@ -9846,7 +9982,7 @@ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
       if(!pwaController){pwaController=navigator.serviceWorker.controller;return;}
       if(pwaCanReload())location.reload();else{U.pwaUpdatePending=true;toast('มีเวอร์ชันใหม่พร้อมใช้ · ระบบจะอัปเดตเมื่อปิดงานที่กำลังแก้ไข');}
     });
-    navigator.serviceWorker.register('sw.js?v=800&source=1098&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
+    navigator.serviceWorker.register('sw.js?v=800&source=1108&project-keyboard=1&oauth-recovery=1&safari-first-open=1&profile-workspace=1&org-activity=1',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});
   }
 }
 var projectStableViewportHeight=0,projectStableViewportWidth=0;
@@ -9887,5 +10023,6 @@ if(window.visualViewport){window.visualViewport.addEventListener('resize',syncPr
 window.addEventListener('resize',syncProjectViewport);syncProjectViewport();
 boot();
 </script>
+<script src="assets/business-registers.js?v=1108"></script>
 </body>
 </html>

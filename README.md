@@ -1,5 +1,38 @@
 # AREA Ledger V2 — Master v800
 
+## v1106 Voice capture quality and transcript correction
+
+- Uses up to five browser speech hypotheses and favors alternatives that identify an amount and item; shows the heard text for correction before use.
+- Retains a parseable interim transcript when iOS ends without a final result after speech ends or a manual stop. It remains an unsaved draft for review.
+- Shows whether microphone, speech detection and transcript events are progressing. Keyboard dictation or typing can correct a misheard phrase; the app still does not record or upload audio.
+- Physical iPhone retest is required before production.
+
+## v1105 Queued repeated voice capture
+
+- A second tap during iOS microphone shutdown queues one new capture. It starts when the previous native session ends, keeps the unsaved draft, and allows another correction without saving.
+- Shows that the restart was queued, prevents duplicate queued sessions, and cancels the queue on timeout, navigation, cancellation, or draft replacement. Adds regression coverage for native event order and no-save behavior.
+- Physical iPhone retest remains required before production release.
+
+## v1104 Account clarity and change history
+
+- Adds a profile-level account and access summary that clearly identifies the current single-user setup and the UI-only owner/site mode.
+- Makes the existing recorded audit trail readable from the profile, with Thai action labels and honest limits on actor attribution and event coverage. No team sign-in is enabled.
+- Keeps financial records, calculations, storage identities, authentication state and the existing v1103 full-screen visual system unchanged. See ORG-READINESS-v1104.md.
+
+## v1103 Six-part shared UX/UI system
+
+- Full-screen shell and floating profile controls keep the supplied reference; primary navigation announces the selected destination.
+- Shared reading sizes and touch targets extend through working views; voice readiness is visible and examples stay collapsed.
+- Backup separates local export, cloud sync and restore, with real busy/cancel/failure/success feedback and stale-copy awareness.
+- Financial calculations, data identities, receipt verification and save guards remain unchanged. See QA-ux-system-v1103.md.
+
+## v1102 Consistent full-screen workspace
+
+- Uses one navy, gold and white presentation across Ledger and Payroll, with clearer headings, readable controls and consistent navigation/dialog actions.
+- Shows the company cover and identity first, keeps profile controls over the cover, and shortens BOQ summaries so actual items are reachable sooner. Import help does not imply completed processing.
+- Preserves unsaved settings text across immediate toggles, retains recovery-key confirmation in the current UI only, and keeps footer Cancel/Save alongside an independent header Close.
+- Tests render the actual local styles, artwork and images. The catalogue covers 15 views and 70 sheets at six widths, keyboard workflows, automated accessibility checks, A4 output and unchanged financial collections. See QA-ui-next-v1102.md.
+
 ## v1098 Native microphone completion and command fallback
 
 - Waits for native end after speech/error without redundant automatic stop or early second capture; preserves confirmed finals across aborted and retains manual-edit guards.
@@ -1654,3 +1687,18 @@ Registration: `sw.js?v=321`, `updateViaCache: 'none'`.
 
 The tracked legacy `area-ledger-package.zip` is not the current deployment source;
 use the current `main` tree. It was not used or rebuilt for this release.
+
+## v1107 Business registers
+
+- Adds separate management registers for stock, machinery/equipment assets, and lease contracts.
+- Tracks stock receipts/issues/counts using moving-average cost; exports stock movements, assets, and leases with the accounting workbook.
+- Presents debts, receivables/payables, cash, and bank balances by linking to existing Ledger records and the private loan register.
+- New register data is migrated, backed up, restored, checked by Data Health, and mirrored through D1 collections.
+- Stock/asset values do not post journal entries, depreciation, or profit changes automatically. Actual rent payments remain expense transactions.
+
+
+## v1108 Organization expenses
+
+- Added a company-wide expense register for tax/fees, support, and other overhead, separate from project costs.
+- Tax settlements debit the selected tax liability and cash without double-counting profit-and-loss expense; unpaid tax expenses use the dedicated tax payable account.
+- Added organization summary/export and a separately verified Google Sheets target included in active-project batch sync.

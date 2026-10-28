@@ -30,6 +30,19 @@ test('manual stop accepts the delayed final, then 20 new taps replace the amount
  assert.equal(JSON.stringify(c.S),before);assert.equal(x.writes.length,0);
  c.expenseVoiceUndo();assert.equal(c.U.draft.amount,'518');
 });
+test('iOS interim speech survives speechend or explicit stop as a reviewable unsaved draft',()=>{
+ for(const endMode of ['speechend','manual-stop']){
+  const x=fixture(),{c}=x,ledger=JSON.stringify(c.S);assert(c.expenseVoiceStart());const engine=x.engines[0],row=[{transcript:'ค่าทราย 500'}];row.isFinal=false;engine.onresult({results:[row]});
+  if(endMode==='speechend')engine.onspeechend();else c.expenseVoiceStart();engine.onend();
+  assert.equal(c.U.draft.amount,'500',endMode);assert.equal(c.U.draft.sub,'ทราย',endMode);assert.equal(c.U.expenseVoiceProvisional,true);assert(c.expenseVoiceStatusText().includes('ข้อความระหว่างฟัง'));assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
+ }
+});
+test('recognition considers multiple hypotheses and exposes an editable transcript for correction',()=>{
+ const x=fixture(),{c}=x,ledger=JSON.stringify(c.S);assert(c.expenseVoiceStart());const engine=x.engines[0],row=[{transcript:'ค่าทราย',confidence:.95},{transcript:'ค่าทราย 500',confidence:.1}];row.isFinal=true;engine.onresult({results:[row]});engine.onend();
+ assert.equal(engine.maxAlternatives,5);assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(JSON.stringify(c.U.expenseVoiceAlternatives),JSON.stringify(['ค่าทราย 500','ค่าทราย']));
+ const form=c.vAdd();assert(form.includes('ตรวจหรือแก้ข้อความที่ได้ยิน'));assert(form.includes('data-act="expenseVoiceAlternative"'));assert(form.includes('value="ค่าทราย 500"')||form.includes('>ค่าทราย 500</textarea>'));
+ assert(c.expenseVoiceSelectAlternative(1));assert.equal(c.U.expenseVoiceCommandText,'ค่าทราย');assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
+});
 test('later manual edits survive pending voice completion, timeout and the next correction undo',()=>{
  const edits={type:'in',amount:'700',cat:'ค่าแรง',sub:'รายการที่กรอกเอง',subCustom:'รายละเอียดที่กรอกเอง',partner:'ร้านที่กรอกเอง',date:'2026-01-02'};
  for(const stage of ['listening','closing'])for(const [field,value]of Object.entries(edits)){
@@ -54,27 +67,25 @@ test('native speechend and final rows wait for end without redundant stop or int
  assert.equal(x.stops,0);assert.equal(c.U.draft.amount,'');engine.onend();
  assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.expenseVoiceTranscript,'ค่าทราย 500');assert.equal(c.S.tx.length,0);
 });
-test('native final and speechend survive aborted in either order until end and a fresh tap',()=>{
+test('native final and speechend survive aborted in either order and queue a correction',()=>{
  for(const order of ['final-speechend-aborted','speechend-aborted-final']){
-  const x=fixture(),{c}=x;c.U.draft.amount='123';const ledger=JSON.stringify(c.S);c.expenseVoiceStart();const engine=x.engines[0];
-  for(const event of order.split('-')){if(event==='final')result(engine,'ค่าทราย500');if(event==='speechend')engine.onspeechend();if(event==='aborted')engine.onerror({error:'aborted',message:'No speech detected'});}
-  assert.equal(c.U.draft.amount,'123');assert.equal(x.stops,0);assert.equal(x.aborts,0);assert.equal(c.U.expenseVoiceEnding,engine);
-  const releaseTimer=c.U.expenseVoiceReleaseTimer;assert(c.expenseVoiceStart());assert(c.expenseVoiceStart());assert.equal(c.U.expenseVoiceReleaseTimer,releaseTimer);assert.equal(x.engines.length,1,'no new native request before end');
-  engine.onend();assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.expenseVoiceDiagnostic.code,'');assert.equal(c.U.expenseVoiceDiagnostic.nativeReason,'NATIVE_NO_SPEECH');assert.equal(c.U.expenseVoiceEnding,null);assert.equal(x.engines.length,1);
-  assert(c.expenseVoiceStart());assert.equal(x.engines.length,2);result(x.engines[1],'แก้ยอดเป็น700');x.engines[1].onend();assert.equal(c.U.draft.amount,'700');assert.equal(x.stops,0);assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
+  const x=fixture(),{c}=x;c.U.draft.amount='123';const ledger=JSON.stringify(c.S);c.expenseVoiceStart();const first=x.engines[0];
+  for(const event of order.split('-')){if(event==='final')result(first,'ค่าทราย500');if(event==='speechend')first.onspeechend();if(event==='aborted')first.onerror({error:'aborted',message:'No speech detected'});}
+  assert.equal(c.U.draft.amount,'123');assert.equal(x.stops,0);assert.equal(x.aborts,0);assert.equal(c.U.expenseVoiceEnding,first);
+  const releaseTimer=c.U.expenseVoiceReleaseTimer;assert(c.expenseVoiceStart());assert(c.expenseVoiceStart());assert.equal(c.U.expenseVoiceReleaseTimer,releaseTimer);assert.equal(x.engines.length,1,'queued restart waits for native end');
+  first.onend();assert.equal(c.U.draft.amount,'500');assert.equal(c.U.draft.sub,'ทราย');assert.equal(c.U.expenseVoiceEnding,null);assert.equal(x.engines.length,2);assert(c.U.expenseVoiceDiagnostic.events.includes('restart-queued'));assert(c.U.expenseVoiceDiagnostic.started);
+  result(x.engines[1],'แก้ยอดเป็น700');x.engines[1].onend();assert.equal(c.U.draft.amount,'700');assert.equal(x.stops,0);assert.equal(JSON.stringify(c.S),ledger);assert.equal(x.writes.length,0);
  }
-});
-test('native errors retain ownership until end, reject fatal-error finals and sanitize reasons',()=>{
+});test('native errors retain ownership through end; an explicit queued tap starts a clean attempt',()=>{
  for(const error of ['network','not-allowed','audio-capture','no-speech','unrecognized']){
-  const x=fixture(),{c}=x;c.U.draft.amount='321';c.expenseVoiceStart();const engine=x.engines[0],late=engine.onresult;
-  result(engine,'ทราย500');engine.onerror({error,message:'private recognizer message secret 987654'});assert.equal(c.U.expenseVoiceEnding,engine);assert.equal(x.aborts,0);assert(c.expenseVoiceStart());assert.equal(x.engines.length,1);
-  engine.onerror({error:'aborted',message:'Another request is started'});late({results:[Object.assign([{transcript:'ค่าทราย900'}],{isFinal:true})]});engine.onend();
-  assert.equal(c.U.draft.amount,'321');assert.equal(c.U.expenseVoiceEnding,null);assert.notEqual(c.U.expenseVoiceDiagnostic.code,'ERROR_ABORTED');assert.equal(c.U.expenseVoiceDiagnostic.nativeReason,'NATIVE_REQUEST_REPLACED');assert(!JSON.stringify(c.U.expenseVoiceDiagnostic).includes('private'));assert(!c.expenseVoiceDiagnosticText().includes('987654'));
-  c.expenseVoiceStart();assert.equal(x.engines.length,2);c.expenseVoiceStop();assert.equal(c.S.tx.length,0);
+  const x=fixture(),{c}=x;c.U.draft.amount='321';c.expenseVoiceStart();const first=x.engines[0],late=first.onresult;
+  result(first,'ทราย500');first.onerror({error,message:'private recognizer message secret 987654'});assert.equal(c.U.expenseVoiceEnding,first);assert.equal(x.aborts,0);assert(c.expenseVoiceStart());assert.equal(x.engines.length,1);
+  first.onerror({error:'aborted',message:'Another request is started'});late({results:[Object.assign([{transcript:'ค่าทราย900'}],{isFinal:true})]});first.onend();
+  assert.equal(c.U.draft.amount,'321');assert.equal(c.U.expenseVoiceEnding,null);assert.equal(x.engines.length,2);assert(c.U.expenseVoiceDiagnostic.events.includes('restart-queued'));assert(!JSON.stringify(c.U.expenseVoiceDiagnostic).includes('private'));assert(!c.expenseVoiceDiagnosticText().includes('987654'));
+  c.expenseVoiceStop();assert.equal(c.S.tx.length,0);
  }
  const x=fixture(),{c,timers}=x;c.U.draft.amount='321';c.expenseVoiceStart();x.engines[0].onerror({error:'aborted',message:'private service detail'});assert.equal(c.U.expenseVoiceDiagnostic.nativeReason,'NATIVE_ERROR');assert(c.expenseVoiceStart());assert.equal(x.engines.length,1);timers.get(c.U.expenseVoiceReleaseTimer)();assert.equal(c.U.draft.amount,'321');assert.equal(c.U.expenseVoiceDiagnostic.code,'ERROR_ABORTED');assert.equal(x.aborts,1);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.S.tx.length,0);
-});
-test('aborted late finals still respect manual edits and explicit stop is requested only once',()=>{
+});test('aborted late finals still respect manual edits and explicit stop is requested only once',()=>{
  const x=fixture(),{c}=x;c.U.draft.amount='100';c.expenseVoiceStart();const engine=x.engines[0];c.expenseVoiceStart();assert.equal(x.stops,1);engine.onspeechend();engine.onerror({error:'aborted'});c.U.draft.amount='700';result(engine,'ค่าทราย500');assert.equal(x.stops,1);engine.onend();assert.equal(c.U.draft.amount,'700');assert.equal(c.U.expenseVoiceDiagnostic.code,'DRAFT_CHANGED');assert.equal(x.aborts,0);assert.equal(c.U.expenseVoiceEnding,null);assert.equal(c.S.tx.length,0);
 });
 test('interim-only, empty and missing-end sessions release the mic without guessing a payment',()=>{
@@ -93,5 +104,22 @@ test('cancel, draft replacement and errors reject late final results and leave t
   c.U.view='add';c.expenseVoiceStart();assert.equal(x.engines.length,2,mode);c.expenseVoiceStop();assert.equal(c.S.tx.length,0);
  }
 });
-let failed=0;for(const [name,fn]of tests){try{fn();console.log('PASS',name);}catch(error){failed++;console.error('FAIL',name,error.message);}}
+test('second user tap during native close queues one fresh capture after end',()=>{
+ const x=fixture(),{c}=x;c.expenseVoiceStart();const first=x.engines[0];
+ result(first,'ค่าทราย500');assert.equal(c.U.expenseVoiceState,'closing');
+ assert(c.expenseVoiceStart());assert.equal(x.engines.length,1);assert.equal(c.U.expenseVoiceRestartDraft,c.U.draft);assert(c.expenseVoiceStart());assert.equal(x.engines.length,1,'repeated taps still queue only one capture');assert(c.expenseVoiceStatusText().includes('จะเริ่มฟังรอบใหม่'));
+ assert.equal(c.U.expenseVoiceRestartDraft,c.U.draft);
+ first.onend();assert.equal(x.engines.length,2);assert.equal(c.U.expenseVoiceRecognition,x.engines[1]);
+ assert.equal(c.U.draft.amount,'500');result(x.engines[1],'แก้ยอดเป็น700');x.engines[1].onend();
+ assert.equal(c.U.draft.amount,'700');assert.equal(c.U.expenseVoiceRecognition,null);assert.equal(c.S.tx.length,0);assert.equal(x.writes.length,0);
+});test('queued second capture is cleared on timeout, cancellation, navigation or a replaced draft',()=>{
+ for(const mode of ['timeout','cancel','draft','view']){
+  const x=fixture(),{c,timers}=x;c.expenseVoiceStart();const first=x.engines[0];result(first,'ค่าทราย500');c.expenseVoiceStart();assert.equal(c.U.expenseVoiceRestartDraft,c.U.draft);
+  if(mode==='timeout')timers.get(c.U.expenseVoiceReleaseTimer)();
+  if(mode==='cancel')c.expenseVoiceStop();
+  if(mode==='draft')c.U.draft=c.newDraft('out','p');if(mode==='view')c.U.view='home';
+  if(mode!=='timeout'&&mode!=='cancel')first.onend();
+  assert.equal(c.U.expenseVoiceRestartDraft,null,mode);assert.equal(c.U.expenseVoiceRestartView,null,mode);assert.equal(x.engines.length,1,mode);assert.equal(c.S.tx.length,0,mode);
+ }
+});let failed=0;for(const [name,fn]of tests){try{fn();console.log('PASS',name);}catch(error){failed++;console.error('FAIL',name,error.message);}}
 if(failed)process.exitCode=1;else console.log(`PASS ${tests.length} voice finalization groups`);
