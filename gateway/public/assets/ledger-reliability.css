@@ -600,3 +600,25 @@
   :root[data-theme="dark"] body[data-view] .workspace-audit-marker {background:#1C2734}
   :root[data-theme="dark"] body[data-view] .workspace-audit-boundary {background:#3B321B;color:#F8E8B0}
 }
+
+Shared screen interaction contract across ledger workspaces. */
+@media screen {
+ body[data-view] {--ledger-touch:44px;--ledger-focus:#1764B0;--ledger-gap:12px;--ledger-radius:12px}
+ body[data-view] :is(button,input,select,textarea,summary):focus-visible {outline:3px solid var(--ledger-focus);outline-offset:3px;scroll-margin-block:90px 110px}
+ body[data-view] :is(.btn,.mtabs button,.seg button,.list-type-tabs button,.list-status-tabs button,.project-status-tabs button,.boq-action,.app-topbar-action) {min-height:var(--ledger-touch);touch-action:manipulation}
+ body[data-view] :is(.btn,.seg button,.boq-action) {white-space:normal;overflow-wrap:anywhere}
+ body[data-view] :is(.empty,.feed-result-summary) {padding:16px;line-height:1.65;border-radius:var(--ledger-radius);overflow-wrap:anywhere}
+ body[data-view] .empty .btn {display:block;margin:12px auto 0}
+ body[data-view] .feed-result-summary {display:grid;gap:4px;margin-block:8px 12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+ body[data-view] .feed-result-summary small {color:var(--muted)}
+ body[data-view] .mgh>b>span {display:block;font-size:14px;font-variant-numeric:tabular-nums}
+ body[data-view] .home-recent-head {position:static}
+ body[data-view] .mtabs {scroll-padding-inline:6px;padding-inline:6px}
+ body[data-view] .mtabs button {background:var(--surface);color:var(--ink);border-color:var(--line)}
+ body[data-view] .mtabs button.on {background:var(--surface);color:var(--ink);border:2px solid var(--ledger-focus);text-decoration:underline;text-underline-offset:4px}
+ body[data-view] button:disabled {cursor:not-allowed}
+ :root[data-theme="dark"] body[data-view] {--ledger-focus:#8DBFFF}
+ @media(max-width:380px) {body[data-view] .mgh {align-items:flex-start;gap:8px;flex-wrap:wrap}body[data-view] .mgh>b {text-align:left}}
+ @media(prefers-reduced-motion:reduce) {body[data-view] :is(.app-topbar-action,.app-menu-btn,.mitem,.btn,.nav button) {transition:none!important;animation:none!important}body[data-view] {scroll-behavior:auto}}
+ @media(forced-colors:active) {body[data-view] [aria-pressed="true"] {outline:2px solid Highlight;outline-offset:-3px}}
+}
