@@ -21,10 +21,22 @@ export async function requestExpenseFixture({base,imageBase64,id,fetchImpl=fetch
  assert(Number.isInteger(maxAttempts)&&maxAttempts>=1&&maxAttempts<=4,'bounded attempts required');
  const history=[];
  for(let attempt=1;attempt<=maxAttempts;attempt++){
-  const rid=makeRequestId(),response=await fetchImpl(base+'/v1/ocr/expense',{
-   method:'POST',headers:{'Content-Type':'application/json','Origin':base,'X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},
-   body:JSON.stringify({image:'data:image/png;base64,'+imageBase64,lang:'tha+eng'}),signal:AbortSignal.timeout(60000)
-  });
+  const rid=makeRequestId();
+  let response;
+  try {
+   response=await fetchImpl(base+'/v1/ocr/expense',{
+    method:'POST',headers:{'Content-Type':'application/json','Origin':base,'X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},
+    body:JSON.stringify({image:'data:image/png;base64,'+imageBase64,lang:'tha+eng'}),signal:AbortSignal.timeout(60000)
+   });
+  } catch(error) {
+   // Only the per-attempt transport timeout is retryable. Never retry an
+   // unexpected exception or conceal a bad OCR result / identity mismatch.
+   if(error?.name!=='TimeoutError'&&error?.name!=='AbortError')throw error;
+   history.push({attempt,status:null,error:'TRANSPORT_TIMEOUT'});
+   if(attempt===maxAttempts)throw Error(id+' OCR transport timeout; attempts='+JSON.stringify(history));
+   await pause(2500*attempt);
+   continue;
+  }
   const data=await response.json();
   history.push({attempt,status:response.status,error:typeof data?.error==='string'?data.error:null});
   if(response.status===200){
