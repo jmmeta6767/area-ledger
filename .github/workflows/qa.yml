@@ -154,6 +154,8 @@ jobs:
         run: node --check tests/live-cloudflare-acceptance.mjs
       - name: Production binding capture syntax
         run: node --check tests/capture-production-bindings.mjs
+      - name: Read-only backup integrity and privacy regression
+        run: node tests/backup-audit.cjs
       - name: Storage headroom privacy and sizing regression
         run: node tests/storage-headroom-audit.cjs
       - name: Lossless receipt evidence archive synthetic tests
