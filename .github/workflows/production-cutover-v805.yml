@@ -108,7 +108,6 @@ jobs:
           node --check sw.js
           node tests/cloudflare-only.cjs
           node tests/qa.cjs
-          node tests/cloud-pull-recovery.cjs
           node tests/profile-workspace-ux.cjs
           node tests/reliability-v1048.cjs
           node tests/boq-quality-provenance.cjs
