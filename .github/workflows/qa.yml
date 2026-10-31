@@ -82,6 +82,10 @@ jobs:
         run: node --check sw.js
       - name: Cloudflare-only deployment contract
         run: node tests/cloudflare-only.cjs
+      - name: OCR receipt review and lossless batch accounting safety
+        run: |
+          node tests/ocr-voice-reliability.cjs
+          node tests/expense-batch-storage.cjs
       - name: Fail-closed transient OCR quality retry QA
         run: node tests/expense-quality-retry.cjs
       - name: Banking UI presentation and PWA safety
@@ -156,6 +160,8 @@ jobs:
         run: node --check tests/live-cloudflare-acceptance.mjs
       - name: Production binding capture syntax
         run: node --check tests/capture-production-bindings.mjs
+      - name: Read-only backup integrity and privacy regression
+        run: node tests/backup-audit.cjs
       - name: Storage headroom privacy and sizing regression
         run: node tests/storage-headroom-audit.cjs
       - name: Lossless receipt evidence archive synthetic tests
