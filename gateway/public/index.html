@@ -4529,9 +4529,10 @@ async function cloudSyncPush(silent,allowConflict){
 }
 async function cloudSyncPull(apply){
   if(!cloudLedgerKey(false))return {ok:false,error:'KEY'};
-  var source=JSON.stringify(S),sourceKey=cloudLedgerKey(false),sourceLocal=localStorage.getItem(KEY)||'';
+  var source=JSON.stringify(S),sourceKey=cloudLedgerKey(false),sourceLocal='';
   U.cloudSyncBusy=true;U.cloudStatus='syncing';workspaceRefreshStatus();
   try{
+    try{sourceLocal=localStorage.getItem(KEY)||'';}catch(_){U.cloudStatus='error';return {ok:false,error:'CACHE'};}
     var r=await cloudGateway('GET','/v1/ledger/state');
     if(!r.ok){U.cloudStatus='error';return {ok:false,error:r.data&&r.data.error||'NETWORK'};}
     if(!r.data||!r.data.hit||!r.data.state){U.cloudStatus='ready';return {ok:false,error:'EMPTY'};}
@@ -4539,13 +4540,13 @@ async function cloudSyncPull(apply){
     var h=stateHealth(next);if(!h.ok)return {ok:false,error:'HEALTH',issues:h.issues};
     U.cloudRemote={state:next,meta:r.data.meta};
     if(!apply)return {ok:true,state:next,meta:r.data.meta};
-    await mirrorQueue.catch(function(){});
-    mirrorQueue=mirrorQueue.then(function(){return storageCompactRecovery(true);});
+    mirrorQueue=mirrorQueue.catch(function(){}).then(function(){return storageCompactRecovery(true);});
     await mirrorQueue;
     if(JSON.stringify(S)!==source||cloudLedgerKey(false)!==sourceKey||(localStorage.getItem(KEY)||'')!==sourceLocal){U.cloudConflict=true;return {ok:false,error:'CONFLICT'};}
     if(!cloudCacheExact(next,r.data.meta))return {ok:false,error:'CACHE'};
     U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {ok:true,state:next,meta:r.data.meta};
-  }finally{U.cloudSyncBusy=false;workspaceRefreshStatus();}
+  }catch(_){U.cloudStatus='error';return {ok:false,error:'NETWORK'};}
+  finally{U.cloudSyncBusy=false;workspaceRefreshStatus();}
 }
 async function cloudSyncEnableCurrent(){
   var h=stateHealth(S);if(!h.ok){toast('ยังเปิด Cloud Sync ไม่ได้ · Data Health พบ '+h.totalIssues+' จุด');return false;}
