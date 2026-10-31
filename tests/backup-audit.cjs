@@ -60,4 +60,25 @@ test('fail closed on missing collections and oversized input', () => {
   assert(verify(item).errors.some(x => x.code === 'MISSING_COLLECTION'));
   assert(auditBackup('sample', { maxBytes: 3 }).errors.some(x => x.code === 'FILE_TOO_LARGE'));
 });
+test('never mutate input or expose sensitive text and embedded image content', () => {
+  const item = fixture();
+  item.state.tx[0].partner = 'PRIVATE_SYNTHETIC_PARTNER';
+  item.state.tx[0].photo = 'data:image/png;base64,' + Buffer.from('PRIVATE_SYNTHETIC_IMAGE').toString('base64');
+  item.stateChecksum = stateChecksum(item.state);
+  const original = JSON.stringify(item);
+  const report = verify(item);
+  assert.deepEqual(report.errors, []);
+  assert.equal(JSON.stringify(item), original);
+  const publicReport = JSON.stringify(report);
+  for (const secret of ['PRIVATE_SYNTHETIC_PARTNER', 'PRIVATE_SYNTHETIC_IMAGE', item.state.tx[0].photo])
+    assert(!publicReport.includes(secret));
+});
+test('missing revenue is an advisory and never an inferred accounting entry', () => {
+  const item = fixture();
+  const before = JSON.stringify(item);
+  const report = verify(item);
+  assert(report.advisories.some(x => x.code === 'NO_INCOMING_TRANSACTIONS_RECORDED'));
+  assert.equal(report.totals.incomingCents, 0);
+  assert.equal(JSON.stringify(item), before);
+});
 console.log(`PASS backup audit: ${count} synthetic tests, no files/network/customer data written`);
