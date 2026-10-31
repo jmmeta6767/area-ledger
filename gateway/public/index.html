@@ -4501,8 +4501,8 @@ function cloudSyncInfo(){
 function cloudCacheExact(next,meta){
   var json='',prev='';try{
     next=migrate(next);json=JSON.stringify(next);prev=localStorage.getItem(KEY)||committedState||'';
-    if(prev&&prev!==json){try{var po=JSON.parse(prev);if(Array.isArray(po.projects)&&Array.isArray(po.tx))localStorage.setItem(BACKUP_KEY,prev);}catch(_){}}
     localStorage.setItem(KEY,json);if(localStorage.getItem(KEY)!==json)throw new Error('cache verify');
+    if(prev&&prev!==json){try{var po=JSON.parse(prev);if(Array.isArray(po.projects)&&Array.isArray(po.tx))localStorage.setItem(BACKUP_KEY,prev);}catch(_){}}
   }catch(_){return false;}
   S=next;committedState=json;U.storageConflict=false;U.storageReadBlocked=false;
   mirrorQueue=mirrorQueue.catch(function(){}).then(async function(){if(prev&&prev!==json)await idbPut('state-backup',prev);var ok=await idbSet(json);U.storageMirrorBad=!ok;});
@@ -4529,6 +4529,7 @@ async function cloudSyncPush(silent,allowConflict){
 }
 async function cloudSyncPull(apply){
   if(!cloudLedgerKey(false))return {ok:false,error:'KEY'};
+  var source=JSON.stringify(S),sourceKey=cloudLedgerKey(false),sourceLocal=localStorage.getItem(KEY)||'';
   U.cloudSyncBusy=true;U.cloudStatus='syncing';workspaceRefreshStatus();
   try{
     var r=await cloudGateway('GET','/v1/ledger/state');
@@ -4538,6 +4539,10 @@ async function cloudSyncPull(apply){
     var h=stateHealth(next);if(!h.ok)return {ok:false,error:'HEALTH',issues:h.issues};
     U.cloudRemote={state:next,meta:r.data.meta};
     if(!apply)return {ok:true,state:next,meta:r.data.meta};
+    await mirrorQueue.catch(function(){});
+    mirrorQueue=mirrorQueue.then(function(){return storageCompactRecovery(true);});
+    await mirrorQueue;
+    if(JSON.stringify(S)!==source||cloudLedgerKey(false)!==sourceKey||(localStorage.getItem(KEY)||'')!==sourceLocal){U.cloudConflict=true;return {ok:false,error:'CONFLICT'};}
     if(!cloudCacheExact(next,r.data.meta))return {ok:false,error:'CACHE'};
     U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {ok:true,state:next,meta:r.data.meta};
   }finally{U.cloudSyncBusy=false;workspaceRefreshStatus();}
@@ -4789,6 +4794,36 @@ function mergeThaSalaPr4Boq(){
 }
 
 var mirrorQueue=Promise.resolve(),committedState='';
+/* Reclaim only a byte-verified recovery copy; never rewrite the primary ledger. */
+async function storageCompactRecovery(force){
+  try{
+    var current=localStorage.getItem(KEY)||'',backup=localStorage.getItem(BACKUP_KEY)||'';
+    if((!force&&current.length<524288)||!backup||current!==committedState)return false;
+    var parsed=JSON.parse(backup);
+    if(!parsed||!Array.isArray(parsed.projects)||!Array.isArray(parsed.tx))return false;
+    if(!await idbPut('state-backup',backup))return false;
+    if(await idbRead('state-backup')!==backup)return false;
+    if(localStorage.getItem(KEY)!==current||committedState!==current||localStorage.getItem(BACKUP_KEY)!==backup)return false;
+    localStorage.removeItem(BACKUP_KEY);
+    return true;
+  }catch(_){return false;}
+}
+function storagePrepareSpace(){
+  if(U.storagePreparing)return mirrorQueue;
+  U.storagePreparing=true;
+  mirrorQueue=mirrorQueue.catch(function(){}).then(function(){return storageCompactRecovery(true);}).then(function(ok){
+    U.storagePreparing=false;
+    toast(ok?'คืนพื้นที่สำเนาซ้ำแล้ว · ตรวจร่างแล้วกดบันทึกอีกครั้ง':'ยังคืนพื้นที่ไม่ได้ · เปิดสำรองข้อมูลเพื่อตรวจรูปแนบและเก็บไฟล์สำรอง');
+    return ok;
+  },function(){U.storagePreparing=false;return false;});
+  return mirrorQueue;
+}
+function storageSpaceHtml(){
+  var raw='',recovery='';try{raw=localStorage.getItem(KEY)||'';recovery=localStorage.getItem(BACKUP_KEY)||'';}catch(_){}
+  var photos=(S.tx||[]).reduce(function(n,t){return n+String(t.photo||'').length;},0);
+  function size(n){return (n*2/1048576).toFixed(2)+' MB';}
+  return '<section class="backup-section"><h4>พื้นที่ข้อมูลในเครื่อง</h4><p>ขนาดข้อความโดยประมาณ ไม่ใช่พื้นที่ว่างของ Safari</p><dl><dt>บัญชีหลัก (รวมรูป)</dt><dd>'+size(raw.length)+'</dd><dt>รูปใบเสร็จในบัญชีหลัก</dt><dd>'+size(photos)+'</dd><dt>สำเนากู้คืนซ้ำ</dt><dd>'+size(recovery.length)+'</dd></dl><p>คืนพื้นที่สำเนาซ้ำหลังตรวจสำเนาที่เก็บแยกสำเร็จ รายการและยอดบัญชีคงเดิม</p><button class="btn" data-act="storagePrepare"'+(U.storagePreparing?' disabled':'')+'>ตรวจและคืนพื้นที่สำเนาซ้ำ</button><p>หากรูปแนบใช้พื้นที่มาก ให้ดาวน์โหลดไฟล์สำรองพร้อมรูปก่อน แล้วใช้เมนูย้ายรูปไป Cloudflare ด้านล่าง</p></section>';
+}
 function storageCommitBaseline(best,ls){
   if(!best)return '';
   var rawCurrent='';
@@ -4823,6 +4858,7 @@ function persist(opts){
   mirrorQueue=mirrorQueue.catch(function(){}).then(async function(){
     if(prev){try{var backup=JSON.parse(prev);if(Array.isArray(backup.projects)&&Array.isArray(backup.tx))await idbPut('state-backup',prev);}catch(ignore){}}
     var mirrored=await idbSet(json);U.storageMirrorBad=!mirrored;
+    if(mirrored)await storageCompactRecovery();
     if(!mirrored)toast('บันทึกในเครื่องแล้ว แต่สำเนา IndexedDB ไม่สำเร็จ กรุณาสำรองข้อมูล');
   });
   if(!opts.skipCloud&&cloudSyncEnabled())cloudSyncSchedule(350);
@@ -8710,7 +8746,7 @@ function sheetHtml(){
     b='<h3 style="color:var(--out)">ยืนยันรีเซ็ตข้อมูล?</h3><p class="muted" style="margin:8px 0 4px">การรีเซ็ตจะลบโครงการและรายการบัญชีทั้งหมดในเครื่องนี้ และไม่สามารถย้อนกลับได้หากยังไม่ได้สำรองข้อมูล</p><div class="stack"><button class="btn dng sure" data-act="resetDo">ยืนยันรีเซ็ตข้อมูลทั้งหมด</button><button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
   }else if(sh.kind==='backup'){
     var csi=cloudSyncInfo(),csm=csi.meta;
-    b='<h3>สำรองและกู้คืนข้อมูล</h3><p class="muted">เลือกวิธีเก็บสำเนาข้อมูล หรือเรียกข้อมูลที่เคยสำรองกลับมาใช้</p>'+
+    b='<h3>สำรองและกู้คืนข้อมูล</h3><p class="muted">เลือกวิธีเก็บสำเนาข้อมูล หรือเรียกข้อมูลที่เคยสำรองกลับมาใช้</p>'+storageSpaceHtml()+
       '<section class="backup-section"><h4>1. สำรองลงเครื่อง</h4><p>ดาวน์โหลดไฟล์ .json พร้อมรูปใบเสร็จ เก็บใน Files, iCloud หรือคอมพิวเตอร์ เพื่อกู้คืนหรือย้ายเครื่อง</p>'+backupPortableStatusHtml()+'<div class="stack"><button class="btn pri" data-act="backupFile">ดาวน์โหลดไฟล์สำรอง (.json)</button><button class="btn" data-act="copyBk">คัดลอกข้อมูลสำรอง</button></div><details><summary>ดูข้อมูลในไฟล์สำรอง</summary><label for="bkbox">ข้อมูลสำหรับคัดลอกหรือเก็บเป็นไฟล์</label><textarea class="csv" id="bkbox" readonly>'+esc((S.tx||[]).some(function(t){return t.photoRef&&!/^data:image\//i.test(String(t.photo||''));})?'มีรูปใบเสร็จบน R2: กดดาวน์โหลดหรือคัดลอกข้อมูลสำรองเพื่อรวมรูปต้นฉบับจาก IndexedDB ให้ครบก่อนใช้งานไฟล์':backupJson())+'</textarea></details></section>'+
       '<section class="backup-section"><h4>2. ซิงค์คลาวด์</h4><p>ซิงค์ข้อมูลระหว่างเครื่องนี้กับ Cloudflare เมื่อเปิดใช้งาน · ควรเก็บไฟล์สำรองลงเครื่องแยกไว้ด้วย</p><div class="kv"><span>สถานะคลาวด์</span><b class="'+(U.cloudConflict?'out':csi.enabled?'in':'')+'">'+esc(csi.label)+'</b></div>'+
       (csi.enabled&&csm.savedAt?'<div class="kv"><span>ซิงก์ล่าสุด</span><small>'+esc(workspaceTime(csm.savedAt))+'</small></div>':'')+
@@ -9547,6 +9583,7 @@ document.addEventListener('click',function(e){
   }
   else if(a==='install'){U.sheet={kind:'install'};render();}
   else if(a==='backup'){U.sheet={kind:'backup'};render();}
+  else if(a==='storagePrepare'){storagePrepareSpace().then(function(){if(U.sheet&&U.sheet.kind==='backup')render();});}
   else if(a==='cloudEnable'){U.confirm=null;cloudSyncEnableCurrent().then(function(){render();});}
   else if(a==='cloudDisable'){cloudSetEnabled(false);U.cloudConflict=false;U.cloudRemote=null;U.confirm=null;render();toast('ปิด Auto Sync แล้ว · ข้อมูล Cloudflare ไม่ถูกลบ');}
   else if(a==='cloudCopyKey'){if(!cloudLedgerKey(false)){toast('ยังไม่มีรหัส Cloud Sync');return true;}doCopy('cloudKeyBox',function(){toast('คัดลอกรหัสกู้คืน Cloud แล้ว · เก็บไว้เป็นความลับ');});}
@@ -9964,6 +10001,7 @@ function boot(){
     try{history.replaceState({areaLedger:true,view:U.view||'home',pid:U.pid||null},'',location.href);}catch(e){}
     render();
     expenseBatchDraftLoad();
+    mirrorQueue=mirrorQueue.catch(function(){}).then(function(){return storageCompactRecovery();});
     var googlePending=false;try{googlePending=sessionStorage.getItem('area-ledger-google-return-pid')!==null;}catch(_){}if(U.googleOauthReturned||googlePending){U.googleOauthReturned=false;googleWorkspaceResume();}
     if(best&&best===o&&o!==ls)persist({recovery:true});
     try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}

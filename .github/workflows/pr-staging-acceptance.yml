@@ -101,6 +101,7 @@ jobs:
       - name: Regression QA
         run: |
           node tests/qa.cjs
+          node tests/storage-recovery-compaction.cjs
           node tests/profile-workspace-ux.cjs
           node tests/reliability-v1048.cjs
       - name: BOQ provenance regression
