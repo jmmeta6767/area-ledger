@@ -1,0 +1,25 @@
+name: AREA Ledger Primary Storage Candidate
+on:
+  pull_request:
+    paths:
+      - 'gateway/public/assets/ledger-primary-store.js'
+      - 'tests/ledger-primary-store*.cjs'
+      - '.github/workflows/storage-primary-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/ledger-primary-store.cjs
+      - name: Install isolated browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/storage-runtime" playwright
+          "$RUNNER_TEMP/storage-runtime/node_modules/.bin/playwright" install --with-deps chromium
+          echo "PLAYWRIGHT_MODULE=$RUNNER_TEMP/storage-runtime/node_modules/playwright" >> "$GITHUB_ENV"
+      - run: node tests/ledger-primary-store-browser.cjs
