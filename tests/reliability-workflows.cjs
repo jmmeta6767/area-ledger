@@ -3,6 +3,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const {appContext}=require('./helpers/reliability-context.cjs');
 (async()=>{
  const {c,writes,action}=appContext();let count=0;
+ // Exercise legacy restore guards here; durable primary restore is tested in primary-app-integration.cjs.
+ c.primaryEnable=()=>true;
  const same=()=>JSON.stringify(c.S);
  const financial=same();
  // Every capture needs a new direct start; repeated callbacks must never save a transaction.
@@ -31,7 +33,7 @@ const {appContext}=require('./helpers/reliability-context.cjs');
  c.S.projects[0].name='แก้หลังตรวจ';before=same();action('doRestore');assert.equal(same(),before,'changed local state requires a fresh confirmation');assert.equal(writes.length,writeCount);
  const differentFile=JSON.parse(c.U.rsText);differentFile.state.tx[0].amount=1200;differentFile.stateChecksum=c.backupStateChecksum(differentFile.state);c.U.rsText=JSON.stringify(differentFile);action('doRestore');assert.equal(same(),before,'changed backup requires a fresh confirmation');assert.equal(writes.length,writeCount);
  action('doRestore');assert.equal(c.S.projects.length,6);assert.equal(c.S.tx.length,12);assert.equal(c.S.lastBackupRevision,c.S.dataRevision);assert.equal(writes.filter(x=>x[0]===c.KEY).length,1,'restore commits the complete state once');count++;
- const failedRestore=appContext(),f=failedRestore.c;f.U.sheet={kind:'restore'};f.U.rsText=JSON.stringify(envelope);f.localStorage.setItem(f.KEY,JSON.stringify(f.S));f.committedState=f.localStorage.getItem(f.KEY);const original=f.committedState;
+ const failedRestore=appContext(),f=failedRestore.c;f.primaryEnable=()=>true;f.U.sheet={kind:'restore'};f.U.rsText=JSON.stringify(envelope);f.localStorage.setItem(f.KEY,JSON.stringify(f.S));f.committedState=f.localStorage.getItem(f.KEY);const original=f.committedState;
  failedRestore.action('doRestore');const set=f.localStorage.setItem;f.localStorage.setItem=(key,value)=>{if(key===f.KEY)throw Object.assign(Error('quota'),{name:'QuotaExceededError'});return set(key,value);};failedRestore.action('doRestore');assert.equal(JSON.stringify(f.S),original);assert.equal(f.localStorage.getItem(f.KEY),original);assert(f.U.rsText);count++;
  // PWA updates must wait for active speech and Google writes even when there is no sheet.
  c.U.sheet=null;c.U.draft=null;c.U.expenseVoiceRecognition={};assert.equal(c.pwaCanReload(),false);c.U.expenseVoiceRecognition=null;
