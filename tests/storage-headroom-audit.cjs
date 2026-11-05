@@ -31,6 +31,26 @@ test('a large receipt triggers non-destructive advisory only', () => {
   assert(result.warnings.includes('EMBEDDED_MEDIA_DOMINATES_STATE'));
   assert(result.warnings.includes('ESTIMATED_LARGE_LOCAL_STORAGE_STATE'));
 });
+test('receipt storage placement is aggregate-only and never asserts remote readback', () => {
+  const embedded = 'data:image/png;base64,QUJD';
+  const result = analyzeBackupStorage(b(state({ tx: [
+    { id: 'PRIVATE_EMBEDDED', photo: embedded },
+    { id: 'PRIVATE_REMOTE', photoRef: 'r2/private-secret-key' },
+    { id: 'PRIVATE_BOTH', photo: embedded, photoRef: 'r2/another-secret-key' },
+    { id: 'PRIVATE_NONE' }, null
+  ] })));
+  assert.deepEqual(result.receiptPhotoPlacement, { embeddedOnly: 1, referenceOnly: 1, both: 1, neither: 1 });
+  assert.equal(result.referencePresenceDoesNotVerifyCloudObject, true);
+  assert.equal(result.embeddedMediaItems, 2);
+  const output = JSON.stringify(result);
+  for (const secret of ['PRIVATE_EMBEDDED', 'PRIVATE_REMOTE', 'PRIVATE_BOTH', 'r2/private-secret-key', 'r2/another-secret-key'])
+    assert(!output.includes(secret));
+});
+test('unrecognized receipt photo values do not count as recoverable originals', () => {
+  const result = analyzeBackupStorage(b(state({ tx: [{photo:'some-file.jpg',photoRef:'   '}] })));
+  assert.equal(result.receiptPhotoPlacement.neither, 1);
+  assert.equal(result.receiptPhotoPlacement.referenceOnly, 0);
+});
 test('storage estimate distinguishes unicode UTF-8/UTF-16', () => {
   const result = analyzeBackupStorage(b(state({ tx: [{sub: 'ค่าวัสดุ 🧱'}] })));
   assert.notEqual(result.estimatedStateUtf8Bytes, result.estimatedStateUtf16Bytes);
