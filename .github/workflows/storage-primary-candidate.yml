@@ -1,0 +1,31 @@
+name: IndexedDB primary candidate
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [codex/indexeddb-primary-rc2]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  primary-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Storage and application checks
+        run: |
+          node tests/ledger-primary-store.cjs
+          node tests/primary-app-integration.cjs
+          node tests/primary-await-audit.cjs
+      - name: Install isolated browser runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/storage-runtime" playwright@1.62.1
+          "$RUNNER_TEMP/storage-runtime/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Native IndexedDB checks
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/storage-runtime/node_modules/playwright
+        run: node tests/ledger-primary-store-browser.cjs

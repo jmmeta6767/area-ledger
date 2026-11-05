@@ -3895,6 +3895,7 @@ body[data-view] :is(.empty,.due-empty,.boq-empty,.profile-empty){border-radius:1
 </head>
 <body>
 <div id="app"></div>
+<script src="assets/ledger-primary-store.js?v=1"></script>
 <script>
 /* ---------- ค่าคงที่ ---------- */
 var CAT_OUT=['ค่าของ','ค่าแรง','ค่าประกัน/ค่างาน','ค่างานเอกสาร','ค่าเช่าอื่นๆ'];
@@ -4263,7 +4264,7 @@ async function cloudFullAcceptance(){
   var out={ok:true,at:Date.now(),platform:platform.data,reconcile:reconcile.data,probe:probe.data,history:history.data};
   U.cloudAcceptance=out;
   S.ops=S.ops||{};S.ops.fullAcceptance={at:out.at,origin:String(location.origin||''),release:APP_RELEASE,productionReady:true,d1Matched:true,r2Probe:true,cloudRevision:+(history.data.current&&history.data.current.revision)||0};
-  try{persist({metaOnly:true});}catch(_){}
+  try{(await persist({metaOnly:true}));}catch(_){}
   return out;
 }
 function cloudFullAcceptanceEvidence(){
@@ -4353,13 +4354,13 @@ async function cloudOffloadOneTxPhoto(id,silent){
   }
   // Detect same-tab edits and other-tab writes before changing the ledger state.
   var current='';
-  try{current=localStorage.getItem(KEY)||'';}catch(_){return false;}
+  try{current=storageCurrentRaw()||'';}catch(_){return false;}
   if(!cloudSyncEnabled()||cloudLedgerKey(false)!==cloudKey||JSON.stringify(S)!==source||current!==committedState){
     if(!silent)toast('ข้อมูลเปลี่ยนระหว่างย้ายรูป · ไม่แก้บัญชี');return false;
   }
   var snap={photo:t.photo,photoRef:t.photoRef||'',photoThumb:t.photoThumb||'',photoHash:t.photoHash||'',photoMime:t.photoMime||''};
   t.photo='';t.photoRef=up.data.key;t.photoThumb=thumb;t.photoHash=hash;t.photoMime=up.data.mime||'image/jpeg';
-  if(!persist()){
+  if(!(await persist())){
     Object.assign(t,snap);
     if(!silent)toast('บันทึกอ้างอิง R2 ไม่สำเร็จ · สำเนารูปยังเก็บใน IndexedDB');return false;
   }
@@ -4499,9 +4500,10 @@ function cloudSyncInfo(){
   return {enabled:enabled,label:label,meta:m,key:cloudLedgerKey(false)};
 }
 function cloudCacheExact(next,meta){
+  if(primaryActive)return primaryCacheExact(next,meta);
   var json='',prev='';try{
-    next=migrate(next);json=JSON.stringify(next);prev=localStorage.getItem(KEY)||committedState||'';
-    localStorage.setItem(KEY,json);if(localStorage.getItem(KEY)!==json)throw new Error('cache verify');
+    next=migrate(next);json=JSON.stringify(next);prev=storageCurrentRaw()||committedState||'';
+    localStorage.setItem(KEY,json);if(storageCurrentRaw()!==json)throw new Error('cache verify');
     if(prev&&prev!==json){try{var po=JSON.parse(prev);if(Array.isArray(po.projects)&&Array.isArray(po.tx))localStorage.setItem(BACKUP_KEY,prev);}catch(_){}}
   }catch(_){return false;}
   S=next;committedState=json;U.storageConflict=false;U.storageReadBlocked=false;
@@ -4513,6 +4515,7 @@ function cloudSyncSchedule(delay){
   clearTimeout(cloudSyncTimer);cloudSyncTimer=setTimeout(function(){cloudSyncPush(true,false);},Math.max(80,+delay||350));return true;
 }
 async function cloudSyncPush(silent,allowConflict){
+  if(U.primaryWriteBusy){U.cloudSyncPending=true;return false;}
   if(!cloudSyncEnabled())return false;if(U.cloudConflict&&!allowConflict)return false;
   if(U.cloudSyncBusy){U.cloudSyncPending=true;return false;}
   U.cloudSyncBusy=true;U.cloudSyncPending=false;U.cloudStatus='syncing';
@@ -4532,7 +4535,7 @@ async function cloudSyncPull(apply){
   var source=JSON.stringify(S),sourceKey=cloudLedgerKey(false),sourceLocal='';
   U.cloudSyncBusy=true;U.cloudStatus='syncing';workspaceRefreshStatus();
   try{
-    try{sourceLocal=localStorage.getItem(KEY)||'';}catch(_){U.cloudStatus='error';return {ok:false,error:'CACHE'};}
+    try{sourceLocal=storageCurrentRaw()||'';}catch(_){U.cloudStatus='error';return {ok:false,error:'CACHE'};}
     var r=await cloudGateway('GET','/v1/ledger/state');
     if(!r.ok){U.cloudStatus='error';return {ok:false,error:r.data&&r.data.error||'NETWORK'};}
     if(!r.data||!r.data.hit||!r.data.state){U.cloudStatus='ready';return {ok:false,error:'EMPTY'};}
@@ -4542,8 +4545,8 @@ async function cloudSyncPull(apply){
     if(!apply)return {ok:true,state:next,meta:r.data.meta};
     mirrorQueue=mirrorQueue.catch(function(){}).then(function(){return storageCompactRecovery(true);});
     await mirrorQueue;
-    if(JSON.stringify(S)!==source||cloudLedgerKey(false)!==sourceKey||(localStorage.getItem(KEY)||'')!==sourceLocal){U.cloudConflict=true;return {ok:false,error:'CONFLICT'};}
-    if(!cloudCacheExact(next,r.data.meta))return {ok:false,error:'CACHE'};
+    if(JSON.stringify(S)!==source||cloudLedgerKey(false)!==sourceKey||(storageCurrentRaw()||'')!==sourceLocal){U.cloudConflict=true;return {ok:false,error:'CONFLICT'};}
+    if(!(await cloudCacheExact(next,r.data.meta)))return {ok:false,error:'CACHE'};
     U.cloudConflict=false;U.cloudRemote=null;U.cloudStatus='synced';return {ok:true,state:next,meta:r.data.meta};
   }catch(_){U.cloudStatus='error';return {ok:false,error:'NETWORK'};}
   finally{U.cloudSyncBusy=false;workspaceRefreshStatus();}
@@ -4625,14 +4628,14 @@ function stateHealth(o){
   (o.guarantees||[]).forEach(function(g){if(!g||g.legacyPid||g.method!=='เงินสด/โอน')return;[['guarantee-v2-expense-',!!g.paidDate,'out'],['guarantee-v2-refund-',!!g.returned,'in']].forEach(function(pair){var t=maps.tx[pair[0]+g.id];if(pair[1]&&!t)issues.push('หลักประกันไม่มีรายการบัญชีเชื่อม');if(t&&(t.pid!==g.pid||t.type!==pair[2]||Math.abs(+t.amount-(+g.amount||0))>.011||!pair[1]))issues.push('หลักประกัน/รายการบัญชีไม่สัมพันธ์');});});
   return {ok:issues.length===0,issues:issues,totalIssues:issues.length,projects:(o.projects||[]).length,tx:(o.tx||[]).length,boq:(o.boq||[]).length};
 }
-function repairStateSafe(){
+function repairStateSafe(){return storageRun((function*(){
   var snap=JSON.parse(JSON.stringify(S)),fix=0,pids={},bids={};(S.projects||[]).forEach(function(p){if(p&&p.id)pids[p.id]=1;});(S.boq||[]).forEach(function(b){if(b&&b.id&&pids[b.pid])bids[b.id]=b.pid;});
   (S.tx||[]).forEach(function(t){if(isPeriodClosed(t.date))return;if(t.boqId&&(!bids[t.boqId]||bids[t.boqId]!==t.pid)){t.boqId='';fix++;}if(t.type!=='out'&&t.boqId){t.boqId='';fix++;}});
   if(!fix)return {ok:true,fixed:0};
-  if(!persist()){S=snap;return {ok:false,fixed:0};}
+  if(!(yield persist())){S=snap;return {ok:false,fixed:0};}
   return {ok:true,fixed:fix};
-}
-function loadLS(){try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(!o||!Array.isArray(o.tx)||!Array.isArray(o.projects))throw new Error('Invalid stored state');return migrate(o);}}catch(e){U.storageReadBlocked=true;}return null;}
+}).apply(this,arguments));}
+function loadLS(){try{var raw=storageCurrentRaw();if(raw){var o=JSON.parse(raw);if(!o||!Array.isArray(o.tx)||!Array.isArray(o.projects))throw new Error('Invalid stored state');return migrate(o);}}catch(e){U.storageReadBlocked=true;}return null;}
 function seed(){
   var P=[
    {id:'p1',name:'บ้านคุณสมชาย 2 ชั้น',client:'คุณสมชาย ใจดี',contract:3200000,budget:2600000,contractNo:'001/2569',contractDate:addDays(-90),startDate:addDays(-80),endDate:addDays(150),retAmt:160000,retDue:addDays(120),retRecv:false},
@@ -4794,17 +4797,33 @@ function mergeThaSalaPr4Boq(){
   return true;
 }
 
+/* IndexedDB primary adapter. Legacy writes stay synchronous until explicit migration. */
+var primaryActive=false,primaryStore=null,primaryHead=null,primaryLegacyRaw='',primaryLegacyToken='',primaryAbort=null;
+function storageRun(iterator){function step(method,value){var next;try{next=iterator[method](value);}catch(e){throw e;}while(!next.done){if(next.value&&typeof next.value.then==='function')return Promise.resolve(next.value).then(function(v){return step('next',v);},function(e){return step('throw',e);});next=iterator.next(next.value);}return next.value;}return step('next');}
+function storageCurrentRaw(){return primaryActive?committedState:(localStorage.getItem(KEY)||'');}
+function primaryProgress(p){var el=document.getElementById('primaryStorageProgress');if(!el)return;var label=el.querySelector('[role="status"]');if(label)label.textContent=({images:'กำลังเก็บรูป',verify:'กำลังตรวจข้อมูล',commit:'กำลังบันทึกข้อมูล'}[p.phase]||'กำลังเตรียมข้อมูล')+' '+p.done+' / '+p.total;}
+function primaryBusy(on){U.primaryWriteBusy=on;var el=document.getElementById('primaryStorageProgress');if(!on){if(el)el.remove();primaryAbort=null;return;}primaryAbort=typeof AbortController==='function'?new AbortController():null;if(!el){el=document.createElement('div');el.id='primaryStorageProgress';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','กำลังจัดเก็บข้อมูล');el.style.cssText='position:fixed;inset:0;z-index:30000;background:rgba(10,30,50,.88);display:grid;place-content:center;padding:24px;color:white;text-align:center';el.innerHTML='<h3 style="color:white">กำลังจัดเก็บข้อมูล</h3><p role="status" aria-live="polite">กำลังเตรียมข้อมูล</p><p>รอให้ตรวจข้อมูลครบก่อนปิดหน้านี้</p><button type="button" data-primary-cancel style="min-height:48px;padding:12px">หยุดก่อนบันทึก</button>';document.body.appendChild(el);el.querySelector('button').focus();}}
+function primaryFailure(e){var code=String(e&&e.code||(e&&e.name!=='Error'&&e.name)||e&&e.message||'');U.storageWriteError=code==='CONFLICT'||code==='SOURCE_CHANGED'?'conflict':/quota/i.test(code)?'quota':'write';U.storageConflict=U.storageWriteError==='conflict';var text=code==='CANCELLED'?'ยกเลิกแล้ว · ยังไม่ได้เปลี่ยนข้อมูล':U.storageWriteError==='quota'?'พื้นที่เครื่องไม่พอ · ยังไม่ได้เปลี่ยนข้อมูล กรุณาเก็บไฟล์สำรองไว้':U.storageConflict?'ข้อมูลเปลี่ยนระหว่างบันทึก · หยุดเพื่อป้องกันการเขียนทับ กรุณาตรวจข้อมูลล่าสุด':'บันทึกไม่สำเร็จ · ข้อมูลชุดเดิมและไฟล์สำรองยังอยู่';U.primaryStorageError=text;toast(text);return false;}
+async function primaryLoad(){if(typeof AreaLedgerPrimaryStore==='undefined')throw Error('STORAGE_MODULE_UNAVAILABLE');primaryStore=AreaLedgerPrimaryStore.create();var loaded=await primaryStore.load();if(!loaded)return null;var legacy=localStorage.getItem(KEY)||'',token=await AreaLedgerPrimaryStore.hash(legacy);if(loaded.head.legacyToken&&loaded.head.legacyToken!==token)throw Error('LEGACY_CHANGED');primaryHead=loaded.head;primaryLegacyRaw=legacy;primaryLegacyToken=token;primaryActive=true;U.storageReadBlocked=false;return loaded.state;}
+async function primaryEnable(){if(primaryActive)return true;if(U.primaryWriteBusy)return false;primaryBusy(true);try{await mirrorQueue.catch(function(){});var raw=localStorage.getItem(KEY)||'',source=JSON.stringify(S);if(committedState&&raw!==committedState)throw Error('CONFLICT');primaryStore=primaryStore||AreaLedgerPrimaryStore.create();if(await primaryStore.load())throw Error('CONFLICT');var token=await AreaLedgerPrimaryStore.hash(raw);var saved=await primaryStore.save(JSON.parse(source),null,{legacyToken:token,signal:primaryAbort&&primaryAbort.signal,isCurrent:function(){return JSON.stringify(S)===source&&(localStorage.getItem(KEY)||'')===raw;},onProgress:primaryProgress});primaryActive=true;primaryHead=saved.head;primaryLegacyRaw=raw;primaryLegacyToken=token;committedState=source;U.storageReadBlocked=false;U.storageWriteError='';return true;}catch(e){return primaryFailure(e);}finally{primaryBusy(false);}}
+async function primaryPersist(opts){opts=opts||{};if(U.primaryWriteBusy){U.storageWriteError='busy';return false;}if(U.storageReadBlocked){U.storageWriteError='read';return false;}primaryBusy(true);var previous=committedState,stamp=S.updatedAt,revision=+S.dataRevision||0,json='';try{if(!opts.exact){if(!opts.metaOnly)S.dataRevision=revision+1;S.updatedAt=Math.max(Date.now(),(+S.updatedAt||0)+1);}json=JSON.stringify(S);var saved=await primaryStore.save(JSON.parse(json),primaryHead.id,{legacyToken:primaryLegacyToken,signal:primaryAbort&&primaryAbort.signal,isCurrent:function(){return JSON.stringify(S)===json&&(localStorage.getItem(KEY)||'')===primaryLegacyRaw;},onProgress:primaryProgress});primaryHead=saved.head;committedState=json;U.storageConflict=false;U.storageWriteError='';U.primaryStorageError='';if(!opts.skipCloud&&cloudSyncEnabled())cloudSyncSchedule(350);return true;}catch(e){if(JSON.stringify(S)===json&&previous)S=JSON.parse(previous);else{S.updatedAt=stamp;S.dataRevision=revision;}return primaryFailure(e);}finally{primaryBusy(false);}}
+async function primaryCacheExact(next,meta){var prev=S;S=migrate(next);if(!await primaryPersist({exact:true,skipCloud:true})){S=prev;return false;}if(meta)cloudSetMeta(Object.assign({hit:true},meta));return true;}
+document.addEventListener('click',function(e){if(!U.primaryWriteBusy)return;var cancel=e.target&&e.target.closest&&e.target.closest('[data-primary-cancel]');if(cancel&&primaryAbort)primaryAbort.abort();e.preventDefault();e.stopImmediatePropagation();},true);
+document.addEventListener('keydown',function(e){if(U.primaryWriteBusy){if(e.key==='Escape'&&primaryAbort)primaryAbort.abort();e.preventDefault();e.stopImmediatePropagation();}},true);
+window.addEventListener('beforeunload',function(e){if(U.primaryWriteBusy){e.preventDefault();e.returnValue='';}});
+
 var mirrorQueue=Promise.resolve(),committedState='';
 /* Reclaim only a byte-verified recovery copy; never rewrite the primary ledger. */
 async function storageCompactRecovery(force){
+  if(primaryActive)return false;
   try{
-    var current=localStorage.getItem(KEY)||'',backup=localStorage.getItem(BACKUP_KEY)||'';
+    var current=storageCurrentRaw()||'',backup=localStorage.getItem(BACKUP_KEY)||'';
     if((!force&&current.length<524288)||!backup||current!==committedState)return false;
     var parsed=JSON.parse(backup);
     if(!parsed||!Array.isArray(parsed.projects)||!Array.isArray(parsed.tx))return false;
     if(!await idbPut('state-backup',backup))return false;
     if(await idbRead('state-backup')!==backup)return false;
-    if(localStorage.getItem(KEY)!==current||committedState!==current||localStorage.getItem(BACKUP_KEY)!==backup)return false;
+    if(storageCurrentRaw()!==current||committedState!==current||localStorage.getItem(BACKUP_KEY)!==backup)return false;
     localStorage.removeItem(BACKUP_KEY);
     return true;
   }catch(_){return false;}
@@ -4820,23 +4839,24 @@ function storagePrepareSpace(){
   return mirrorQueue;
 }
 function storageSpaceHtml(){
-  var raw='',recovery='';try{raw=localStorage.getItem(KEY)||'';recovery=localStorage.getItem(BACKUP_KEY)||'';}catch(_){}
+  var raw='',recovery='';try{raw=storageCurrentRaw()||'';recovery=localStorage.getItem(BACKUP_KEY)||'';}catch(_){}
   var photos=(S.tx||[]).reduce(function(n,t){return n+String(t.photo||'').length;},0);
   function size(n){return (n*2/1048576).toFixed(2)+' MB';}
-  return '<section class="backup-section"><h4>พื้นที่ข้อมูลในเครื่อง</h4><p>ขนาดข้อความโดยประมาณ ไม่ใช่พื้นที่ว่างของ Safari</p><dl><dt>บัญชีหลัก (รวมรูป)</dt><dd>'+size(raw.length)+'</dd><dt>รูปใบเสร็จในบัญชีหลัก</dt><dd>'+size(photos)+'</dd><dt>สำเนากู้คืนซ้ำ</dt><dd>'+size(recovery.length)+'</dd></dl><p>คืนพื้นที่สำเนาซ้ำหลังตรวจสำเนาที่เก็บแยกสำเร็จ รายการและยอดบัญชีคงเดิม</p><button class="btn" data-act="storagePrepare"'+(U.storagePreparing?' disabled':'')+'>ตรวจและคืนพื้นที่สำเนาซ้ำ</button><p>หากรูปแนบใช้พื้นที่มาก ให้ดาวน์โหลดไฟล์สำรองพร้อมรูปก่อน แล้วใช้เมนูย้ายรูปไป Cloudflare ด้านล่าง</p></section>';
+  return '<section class="backup-section"><h4>พื้นที่ข้อมูลในเครื่อง</h4>'+(!primaryActive?'<button class="btn pri" data-act="primaryEnable">เปิดพื้นที่จัดเก็บสำหรับไฟล์ใหญ่</button>':'<p>กำลังใช้พื้นที่จัดเก็บ IndexedDB · รูปแยกจากบัญชี</p>')+'<p>ขนาดข้อความโดยประมาณ ไม่ใช่พื้นที่ว่างของ Safari</p><dl><dt>บัญชีหลัก (รวมรูป)</dt><dd>'+size(raw.length)+'</dd><dt>รูปใบเสร็จในบัญชีหลัก</dt><dd>'+size(photos)+'</dd><dt>สำเนากู้คืนซ้ำ</dt><dd>'+size(recovery.length)+'</dd></dl><p>คืนพื้นที่สำเนาซ้ำหลังตรวจสำเนาที่เก็บแยกสำเร็จ รายการและยอดบัญชีคงเดิม</p><button class="btn" data-act="storagePrepare"'+(U.storagePreparing?' disabled':'')+'>ตรวจและคืนพื้นที่สำเนาซ้ำ</button><p>หากรูปแนบใช้พื้นที่มาก ให้ดาวน์โหลดไฟล์สำรองพร้อมรูปก่อน แล้วใช้เมนูย้ายรูปไป Cloudflare ด้านล่าง</p></section>';
 }
 function storageCommitBaseline(best,ls){
   if(!best)return '';
   var rawCurrent='';
-  try{rawCurrent=localStorage.getItem(KEY)||'';}catch(_){}
+  try{rawCurrent=storageCurrentRaw()||'';}catch(_){}
   return (best===ls&&rawCurrent)?rawCurrent:JSON.stringify(best);
 }
 function persist(opts){
+  if(primaryActive)return primaryPersist(opts);
   opts=opts||{};U.storageWriteError='';
   if(U.storageReadBlocked&&!committedState){U.storageWriteError='read';toast('ยังอ่านข้อมูลเดิมไม่สำเร็จ กรุณาปิดแท็บอื่นแล้วเปิดใหม่ก่อนบันทึก');return false;}
   var prev='',json='',stamp=S.updatedAt,revStamp=+S.dataRevision||0,current='';
   try{
-    current=localStorage.getItem(KEY)||'';
+    current=storageCurrentRaw()||'';
     if(!opts.recovery&&committedState&&current!==committedState){
       U.storageConflict=true;U.storageWriteError='conflict';
       if(!opts.silentConflict)toast('พบข้อมูลใหม่จากอีกแท็บ · หยุดบันทึกเพื่อป้องกันข้อมูลถูกเขียนทับ กรุณาโหลดแอปใหม่');
@@ -4847,7 +4867,7 @@ function persist(opts){
     S.updatedAt=Math.max(Date.now(),(+S.updatedAt||0)+1);
     json=JSON.stringify(S);
     localStorage.setItem(KEY,json);
-    if(localStorage.getItem(KEY)!==json)throw new Error('Storage verification failed');
+    if(storageCurrentRaw()!==json)throw new Error('Storage verification failed');
   }catch(e){
     S.updatedAt=stamp;S.dataRevision=revStamp;
     if(prev){try{S=JSON.parse(prev);}catch(ignore){}}
@@ -5992,26 +6012,26 @@ function dashPids(){
   return S.ui.dashboardPids;
 }
 function dashboardPinStored(id){
-  try{var raw=localStorage.getItem(KEY),o=raw?JSON.parse(raw):null;return !!(o&&o.ui&&Array.isArray(o.ui.dashboardPids)&&o.ui.dashboardPids.indexOf(id)>=0);}catch(_){return false;}
+  try{var raw=storageCurrentRaw(),o=raw?JSON.parse(raw):null;return !!(o&&o.ui&&Array.isArray(o.ui.dashboardPids)&&o.ui.dashboardPids.indexOf(id)>=0);}catch(_){return false;}
 }
-function dashboardPinProject(id){
+function dashboardPinProject(id){return storageRun((function*(){
   if(!proj(id))return false;
   S.ui=S.ui||{};var pins=dashPids().slice();if(pins.indexOf(id)<0)pins.push(id);S.ui.dashboardPids=pins;
-  if(!persist({metaOnly:true,silentConflict:true})){
+  if(!(yield persist({metaOnly:true,silentConflict:true}))){
     if(!U.storageConflict)return false;
     try{
-      var raw=localStorage.getItem(KEY)||'',fresh=raw?migrate(JSON.parse(raw)):null;
+      var raw=storageCurrentRaw()||'',fresh=raw?migrate(JSON.parse(raw)):null;
       if(!fresh||!(fresh.projects||[]).some(function(p){return p.id===id;}))return false;
       fresh.ui=fresh.ui||{};var fp=Array.isArray(fresh.ui.dashboardPids)?fresh.ui.dashboardPids.filter(function(pid){return fresh.projects.some(function(p){return p.id===pid;});}):[];
       if(fp.indexOf(id)<0)fp.push(id);fresh.ui.dashboardPids=fp;
       S=fresh;committedState=raw;U.storageConflict=false;
-      if(!persist({metaOnly:true}))return false;
+      if(!(yield persist({metaOnly:true})))return false;
     }catch(_){return false;}
   }
   if(!dashboardPinStored(id))return false;
   U.homePid=id;try{localStorage.setItem('area-ledger-home-pid',id);}catch(_){}
   U.sheet=null;return true;
-}
+}).apply(this,arguments));}
 function dashTabs(){
   var pins=dashPids(),h='<div class="dash-tabs" role="group" aria-label="เลือกขอบเขตโครงการ"><button class="dash-tab all '+(U.homePid==='__all'?'on':'')+'" data-act="dashSwitch" data-id="__all" aria-pressed="'+(U.homePid==='__all'?'true':'false')+'"><span>รวมทุกโครงการ</span></button>';
   pins.forEach(function(id,i){
@@ -6653,11 +6673,11 @@ function aiGatewayValidatePayload(path,payload){
   if(image.length>3*1024*1024)throw new Error('AI gateway payload too large');
   return {image:image,lang:'tha+eng'};
 }
-function recordOcrDiagnostic(x){
+function recordOcrDiagnostic(x){return storageRun((function*(){
   S.ops=S.ops||{};var code=String(x.errorCode||'');if(!/^(?:PROVIDER_(?:HTTP_\d{3}|IMAGE_INVALID|AUTH_FAILED|REQUEST_INVALID|FAILED|TIMEOUT)|HTTP_\d{3}|TIMEOUT|OCR_ERROR|NETWORK_ERROR|IMAGE_INVALID|INVALID_IMAGE|RATE_LIMITED|PAYLOAD_TOO_LARGE)$/.test(code))code=x.ok?'':'OCR_ERROR';
   var meta=x.imageMeta||{};S.ops.ocrDiagnostic={at:Date.now(),base:String(x.base||''),ok:!!x.ok,status:+x.status||0,errorCode:code,durationMs:Math.max(0,+x.durationMs||0),requestId:String(x.requestId||'').slice(0,80),build:APP_BUILD.version,sha:String(APP_BUILD.sha||'').slice(0,40),imageMime:/^image\/(?:jpeg|png|webp)$/.test(meta.mime)?meta.mime:'',imageBytes:Math.max(0,Math.min(20000000,+meta.bytes||0)),imageWidth:Math.max(0,Math.min(20000,+meta.width||0)),imageHeight:Math.max(0,Math.min(20000,+meta.height||0))};
-  S.ops.ocrDiagnosticHistory=(Array.isArray(S.ops.ocrDiagnosticHistory)?S.ops.ocrDiagnosticHistory:[]).slice(-9).concat([S.ops.ocrDiagnostic]);try{persist({metaOnly:true});}catch(_){}
-}
+  S.ops.ocrDiagnosticHistory=(Array.isArray(S.ops.ocrDiagnosticHistory)?S.ops.ocrDiagnosticHistory:[]).slice(-9).concat([S.ops.ocrDiagnostic]);try{(yield persist({metaOnly:true}));}catch(_){}
+}).apply(this,arguments));}
 function aiGatewayValidateExpense(data){
   if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('AI gateway invalid response');
   var cats=['ค่าของ','ค่าแรง','ค่าประกัน/ค่างาน','ค่างานเอกสาร','ค่าเช่าอื่นๆ'],rows=Array.isArray(data.rows)?data.rows.slice(0,80):[],clean=[];
@@ -6698,8 +6718,8 @@ async function aiGatewayRequest(path,payload,opt){
     var rp=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Gateway-Version')||''):'',rr=res.headers&&res.headers.get?String(res.headers.get('X-AREA-Request-ID')||''):'',raw={};try{raw=await res.json();}catch(_){raw={};}
     if(!res.ok){var code=raw&&raw.error?String(raw.error):('HTTP_'+res.status),err=new Error(code);err.gatewayStatus=res.status;err.gatewayCode=code;throw err;}
     if(rp!=='1'||rr!==rid)throw new Error('AI gateway response identity mismatch');
-    var out=path==='v1/ocr/boq'?aiGatewayValidateBoq(raw):aiGatewayValidateExpense(raw);recordOcrDiagnostic({base:aiGatewayBase(),ok:true,status:status,durationMs:Date.now()-started,requestId:rid,imageMeta:opt.imageMeta});return out;
-  }catch(e){recordOcrDiagnostic({base:aiGatewayBase(),ok:false,status:status,errorCode:e&&e.name==='AbortError'?'TIMEOUT':String(e&&e.gatewayCode||e&&e.message||'OCR_ERROR').slice(0,80),durationMs:Date.now()-started,requestId:rid,imageMeta:opt.imageMeta});throw e;
+    var out=path==='v1/ocr/boq'?aiGatewayValidateBoq(raw):aiGatewayValidateExpense(raw);(await recordOcrDiagnostic({base:aiGatewayBase(),ok:true,status:status,durationMs:Date.now()-started,requestId:rid,imageMeta:opt.imageMeta}));return out;
+  }catch(e){(await recordOcrDiagnostic({base:aiGatewayBase(),ok:false,status:status,errorCode:e&&e.name==='AbortError'?'TIMEOUT':String(e&&e.gatewayCode||e&&e.message||'OCR_ERROR').slice(0,80),durationMs:Date.now()-started,requestId:rid,imageMeta:opt.imageMeta}));throw e;
   }finally{if(timer)clearTimeout(timer);}
 }
 function expenseOcrPartialDocument(text){
@@ -7852,7 +7872,7 @@ async function backupPortableJson(){
     row.photo=originalPhoto;
   }
   var disk='';
-  try{disk=localStorage.getItem(KEY)||'';}catch(_){throw new Error('BACKUP_STORAGE_UNAVAILABLE');}
+  try{disk=storageCurrentRaw()||'';}catch(_){throw new Error('BACKUP_STORAGE_UNAVAILABLE');}
   if(JSON.stringify(S)!==original||disk!==committedState)throw new Error('BACKUP_STATE_CHANGED');
   var e=backupEnvelope();
   e.state=state;
@@ -7890,19 +7910,19 @@ async function backupPortableAction(mode){
       if(!ok)backupPortableUi(true,'ยังไม่ได้บันทึกไฟล์สำรอง · กดดาวน์โหลดเพื่อลองใหม่','warning');
       if(!ok)return false;
       S.lastBackup=Date.now();S.lastBackupRevision=revision;
-      if(!persist({metaOnly:true})){backupPortableUi(true,'ได้ไฟล์สำรองแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ · เก็บไฟล์ที่ดาวน์โหลดไว้','warning');return false;}
+      if(!(await persist({metaOnly:true}))){backupPortableUi(true,'ได้ไฟล์สำรองแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ · เก็บไฟล์ที่ดาวน์โหลดไว้','warning');return false;}
       backupPortableUi(true,'บันทึกไฟล์สำรองพร้อมรูปใบเสร็จแล้ว · '+workspaceTime(S.lastBackup),'success');
       render();toast('บันทึกไฟล์สำรองพร้อมรูปหลักฐานครบแล้ว · เก็บไฟล์เพื่อกู้คืนหรือย้ายเครื่อง');
     }else{
       var box=document.getElementById('bkbox');
       if(!box)return false;
       box.value=payload;
-      doCopy('bkbox',function(){
+      doCopy('bkbox',function(){return storageRun((function*(){
         S.lastBackup=Date.now();S.lastBackupRevision=revision;
-        if(!persist({metaOnly:true})){backupPortableUi(true,'คัดลอกสำเนาแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ','warning');return;}
+        if(!(yield persist({metaOnly:true}))){backupPortableUi(true,'คัดลอกสำเนาแล้ว แต่บันทึกสถานะในเครื่องไม่สำเร็จ','warning');return;}
         backupPortableUi(true,'คัดลอกข้อมูลสำรองพร้อมรูปใบเสร็จแล้ว · '+workspaceTime(S.lastBackup),'success');
         render();toast('คัดลอกข้อมูลสำรองพร้อมรูปหลักฐานครบแล้ว');
-      });
+      }).apply(this,arguments));});
       if(U.portableBackupFeedback&&U.portableBackupFeedback.tone==='pending')backupPortableUi(true,'เตรียมข้อมูลสำรองแล้ว · หากคัดลอกไม่ได้ ให้เลือกข้อความแล้วคัดลอกเอง','ready');
     }
     return true;
@@ -8203,7 +8223,7 @@ function billingReconcile(pid){
   S.tx.forEach(function(t){if(t.billId&&(!pid||t.pid===pid)&&!(S.bills||[]).some(function(b){return b.id===t.billId;}))orphanTx++;});
   return {count:bills.length,open:open,paid:paid,overdue:overdue,unlinked:unlinked,mismatch:mismatch,missingReceipt:missingReceipt,orphanTx:orphanTx,issues:unlinked+mismatch+missingReceipt+orphanTx};
 }
-function safeRepairBilling(pid){
+function safeRepairBilling(pid){return storageRun((function*(){
   var repairSnapshot=JSON.parse(JSON.stringify(S)),before=billingReconcile(pid),created=0,updated=0;
   (S.bills||[]).filter(function(b){return !pid||b.pid===pid;}).forEach(function(b){
     var sm=billPaymentSummary(b),pending=sm.rows.filter(function(t){return !t.paid;});
@@ -8217,9 +8237,9 @@ function safeRepairBilling(pid){
       if(synthetic){syncBillReceivable(b);updated++;}
     }
   });
-  if(created||updated){if(!persist()){S=repairSnapshot;toast('ซ่อมความเชื่อมโยงไม่สำเร็จ กรุณาลองใหม่');return null;}}
+  if(created||updated){if(!(yield persist())){S=repairSnapshot;toast('ซ่อมความเชื่อมโยงไม่สำเร็จ กรุณาลองใหม่');return null;}}
   return {before:before,after:billingReconcile(pid),created:created,updated:updated};
-}
+}).apply(this,arguments));}
 function billStatus(bill){var sm=billPaymentSummary(bill);if(sm.total>0&&sm.remain<=0)return {cls:'in',text:'รับครบแล้ว'};if(sm.paid>0)return {cls:'pend',text:'รับบางส่วน '+fmt(sm.paid)+' · เหลือ '+fmt(sm.remain)};if(bill.dueDate){var d=dd(today(),bill.dueDate);if(d<0)return {cls:'out',text:'เลยกำหนด '+(-d)+' วัน'};if(d===0)return {cls:'out',text:'ครบกำหนดวันนี้'};if(d<=7)return {cls:'pend',text:'ครบกำหนดใน '+d+' วัน'};}return {cls:'pend',text:'ค้างรับ '+fmt(sm.remain)};}
 function paymentReceiptFromBill(bill,amount,payDate){var c=docCalc(bill),sm=billPaymentSummary(bill),amt=Math.min(sm.remain,Math.max(0,+amount||0)),ratio=c.total>0?amt/c.total:0,desc='รับชำระตามใบวางบิล '+(bill.no||'')+(amt<sm.remain?' (บางส่วน)':'');return {id:uid(),no:nextDocNo('receipt'),date:payDate||today(),customer:bill.customer||'',customerAddress:bill.customerAddress||'',customerTaxId:bill.customerTaxId||'',customerBranch:bill.customerBranch||'',customerVatRegistered:!!bill.customerVatRegistered,seller:bill.seller||'',project:bill.project||'',pid:bill.pid||'',items:[{description:desc,qty:1,unit:'งวด',unitPrice:Math.round(c.after*ratio*10000)/10000,discount:0}],description:desc,qty:1,unit:'งวด',unitPrice:Math.round(c.after*ratio*10000)/10000,discount:0,whtRate:+bill.whtRate||0,dueDate:'',note:'รับชำระจาก '+(bill.no||''),sourceId:bill.id,sourceKind:'bill',paymentAmount:amt};}
 function docTitle(kind){return kind==='bill'?['ใบวางบิล','BILLING NOTE']:kind==='receipt'?['ใบเสร็จรับเงิน','RECEIPT']:['ใบเสนอราคา','QUOTATION'];}
@@ -8272,14 +8292,15 @@ function expenseBatchSaveMessage(){
   return messages[U.storageWriteError]||messages.write;
 }
 async function storageArchiveRecoveryCopy(isCurrent){
+  if(primaryActive)return false;
   await mirrorQueue.catch(function(){});
-  var backup=localStorage.getItem(BACKUP_KEY)||'',current=localStorage.getItem(KEY)||'';
+  var backup=localStorage.getItem(BACKUP_KEY)||'',current=storageCurrentRaw()||'';
   if(current!==committedState){U.storageWriteError='conflict';return false;}
   if(!backup||!isCurrent())return false;
   try{var parsed=JSON.parse(backup);if(!parsed||!Array.isArray(parsed.tx)||!Array.isArray(parsed.projects))return false;}catch(_){return false;}
   var saved=await idbPut('state-backup',backup),verified=saved&&await idbRead('state-backup');
   if(!isCurrent())throw Error('ร่างเปลี่ยนระหว่างเตรียมพื้นที่ กรุณาตรวจแล้วบันทึกใหม่');
-  if(localStorage.getItem(KEY)!==current){U.storageWriteError='conflict';return false;}
+  if(storageCurrentRaw()!==current){U.storageWriteError='conflict';return false;}
   if(verified!==backup||localStorage.getItem(BACKUP_KEY)!==backup)return false;
   localStorage.removeItem(BACKUP_KEY);return true;
 }
@@ -8289,7 +8310,7 @@ async function expenseBatchRecoverQuota(batch){
   U.expenseBatchBusy=true;U.expenseBatchSaveError='พื้นที่ในเครื่องเต็ม · กำลังตรวจพื้นที่สำรองก่อนบันทึกอีกครั้ง';render();
   try{
     if(await storageArchiveRecoveryCopy(unchanged)){
-      U.expenseBatchBusy=false;expenseBatchSave(true);
+      U.expenseBatchBusy=false;(await expenseBatchSave(true));
       if(!U.expenseBatch.length||U.storageWriteError!=='quota')return;
       U.expenseBatchBusy=true;
     }
@@ -8306,11 +8327,11 @@ async function expenseBatchRecoverQuota(batch){
       ready[fp]={ledgerKey:cloudKey,id:id,key:up.data.key,mime:up.data.mime||'image/jpeg',photo:x.photo};U.expenseBatchEvidence=ready;
     }
     if(!cloudSyncEnabled()||cloudLedgerKey(false)!==cloudKey||!unchanged())throw Error('ร่างเปลี่ยนระหว่างเก็บรูป กรุณาตรวจแล้วบันทึกใหม่');
-    U.expenseBatchBusy=false;U.expenseBatchSaveError='';expenseBatchSave(true);
+    U.expenseBatchBusy=false;U.expenseBatchSaveError='';(await expenseBatchSave(true));
   }catch(e){U.expenseBatchBusy=false;U.expenseBatchSaveError=String(e.message||'เตรียมพื้นที่ไม่สำเร็จ')+' · ยังไม่บันทึกรายการ ร่างและรูปเดิมยังอยู่';expenseBatchDraftWrite();render();toast(U.expenseBatchSaveError);}
 }
 
-function expenseBatchSave(quotaRetried){
+function expenseBatchSave(quotaRetried){return storageRun((function*(){
     if(U.expenseBatchBusy||U.saveLock)return;U.expenseBatchSaveError='';
     var batch=(U.expenseBatch||[]).filter(function(x){return x.include;}),old=S.tx.slice(),oldAudit=(S.auditLog||[]).slice();
     if(expenseBatchReconciliation(U.expenseBatch||[]).some(function(g){return g.mismatch&&!g.reviewed&&g.rows.some(function(x){return x.include;});})){toast('ยอดรวม OCR ไม่ตรงกับยอดในรูป · ตรวจยอดและยืนยันก่อนบันทึก');return;}
@@ -8321,13 +8342,13 @@ function expenseBatchSave(quotaRetried){
     if(dupPhoto){toast('พบรูปใบเสร็จซ้ำในชุดนำเข้าหรือในบัญชีเดิม');return;}
     var storedEvidence=Object.create(null);
     batch.forEach(function(x){var gid=String(x.sourceGroupId||x.id),fp=expensePhotoFingerprint(x.photo||''),evidence=(U.expenseBatchEvidence||{})[fp],remote=!!(evidence&&cloudSyncEnabled()&&evidence.ledgerKey===cloudLedgerKey(false)&&evidence.photo===x.photo&&evidence.key),keepPhoto=!storedEvidence[gid],tx={id:remote&&keepPhoto?evidence.id:uid(),date:x.date||today(),type:'out',amount:+x.amount,boqId:x.boqId||'',cat:x.cat||'ค่าของ',sub:(x.sub||'').trim(),pay:x.paymentStatus==='paid'?x.pay:'',pid:x.pid,partner:(x.partner||'').trim(),vat:false,wht:false,paid:x.paymentStatus==='paid',due:'',photo:remote?'':(x.photo||''),photoRef:remote&&keepPhoto?evidence.key:'',photoMime:remote&&keepPhoto?evidence.mime:'',photoHash:expensePhotoFingerprint(x.photo||''),sourceImageHash:fp,sourceGroupId:gid,sourceRowIndex:+x.sourceRowIndex||1,sourceRowCount:+x.sourceRowCount||1,note:(+x.sourceRowCount>1?'นำเข้าจากตารางในรูป · แถว '+(+x.sourceRowIndex||1)+'/'+(+x.sourceRowCount||1):'นำเข้าจากรูปใบเสร็จ')+' · ตรวจโดยผู้ใช้',ocrConfidence:+x.ocrConfidence||0,ocrSource:x.ocrSource||'',ocrReviewed:true,ocrPaymentReviewed:true,createdAt:Date.now()};storedEvidence[gid]=1;if(!keepPhoto){tx.photo='';tx.photoHash='';}S.tx.push(tx);accountingAudit('tx-create','tx',tx.id,null,tx,'ตรวจและบันทึกค่าใช้จ่ายจาก OCR');});
-    if(!persist()){
+    if(!(yield persist())){
       S.tx=old;S.auditLog=oldAudit;U.expenseBatchSaveError=expenseBatchSaveMessage();expenseBatchDraftWrite();
       if(!quotaRetried&&U.storageWriteError==='quota'){expenseBatchRecoverQuota(batch);return;}
       render();toast(U.expenseBatchSaveError);return;
     }
     var n=batch.length;U.expenseBatchEvidence=null;U.expenseBatchSaveError='';U.expenseBatch=[];U.sheet=null;U.draft=null;expenseBatchDraftClear();go('list');toast('บันทึกค่าใช้จ่าย '+n+' รายการพร้อมกันแล้ว');
-  }
+  }).apply(this,arguments));}
 function expenseBatchTotals(items){
   var all=Array.isArray(items)?items:[],selected=all.filter(function(x){return !!(x&&x.include);});
   function amount(x){var n=+((x&&x.amount)||0);return isFinite(n)&&n>0?n:0;}
@@ -8876,13 +8897,13 @@ async function profileSetIdentity(kind,file){
   var b=S.business||(S.business={}),dataKey=kind==='avatar'?'profileAvatar':'profileCover',refKey=kind==='avatar'?'profileAvatarRef':'profileCoverRef',oldData=b[dataKey]||'',oldRef=b[refKey]||'',media=null,newRef='';
   try{media=await profileIdentityResize(file,kind);if(cloudSyncEnabled()){var st=await cloudFileStatus();if(st.ok&&st.data&&st.data.configured){var up=await cloudFileUpload(media.data,'profile-'+kind,'company','profile-'+kind+'.jpg');if(up.ok&&up.data&&up.data.key)newRef=up.data.key;}}
     b[dataKey]=media.data;b[refKey]=newRef||oldRef;
-    if(!persist()){b[dataKey]=oldData;b[refKey]=oldRef;if(newRef&&newRef!==oldRef)cloudFileDelete(newRef);U.profileIdentityBusy='';render();toast('บันทึกรูปโปรไฟล์ไม่สำเร็จ');return false;}
+    if(!(await persist())){b[dataKey]=oldData;b[refKey]=oldRef;if(newRef&&newRef!==oldRef)cloudFileDelete(newRef);U.profileIdentityBusy='';render();toast('บันทึกรูปโปรไฟล์ไม่สำเร็จ');return false;}
     if(newRef&&oldRef&&oldRef!==newRef)cloudFileDelete(oldRef);U.profileIdentityBusy='';render();toast(kind==='avatar'?'อัปเดตรูปโปรไฟล์แล้ว':'อัปเดตรูปปกแล้ว');return true;
   }catch(_){U.profileIdentityBusy='';render();toast('อ่านรูปไม่ได้ กรุณาใช้ JPG/PNG/HEIC');return false;}
 }
-function profileRemoveIdentity(kind){
-  var b=S.business||(S.business={}),dataKey=kind==='avatar'?'profileAvatar':'profileCover',refKey=kind==='avatar'?'profileAvatarRef':'profileCoverRef',oldData=b[dataKey]||'',oldRef=b[refKey]||'';b[dataKey]='';b[refKey]='';if(!persist()){b[dataKey]=oldData;b[refKey]=oldRef;toast('ลบรูปไม่สำเร็จ');return false;}if(oldRef)cloudFileDelete(oldRef);render();toast(kind==='avatar'?'กลับไปใช้โลโก้เดิมแล้ว':'ลบรูปปกแล้ว');return true;
-}
+function profileRemoveIdentity(kind){return storageRun((function*(){
+  var b=S.business||(S.business={}),dataKey=kind==='avatar'?'profileAvatar':'profileCover',refKey=kind==='avatar'?'profileAvatarRef':'profileCoverRef',oldData=b[dataKey]||'',oldRef=b[refKey]||'';b[dataKey]='';b[refKey]='';if(!(yield persist())){b[dataKey]=oldData;b[refKey]=oldRef;toast('ลบรูปไม่สำเร็จ');return false;}if(oldRef)cloudFileDelete(oldRef);render();toast(kind==='avatar'?'กลับไปใช้โลโก้เดิมแล้ว':'ลบรูปปกแล้ว');return true;
+}).apply(this,arguments));}
 function profileCompleteness(){
   var b=S.business||{},posts=S.profilePosts||[],pinned=posts.some(function(x){return x.pinned;}),checks=[!!(S.brand||b.legalName),!!b.tagline,!!b.bio,!!b.phone,!!b.address,!!(b.website||b.facebook||b.instagram||b.tiktok||b.lineId),!!b.profileAvatar,!!b.profileCover,posts.length>0,pinned];var done=checks.filter(Boolean).length;return {done:done,total:checks.length,pct:Math.round(done/checks.length*100)};
 }
@@ -8900,7 +8921,7 @@ async function profileEnsurePublicAssets(){
   if(b.profileCover&&!b.profileCoverRef){var c=await put(b.profileCover,'profile-cover','company','public-profile-cover.jpg');if(c){b.profileCoverRef=c.key;moved++;changed=true;}else failed++;}
   var rows=(S.profilePosts||[]).filter(function(p){return !!p.publicVisible;});
   for(var i=0;i<rows.length;i++){var p=rows[i],photos=(p.photos||[]).slice(0,4);for(var j=0;j<photos.length;j++){var ph=photos[j];if(ph.ref||!ph.data)continue;var u=await put(ph.data,'profile-public',p.id,'portfolio-'+p.id+'-'+(j+1)+'.jpg');if(u){ph.ref=u.key;ph.mime=u.mime||ph.mime||'image/jpeg';moved++;changed=true;}else failed++;}}
-  if(changed&&!persist())return {ok:false,error:'LOCAL_PERSIST_FAILED',moved:moved,failed:failed};return {ok:true,moved:moved,failed:failed};
+  if(changed&&!(await persist()))return {ok:false,error:'LOCAL_PERSIST_FAILED',moved:moved,failed:failed};return {ok:true,moved:moved,failed:failed};
 }
 function profileBuildPublicSnapshot(){
   var b=S.business||{},active=S.projects.filter(function(p){return ['delivered','closed'].indexOf(p.status||'active')<0;}).length,done=S.projects.filter(function(p){return ['delivered','closed'].indexOf(p.status||'active')>=0;}).length;
@@ -8911,10 +8932,10 @@ async function profilePublishPublic(){
   if(U.profilePublicBusy)return false;U.profilePublicBusy=true;render();toast('กำลังเตรียม Portfolio ลูกค้า…');var media=await profileEnsurePublicAssets();if(!media.ok){U.profilePublicBusy=false;render();toast('Cloudflare R2 ยังไม่พร้อมสำหรับ Portfolio สาธารณะ');return false;}
   var r=await cloudGateway('POST','/v1/profile/publish',{snapshot:profileBuildPublicSnapshot()});U.profilePublicBusy=false;
   if(!r.ok||!r.data||!r.data.publicId){render();toast('เผยแพร่ Portfolio ไม่สำเร็จ');return false;}
-  S.business=S.business||{};S.business.publicProfileId=r.data.publicId;S.business.publicProfileEnabled=true;S.business.publicProfilePublishedAt=r.data.updatedAt||new Date().toISOString();persist();render();toast('เผยแพร่ Portfolio ลูกค้าแล้ว'+(media.failed?' · มีรูปข้าม '+media.failed+' รูป':''));return true;
+  S.business=S.business||{};S.business.publicProfileId=r.data.publicId;S.business.publicProfileEnabled=true;S.business.publicProfilePublishedAt=r.data.updatedAt||new Date().toISOString();(await persist());render();toast('เผยแพร่ Portfolio ลูกค้าแล้ว'+(media.failed?' · มีรูปข้าม '+media.failed+' รูป':''));return true;
 }
 async function profileRevokePublic(){
-  if(U.profilePublicBusy)return false;U.profilePublicBusy=true;render();var r=await cloudGateway('POST','/v1/profile/revoke',{});U.profilePublicBusy=false;if(!r.ok){render();toast('ปิด Portfolio ไม่สำเร็จ');return false;}S.business.publicProfileEnabled=false;persist();U.confirm=null;render();toast('ปิดลิงก์ Portfolio สาธารณะแล้ว');return true;
+  if(U.profilePublicBusy)return false;U.profilePublicBusy=true;render();var r=await cloudGateway('POST','/v1/profile/revoke',{});U.profilePublicBusy=false;if(!r.ok){render();toast('ปิด Portfolio ไม่สำเร็จ');return false;}S.business.publicProfileEnabled=false;(await persist());U.confirm=null;render();toast('ปิดลิงก์ Portfolio สาธารณะแล้ว');return true;
 }
 function profileOpenPublic(){var u=profilePublicUrl(S.business&&S.business.publicProfileId);if(!u||!(S.business&&S.business.publicProfileEnabled)){toast('ยังไม่ได้เผยแพร่ Portfolio');return false;}window.open(u,'_blank','noopener');return true;}
 function profileSharePublic(){var u=profilePublicUrl(S.business&&S.business.publicProfileId),name=S.brand||(S.business&&S.business.legalName)||'AREA MAIBAB';if(!u||!(S.business&&S.business.publicProfileEnabled)){toast('เผยแพร่ Portfolio ก่อนจึงจะแชร์ลิงก์ได้');return false;}if(navigator.share){navigator.share({title:name+' · Portfolio',text:'ดูผลงานและอัปเดตหน้างานของ '+name,url:u}).catch(function(){});return true;}if(navigator.clipboard){navigator.clipboard.writeText(u).then(function(){toast('คัดลอกลิงก์ Portfolio แล้ว');});return true;}return false;}
@@ -8940,7 +8961,7 @@ async function profileSavePost(){
   try{photos=await profileOffloadDraftPhotos(id,photos);}catch(_){}
   var post={id:id,type:['site','portfolio','delivery','announce'].indexOf(d.type)>=0?d.type:'site',pid:proj(d.pid)?d.pid:'',date:validIsoDate(d.date)?d.date:today(),text:text0.slice(0,2000),photos:photos,pinned:!!(created&&created.pinned),publicVisible:!!d.publicVisible,createdAt:createdAt,updatedAt:Date.now()},newRefs=photos.map(function(x){return x.ref||'';}).filter(Boolean);
   var ix=(S.profilePosts||[]).findIndex(function(x){return x.id===id;});if(ix>=0)S.profilePosts[ix]=post;else S.profilePosts.push(post);
-  if(!persist()){S=snap;U.profilePostSaving=false;newRefs.filter(function(k){return oldRefs.indexOf(k)<0;}).forEach(function(k){cloudFileDelete(k);});render();toast('บันทึกโพสต์ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return false;}
+  if(!(await persist())){S=snap;U.profilePostSaving=false;newRefs.filter(function(k){return oldRefs.indexOf(k)<0;}).forEach(function(k){cloudFileDelete(k);});render();toast('บันทึกโพสต์ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return false;}
   oldRefs.filter(function(k){return newRefs.indexOf(k)<0;}).forEach(function(k){cloudFileDelete(k);});
   U.profilePostSaving=false;U.profilePostDraft=null;U.profilePostImages=[];U.sheet=null;render();toast(created?'แก้ไขโพสต์แล้ว':'โพสต์อัปเดตหน้างานแล้ว');return true;
 }
@@ -9169,10 +9190,12 @@ function accountingActionAllowed(action){
   var ownerActions={apPayOpen:1,apPaySave:1,markPaid:1,editTx:1,delTx:1,saveBillPayment:1,manualJournalSave:1,bankReconcile:1,periodClose:1,periodReopen:1,contractorPackageNew:1,contractorPackageSave:1};
   if(ownerActions[action]&&S.role!=='owner'){toast('เฉพาะเจ้าของบัญชี');return false;}return true;
 }
-function directAction(el){
+function directAction(el){return storageRun((function*(){
+  if(el&&el.getAttribute('data-act')==='primaryEnable'){if((yield primaryEnable())){render();toast('เปิดพื้นที่จัดเก็บใหม่แล้ว · ข้อมูลเดิมยังเก็บไว้');}return true;}
   if(!el)return false;
-  if(typeof businessRegisterAction==='function'&&businessRegisterAction(el))return true;
+  if(typeof businessRegisterAction==='function'&&(yield businessRegisterAction(el)))return true;
   var a=el.getAttribute('data-act'),v=el.getAttribute('data-v'),id=el.getAttribute('data-id');
+  if(a==='primaryEnable'){if((yield primaryEnable())){render();toast('เปิดพื้นที่จัดเก็บใหม่แล้ว · ข้อมูลเดิมยังเก็บไว้');}return true;}
   if(!accountingActionAllowed(a))return true;
   if(a==='pilotGuide'||a==='ocrReviewQueue'){if(a==='ocrReviewQueue'&&S.role!=='owner')return true;U.sheet={kind:a};render();return true;}
   if(a==='expenseVoiceUndo'){expenseVoiceUndo();return true;}
@@ -9215,18 +9238,18 @@ function directAction(el){
   if(a==='listLoadMore'){U.listRenderLimit=Math.max(120,+U.listRenderLimit||120)+120;render();return true;}
   if(a==='listClearFilters'){U.filter={type:'all',pid:'',cat:'',status:'all',sub:'',q:'',auditCat:'',paidOnly:false};U.listFilterOpen=false;U.listRenderLimit=120;saveNavSession();render();return true;}
   if(a==='guaranteeQuickClear'){U.guaranteeQuery='';var gi=document.getElementById('guaranteeQuickSearch');if(gi)gi.value='';guaranteeApplyQuickSearch('');if(gi)gi.focus();return true;}
-  if(a==='guaranteeDismiss'){S.ui=S.ui||{};S.ui.guaranteeDismissed=S.ui.guaranteeDismissed||{};S.ui.guaranteeDismissed[id]=today();persist({metaOnly:true});render();toast('ปิดแจ้งเตือนรายการนี้สำหรับวันนี้แล้ว');return true;}
+  if(a==='guaranteeDismiss'){S.ui=S.ui||{};S.ui.guaranteeDismissed=S.ui.guaranteeDismissed||{};S.ui.guaranteeDismissed[id]=today();(yield persist({metaOnly:true}));render();toast('ปิดแจ้งเตือนรายการนี้สำหรับวันนี้แล้ว');return true;}
   if(a==='boqSectionToggle'){if(U.boqQuery)return true;var sk=el.getAttribute('data-boq-key')||'',sp=el.getAttribute('data-pid')||U.boqProjectPid||'';if(!sk||!sp)return true;boqCapturePosition();U.boqCollapsed=U.boqCollapsed&&typeof U.boqCollapsed==='object'?U.boqCollapsed:{};var ck=boqSectionKey(sp,sk);if(U.boqCollapsed[ck])delete U.boqCollapsed[ck];else U.boqCollapsed[ck]=true;saveNavSession();render();return true;}
   if(a==='go'||a==='openList'||a==='menuGo'){U.appMenu=false;if(a==='openList'){navList();return true;}if(a==='menuGo'&&v==='boq'){U.boqProjectPid='';U.boqQuery='';U.boqAnchorId='';U.boqScroll=0;}if((v||'home')==='home'){navHome();return true;}go(v||'home');return true;} if(a==='navBack'){navBack();return true;} if(a==='navHome'){navHome();return true;}
   if(a==='dashSwitch'){U.homePid=id||'__all';try{localStorage.setItem('area-ledger-home-pid',U.homePid);}catch(err){}U.sheet=null;render();return true;}
   if(a==='dashManager'){U.sheet={kind:'dashManager'};render();return true;}
-  if(a==='dashAdd'){if(dashboardPinProject(id)){render();toast('เพิ่มแดชบอร์ดและเปิดโครงการแล้ว');}else toast('เพิ่มแดชบอร์ดไม่สำเร็จ · ข้อมูลเดิมยังอยู่');return true;}
+  if(a==='dashAdd'){if((yield dashboardPinProject(id))){render();toast('เพิ่มแดชบอร์ดและเปิดโครงการแล้ว');}else toast('เพิ่มแดชบอร์ดไม่สำเร็จ · ข้อมูลเดิมยังอยู่');return true;}
   if(a==='dashClose'){
     var cp=proj(id);if(!cp)return true;var cs=cp.status||'active';
     if(cs!=='delivered'&&cs!=='closed'){toast('ปิดแดชบอร์ดได้เมื่อโครงการส่งมอบแล้วหรือปิดโครงการ');return true;}
     S.ui.dashboardPids=dashPids().filter(function(x){return x!==id;});
     if(U.homePid===id){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
-    if(!persist())return true;render();toast('ปิดแดชบอร์ดโครงการแล้ว ข้อมูลยังอยู่ครบ');return true;
+    if(!(yield persist()))return true;render();toast('ปิดแดชบอร์ดโครงการแล้ว ข้อมูลยังอยู่ครบ');return true;
   }
   if(a==='ownerOps'){U.sheet={kind:'ownerOps'};render();return true;}
   if(a==='integrityOpen'){U.sheet={kind:'integrityStatus'};render();return true;}
@@ -9246,16 +9269,16 @@ function directAction(el){
   if(a==='accountingControl2'){U.sheet={kind:'accountingControl2'};render();return true;}
   if(a==='accountingReport'){U.sheet={kind:'accountingReport'};render();return true;}
   if(a==='accountingExport'){exportAccountingXlsx(U.month||today().slice(0,7));return true;}
-  if(a==='manualJournalSave'){var lines=[];for(var mji=0;mji<4;mji++){var acEl=document.getElementById('mjAcc'+mji),drEl=document.getElementById('mjDr'+mji),crEl=document.getElementById('mjCr'+mji),dr=+(drEl&&drEl.value)||0,cr=+(crEl&&crEl.value)||0;if(dr||cr)lines.push({account:(acEl&&acEl.value)||'',debit:dr,credit:cr});}var mj={id:uid(),date:(document.getElementById('mjDate')||{}).value||today(),pid:(document.getElementById('mjPid')||{}).value||'',note:(document.getElementById('mjNote')||{}).value||'',lines:lines,createdAt:Date.now()},merr=manualJournalError(mj);if(merr){toast(merr);return true;}var auditBeforeJournal=(S.auditLog||[]).slice();S.manualJournals.push(mj);accountingAudit('manual-journal','journal',mj.id,null,mj,mj.note);if(!persist()){S.manualJournals=S.manualJournals.filter(function(x){return x.id!==mj.id;});S.auditLog=auditBeforeJournal;return true;}U.sheet={kind:'accountingTB'};render();toast('บันทึก Journal แล้ว');return true;}
-  if(a==='bankReconcile'){var per=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7);if(!/^\d{4}-\d{2}$/.test(per)){toast('งวด Bank reconciliation ไม่ถูกต้อง');return true;}if((S.accountingPeriods||[]).some(function(x){return x.period===per&&x.status==='closed';})){toast('งวด '+per+' ปิดบัญชีแล้ว · เปิดงวดก่อนกระทบยอดใหม่');return true;}var stmt=+(document.getElementById('bankStatement')||{}).value;if(!isFinite(stmt)){toast('กรอกยอด Statement');return true;}var book=bankBookBalance(per),sig=[per,Math.round(stmt*100),Math.round(book*100),bankActivitySummary(per).count].join('|'),prevRec=latestBankReconciliation(per);if(prevRec&&prevRec.signature===sig){toast('Bank reconciliation นี้ถูกบันทึกแล้ว');return true;}var rec={id:uid(),period:per,statementBalance:stmt,bookBalance:book,difference:stmt-book,date:today(),createdAt:Date.now(),signature:sig,bookRevision:(+S.dataRevision||0)+1,bookTxCount:bankActivitySummary(per).count,bookFingerprint:bankBookFingerprint(per)};var auditBeforeBank=(S.auditLog||[]).slice();S.bankReconciliations=S.bankReconciliations||[];S.bankReconciliations.push(rec);accountingAudit('bank-reconcile','bank',rec.id,null,rec,'');if(!persist()){S.bankReconciliations=S.bankReconciliations.filter(function(x){return x.id!==rec.id;});S.auditLog=auditBeforeBank;return true;}U.month=per;render();toast(Math.abs(rec.difference)<.01?'กระทบยอดธนาคารตรงกัน':'บันทึกแล้ว · ผลต่าง '+fmt(rec.difference));return true;}
-  if(a==='periodClose'){var per2=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7);if((S.accountingPeriods||[]).some(function(x){return x.period===per2&&x.status==='closed';})){toast('งวดนี้ปิดแล้ว');return true;}var me2=monthEndCloseChecklist(per2),gate2=me2.gate,hp=gate2.health,tb2=gate2.trialBalance,tr2=gate2.tax,br2=(S.bankReconciliations||[]).filter(function(x){return x.period===per2;}).slice(-1)[0];if(!me2.ok){U.sheet={kind:'accountingMonthEnd'};render();toast('ยังปิดงวดไม่ได้ '+me2.items.filter(function(x){return !x.ok;}).length+' จุด · เปิด Checklist แล้ว');return true;}var fs2=financialStatements(per2,''),pr={id:uid(),period:per2,status:'closed',closedAt:Date.now(),snapshot:{trialDebit:tb2.debit,trialCredit:tb2.credit,bankBook:bankBookBalance(per2),ar:arAging('').total,ap:apAging('').total,profit:fs2.profitLoss.profit,txCount:(S.tx||[]).filter(function(x){return periodKey(x.date)<=per2;}).length,journalCount:accountingJournalEntries('').filter(function(x){return x.date==='0000-00-00'||periodKey(x.date)<=per2;}).length,auditCount:(S.auditLog||[]).length}};var auditBeforeClose=(S.auditLog||[]).slice();S.accountingPeriods.push(pr);accountingAudit('period-close','period',pr.id,null,pr,'ปิดงวดพร้อม snapshot');if(!persist()){S.accountingPeriods=S.accountingPeriods.filter(function(x){return x.id!==pr.id;});S.auditLog=auditBeforeClose;return true;}U.month=per2;render();toast('ปิดงวด '+per2+' แล้ว');return true;}
-  if(a==='periodReopen'){var per3=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7),pr3=(S.accountingPeriods||[]).find(function(x){return x.period===per3&&x.status==='closed';});if(!pr3)return true;var auditBeforeReopen=(S.auditLog||[]).slice(),old3=JSON.parse(JSON.stringify(pr3));pr3.status='open';pr3.reopenedAt=Date.now();accountingAudit('period-reopen','period',pr3.id,old3,pr3,'เปิดงวดเพื่อแก้ไข');if(!persist()){Object.keys(pr3).forEach(function(k){delete pr3[k];});Object.assign(pr3,old3);S.auditLog=auditBeforeReopen;return true;}U.month=per3;render();toast('เปิดงวด '+per3+' แล้ว · การแก้ไขจะถูกบันทึกใน Audit Trail');return true;}
+  if(a==='manualJournalSave'){var lines=[];for(var mji=0;mji<4;mji++){var acEl=document.getElementById('mjAcc'+mji),drEl=document.getElementById('mjDr'+mji),crEl=document.getElementById('mjCr'+mji),dr=+(drEl&&drEl.value)||0,cr=+(crEl&&crEl.value)||0;if(dr||cr)lines.push({account:(acEl&&acEl.value)||'',debit:dr,credit:cr});}var mj={id:uid(),date:(document.getElementById('mjDate')||{}).value||today(),pid:(document.getElementById('mjPid')||{}).value||'',note:(document.getElementById('mjNote')||{}).value||'',lines:lines,createdAt:Date.now()},merr=manualJournalError(mj);if(merr){toast(merr);return true;}var auditBeforeJournal=(S.auditLog||[]).slice();S.manualJournals.push(mj);accountingAudit('manual-journal','journal',mj.id,null,mj,mj.note);if(!(yield persist())){S.manualJournals=S.manualJournals.filter(function(x){return x.id!==mj.id;});S.auditLog=auditBeforeJournal;return true;}U.sheet={kind:'accountingTB'};render();toast('บันทึก Journal แล้ว');return true;}
+  if(a==='bankReconcile'){var per=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7);if(!/^\d{4}-\d{2}$/.test(per)){toast('งวด Bank reconciliation ไม่ถูกต้อง');return true;}if((S.accountingPeriods||[]).some(function(x){return x.period===per&&x.status==='closed';})){toast('งวด '+per+' ปิดบัญชีแล้ว · เปิดงวดก่อนกระทบยอดใหม่');return true;}var stmt=+(document.getElementById('bankStatement')||{}).value;if(!isFinite(stmt)){toast('กรอกยอด Statement');return true;}var book=bankBookBalance(per),sig=[per,Math.round(stmt*100),Math.round(book*100),bankActivitySummary(per).count].join('|'),prevRec=latestBankReconciliation(per);if(prevRec&&prevRec.signature===sig){toast('Bank reconciliation นี้ถูกบันทึกแล้ว');return true;}var rec={id:uid(),period:per,statementBalance:stmt,bookBalance:book,difference:stmt-book,date:today(),createdAt:Date.now(),signature:sig,bookRevision:(+S.dataRevision||0)+1,bookTxCount:bankActivitySummary(per).count,bookFingerprint:bankBookFingerprint(per)};var auditBeforeBank=(S.auditLog||[]).slice();S.bankReconciliations=S.bankReconciliations||[];S.bankReconciliations.push(rec);accountingAudit('bank-reconcile','bank',rec.id,null,rec,'');if(!(yield persist())){S.bankReconciliations=S.bankReconciliations.filter(function(x){return x.id!==rec.id;});S.auditLog=auditBeforeBank;return true;}U.month=per;render();toast(Math.abs(rec.difference)<.01?'กระทบยอดธนาคารตรงกัน':'บันทึกแล้ว · ผลต่าง '+fmt(rec.difference));return true;}
+  if(a==='periodClose'){var per2=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7);if((S.accountingPeriods||[]).some(function(x){return x.period===per2&&x.status==='closed';})){toast('งวดนี้ปิดแล้ว');return true;}var me2=monthEndCloseChecklist(per2),gate2=me2.gate,hp=gate2.health,tb2=gate2.trialBalance,tr2=gate2.tax,br2=(S.bankReconciliations||[]).filter(function(x){return x.period===per2;}).slice(-1)[0];if(!me2.ok){U.sheet={kind:'accountingMonthEnd'};render();toast('ยังปิดงวดไม่ได้ '+me2.items.filter(function(x){return !x.ok;}).length+' จุด · เปิด Checklist แล้ว');return true;}var fs2=financialStatements(per2,''),pr={id:uid(),period:per2,status:'closed',closedAt:Date.now(),snapshot:{trialDebit:tb2.debit,trialCredit:tb2.credit,bankBook:bankBookBalance(per2),ar:arAging('').total,ap:apAging('').total,profit:fs2.profitLoss.profit,txCount:(S.tx||[]).filter(function(x){return periodKey(x.date)<=per2;}).length,journalCount:accountingJournalEntries('').filter(function(x){return x.date==='0000-00-00'||periodKey(x.date)<=per2;}).length,auditCount:(S.auditLog||[]).length}};var auditBeforeClose=(S.auditLog||[]).slice();S.accountingPeriods.push(pr);accountingAudit('period-close','period',pr.id,null,pr,'ปิดงวดพร้อม snapshot');if(!(yield persist())){S.accountingPeriods=S.accountingPeriods.filter(function(x){return x.id!==pr.id;});S.auditLog=auditBeforeClose;return true;}U.month=per2;render();toast('ปิดงวด '+per2+' แล้ว');return true;}
+  if(a==='periodReopen'){var per3=(document.getElementById('acctPeriod')||{}).value||U.month||today().slice(0,7),pr3=(S.accountingPeriods||[]).find(function(x){return x.period===per3&&x.status==='closed';});if(!pr3)return true;var auditBeforeReopen=(S.auditLog||[]).slice(),old3=JSON.parse(JSON.stringify(pr3));pr3.status='open';pr3.reopenedAt=Date.now();accountingAudit('period-reopen','period',pr3.id,old3,pr3,'เปิดงวดเพื่อแก้ไข');if(!(yield persist())){Object.keys(pr3).forEach(function(k){delete pr3[k];});Object.assign(pr3,old3);S.auditLog=auditBeforeReopen;return true;}U.month=per3;render();toast('เปิดงวด '+per3+' แล้ว · การแก้ไขจะถูกบันทึกใน Audit Trail');return true;}
   if(a==='appMenu'){U.appMenu=true;render();return true;}
   if(a==='appMenuClose'){U.appMenu=false;render();var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});return true;}
   if(a==='newTx'){U.appMenu=false;U.from=U.view==='project'?'project':U.view;U.draft=newDraft('out',quickEntryProject()||null);go('add');focusAmt();return true;}
   if(a==='profileEdit'){U.appMenu=false;U.sheet={kind:'profileEdit'};render();return true;}
   if(a==='profileShareCompany'){profileShareCompany();return true;}
-  if(a==='profileIdentityRemove'){profileRemoveIdentity(v);return true;}
+  if(a==='profileIdentityRemove'){(yield profileRemoveIdentity(v));return true;}
   if(a==='profileLoanOpen'){
     if(S.role!=='owner')return true;
     U.confirm=null;U.sheet={kind:'loanList',loanKind:v==='receivable'?'receivable':'payable'};render();return true;
@@ -9291,7 +9314,7 @@ function directAction(el){
     row.kind=kind;row.party=party;row.principal=principal;row.date=date;row.dueDate=due;row.interestRate=rate;row.note=note;
     if(!existing)S.loans.push(row);
     accountingAudit(existing?'loan-edit':'loan-create','loan',row.id,before,row,'ทะเบียนเงินกู้/ลูกหนี้');
-    if(!persist()){S=snap;toast('บันทึกเงินกู้ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return true;}
+    if(!(yield persist())){S=snap;toast('บันทึกเงินกู้ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return true;}
     U.sheet={kind:'loanDetail',id:row.id};render();toast('บันทึก '+loanKindLabel(kind)+' แล้ว');return true;
   }
   if(a==='profileLoanPayment'){
@@ -9312,7 +9335,7 @@ function directAction(el){
     var snap=JSON.parse(JSON.stringify(S)),pay={id:uid(),date:dt,amount:amt,method:method,note:note,createdAt:Date.now()};
     lp.payments=Array.isArray(lp.payments)?lp.payments:[];lp.payments.push(pay);
     accountingAudit('loan-payment','loan',lp.id,null,pay,loanActionLabel(lp.kind));
-    if(!persist()){S=snap;toast('บันทึกการชำระไม่สำเร็จ');return true;}
+    if(!(yield persist())){S=snap;toast('บันทึกการชำระไม่สำเร็จ');return true;}
     U.sheet={kind:'loanDetail',id:lp.id};render();toast('บันทึก '+loanActionLabel(lp.kind)+' แล้ว');return true;
   }
   if(a==='profileLoanPaymentDelete'){
@@ -9326,7 +9349,7 @@ function directAction(el){
     var snap=JSON.parse(JSON.stringify(S));
     lp.payments=(lp.payments||[]).filter(function(p){return p.id!==payId;});
     accountingAudit('loan-payment-delete','loan',lp.id,pay,null,'ลบรายการชำระคืน');
-    if(!persist()){S=snap;return true;}
+    if(!(yield persist())){S=snap;return true;}
     U.confirm=null;U.sheet={kind:'loanDetail',id:lp.id};render();toast('ลบรายการชำระแล้ว');return true;
   }
   if(a==='profileLoanDelete'){
@@ -9338,7 +9361,7 @@ function directAction(el){
     var snap=JSON.parse(JSON.stringify(S));
     S.loans=(S.loans||[]).filter(function(x){return x.id!==id;});
     accountingAudit('loan-delete','loan',id,lx,null,'ลบทะเบียนเงินกู้/ลูกหนี้');
-    if(!persist()){S=snap;return true;}
+    if(!(yield persist())){S=snap;return true;}
     U.confirm=null;U.sheet={kind:'loanList',loanKind:lx.kind};render();toast('ลบรายการแล้ว');return true;
   }
   if(a==='profilePostNew'){profileOpenPost('',id&&proj(id)?id:'');return true;}
@@ -9349,50 +9372,50 @@ function directAction(el){
   if(a==='profilePublicOpen'){profileOpenPublic();return true;}
   if(a==='profilePublicShare'){profileSharePublic();return true;}
   if(a==='profilePublicRevoke'){if(U.confirm!=='profilePublicRevoke'){U.confirm='profilePublicRevoke';toast('แตะ “ปิดสาธารณะ” อีกครั้งเพื่อยืนยัน');render();return true;}profileRevokePublic();return true;}
-  if(a==='profilePostPin'){var ppn=(S.profilePosts||[]).find(function(x){return x.id===id;});if(!ppn)return true;var oldPin=!!ppn.pinned;ppn.pinned=!oldPin;ppn.updatedAt=Date.now();if(!persist()){ppn.pinned=oldPin;toast('เปลี่ยนสถานะปักหมุดไม่สำเร็จ');return true;}render();toast(ppn.pinned?'ปักหมุดผลงานแล้ว':'ยกเลิกปักหมุดแล้ว');return true;}
+  if(a==='profilePostPin'){var ppn=(S.profilePosts||[]).find(function(x){return x.id===id;});if(!ppn)return true;var oldPin=!!ppn.pinned;ppn.pinned=!oldPin;ppn.updatedAt=Date.now();if(!(yield persist())){ppn.pinned=oldPin;toast('เปลี่ยนสถานะปักหมุดไม่สำเร็จ');return true;}render();toast(ppn.pinned?'ปักหมุดผลงานแล้ว':'ยกเลิกปักหมุดแล้ว');return true;}
   if(a==='profileOpenLink'){var pu=profileSafeUrl(el.getAttribute('data-url')||'');if(pu)window.open(pu,'_blank','noopener');return true;}
   if(a==='profilePhotoRemove'){profilePostDraftCapture();var px=Math.max(0,+v||0);U.profilePostImages=(U.profilePostImages||[]).filter(function(_,i){return i!==px;});render();return true;}
   if(a==='profilePhotoOpen'){var po=(S.profilePosts||[]).find(function(x){return x.id===id;}),pi=Math.max(0,+v||0),ph=po&&po.photos&&po.photos[pi];if(!ph)return true;if(ph.ref){cloudFileOpen(ph.ref,ph.mime||'image/jpeg').then(function(ok){if(ok&&U.sheet){U.sheet.title='รูปหน้างาน';render();}else if(!ok)toast('เปิดรูปจาก R2 ไม่สำเร็จ');});}else if(ph.data||ph.thumb){U.sheet={kind:'cloudPhoto',url:ph.data||ph.thumb,title:'รูปหน้างาน'};render();}return true;}
   if(a==='profilePostShare'){var ps=(S.profilePosts||[]).find(function(x){return x.id===id;});if(!ps)return true;var cap=profilePostCaption(ps);if(navigator.share){navigator.share({title:S.brand||'AREA MAIBAB',text:cap}).catch(function(){});}else if(navigator.clipboard){navigator.clipboard.writeText(cap).then(function(){toast('คัดลอกข้อความโพสต์แล้ว');},function(){toast('คัดลอกไม่ได้');});}else toast('อุปกรณ์นี้ยังไม่รองรับ Share');return true;}
-  if(a==='profilePostDelete'){var pdx=(S.profilePosts||[]).find(function(x){return x.id===id;});if(!pdx)return true;if(U.confirm!=='profilePost'+id){U.confirm='profilePost'+id;render();toast('แตะ “ยืนยันลบ” อีกครั้ง');return true;}var refs=(pdx.photos||[]).map(function(x){return x.ref;}).filter(Boolean),snapPp=JSON.parse(JSON.stringify(S));S.profilePosts=(S.profilePosts||[]).filter(function(x){return x.id!==id;});if(!persist()){S=snapPp;return true;}U.confirm=null;render();refs.forEach(function(k){cloudFileDelete(k);});toast('ลบโพสต์แล้ว');return true;}
+  if(a==='profilePostDelete'){var pdx=(S.profilePosts||[]).find(function(x){return x.id===id;});if(!pdx)return true;if(U.confirm!=='profilePost'+id){U.confirm='profilePost'+id;render();toast('แตะ “ยืนยันลบ” อีกครั้ง');return true;}var refs=(pdx.photos||[]).map(function(x){return x.ref;}).filter(Boolean),snapPp=JSON.parse(JSON.stringify(S));S.profilePosts=(S.profilePosts||[]).filter(function(x){return x.id!==id;});if(!(yield persist())){S=snapPp;return true;}U.confirm=null;render();refs.forEach(function(k){cloudFileDelete(k);});toast('ลบโพสต์แล้ว');return true;}
   if(a==='profilePostSave'){profileSavePost();return true;}
-  if(a==='profileSaveCompany'){var sb=JSON.parse(JSON.stringify(S.business||{})),oldBrand=S.brand;S.business=S.business||{};S.brand=String((document.getElementById('profileBrand')||{}).value||'').trim()||'AREA MAIBAB';S.business.legalName=String((document.getElementById('profileLegal')||{}).value||'').trim();S.business.tagline=String((document.getElementById('profileTagline')||{}).value||'').trim().slice(0,180);S.business.bio=String((document.getElementById('profileBio')||{}).value||'').trim().slice(0,1200);S.business.phone=String((document.getElementById('profilePhone')||{}).value||'').trim().slice(0,80);S.business.email=String((document.getElementById('profileEmail')||{}).value||'').trim().slice(0,160);S.business.address=String((document.getElementById('profileAddress')||{}).value||'').trim().slice(0,600);S.business.lineId=String((document.getElementById('profileLine')||{}).value||'').trim().slice(0,160);S.business.website=String((document.getElementById('profileWebsite')||{}).value||'').trim().slice(0,300);S.business.facebook=String((document.getElementById('profileFacebook')||{}).value||'').trim().slice(0,300);S.business.instagram=String((document.getElementById('profileInstagram')||{}).value||'').trim().slice(0,300);S.business.tiktok=String((document.getElementById('profileTikTok')||{}).value||'').trim().slice(0,300);if(!persist()){S.business=sb;S.brand=oldBrand;return true;}U.sheet=null;render();toast('อัปเดตโปรไฟล์บริษัทแล้ว');return true;}
+  if(a==='profileSaveCompany'){var sb=JSON.parse(JSON.stringify(S.business||{})),oldBrand=S.brand;S.business=S.business||{};S.brand=String((document.getElementById('profileBrand')||{}).value||'').trim()||'AREA MAIBAB';S.business.legalName=String((document.getElementById('profileLegal')||{}).value||'').trim();S.business.tagline=String((document.getElementById('profileTagline')||{}).value||'').trim().slice(0,180);S.business.bio=String((document.getElementById('profileBio')||{}).value||'').trim().slice(0,1200);S.business.phone=String((document.getElementById('profilePhone')||{}).value||'').trim().slice(0,80);S.business.email=String((document.getElementById('profileEmail')||{}).value||'').trim().slice(0,160);S.business.address=String((document.getElementById('profileAddress')||{}).value||'').trim().slice(0,600);S.business.lineId=String((document.getElementById('profileLine')||{}).value||'').trim().slice(0,160);S.business.website=String((document.getElementById('profileWebsite')||{}).value||'').trim().slice(0,300);S.business.facebook=String((document.getElementById('profileFacebook')||{}).value||'').trim().slice(0,300);S.business.instagram=String((document.getElementById('profileInstagram')||{}).value||'').trim().slice(0,300);S.business.tiktok=String((document.getElementById('profileTikTok')||{}).value||'').trim().slice(0,300);if(!(yield persist())){S.business=sb;S.brand=oldBrand;return true;}U.sheet=null;render();toast('อัปเดตโปรไฟล์บริษัทแล้ว');return true;}
   if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};render();return true;}
   if(a==='systemAdvanced'){U.appMenu=false;U.sheet={kind:'systemAdvanced'};render();return true;}
   if(a==='productionStableCheck'){var ps=productionStableReadiness();toast(ps.ok?'Production Stable Gate: PASS':'Production Stable Gate: CHECK '+ps.issues.length+' จุด');return true;}
   if(a==='businessStableOpen'){U.sheet={kind:'businessStable'};render();return true;}
   if(a==='fieldAcceptToggle'){
-    var k=el.getAttribute('data-v')||'';if(['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'].indexOf(k)<0)return true;S.ops=S.ops||{};var previous=S.ops.fieldAcceptance,evidence=fieldAcceptanceEvidence(),f=evidence.sameBuild&&evidence.sameRelease?Object.assign({},previous):{},turningOn=!evidence.checks[k];if(turningOn){var dev=fieldAcceptanceDevice();if(!dev.ok){toast('ต้องยืนยันข้อนี้จาก iPhone Safari จริง');return true;}if(!/^[a-f0-9]{40}$/i.test(APP_BUILD.sha||'')||['staging','production'].indexOf(APP_BUILD.environment)<0){toast('ต้องใช้รุ่นที่ deploy และระบุ commit แล้ว');return true;}f.device='iphone-safari';f.deviceVerified=true;}f.checkAt=Object.assign({},f.checkAt||{});f[k]=turningOn;f.checkAt[k]=turningOn?Date.now():0;f.at=Date.now();f.release=APP_RELEASE;f.build=Object.assign({},APP_BUILD);S.ops.fieldAcceptance=f;if(!persist({metaOnly:true}))S.ops.fieldAcceptance=previous;U.sheet={kind:'businessStable'};render();return true;
+    var k=el.getAttribute('data-v')||'';if(['refresh','offlineOnline','receiptR2','ocr','editRoundTrip','networkSwitch'].indexOf(k)<0)return true;S.ops=S.ops||{};var previous=S.ops.fieldAcceptance,evidence=fieldAcceptanceEvidence(),f=evidence.sameBuild&&evidence.sameRelease?Object.assign({},previous):{},turningOn=!evidence.checks[k];if(turningOn){var dev=fieldAcceptanceDevice();if(!dev.ok){toast('ต้องยืนยันข้อนี้จาก iPhone Safari จริง');return true;}if(!/^[a-f0-9]{40}$/i.test(APP_BUILD.sha||'')||['staging','production'].indexOf(APP_BUILD.environment)<0){toast('ต้องใช้รุ่นที่ deploy และระบุ commit แล้ว');return true;}f.device='iphone-safari';f.deviceVerified=true;}f.checkAt=Object.assign({},f.checkAt||{});f[k]=turningOn;f.checkAt[k]=turningOn?Date.now():0;f.at=Date.now();f.release=APP_RELEASE;f.build=Object.assign({},APP_BUILD);S.ops.fieldAcceptance=f;if(!(yield persist({metaOnly:true})))S.ops.fieldAcceptance=previous;U.sheet={kind:'businessStable'};render();return true;
   }
   if(a==='accountingFreezeStamp'){
-    var bline=accountingBaselineCertificate(today().slice(0,7));if(!bline.ok){toast('Accounting Baseline ยังมี '+bline.issues.length+' blocker');return true;}S.ops=S.ops||{};S.ops.accountingFreeze={at:Date.now(),release:APP_RELEASE,policy:ACCOUNTING_POLICY_VERSION,period:bline.period};persist({metaOnly:true});U.sheet={kind:'businessStable'};render();toast('Accounting Freeze '+ACCOUNTING_POLICY_VERSION+' ยืนยันแล้ว');return true;
+    var bline=accountingBaselineCertificate(today().slice(0,7));if(!bline.ok){toast('Accounting Baseline ยังมี '+bline.issues.length+' blocker');return true;}S.ops=S.ops||{};S.ops.accountingFreeze={at:Date.now(),release:APP_RELEASE,policy:ACCOUNTING_POLICY_VERSION,period:bline.period};(yield persist({metaOnly:true}));U.sheet={kind:'businessStable'};render();toast('Accounting Freeze '+ACCOUNTING_POLICY_VERSION+' ยืนยันแล้ว');return true;
   }
   if(a==='finalAcceptanceRun'){
     toast('กำลังรัน Final Check…');
-    Promise.all([cloudFullAcceptance(),disasterRecoverySelfCheck()]).then(function(v){
+    Promise.all([cloudFullAcceptance(),disasterRecoverySelfCheck()]).then(function(v){return storageRun((function*(){
       S.ops=S.ops||{};S.ops.disasterRecovery=v[1];S.ops.businessStable={at:Date.now(),release:APP_RELEASE,cloud:!!(v[0]&&v[0].ok),recovery:!!(v[1]&&v[1].ok)};
-      try{persist({metaOnly:true});}catch(_){}
+      try{(yield persist({metaOnly:true}));}catch(_){}
       U.sheet={kind:'businessStable'};render();var final=finalAcceptanceSnapshot();toast(final.ok?'Stable 1.0 FINAL: PASS':'Final Gate: CHECK '+final.issues.length+' จุด · ยืนยันเฉพาะงานจริงที่เหลือ');
-    }).catch(function(){U.sheet={kind:'businessStable'};render();toast('Final Check ยังไม่ผ่าน · ตรวจ Cloudflare/Recovery');});
+    }).apply(this,arguments));}).catch(function(){U.sheet={kind:'businessStable'};render();toast('Final Check ยังไม่ผ่าน · ตรวจ Cloudflare/Recovery');});
     return true;
   }
   if(a==='businessStableRun'){
     toast('กำลังรัน Acceptance 1–10…');
-    Promise.all([cloudFullAcceptance(),disasterRecoverySelfCheck()]).then(function(v){
+    Promise.all([cloudFullAcceptance(),disasterRecoverySelfCheck()]).then(function(v){return storageRun((function*(){
       S.ops=S.ops||{};S.ops.disasterRecovery=v[1];S.ops.businessStable={at:Date.now(),release:APP_RELEASE,cloud:!!(v[0]&&v[0].ok),recovery:!!(v[1]&&v[1].ok)};
-      try{persist({metaOnly:true});}catch(_){}
+      try{(yield persist({metaOnly:true}));}catch(_){}
       U.sheet={kind:'businessStable'};render();var z=businessStableReadiness();var s1=stable1Readiness();toast(s1.ok?'Business Stable 1.0: PASS':'v800 Acceptance: CHECK '+s1.issues.length+' จุด');
-    }).catch(function(){U.sheet={kind:'businessStable'};render();toast('Acceptance 1–10 ยังไม่ผ่าน · ตรวจ Cloudflare/Recovery');});
+    }).apply(this,arguments));}).catch(function(){U.sheet={kind:'businessStable'};render();toast('Acceptance 1–10 ยังไม่ผ่าน · ตรวจ Cloudflare/Recovery');});
     return true;
   }
   if(a==='expenseAiConsentRun'){
     var efiles=(U.expensePendingFiles||[]).slice();if(!efiles.length){U.sheet=null;render();toast('กรุณาเลือกรูปใหม่');return true;}
     S.ai=S.ai||{};var etarget=aiGatewayProductionBase();S.ai.mode='gateway';S.ai.endpoint=etarget;aiGatewayRevokeConsent();U.expenseAiConsentStatus='กำลังตรวจ Production AI Vision…';render();toast('กำลังตรวจ AI Vision…');
-    aiGatewayReadiness().then(function(x){
+    aiGatewayReadiness().then(function(x){return storageRun((function*(){
       if(!x.ok||!x.base||aiGatewayNormalizeBase(x.base)!==aiGatewayNormalizeBase(etarget)){aiGatewayRevokeConsent();U.expenseAiConsentStatus='AI Vision ยังไม่พร้อม · คุณยังเลือก OCR ในเครื่องได้';U.sheet={kind:'expenseAiConsent'};render();toast('AI Vision Gateway ยังไม่พร้อม');return;}
-      S.ai.endpoint=x.base;S.ai.remoteOcrConsentBase=x.base;S.ai.remoteOcrConsent=true;if(!persist({metaOnly:true})){aiGatewayRevokeConsent();U.expenseAiConsentStatus='บันทึกการอนุญาตไม่สำเร็จ';render();return;}
+      S.ai.endpoint=x.base;S.ai.remoteOcrConsentBase=x.base;S.ai.remoteOcrConsent=true;if(!(yield persist({metaOnly:true}))){aiGatewayRevokeConsent();U.expenseAiConsentStatus='บันทึกการอนุญาตไม่สำเร็จ';render();return;}
       U.expensePendingFiles=[];U.expenseAiConsentStatus='';U.sheet=null;render();expenseBatchScan(efiles);
-    }).catch(function(){aiGatewayRevokeConsent();U.expenseAiConsentStatus='เชื่อม AI Vision ไม่สำเร็จ · รูปยังอยู่ เลือกลองใหม่หรือ OCR ในเครื่อง';U.sheet={kind:'expenseAiConsent'};render();toast('เชื่อม AI Vision ไม่สำเร็จ');});
+    }).apply(this,arguments));}).catch(function(){aiGatewayRevokeConsent();U.expenseAiConsentStatus='เชื่อม AI Vision ไม่สำเร็จ · รูปยังอยู่ เลือกลองใหม่หรือ OCR ในเครื่อง';U.sheet={kind:'expenseAiConsent'};render();toast('เชื่อม AI Vision ไม่สำเร็จ');});
     return true;
   }
   if(a==='expenseAiLocalRun'){var lfiles=(U.expensePendingFiles||[]).slice();U.expensePendingFiles=[];U.expenseAiConsentStatus='';U.expenseLocalOnce=true;U.sheet=null;render();if(lfiles.length)expenseBatchScan(lfiles);return true;}
@@ -9407,14 +9430,14 @@ function directAction(el){
   if(a==='boqAiConsentRun'){
     var apid=id||(U.sheet&&U.sheet.pid)||'';if(!U.boqImageQueue.length){U.sheet={kind:'boqImportFile',pid:apid};render();toast('กรุณาเพิ่มรูปก่อน');return true;}
     S.ai=S.ai||{};var target=aiGatewayProductionBase();S.ai.mode='gateway';S.ai.endpoint=target;aiGatewayRevokeConsent();boqImportSetStatus('กำลังตรวจ AI Vision Production Gateway…');toast('กำลังตรวจ AI Vision…');
-    aiGatewayReadiness().then(function(x){
+    aiGatewayReadiness().then(function(x){return storageRun((function*(){
       if(!x.ok||!x.base||aiGatewayNormalizeBase(x.base)!==aiGatewayNormalizeBase(target)){aiGatewayRevokeConsent();U.sheet={kind:'boqImportFile',pid:apid};render();boqImportSetStatus('AI Vision ยังไม่พร้อม · ใช้ OCR ในเครื่องได้');toast('AI Vision Gateway ยังไม่พร้อม');return;}
-      S.ai.endpoint=x.base;S.ai.remoteOcrConsentBase=x.base;S.ai.remoteOcrConsent=true;if(!persist()){aiGatewayRevokeConsent();U.sheet={kind:'boqImportFile',pid:apid};render();return;}
+      S.ai.endpoint=x.base;S.ai.remoteOcrConsentBase=x.base;S.ai.remoteOcrConsent=true;if(!(yield persist())){aiGatewayRevokeConsent();U.sheet={kind:'boqImportFile',pid:apid};render();return;}
       U.sheet={kind:'boqImportFile',pid:apid};render();boqImportSetStatus('AI Vision พร้อม · เริ่มอ่าน BOQ…');boqImportImages(U.boqImageQueue.slice(),apid);
-    }).catch(function(){aiGatewayRevokeConsent();U.sheet={kind:'boqImportFile',pid:apid};render();boqImportSetStatus('AI Vision เชื่อมต่อไม่สำเร็จ · รูปที่เลือกยังคงอยู่');toast('เชื่อม AI Vision ไม่สำเร็จ');});
+    }).apply(this,arguments));}).catch(function(){aiGatewayRevokeConsent();U.sheet={kind:'boqImportFile',pid:apid};render();boqImportSetStatus('AI Vision เชื่อมต่อไม่สำเร็จ · รูปที่เลือกยังคงอยู่');toast('เชื่อม AI Vision ไม่สำเร็จ');});
     return true;
   } if(a==='healthCheck'){var hh=stateHealth(S);toast(hh.ok?'ข้อมูลปกติ · '+hh.projects+' โครงการ · '+hh.tx+' รายการ · '+hh.boq+' BOQ':'พบจุดต้องตรวจ '+hh.issues.length+' รายการ');if(!hh.ok){U.sheet={kind:'health',health:hh};render();}return true;}
-  if(a==='healthRepair'){var rr=repairStateSafe();if(!rr.ok){toast('ซ่อมไม่สำเร็จ ข้อมูลเดิมยังอยู่');return true;}var rh=stateHealth(S);toast(rr.fixed?'ซ่อม reference แล้ว '+rr.fixed+' จุด':'ไม่พบ reference ที่ซ่อมอัตโนมัติได้');U.sheet={kind:'health',health:rh};render();return true;}
+  if(a==='healthRepair'){var rr=(yield repairStateSafe());if(!rr.ok){toast('ซ่อมไม่สำเร็จ ข้อมูลเดิมยังอยู่');return true;}var rh=stateHealth(S);toast(rr.fixed?'ซ่อม reference แล้ว '+rr.fixed+' จุด':'ไม่พบ reference ที่ซ่อมอัตโนมัติได้');U.sheet={kind:'health',health:rh};render();return true;}
   if(a==='drawerDocList'){U.appMenu=false;U.docProjectPid='';U.docListKind=el.getAttribute('data-kind')||'quote';go('doclist');return true;}
   if(a==='openProj'){U.pid=id;go('project',{pid:id});return true;}
   if(a==='boqOpenProject'){var bp=id||U.pid||'';if(!bp||!proj(bp)){toast('ไม่พบโครงการ BOQ');return true;}var changed=U.boqProjectPid!==bp;U.boqProjectPid=bp;U.boqQuery='';if(changed){U.boqAnchorId='';U.boqScroll=0;}U.pid=bp;U.sheet=null;if(U.view==='boq'){saveNavSession();render();}else go('boq',{pid:bp,boqProjectPid:bp,boqQuery:'',boqAnchorId:U.boqAnchorId||'',boqScroll:U.boqScroll||0});return true;}
@@ -9426,7 +9449,7 @@ function directAction(el){
   if(a==='docBillFilter'){U.docBillFilter=el.getAttribute('data-v')||'all';U.docQuery='';saveNavSession();render();return true;}
   if(a==='docQuickClear'){U.docQuery='';var dq=document.getElementById('docQuickSearch');if(dq)dq.value='';docListApplySearch('');if(dq)dq.focus();return true;}
   return false;
-}
+}).apply(this,arguments));}
 /* Use one click path for touch, mouse and keyboard. Pointer release also fires
    after scrolling and can trigger navigation before the synthetic click. */
 
@@ -9438,11 +9461,11 @@ document.addEventListener('keydown',function(e){
   }
 });
 /* ---------- เหตุการณ์ ---------- */
-document.addEventListener('click',function(e){
+document.addEventListener('click',function(e){return storageRun((function*(){
   var el=e.target&&e.target.closest?e.target.closest('[data-act]'):null;if(!el)return;
   if(el.disabled||el.getAttribute('aria-disabled')==='true')return;
   if(runtimeActionDuplicate(el)){e.preventDefault();if(e.stopImmediatePropagation)e.stopImmediatePropagation();return;}
-  if(directAction(el)){e.preventDefault();return;}
+  if((yield directAction(el))){e.preventDefault();return;}
   var a=el.dataset.act,id=el.dataset.id,v=el.dataset.v;
   if(a==='scrim'){if(e.target!==el)return;U.sheet=null;render();return;}
   if(a==='confirmLeaveAdd'){var fn=U.sheet&&U.sheet.target;U.sheet=null;U.draft=null;if(typeof fn==='function')fn();else navHome();return;}
@@ -9454,7 +9477,7 @@ document.addEventListener('click',function(e){
   }
   if(a==='dashManager'){U.sheet={kind:'dashManager'};render();return;}
   if(a==='dashAdd'){
-    if(dashboardPinProject(id)){render();toast('เพิ่มแดชบอร์ดและเปิดโครงการแล้ว');}else toast('เพิ่มแดชบอร์ดไม่สำเร็จ · ข้อมูลเดิมยังอยู่');return;
+    if((yield dashboardPinProject(id))){render();toast('เพิ่มแดชบอร์ดและเปิดโครงการแล้ว');}else toast('เพิ่มแดชบอร์ดไม่สำเร็จ · ข้อมูลเดิมยังอยู่');return;
   }
   if(a==='dashClose'){
     var cp=proj(id);if(!cp)return;
@@ -9462,7 +9485,7 @@ document.addEventListener('click',function(e){
     if(cs!=='delivered'&&cs!=='closed'){toast('ปิดแดชบอร์ดได้เมื่อโครงการส่งมอบแล้วหรือปิดโครงการ');return;}
     S.ui.dashboardPids=dashPids().filter(function(x){return x!==id;});
     if(U.homePid===id){U.homePid='__all';try{localStorage.setItem('area-ledger-home-pid','__all');}catch(err){}}
-    if(!persist())return;render();toast('ปิดแดชบอร์ดโครงการแล้ว ข้อมูลยังอยู่ครบ');return;
+    if(!(yield persist()))return;render();toast('ปิดแดชบอร์ดโครงการแล้ว ข้อมูลยังอยู่ครบ');return;
   }
   if(a==='appMenu'){U.appMenu=true;render();return;}
   if(a==='appMenuClose'){U.appMenu=false;render();var menuButton=document.querySelector('.app-menu-btn');if(menuButton)menuButton.focus({preventScroll:true});return;}
@@ -9499,7 +9522,7 @@ document.addEventListener('click',function(e){
     if(repeat){toast('มีงานเหมาช่างรายการนี้แล้ว กรุณาตรวจสอบเพื่อไม่ให้ลงต้นทุนซ้ำ');return;}
     var txC={id:uid(),pid:id,type:'out',date:dateC,amount:amtC,cat:'ค่าแรง',sub:scope,partner:cname,paid:false,pay:'',due:'',payments:[],vat:false,wht:false,contractorPackage:true,contractorDuePolicy:'project-completion',note:'ค่าเหมาช่าง · ชำระเมื่อจบโครงการ · เงินเบิกจะบันทึกเป็นรายการชำระเจ้าหนี้',createdAt:Date.now()};
     var auditBeforeC=(S.auditLog||[]).slice();S.tx.push(txC);accountingAudit('contractor-package','tx',txC.id,null,txC,'บันทึกค่าเหมาช่างค้างจ่าย');
-    if(!persist()){S.tx=S.tx.filter(function(t){return t.id!==txC.id;});S.auditLog=auditBeforeC;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}
+    if(!(yield persist())){S.tx=S.tx.filter(function(t){return t.id!==txC.id;});S.auditLog=auditBeforeC;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}
     U.sheet=null;render();toast('บันทึกค่าเหมาช่างค้างจ่าย '+fmt(amtC)+' แล้ว');
   }
   else if(a==='setType'){U.draft.type=v;U.draft.cat=v==='in'?CAT_IN[1]:CAT_OUT[0];U.draft.sub='';U.draft.subCustom='';render();}
@@ -9522,8 +9545,8 @@ document.addEventListener('click',function(e){
   else if(a==='dueQuick'){if(!U.draft)return;var qdays=Math.max(1,Math.min(365,+el.dataset.days||7));U.draft.dueEnabled=true;U.draft.due=addDays(qdays);render();}
   else if(a==='pay'){U.draft.pay=v;U.draft.expensePaymentMethodManual=true;render();}
   else if(a==='rmphoto'){if(U.draft.photoRef)U.draft.photoDeleteRef=U.draft.photoRef;U.draft.photo='';U.draft.photoRef='';U.draft.photoThumb='';U.draft.photoHash='';U.draft.photoMime='';render();}
-  else if(a==='save')saveTx();
-  else if(a==='saveMore')saveTx(true);
+  else if(a==='save')(yield saveTx());
+  else if(a==='saveMore')(yield saveTx(true));
   else if(a==='xlsx')exportXlsx();
   else if(a==='exportProjectXlsx'){U.exportPid=id;exportXlsx();}
   else if(a==='exportGuarantees'){exportGuaranteeCsv();}
@@ -9536,17 +9559,17 @@ document.addEventListener('click',function(e){
   else if(a==='saveDueTx'){
     var qd=S.tx.find(function(x){return x.id===id;}),qel=document.getElementById('quickDue');
     if(!qd||!qel||!qel.value){toast('เลือกวันที่ครบกำหนดก่อน');return;}if(accountingPeriodLocked(qd.date,'รายการบัญชี'))return;
-    var oldQD={due:qd.due,paid:qd.paid};qd.due=qel.value;qd.paid=false;if(!persist()){qd.due=oldQD.due;qd.paid=oldQD.paid;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast('บันทึกวันครบกำหนดแล้ว');
+    var oldQD={due:qd.due,paid:qd.paid};qd.due=qel.value;qd.paid=false;if(!(yield persist())){qd.due=oldQD.due;qd.paid=oldQD.paid;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast('บันทึกวันครบกำหนดแล้ว');
   }
   else if(a==='clearDueTx'){
     var cd=S.tx.find(function(x){return x.id===id;});
-    if(cd){if(accountingPeriodLocked(cd.date,'รายการบัญชี'))return;cd.due='';cd.paid=false;if(!persist())return;U.sheet={kind:'tx',id:id};render();toast('ปิดวันครบกำหนดแล้ว');}
+    if(cd){if(accountingPeriodLocked(cd.date,'รายการบัญชี'))return;cd.due='';cd.paid=false;if(!(yield persist()))return;U.sheet={kind:'tx',id:id};render();toast('ปิดวันครบกำหนดแล้ว');}
   }
   else if(a==='boqCancelImport'){var cp=U.sheet&&U.sheet.pid||U.boqProjectPid||'';boqCancelImport();U.sheet={kind:'boqImportFile',pid:cp};render();toast('หยุดการอ่าน BOQ แล้ว · รูปที่เลือกยังอยู่');}
   else if(a==='closeSheet'){if(U.boqImportBusy&&U.sheet&&U.sheet.kind==='boqImportFile')boqCancelImport();var wasBoq=U.sheet&&U.sheet.kind==='boq'&&U.view==='boq';runtimeReleaseCloudPhoto();U.sheet=null;U.confirm=null;if(wasBoq)saveNavSession();render();pwaApplyPendingUpdate();}
   else if(a==='apPayOpen'){var apt0=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt0)return;if(txOutstandingNet(apt0)<=.01){toast('รายการนี้ชำระครบแล้ว');return;}U.sheet={kind:'apPay',id:id};render();}
-  else if(a==='apPaySave'){var apt1=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt1){toast('ไม่พบเจ้าหนี้');return;}if(apt1.contractorPackage===true&&S.role!=='owner'){toast('เฉพาะเจ้าของบัญชี');return;}var amtAP=Math.round((+(document.getElementById('apPayAmount')||{}).value||0)*100)/100,dateAP=(document.getElementById('apPayDate')||{}).value||today(),payAP=(document.getElementById('apPayMethod')||{}).value||'transfer',remainAP=txOutstandingNet(apt1);if(!(amtAP>0)||amtAP-remainAP>.01){toast('จำนวนชำระต้องมากกว่า 0 และไม่เกินยอดคงเหลือ');return;}if(!validIsoDate(dateAP)||['cash','transfer'].indexOf(payAP)<0){toast('ตรวจวันที่และช่องทางชำระ');return;}if(accountingPeriodLocked(dateAP,'การชำระเจ้าหนี้'))return;var auditBeforeAP=(S.auditLog||[]).slice(),snapAP=JSON.parse(JSON.stringify(apt1)),pmt={id:uid(),date:dateAP,amount:amtAP,pay:payAP,createdAt:Date.now()};apt1.payments=txPayments(apt1).slice();apt1.payments.push(pmt);var stAP=txPaymentState(apt1);apt1.paid=stAP.settled;apt1.pay=stAP.settled&&apt1.payments.length===1?payAP:(apt1.pay||'');if(stAP.settled)apt1.due='';accountingAudit('ap-payment','tx',apt1.id,snapAP,apt1,'ชำระเจ้าหนี้ '+fmt(amtAP));if(!persist()){Object.keys(apt1).forEach(function(k){delete apt1[k];});Object.assign(apt1,snapAP);S.auditLog=auditBeforeAP;toast('บันทึกชำระไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast(stAP.settled?'ชำระเจ้าหนี้ครบแล้ว':'บันทึกจ่ายบางส่วนแล้ว · เหลือ '+fmt(stAP.remain));}
-  else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(!t){toast('ไม่พบรายการ');return;}if(accountingPeriodLocked(t.date,'รายการบัญชี'))return;if(t.paid){U.sheet=null;render();toast('รายการนี้ชำระแล้ว');return;}var prevPaid=t.paid,prevDue=t.due,prevPay=t.pay;t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';if(!persist()){t.paid=prevPaid;t.due=prevDue;t.pay=prevPay;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}
+  else if(a==='apPaySave'){var apt1=S.tx.find(function(x){return x.id===id&&x.type==='out';});if(!apt1){toast('ไม่พบเจ้าหนี้');return;}if(apt1.contractorPackage===true&&S.role!=='owner'){toast('เฉพาะเจ้าของบัญชี');return;}var amtAP=Math.round((+(document.getElementById('apPayAmount')||{}).value||0)*100)/100,dateAP=(document.getElementById('apPayDate')||{}).value||today(),payAP=(document.getElementById('apPayMethod')||{}).value||'transfer',remainAP=txOutstandingNet(apt1);if(!(amtAP>0)||amtAP-remainAP>.01){toast('จำนวนชำระต้องมากกว่า 0 และไม่เกินยอดคงเหลือ');return;}if(!validIsoDate(dateAP)||['cash','transfer'].indexOf(payAP)<0){toast('ตรวจวันที่และช่องทางชำระ');return;}if(accountingPeriodLocked(dateAP,'การชำระเจ้าหนี้'))return;var auditBeforeAP=(S.auditLog||[]).slice(),snapAP=JSON.parse(JSON.stringify(apt1)),pmt={id:uid(),date:dateAP,amount:amtAP,pay:payAP,createdAt:Date.now()};apt1.payments=txPayments(apt1).slice();apt1.payments.push(pmt);var stAP=txPaymentState(apt1);apt1.paid=stAP.settled;apt1.pay=stAP.settled&&apt1.payments.length===1?payAP:(apt1.pay||'');if(stAP.settled)apt1.due='';accountingAudit('ap-payment','tx',apt1.id,snapAP,apt1,'ชำระเจ้าหนี้ '+fmt(amtAP));if(!(yield persist())){Object.keys(apt1).forEach(function(k){delete apt1[k];});Object.assign(apt1,snapAP);S.auditLog=auditBeforeAP;toast('บันทึกชำระไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'tx',id:id};render();toast(stAP.settled?'ชำระเจ้าหนี้ครบแล้ว':'บันทึกจ่ายบางส่วนแล้ว · เหลือ '+fmt(stAP.remain));}
+  else if(a==='markPaid'){var t=S.tx.find(function(x){return x.id===id;});if(!t){toast('ไม่พบรายการ');return;}if(accountingPeriodLocked(t.date,'รายการบัญชี'))return;if(t.paid){U.sheet=null;render();toast('รายการนี้ชำระแล้ว');return;}var prevPaid=t.paid,prevDue=t.due,prevPay=t.pay;t.paid=true;t.due='';t.pay=el.dataset.pay||(S.last&&S.last.pay)||'transfer';if(!(yield persist())){t.paid=prevPaid;t.due=prevDue;t.pay=prevPay;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast(t.type==='in'?'บันทึกว่ารับเงินแล้ว':'บันทึกว่าจ่ายแล้ว');}
   else if(a==='editTx'){
     var t2=S.tx.find(function(x){return x.id===id;});if(!t2)return;if(accountingPeriodLocked(t2.date,'รายการบัญชี'))return;
     U.draft=JSON.parse(JSON.stringify(t2));U.draft.amount=String(t2.amount);
@@ -9555,7 +9578,7 @@ document.addEventListener('click',function(e){
     else{U.draft.dueEnabled=!!t2.due;if(!U.draft.dueEnabled)U.draft.due='';}
     U.from=U.view;go('add');
   }
-  else if(a==='delTx'){var dtx=S.tx.find(function(x){return x.id===id;});if(!dtx)return;if(accountingPeriodLocked(dtx.date,'รายการบัญชี'))return;if(U.confirm==='tx'+id){var oldTx=S.tx.slice();S.tx=S.tx.filter(function(x){return x.id!==id;});if(!persist()){S.tx=oldTx;toast('ลบไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
+  else if(a==='delTx'){var dtx=S.tx.find(function(x){return x.id===id;});if(!dtx)return;if(accountingPeriodLocked(dtx.date,'รายการบัญชี'))return;if(U.confirm==='tx'+id){var oldTx=S.tx.slice();S.tx=S.tx.filter(function(x){return x.id!==id;});if(!(yield persist())){S.tx=oldTx;toast('ลบไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการแล้ว');}else{U.confirm='tx'+id;render();}}
   else if(a==='homePaid'){var hp=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v,pid:hp?hp.id:'',cat:'',sub:'',status:'paid',paidOnly:false,q:''};go('list');}
   else if(a==='homePending'){var hpr=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:v||'in',pid:hpr?hpr.id:'',cat:'',sub:'',status:'pending',paidOnly:false,q:''};go('list');}
   else if(a==='homeExpense'){var hpe=U.homePid==='__all'?null:(proj(U.homePid)||S.projects[0]);U.filter={type:'out',pid:hpe?hpe.id:'',cat:'',sub:'',status:'all',paidOnly:false,q:''};go('list');}
@@ -9567,7 +9590,7 @@ document.addEventListener('click',function(e){
   else if(a==='ftype'){U.filter.type=v;render();}
   else if(a==='fstatus'){U.filter.status=v||'all';U.filter.paidOnly=false;render();}
   else if(a==='listAuditCat'){U.filter=U.filter||{};U.filter.auditCat=v||'';U.listRenderLimit=120;saveNavSession();render();}
-  else if(a==='execDismiss'){if(!S.ui)S.ui={};if(!S.ui.executiveDismissed||typeof S.ui.executiveDismissed!=='object')S.ui.executiveDismissed={};var oldDismiss=Object.assign({},S.ui.executiveDismissed);S.ui.executiveDismissed[id]=Date.now();if(!persist()){S.ui.executiveDismissed=oldDismiss;return;}render();}
+  else if(a==='execDismiss'){if(!S.ui)S.ui={};if(!S.ui.executiveDismissed||typeof S.ui.executiveDismissed!=='object')S.ui.executiveDismissed={};var oldDismiss=Object.assign({},S.ui.executiveDismissed);S.ui.executiveDismissed[id]=Date.now();if(!(yield persist())){S.ui.executiveDismissed=oldDismiss;return;}render();}
   else if(a==='openProj'){U.from=null;go('project',{pid:id});}
   else if(a==='retRecv'){
     if(accountingPeriodLocked(today(),'การรับคืนเงินประกัน'))return;
@@ -9579,7 +9602,7 @@ document.addEventListener('click',function(e){
       var oldRefund=S.tx.find(function(t){return t.pid===rp.id&&t.type==='in'&&((t.cat||'')==='เงินประกันสัญญา'||(t.note||'').indexOf('รับคืนเงินประกันสัญญา')>=0);});
       rp.retRecv=true;rp.retRecvDate=today();
       if(!oldRefund)S.tx.push({id:'guarantee-refund-'+rp.id,date:today(),type:'in',amount:rp.retAmt,cat:'เงินประกันสัญญา',sub:'รับคืนเงินประกัน',pid:rp.id,partner:rp.client||'',pay:'transfer',vat:false,wht:false,paid:true,due:'',photo:'',note:'รับคืนเงินประกันสัญญาหลังส่งมอบครบ 2 ปี'});
-      if(!persist()){rp.retRecv=false;rp.retRecvDate='';if(!oldRefund)S.tx=S.tx.filter(function(t){return t.id!=='guarantee-refund-'+rp.id;});toast('บันทึกรับคืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}render();toast('บันทึกรับเงินประกันคืนแล้ว');
+      if(!(yield persist())){rp.retRecv=false;rp.retRecvDate='';if(!oldRefund)S.tx=S.tx.filter(function(t){return t.id!=='guarantee-refund-'+rp.id;});toast('บันทึกรับคืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}render();toast('บันทึกรับเงินประกันคืนแล้ว');
     }
   }
   else if(a==='install'){U.sheet={kind:'install'};render();}
@@ -9624,7 +9647,7 @@ document.addEventListener('click',function(e){
   else if(a==='restoreOpen'){U.sheet={kind:'restore'};U.rsText='';U.restoreInfo='';U.confirm=null;render();}
   else if(a==='copyBk'){backupPortableAction('copy');}
   else if(a==='migrationCertificateOpen'){U.sheet={kind:'migrationCertificate'};render();}
-  else if(a==='migrationDrillCheck'){var mdp=restoreParse(U.rsText||'');if(!mdp.ok){toast(mdp.error==='BACKUP_CHECKSUM'?'Migration Drill ไม่ผ่าน · checksum ไม่ตรง':'Migration Drill ไม่ผ่าน · ไฟล์ไม่ถูกต้อง');return;}var md=migrationDrill(mdp);S.ops=S.ops||{};S.ops.migrationDrill={at:Date.now(),ok:md.ok,digest:md.digest,sourceOrigin:md.sourceOrigin,sourceRevision:md.sourceRevision,summary:md.summary,healthIssues:md.health.issues.length};persist({metaOnly:true});U.restoreInfo=(md.ok?'Migration Drill ผ่าน':'Migration Drill พบปัญหา')+' · '+md.summary.projects+' โครงการ · '+md.summary.tx+' รายการ · digest '+md.digest;render();return;}
+  else if(a==='migrationDrillCheck'){var mdp=restoreParse(U.rsText||'');if(!mdp.ok){toast(mdp.error==='BACKUP_CHECKSUM'?'Migration Drill ไม่ผ่าน · checksum ไม่ตรง':'Migration Drill ไม่ผ่าน · ไฟล์ไม่ถูกต้อง');return;}var md=migrationDrill(mdp);S.ops=S.ops||{};S.ops.migrationDrill={at:Date.now(),ok:md.ok,digest:md.digest,sourceOrigin:md.sourceOrigin,sourceRevision:md.sourceRevision,summary:md.summary,healthIssues:md.health.issues.length};(yield persist({metaOnly:true}));U.restoreInfo=(md.ok?'Migration Drill ผ่าน':'Migration Drill พบปัญหา')+' · '+md.summary.projects+' โครงการ · '+md.summary.tx+' รายการ · digest '+md.digest;render();return;}
   else if(a==='doRestore'){
     var parsed=restoreParse(U.rsText||'');
     if(!parsed.ok){toast(parsed.error==='BACKUP_CHECKSUM'?'ไฟล์สำรองเสียหายหรือถูกแก้ไข · checksum ไม่ตรง':'ไฟล์/ข้อมูลสำรองไม่ถูกต้อง · ยังไม่ได้เปลี่ยนข้อมูล');return;}
@@ -9632,7 +9655,8 @@ document.addEventListener('click',function(e){
     var restoreFp=restoreFingerprint(parsed),repeatKey='restore-repeat:'+restoreFp,repeatConfirmed=U.confirm===repeatKey;
     if(S.lastRestoreFingerprint&&S.lastRestoreFingerprint===restoreFp&&!repeatConfirmed){U.confirm=repeatKey;U.restoreInfo='ไฟล์นี้เคยกู้คืนบนอุปกรณ์นี้แล้ว · แตะยืนยันอีกครั้งเฉพาะเมื่อจำเป็นต้องย้อนกลับจริง';render();return;}
     if(U.confirm!=='restore'&&!repeatConfirmed){U.confirm='restore';U.restoreInfo='พร้อมแทนที่ · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ · '+parsed.summary.boq+' BOQ'+(parsed.meta.sourceOrigin&&parsed.meta.sourceOrigin!==location.origin?' · ย้ายจาก '+parsed.meta.sourceOrigin:'');render();return;}
-    var restoreSnap=S,sourceDigest=migrationBusinessDigest(parsed.state);S=parsed.state;S.ops=S.ops||{};S.lastRestoreFingerprint=restoreFp;S.lastRestoreSourceOrigin=String(parsed.meta.sourceOrigin||'');S.lastRestoreAt=Date.now();S.lastBackup=S.lastRestoreAt;S.lastBackupRevision=(+S.dataRevision||0)+1;S.ops.lastMigration={at:S.lastRestoreAt,sourceOrigin:S.lastRestoreSourceOrigin,sourceRevision:+(parsed.meta&&parsed.meta.dataRevision)||0,sourceDigest:sourceDigest,targetDigest:migrationBusinessDigest(S),matched:sourceDigest===migrationBusinessDigest(S),summary:parsed.summary};if(!persist()){S=restoreSnap;return;}U.restoreConfirmToken='';U.rsText='';U.restoreInfo='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ');
+    var selectedRestore=U.rsText;if(!(yield primaryEnable()))return;if(U.rsText!==selectedRestore||!U.sheet||U.sheet.kind!=='restore'){toast('ไฟล์หรือหน้ากู้คืนเปลี่ยน กรุณาตรวจใหม่');return;}
+    var restoreSnap=S,sourceDigest=migrationBusinessDigest(parsed.state);S=parsed.state;S.ops=S.ops||{};S.lastRestoreFingerprint=restoreFp;S.lastRestoreSourceOrigin=String(parsed.meta.sourceOrigin||'');S.lastRestoreAt=Date.now();S.lastBackup=S.lastRestoreAt;S.lastBackupRevision=(+S.dataRevision||0)+1;S.ops.lastMigration={at:S.lastRestoreAt,sourceOrigin:S.lastRestoreSourceOrigin,sourceRevision:+(parsed.meta&&parsed.meta.dataRevision)||0,sourceDigest:sourceDigest,targetDigest:migrationBusinessDigest(S),matched:sourceDigest===migrationBusinessDigest(S),summary:parsed.summary};if(!(yield persist())){S=restoreSnap;return;}U.restoreConfirmToken='';U.rsText='';U.restoreInfo='';U.sheet=null;U.confirm=null;go(S.role==='foreman'?'list':'home');toast('กู้คืนข้อมูลแล้ว · '+parsed.summary.projects+' โครงการ · '+parsed.summary.tx+' รายการ');
   }
   else if(a==='boqImportPick'){U.sheet={kind:'boqImportFile',pid:id};render();}
   else if(a==='boqReviewPrev'||a==='boqReviewNext'){
@@ -9670,33 +9694,33 @@ document.addEventListener('click',function(e){
     im0.batch=finalBatch;im0.total=finalTotal;
     var snap0=(S.boq||[]).slice(),added=0,importedNow=Date.now();
     im0.rows.forEach(function(x){S.boq.push({id:uid(),pid:im0.pid,name:x.name,category:x.category||'ค่าของ',qty:+x.qty||0,unit:x.unit||'',unitPrice:+x.unitPrice||0,sectionCode:String(x.sectionCode||''),sectionName:String(x.sectionName||''),sectionSource:String(x.sectionSource||''),sourcePage:Math.max(0,+x.sourcePage||0),sourceFile:String(x.sourceFile||'').slice(0,180),sourceKind:String(x.sourceKind||'').slice(0,40),note:x.note||('นำเข้าจาก '+(im0.file||'ไฟล์')),importBatch:im0.batch||'',importFile:im0.file||'',importedAt:importedNow});added++;});
-    if(!persist()){S.boq=snap0;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}
+    if(!(yield persist())){S.boq=snap0;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}
     U.boqImport=null;U.boqReviewPage=0;U.boqReviewChecked={};U.sheet=null;U.confirm=null;render();toast('นำเข้า BOQ แล้ว '+added+' รายการ · '+pname(im0.pid));
   }
-  else if(a==='undoBoqBatch'){var upid=el.dataset.pid||'',batch=id,br=(S.boq||[]).filter(function(x){return x.pid===upid&&x.importBatch===batch;});if(!br.length){toast('ไม่พบชุดนำเข้า');return;}var ids={};br.forEach(function(x){ids[x.id]=1;});if(S.tx.some(function(t){return t.boqId&&ids[t.boqId];})){toast('ย้อนชุดนี้ไม่ได้: มีรายจ่ายจริงผูกกับ BOQ แล้ว');return;}if(U.confirm!=='batch'+batch){U.confirm='batch'+batch;toast('แตะย้อนชุดนี้อีกครั้งเพื่อยืนยัน');render();return;}var oldBatch=S.boq.slice();S.boq=S.boq.filter(function(x){return !(x.pid===upid&&x.importBatch===batch);});if(!persist()){S.boq=oldBatch;toast('ย้อนนำเข้าไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.confirm=null;render();toast('ย้อนชุดนำเข้า BOQ แล้ว '+br.length+' รายการ');}
+  else if(a==='undoBoqBatch'){var upid=el.dataset.pid||'',batch=id,br=(S.boq||[]).filter(function(x){return x.pid===upid&&x.importBatch===batch;});if(!br.length){toast('ไม่พบชุดนำเข้า');return;}var ids={};br.forEach(function(x){ids[x.id]=1;});if(S.tx.some(function(t){return t.boqId&&ids[t.boqId];})){toast('ย้อนชุดนี้ไม่ได้: มีรายจ่ายจริงผูกกับ BOQ แล้ว');return;}if(U.confirm!=='batch'+batch){U.confirm='batch'+batch;toast('แตะย้อนชุดนี้อีกครั้งเพื่อยืนยัน');render();return;}var oldBatch=S.boq.slice();S.boq=S.boq.filter(function(x){return !(x.pid===upid&&x.importBatch===batch);});if(!(yield persist())){S.boq=oldBatch;toast('ย้อนนำเข้าไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.confirm=null;render();toast('ย้อนชุดนำเข้า BOQ แล้ว '+br.length+' รายการ');}
   else if(a==='boqPickOne'){U.sheet={kind:'boq',id:null,pid:id};render();}
   else if(a==='contractChangeNew'){U.sheet={kind:'contractChange',pid:id||U.pid};render();}
-  else if(a==='contractChangeSave'){var ct=document.getElementById('ccTitle');if(!ct||!ct.value.trim()){toast('กรอกหัวข้อก่อน');return;}var z={id:uid(),pid:id||U.pid,date:today(),title:ct.value.trim(),amount:Number(document.getElementById('ccAmount').value),status:document.getElementById('ccStatus').value,ref:document.getElementById('ccRef').value.trim(),note:document.getElementById('ccNote').value.trim(),createdAt:Date.now()};var ce=contractRecordError(z,false);if(ce){toast(ce);return;}S.contractChanges=S.contractChanges||[];S.contractChanges.push(z);if(!persist()){S.contractChanges=S.contractChanges.filter(function(x){return x.id!==z.id;});toast('บันทึกไม่สำเร็จ');return;}U.sheet=null;render();toast('บันทึก Variation แล้ว');}
+  else if(a==='contractChangeSave'){var ct=document.getElementById('ccTitle');if(!ct||!ct.value.trim()){toast('กรอกหัวข้อก่อน');return;}var z={id:uid(),pid:id||U.pid,date:today(),title:ct.value.trim(),amount:Number(document.getElementById('ccAmount').value),status:document.getElementById('ccStatus').value,ref:document.getElementById('ccRef').value.trim(),note:document.getElementById('ccNote').value.trim(),createdAt:Date.now()};var ce=contractRecordError(z,false);if(ce){toast(ce);return;}S.contractChanges=S.contractChanges||[];S.contractChanges.push(z);if(!(yield persist())){S.contractChanges=S.contractChanges.filter(function(x){return x.id!==z.id;});toast('บันทึกไม่สำเร็จ');return;}U.sheet=null;render();toast('บันทึก Variation แล้ว');}
   else if(a==='timeExtensionNew'){U.sheet={kind:'timeExtension',pid:id||U.pid};render();}
-  else if(a==='timeExtensionSave'){var tr=document.getElementById('teReason');if(!tr||!tr.value.trim()){toast('กรอกเหตุขยายเวลาก่อน');return;}var z2={id:uid(),pid:id||U.pid,date:today(),reason:tr.value.trim(),days:Number(document.getElementById('teDays').value),status:document.getElementById('teStatus').value,ref:document.getElementById('teRef').value.trim(),note:document.getElementById('teNote').value.trim(),createdAt:Date.now()};var te=contractRecordError(z2,true);if(te){toast(te);return;}S.timeExtensions=S.timeExtensions||[];S.timeExtensions.push(z2);if(!persist()){S.timeExtensions=S.timeExtensions.filter(function(x){return x.id!==z2.id;});toast('บันทึกไม่สำเร็จ');return;}U.sheet=null;render();toast('บันทึกคำขอขยายเวลาแล้ว');}
+  else if(a==='timeExtensionSave'){var tr=document.getElementById('teReason');if(!tr||!tr.value.trim()){toast('กรอกเหตุขยายเวลาก่อน');return;}var z2={id:uid(),pid:id||U.pid,date:today(),reason:tr.value.trim(),days:Number(document.getElementById('teDays').value),status:document.getElementById('teStatus').value,ref:document.getElementById('teRef').value.trim(),note:document.getElementById('teNote').value.trim(),createdAt:Date.now()};var te=contractRecordError(z2,true);if(te){toast(te);return;}S.timeExtensions=S.timeExtensions||[];S.timeExtensions.push(z2);if(!(yield persist())){S.timeExtensions=S.timeExtensions.filter(function(x){return x.id!==z2.id;});toast('บันทึกไม่สำเร็จ');return;}U.sheet=null;render();toast('บันทึกคำขอขยายเวลาแล้ว');}
   else if(a==='govFollowup'){U.sheet={kind:'govFollowup',pid:id||U.pid};render();}
   else if(a==='govPendingLetters'){U.sheet={kind:'govPendingLetters',pid:id||U.pid};render();}
   else if(a==='govEventLetter'){var ee=(S.siteEvents||[]).find(function(x){return x.id===id;});if(!ee)return;U.sheet={kind:'govEventLetter',eventId:id,pid:ee.pid};render();}
-  else if(a==='govEventLetterSave'){var ee2=(S.siteEvents||[]).find(function(x){return x.id===id;});if(!ee2)return;var snap=JSON.parse(JSON.stringify(ee2));ee2.letterStatus=document.getElementById('govLetterStatus').value;ee2.letterNo=document.getElementById('govLetterNo').value.trim();ee2.sentDate=document.getElementById('govLetterSent').value;ee2.replyDate=document.getElementById('govLetterReplyDate').value;ee2.replyNote=document.getElementById('govLetterReplyNote').value.trim();if(ee2.letterStatus==='sent'&&!ee2.sentDate){Object.assign(ee2,snap);toast('ระบุวันที่ส่งหนังสือก่อน');return;}if(ee2.letterStatus==='replied'&&(!ee2.sentDate||!ee2.replyDate)){Object.assign(ee2,snap);toast('ระบุวันที่ส่งและวันที่ได้รับคำตอบก่อน');return;}var leError=letterStateError(ee2);if(leError){Object.assign(ee2,snap);toast(leError);return;}if(!persist()){Object.assign(ee2,snap);toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกสถานะหนังสือแล้ว');}
+  else if(a==='govEventLetterSave'){var ee2=(S.siteEvents||[]).find(function(x){return x.id===id;});if(!ee2)return;var snap=JSON.parse(JSON.stringify(ee2));ee2.letterStatus=document.getElementById('govLetterStatus').value;ee2.letterNo=document.getElementById('govLetterNo').value.trim();ee2.sentDate=document.getElementById('govLetterSent').value;ee2.replyDate=document.getElementById('govLetterReplyDate').value;ee2.replyNote=document.getElementById('govLetterReplyNote').value.trim();if(ee2.letterStatus==='sent'&&!ee2.sentDate){Object.assign(ee2,snap);toast('ระบุวันที่ส่งหนังสือก่อน');return;}if(ee2.letterStatus==='replied'&&(!ee2.sentDate||!ee2.replyDate)){Object.assign(ee2,snap);toast('ระบุวันที่ส่งและวันที่ได้รับคำตอบก่อน');return;}var leError=letterStateError(ee2);if(leError){Object.assign(ee2,snap);toast(leError);return;}if(!(yield persist())){Object.assign(ee2,snap);toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกสถานะหนังสือแล้ว');}
   else if(a==='govEventNew'){U.govEventPhoto='';U.sheet={kind:'govEvent',pid:id||U.pid};render();}
-  else if(a==='govEventSave'){var ed=document.getElementById('govEventDate'),et=document.getElementById('govEventType'),eh=document.getElementById('govEventTitle'),er=document.getElementById('govEventRecipient'),en=document.getElementById('govEventNote');if(!eh||!eh.value.trim()){toast('กรอกหัวข้อเหตุการณ์ก่อน');return;}var ev={id:uid(),pid:id||U.pid,date:ed&&ed.value||today(),type:et&&et.value||'ปัญหา/อุปสรรคหน้างาน',title:eh.value.trim(),recipient:er&&er.value.trim()||'',note:en&&en.value.trim()||'',photo:U.govEventPhoto||'',letterNo:'',letterStatus:'none',sentDate:'',replyDate:'',replyNote:'',createdAt:Date.now()};if(!proj(ev.pid)||!validIsoDate(ev.date)){toast('โครงการหรือวันที่ไม่ถูกต้อง');return;}S.siteEvents=S.siteEvents||[];S.siteEvents.push(ev);if(!persist()){S.siteEvents=S.siteEvents.filter(function(x){return x.id!==ev.id;});toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.govEventPhoto='';U.sheet=null;render();toast('บันทึกเหตุการณ์ใน Timeline แล้ว');}
+  else if(a==='govEventSave'){var ed=document.getElementById('govEventDate'),et=document.getElementById('govEventType'),eh=document.getElementById('govEventTitle'),er=document.getElementById('govEventRecipient'),en=document.getElementById('govEventNote');if(!eh||!eh.value.trim()){toast('กรอกหัวข้อเหตุการณ์ก่อน');return;}var ev={id:uid(),pid:id||U.pid,date:ed&&ed.value||today(),type:et&&et.value||'ปัญหา/อุปสรรคหน้างาน',title:eh.value.trim(),recipient:er&&er.value.trim()||'',note:en&&en.value.trim()||'',photo:U.govEventPhoto||'',letterNo:'',letterStatus:'none',sentDate:'',replyDate:'',replyNote:'',createdAt:Date.now()};if(!proj(ev.pid)||!validIsoDate(ev.date)){toast('โครงการหรือวันที่ไม่ถูกต้อง');return;}S.siteEvents=S.siteEvents||[];S.siteEvents.push(ev);if(!(yield persist())){S.siteEvents=S.siteEvents.filter(function(x){return x.id!==ev.id;});toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.govEventPhoto='';U.sheet=null;render();toast('บันทึกเหตุการณ์ใน Timeline แล้ว');}
   else if(a==='govRiskOpen'){U.sheet={kind:'govRisk',pid:id||U.pid};render();}
   else if(a==='govDraft'){U.sheet={kind:'govDraft',pid:id||U.pid,draftKind:v||'clarify'};render();}
   else if(a==='govDraftCopy'){doCopy('govDraftText',function(){toast('คัดลอกร่างหนังสือแล้ว');});}
   else if(a==='expenseBatchTotalReview'){var gid=String(el.getAttribute('data-id')||'');(U.expenseBatch||[]).forEach(function(x){if(String(x.sourceGroupId||x.id)===gid)x.ocrTotalReviewed=!!el.checked;});expenseBatchUpdateUi();expenseBatchDraftSchedule();}
   else if(a==='expenseBatchSelectAll'){(U.expenseBatch||[]).forEach(function(x){if(+x.amount>0)x.include=true;});expenseBatchUpdateUi();expenseBatchDraftSchedule();}
   else if(a==='expenseBatchSelectNone'){(U.expenseBatch||[]).forEach(function(x){x.include=false;});expenseBatchUpdateUi();expenseBatchDraftSchedule();}
-  else if(a==='expenseBatchSave'){expenseBatchSave();}
+  else if(a==='expenseBatchSave'){(yield expenseBatchSave());}
   else if(a==='boqCostToggle'){U.boqCostOpen=U.boqCostOpen===false?true:false;render();}
   else if(a==='boqLinkBulk'){U.sheet={kind:'boqLinkBulkConfirm',pid:id||U.pid};render();}
-  else if(a==='boqLinkBulkCommit'){var cp=id||U.pid,ct=(S.tx||[]).filter(function(t){return t.pid===cp&&t.type==='out'&&!t.boqId;}),cr=boqRows(cp),pl=candLinkPlan(ct,cr);if(!pl.ready){toast('ไม่มีรายการที่ผ่านเกณฑ์');return;}var snaps=pl.picks.map(function(z){return[z.tx,z.tx.boqId||''];});pl.picks.forEach(function(z){z.tx.boqId=z.boq.id;});if(!persist()){snaps.forEach(function(q){q[0].boqId=q[1];});toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'boqLink',pid:cp};render();toast('ผูก BOQ สำเร็จ '+pl.ready+' รายการ');}
+  else if(a==='boqLinkBulkCommit'){var cp=id||U.pid,ct=(S.tx||[]).filter(function(t){return t.pid===cp&&t.type==='out'&&!t.boqId;}),cr=boqRows(cp),pl=candLinkPlan(ct,cr);if(!pl.ready){toast('ไม่มีรายการที่ผ่านเกณฑ์');return;}var snaps=pl.picks.map(function(z){return[z.tx,z.tx.boqId||''];});pl.picks.forEach(function(z){z.tx.boqId=z.boq.id;});if(!(yield persist())){snaps.forEach(function(q){q[0].boqId=q[1];});toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet={kind:'boqLink',pid:cp};render();toast('ผูก BOQ สำเร็จ '+pl.ready+' รายการ');}
   else if(a==='boqLinkStart'){U.sheet={kind:'boqLink',pid:id||U.pid};render();}
-  else if(a==='boqLinkSave'){var lt=(S.tx||[]).find(function(t){return t.id===id;}),ls=document.querySelector('select[data-link-tx="'+id+'"]'),bid=ls?ls.value:'';if(!lt||lt.type!=='out'||!bid||!S.boq.some(function(x){return x.id===bid&&x.pid===lt.pid;})){toast('เลือก BOQ ก่อนผูก');return;}if(isPeriodClosed(lt.date)){toast('งวดนี้ปิดบัญชีแล้ว · ไม่สามารถเปลี่ยนการผูก BOQ');return;}var snap=lt.boqId||'';lt.boqId=bid;if(!persist()){lt.boqId=snap;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}render();toast('ผูกรายจ่ายกับ BOQ แล้ว');}
+  else if(a==='boqLinkSave'){var lt=(S.tx||[]).find(function(t){return t.id===id;}),ls=document.querySelector('select[data-link-tx="'+id+'"]'),bid=ls?ls.value:'';if(!lt||lt.type!=='out'||!bid||!S.boq.some(function(x){return x.id===bid&&x.pid===lt.pid;})){toast('เลือก BOQ ก่อนผูก');return;}if(isPeriodClosed(lt.date)){toast('งวดนี้ปิดบัญชีแล้ว · ไม่สามารถเปลี่ยนการผูก BOQ');return;}var snap=lt.boqId||'';lt.boqId=bid;if(!(yield persist())){lt.boqId=snap;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}render();toast('ผูกรายจ่ายกับ BOQ แล้ว');}
   else if(a==='newBoq'){boqCapturePosition('');U.sheet={kind:'boq',id:null,pid:id||U.pid};render();}
   else if(a==='editBoq'){boqCapturePosition(id);U.sheet={kind:'boq',id:id};render();}
   else if(a==='boqCheckFilter'){U.boqCheckFilter=el.dataset.v||'all';render();}
@@ -9706,12 +9730,12 @@ document.addEventListener('click',function(e){
     var bpid=el.dataset.pid||U.pid,bn=(document.getElementById('bqname')||{}).value||'',bqty=parseFloat((document.getElementById('bqqty')||{}).value)||0,bprice=parseFloat((document.getElementById('bqprice')||{}).value)||0;
     bn=bn.trim();if(!bpid||!proj(bpid)){toast('ไม่พบโครงการ');return;}if(!bn){toast('กรอกชื่อรายการ BOQ');return;}if(!(bqty>0)){toast('กรอกปริมาณมากกว่า 0');return;}if(bprice<0){toast('ราคาต่อหน่วยไม่ถูกต้อง');return;}
     var oldEdit=id?(S.boq||[]).find(function(x){return x.id===id;}):null;var bo={pid:bpid,name:bn,category:(document.getElementById('bqcat')||{}).value||'ค่าของ',qty:bqty,unit:((document.getElementById('bqunit')||{}).value||'').trim(),unitPrice:bprice,note:((document.getElementById('bqnote')||{}).value||'').trim(),sectionCode:oldEdit?oldEdit.sectionCode||'':'',sectionName:oldEdit?oldEdit.sectionName||'':''};
-    var bi=id?(S.boq||[]).findIndex(function(x){return x.id===id;}):-1,oldBoq=JSON.parse(JSON.stringify(S.boq));if(bi>-1){bo.id=id;S.boq[bi]=bo;}else{bo.id=uid();S.boq.push(bo);}if(!persist()){S.boq=oldBoq;toast('บันทึก BOQ ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.boqAnchorId=bo.id;U.sheet=null;saveNavSession();render();toast('บันทึก BOQ แล้ว');
+    var bi=id?(S.boq||[]).findIndex(function(x){return x.id===id;}):-1,oldBoq=JSON.parse(JSON.stringify(S.boq));if(bi>-1){bo.id=id;S.boq[bi]=bo;}else{bo.id=uid();S.boq.push(bo);}if(!(yield persist())){S.boq=oldBoq;toast('บันทึก BOQ ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.boqAnchorId=bo.id;U.sheet=null;saveNavSession();render();toast('บันทึก BOQ แล้ว');
   }
   else if(a==='deleteBoq'){
     var linked=S.tx.some(function(t){return t.boqId===id;});if(linked){toast('ลบไม่ได้: BOQ นี้มีรายจ่ายเชื่อมอยู่');return;}
     if(U.confirm!=='boq'+id){U.confirm='boq'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');return;}
-    var oldBq=S.boq.slice();S.boq=(S.boq||[]).filter(function(x){return x.id!==id;});if(!persist()){S.boq=oldBq;toast('ลบ BOQ ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}if(U.boqAnchorId===id)U.boqAnchorId='';U.confirm=null;U.sheet=null;saveNavSession();render();toast('ลบรายการ BOQ แล้ว');
+    var oldBq=S.boq.slice();S.boq=(S.boq||[]).filter(function(x){return x.id!==id;});if(!(yield persist())){S.boq=oldBq;toast('ลบ BOQ ไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}if(U.boqAnchorId===id)U.boqAnchorId='';U.confirm=null;U.sheet=null;saveNavSession();render();toast('ลบรายการ BOQ แล้ว');
   }
   else if(a==='newProj'){U.sheet={kind:'proj',id:null};render();}
   else if(a==='editProj'){U.sheet={kind:'proj',id:id};render();}
@@ -9724,15 +9748,15 @@ document.addEventListener('click',function(e){
     var guaranteeBase=(document.getElementById('gfollowupBase')||{}).value||'income',guaranteePaidDate=(document.getElementById('gpaid')||{}).value||'',guaranteeBaseDate=guaranteeBase==='deposit'?guaranteePaidDate:(document.getElementById('gfollowupDate')||{}).value||'',guaranteeDraft={pid:gp,type:document.getElementById('gtype').value,holder:document.getElementById('gholder').value.trim(),method:document.getElementById('gmethod').value,amount:ga,paidDate:guaranteePaidDate,followupBase:['income','delivery','deposit'].indexOf(guaranteeBase)>=0?guaranteeBase:'income',followupBaseDate:validIsoDate(guaranteeBaseDate)?guaranteeBaseDate:'',dueDate:document.getElementById('gdue').value||'',note:document.getElementById('gnote').value.trim()};if(!guaranteeDraft.dueDate&&guaranteeDraft.followupBaseDate)guaranteeDraft.dueDate=addYearsIso(guaranteeDraft.followupBaseDate,2);if(!guaranteeDraft.dueDate)guaranteeDraft.dueDate=guaranteeDueFromDelivery(guaranteeDraft);
     var existingG=id?(S.guarantees||[]).find(function(x){return x.id===id;}):null;if((guaranteeDraft.paidDate&&accountingPeriodLocked(guaranteeDraft.paidDate,'งานประกัน'))||(existingG&&existingG.paidDate&&isPeriodClosed(existingG.paidDate))){if(existingG&&existingG.paidDate&&isPeriodClosed(existingG.paidDate))toast('งานประกันเดิมอยู่ในงวด '+periodKey(existingG.paidDate)+' ที่ปิดบัญชีแล้ว · เปิดงวดก่อนแก้ไข');return;}
     var snapG=JSON.parse(JSON.stringify(S)),gg=existingG;if(gg)Object.assign(gg,guaranteeDraft);else{guaranteeDraft.id=uid();guaranteeDraft.returned=false;guaranteeDraft.returnedDate='';S.guarantees.push(guaranteeDraft);gg=guaranteeDraft;}if(gg.method!=='เงินสด/โอน')S.tx=S.tx.filter(function(t){return t.id!=='guarantee-v2-expense-'+gg.id;});syncGuaranteeRecord(gg);
-    if(!persist()){S=snapG;toast('บันทึกงานประกันไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกงานประกันแล้ว');
+    if(!(yield persist())){S=snapG;toast('บันทึกงานประกันไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกงานประกันแล้ว');
   }
   else if(a==='saveLegacyRetentionImport'){
     var importSheet=U.sheet&&U.sheet.kind==='legacyRetentionImport'?U.sheet:null,importRows=importSheet&&importSheet.rows||[];if(!importRows.length||importRows.some(legacyRetentionSourceImported)){toast('รายการนำเข้าไม่ครบ หรือมีรายการที่นำเข้าไปแล้ว');return;}var importPayload=[];
     for(var li=0;li<importRows.length;li++){var ir=importRows[li],ip=proj(ir.pid),ia=Number(ir.amount);if(!ip||!isFinite(ia)||ia<=0||!validIsoDate(ir.depositDate)||!validIsoDate(ir.paymentDate)){toast('ตรวจโครงการ ยอดเงิน และวันที่ของรายการ '+(li+1)+' ก่อนนำเข้า');return;}if((S.guarantees||[]).some(function(g){return g.pid===ip.id&&g.type==='ประกันผลงาน'&&Math.abs((+g.amount||0)-ia)<.01&&(g.paidDate||'')===ir.depositDate&&(g.followupBaseDate||'')===ir.paymentDate;})){toast('พบรายการประกันผลงานซ้ำในโครงการ '+ip.name+' · ยกเลิกการนำเข้าเพื่อป้องกันข้อมูลซ้ำ');return;}importPayload.push({id:uid(),pid:ip.id,type:'ประกันผลงาน',holder:ip.client||'',method:'เงินสด/โอน',amount:ia,paidDate:ir.depositDate,followupBase:'income',followupBaseDate:ir.paymentDate,dueDate:addYearsIso(ir.paymentDate,2),returned:false,returnedDate:'',trackingOnly:true,legacySourceId:ir.sourceId,note:'นำเข้าทะเบียนติดตามจากตารางเงินประกันผลงาน 2 ปี · ไม่สร้างรายจ่ายย้อนหลัง'});}
-    var importSnapshot=JSON.parse(JSON.stringify(S));S.guarantees=(S.guarantees||[]).concat(importPayload);if(!persist()){S=importSnapshot;toast('นำเข้าทะเบียนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('เพิ่มทะเบียนติดตาม '+importPayload.length+' รายการแล้ว · ไม่มีการสร้างรายการบัญชี');
+    var importSnapshot=JSON.parse(JSON.stringify(S));S.guarantees=(S.guarantees||[]).concat(importPayload);if(!(yield persist())){S=importSnapshot;toast('นำเข้าทะเบียนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('เพิ่มทะเบียนติดตาม '+importPayload.length+' รายการแล้ว · ไม่มีการสร้างรายการบัญชี');
   }
-  else if(a==='returnGuarantee'){var rg=(S.guarantees||[]).find(function(g){return g.id===id;});if(!rg){toast('ไม่พบรายการหลักประกัน');return;}if(accountingPeriodLocked(today(),'การรับคืนหลักประกัน'))return;if(rg.returned){U.sheet=null;render();toast('รายการนี้รับคืนแล้ว');return;}var snapRG=JSON.parse(JSON.stringify(S));if(receiveGuaranteeRecord(rg)){if(!persist()){S=snapRG;toast('บันทึกรับคืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกรับหลักประกันคืนแล้ว');}}
-  else if(a==='deleteGuarantee'){var dg=(S.guarantees||[]).find(function(g){return g.id===id;});if(dg){var gtx=(S.tx||[]).filter(function(t){return t.id==='guarantee-v2-expense-'+id||t.id==='guarantee-v2-refund-'+id;});if(gtx.some(function(t){return isPeriodClosed(t.date);})){toast('ลบไม่ได้: รายการบัญชีของหลักประกันอยู่ในงวดที่ปิดแล้ว');return;}}if(dg&&dg.legacyPid){toast('รายการเดิมผูกกับโครงการ กรุณาแก้จากข้อมูลโครงการ');return;}if(U.confirm!=='g'+id){U.confirm='g'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');return;}var snapDG=JSON.parse(JSON.stringify(S));S.guarantees=(S.guarantees||[]).filter(function(g){return g.id!==id;});S.tx=S.tx.filter(function(t){return t.id!=='guarantee-v2-expense-'+id&&t.id!=='guarantee-v2-refund-'+id;});if(!persist()){S=snapDG;toast('ลบงานประกันไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการงานประกันและรายการบัญชีที่เชื่อมแล้ว');}
+  else if(a==='returnGuarantee'){var rg=(S.guarantees||[]).find(function(g){return g.id===id;});if(!rg){toast('ไม่พบรายการหลักประกัน');return;}if(accountingPeriodLocked(today(),'การรับคืนหลักประกัน'))return;if(rg.returned){U.sheet=null;render();toast('รายการนี้รับคืนแล้ว');return;}var snapRG=JSON.parse(JSON.stringify(S));if(receiveGuaranteeRecord(rg)){if(!(yield persist())){S=snapRG;toast('บันทึกรับคืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกรับหลักประกันคืนแล้ว');}}
+  else if(a==='deleteGuarantee'){var dg=(S.guarantees||[]).find(function(g){return g.id===id;});if(dg){var gtx=(S.tx||[]).filter(function(t){return t.id==='guarantee-v2-expense-'+id||t.id==='guarantee-v2-refund-'+id;});if(gtx.some(function(t){return isPeriodClosed(t.date);})){toast('ลบไม่ได้: รายการบัญชีของหลักประกันอยู่ในงวดที่ปิดแล้ว');return;}}if(dg&&dg.legacyPid){toast('รายการเดิมผูกกับโครงการ กรุณาแก้จากข้อมูลโครงการ');return;}if(U.confirm!=='g'+id){U.confirm='g'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');return;}var snapDG=JSON.parse(JSON.stringify(S));S.guarantees=(S.guarantees||[]).filter(function(g){return g.id!==id;});S.tx=S.tx.filter(function(t){return t.id!=='guarantee-v2-expense-'+id&&t.id!=='guarantee-v2-refund-'+id;});if(!(yield persist())){S=snapDG;toast('ลบงานประกันไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการงานประกันและรายการบัญชีที่เชื่อมแล้ว');}
   else if(a==='saveProj'){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
     var sd0=document.getElementById('psd').value,ed0=document.getElementById('ped').value;
@@ -9741,34 +9765,34 @@ document.addEventListener('click',function(e){
     var oldProj=id?proj(id):null,retChanged=!!oldProj&&((+oldProj.retAmt||0)!==retAmtVal||(oldProj.retPaidDate||'')!==retPaidDate);if(retAmtVal>0&&retPaidDate&&accountingPeriodLocked(retPaidDate,'เงินประกันสัญญา'))return;if(retChanged&&oldProj.retPaidDate&&isPeriodClosed(oldProj.retPaidDate)){toast('เงินประกันเดิมอยู่ในงวด '+periodKey(oldProj.retPaidDate)+' ที่ปิดบัญชีแล้ว · เปิดงวดก่อนแก้ไข');return;}
     var snapP=JSON.parse(JSON.stringify(S)),target=null;if(id){var pp=proj(id);if(!pp){toast('ไม่พบโครงการ');return;}Object.assign(pp,o);target=pp;}else{o.id=uid();S.projects.push(o);target=o;if(dashPids().length===0)S.ui.dashboardPids=[o.id];}
     if(target){syncGuaranteeExpense(target);if(target.deliveryDate)(S.guarantees||[]).forEach(function(g){if(g.pid===target.id&&!g.returned&&!g.dueDate){var gd=guaranteeDueFromDelivery(g);if(gd)g.dueDate=gd;}});}
-    if(!persist()){S=snapP;toast('บันทึกโครงการไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกโครงการแล้ว');
+    if(!(yield persist())){S=snapP;toast('บันทึกโครงการไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกโครงการแล้ว');
   }
-  else if(a==='delProj'){var contractLinks=['siteEvents','contractChanges','timeExtensions','materialApprovals'].some(function(k){return (S[k]||[]).some(function(x){return x.pid===id;});});if(contractLinks){toast('ลบไม่ได้: มีข้อมูลสัญญาหรือพัสดุเชื่อมกับโครงการ');return;}var linkedTx=S.tx.filter(function(t){return t.pid===id;}).length,linkedG=(S.guarantees||[]).filter(function(g){return g.pid===id;}).length,linkedDocs=['quotes','bills','receipts'].reduce(function(n,k){return n+(S[k]||[]).filter(function(d){return d.pid===id;}).length;},0),linkedBoq=(S.boq||[]).filter(function(x){return x.pid===id;}).length;if(linkedTx||linkedG||linkedDocs||linkedBoq){toast('ลบไม่ได้: โครงการนี้มีข้อมูลเชื่อม '+linkedTx+' รายการบัญชี · '+linkedBoq+' BOQ · '+linkedG+' งานประกัน · '+linkedDocs+' เอกสาร');return;}if(U.confirm==='p'+id){var oldProjects=S.projects.slice();S.projects=S.projects.filter(function(p){return p.id!==id;});if(!persist()){S.projects=oldProjects;toast('ลบโครงการไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');}}
+  else if(a==='delProj'){var contractLinks=['siteEvents','contractChanges','timeExtensions','materialApprovals'].some(function(k){return (S[k]||[]).some(function(x){return x.pid===id;});});if(contractLinks){toast('ลบไม่ได้: มีข้อมูลสัญญาหรือพัสดุเชื่อมกับโครงการ');return;}var linkedTx=S.tx.filter(function(t){return t.pid===id;}).length,linkedG=(S.guarantees||[]).filter(function(g){return g.pid===id;}).length,linkedDocs=['quotes','bills','receipts'].reduce(function(n,k){return n+(S[k]||[]).filter(function(d){return d.pid===id;}).length;},0),linkedBoq=(S.boq||[]).filter(function(x){return x.pid===id;}).length;if(linkedTx||linkedG||linkedDocs||linkedBoq){toast('ลบไม่ได้: โครงการนี้มีข้อมูลเชื่อม '+linkedTx+' รายการบัญชี · '+linkedBoq+' BOQ · '+linkedG+' งานประกัน · '+linkedDocs+' เอกสาร');return;}if(U.confirm==='p'+id){var oldProjects=S.projects.slice();S.projects=S.projects.filter(function(p){return p.id!==id;});if(!(yield persist())){S.projects=oldProjects;toast('ลบโครงการไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;go('projects');toast('ลบโครงการแล้ว');}else{U.confirm='p'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');}}
   else if(a==='resetAsk'){U.sheet={kind:'resetConfirm'};render();}
-  else if(a==='resetDo'){var resetSnap=S;S=emptyState();if(!persist()){S=resetSnap;return;}U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
-  else if(a==='repairBilling'){var rr=safeRepairBilling('');if(rr){render();if(rr.created||rr.updated)toast('ซ่อมแล้ว: เชื่อมใหม่ '+rr.created+' · ปรับยอดค้างรับ '+rr.updated);else toast('ไม่มีรายการที่ซ่อมอัตโนมัติได้อย่างปลอดภัย');}}
+  else if(a==='resetDo'){var resetSnap=S;S=emptyState();if(!(yield persist())){S=resetSnap;return;}U.sheet=null;U.confirm=null;U.pid=null;U.draft=null;go('projects');toast('รีเซ็ตข้อมูลแล้ว');}
+  else if(a==='repairBilling'){var rr=(yield safeRepairBilling(''));if(rr){render();if(rr.created||rr.updated)toast('ซ่อมแล้ว: เชื่อมใหม่ '+rr.created+' · ปรับยอดค้างรับ '+rr.updated);else toast('ไม่มีรายการที่ซ่อมอัตโนมัติได้อย่างปลอดภัย');}}
   else if(a==='settings'){U.appMenu=false;U.sheet={kind:'settings'};U.confirm=null;render();}
   else if(a==='procurementInfo'){toast('ขออนุมัติใช้วัสดุพร้อมฐานข้อมูลแล้ว · กำลังเปิดหน้ารายการในขั้นถัดไป');}
-  else if(a==='bizType'){settingsFormCapture();S.business=S.business||{};S.business.businessType=v;if(!persist())return;render();}
-  else if(a==='bizVat'){settingsFormCapture();S.business=S.business||{};S.business.vatRegistered=v==='1';if(!persist())return;render();}
-  else if(a==='cloudflareFreshDismiss'){S.ui=S.ui||{};S.ui.cloudflareFreshDismissed=true;if(!persist({metaOnly:true}))return;render();toast('เริ่มใช้งานใหม่บน Cloudflare · ข้อมูลเว็บเดิมยังไม่ถูกลบ');}
+  else if(a==='bizType'){settingsFormCapture();S.business=S.business||{};S.business.businessType=v;if(!(yield persist()))return;render();}
+  else if(a==='bizVat'){settingsFormCapture();S.business=S.business||{};S.business.vatRegistered=v==='1';if(!(yield persist()))return;render();}
+  else if(a==='cloudflareFreshDismiss'){S.ui=S.ui||{};S.ui.cloudflareFreshDismissed=true;if(!(yield persist({metaOnly:true})))return;render();toast('เริ่มใช้งานใหม่บน Cloudflare · ข้อมูลเว็บเดิมยังไม่ถูกลบ');}
   else if(a==='deploymentStatusOpen'){U.sheet={kind:'deploymentStatus'};render();}
-  else if(a==='reliabilityCheck'){toast('กำลังตรวจ storage / IndexedDB / PWA guards…');reliabilitySelfCheck().then(function(x){S.ops=S.ops||{};S.ops.reliability=x;persist({metaOnly:true});render();toast(x.ok?'Reliability Self-Check ผ่าน':'Reliability Self-Check พบจุดต้องตรวจ');}).catch(function(){toast('Reliability Self-Check ไม่สำเร็จ');});}
-  else if(a==='disasterRecoveryCheck'){toast('กำลังรัน Disaster Recovery Certification…');disasterRecoverySelfCheck().then(function(x){S.ops=S.ops||{};S.ops.disasterRecovery=x;S.ops.reliability={at:x.at,ok:!!(x.localStorage&&x.indexedDB&&x.serviceWorker&&x.pwaGuard&&x.conflictGuard),localStorage:x.localStorage,indexedDB:x.indexedDB,serviceWorker:x.serviceWorker,pwaGuard:x.pwaGuard,conflictGuard:x.conflictGuard};persist({metaOnly:true});U.sheet={kind:'disasterRecoveryStatus'};render();toast(x.ok?'Disaster Recovery Certification ผ่าน':'Disaster Recovery พบจุดต้องตรวจ');}).catch(function(){toast('Disaster Recovery Certification ไม่สำเร็จ');});}
+  else if(a==='reliabilityCheck'){toast('กำลังตรวจ storage / IndexedDB / PWA guards…');reliabilitySelfCheck().then(function(x){return storageRun((function*(){S.ops=S.ops||{};S.ops.reliability=x;(yield persist({metaOnly:true}));render();toast(x.ok?'Reliability Self-Check ผ่าน':'Reliability Self-Check พบจุดต้องตรวจ');}).apply(this,arguments));}).catch(function(){toast('Reliability Self-Check ไม่สำเร็จ');});}
+  else if(a==='disasterRecoveryCheck'){toast('กำลังรัน Disaster Recovery Certification…');disasterRecoverySelfCheck().then(function(x){return storageRun((function*(){S.ops=S.ops||{};S.ops.disasterRecovery=x;S.ops.reliability={at:x.at,ok:!!(x.localStorage&&x.indexedDB&&x.serviceWorker&&x.pwaGuard&&x.conflictGuard),localStorage:x.localStorage,indexedDB:x.indexedDB,serviceWorker:x.serviceWorker,pwaGuard:x.pwaGuard,conflictGuard:x.conflictGuard};(yield persist({metaOnly:true}));U.sheet={kind:'disasterRecoveryStatus'};render();toast(x.ok?'Disaster Recovery Certification ผ่าน':'Disaster Recovery พบจุดต้องตรวจ');}).apply(this,arguments));}).catch(function(){toast('Disaster Recovery Certification ไม่สำเร็จ');});}
   else if(a==='releaseCheck'){var rg=releaseReadiness(U.month||today().slice(0,7));if(rg.ok)toast('Release Gate v'+rg.version+' / '+String(rg.channel||'').toUpperCase()+' ผ่าน');else toast('Release Gate ยังไม่ผ่าน '+rg.issues.length+' จุด · '+rg.issues.slice(0,2).join(' · '));}
   else if(a==='cutoverCheck'){var cg=cutoverReadiness(U.month||today().slice(0,7));if(cg.ok)toast('RC2 Cutover Gate ผ่าน');else toast('RC2 Cutover ยังไม่พร้อม '+cg.issues.length+' จุด · '+cg.issues.slice(0,2).join(' · '));}
   else if(a==='productionCandidateCheck'){var pg=productionCandidateReadiness(U.month||today().slice(0,7));U.sheet={kind:'productionCandidate'};render();toast(pg.ok?'RC2 Production Candidate ผ่านทุก gate':'RC2 ยังมี '+pg.issues.length+' blocker');}
   else if(a==='migrationCheck'){var mr=hostMigrationReadiness();if(!mr.health.ok){toast('ยังไม่พร้อม · Data Health พบ '+mr.health.totalIssues+' จุด');return;}if(!mr.storageOk){toast('ยังไม่พร้อม · Storage มี conflict/read/mirror issue');return;}if(!mr.backupFresh){toast('ยังไม่พร้อม · ข้อมูลเปลี่ยนหลัง backup กรุณาสำรองใหม่');return;}var cfg=aiGatewayConfig();if(cfg.mode==='gateway'&&cfg.remoteOcrConsent){aiGatewayReadiness().then(function(x){toast(x.ok?'พร้อมย้าย Host และ Gateway พร้อม':'ข้อมูลพร้อมย้าย · Gateway ยังไม่พร้อม (Local OCR ยังใช้ได้)');}).catch(function(){toast('ข้อมูลพร้อมย้าย · ตรวจ Gateway ไม่สำเร็จ แต่ Local OCR ยังใช้ได้');});}else toast('ข้อมูลพร้อมย้าย Host · backup revision '+mr.revision+' ตรงกับข้อมูลปัจจุบัน');}
-  else if(a==='aiMode'){S.ai=S.ai||{};var nextAiMode=v==='gateway'?'gateway':'local';if(nextAiMode==='local')aiGatewayRevokeConsent();S.ai.mode=nextAiMode;if(!persist())return;render();}
-  else if(a==='aiConsent'){S.ai=S.ai||{};var envCfg=aiGatewayConfig();if(envCfg.appEnvironment==='production'&&envCfg.gatewayEnvironment==='staging'){aiGatewayRevokeConsent();render();toast('Production app ห้ามเปิด Remote OCR ผ่าน Staging Gateway');return;}if(aiGatewayConfig().remoteOcrConsent){aiGatewayRevokeConsent();if(!persist())return;render();toast('ปิด Remote OCR แล้ว · ใช้ Local OCR');return;}aiGatewayRevokeConsent();var requestedAiBase=aiGatewayBase()||aiGatewaySuggestedBase();toast('กำลังตรวจ Gateway readiness…');aiGatewayReadiness().then(function(x){var d=x.data||{},currentAiBase=aiGatewayBase()||aiGatewaySuggestedBase();if(!x.ok){aiGatewayRevokeConsent();if(x.identityOk===false)toast('ยังไม่เปิด Remote OCR · Gateway identity/protocol ไม่ตรง AREA Ledger');else if(d.providerConfigured===false)toast('ยังไม่เปิด Remote OCR · เหลือ Gemini API secret');else if(d.durableState===false)toast('ยังไม่เปิด Remote OCR · Durable Object ยังไม่พร้อม');else toast('ยังไม่เปิด Remote OCR · Gateway readiness ไม่ผ่าน');render();return;}if(!x.base||x.base!==requestedAiBase||currentAiBase!==requestedAiBase){aiGatewayRevokeConsent();render();toast('ยังไม่เปิด Remote OCR · Gateway เปลี่ยนระหว่างตรวจ กรุณายืนยันใหม่');return;}S.ai.endpoint=x.base;S.ai.remoteOcrConsentBase=x.base;S.ai.remoteOcrConsent=true;if(!persist()){aiGatewayRevokeConsent();return;}render();toast('เปิด Remote OCR แล้ว · ผูกกับ Gateway ที่ตรวจผ่านแล้ว');}).catch(function(){aiGatewayRevokeConsent();render();toast('ยังไม่เปิด Remote OCR · ตรวจ Gateway ไม่สำเร็จ');});}
-  else if(a==='aiUseStaging'){S.ai=S.ai||{};var targetAiBase=aiGatewayStagingBase(),oldAiBase=aiGatewayBase();if(oldAiBase!==targetAiBase)aiGatewayRevokeConsent();S.ai.mode='gateway';S.ai.endpoint=targetAiBase;if(!persist())return;render();toast('ตั้ง Staging Gateway แล้ว · ต้องตรวจ readiness และยืนยันใหม่');}
-  else if(a==='aiUseProduction'){S.ai=S.ai||{};var targetProdBase=aiGatewayProductionBase(),oldProdBase=aiGatewayBase();if(oldProdBase!==targetProdBase)aiGatewayRevokeConsent();S.ai.mode='gateway';S.ai.endpoint=targetProdBase;if(!persist())return;render();toast('ตั้ง Production Gateway แล้ว · ต้องตรวจ readiness และยืนยันใหม่');}
+  else if(a==='aiMode'){S.ai=S.ai||{};var nextAiMode=v==='gateway'?'gateway':'local';if(nextAiMode==='local')aiGatewayRevokeConsent();S.ai.mode=nextAiMode;if(!(yield persist()))return;render();}
+  else if(a==='aiConsent'){S.ai=S.ai||{};var envCfg=aiGatewayConfig();if(envCfg.appEnvironment==='production'&&envCfg.gatewayEnvironment==='staging'){aiGatewayRevokeConsent();render();toast('Production app ห้ามเปิด Remote OCR ผ่าน Staging Gateway');return;}if(aiGatewayConfig().remoteOcrConsent){aiGatewayRevokeConsent();if(!(yield persist()))return;render();toast('ปิด Remote OCR แล้ว · ใช้ Local OCR');return;}aiGatewayRevokeConsent();var requestedAiBase=aiGatewayBase()||aiGatewaySuggestedBase();toast('กำลังตรวจ Gateway readiness…');aiGatewayReadiness().then(function(x){return storageRun((function*(){var d=x.data||{},currentAiBase=aiGatewayBase()||aiGatewaySuggestedBase();if(!x.ok){aiGatewayRevokeConsent();if(x.identityOk===false)toast('ยังไม่เปิด Remote OCR · Gateway identity/protocol ไม่ตรง AREA Ledger');else if(d.providerConfigured===false)toast('ยังไม่เปิด Remote OCR · เหลือ Gemini API secret');else if(d.durableState===false)toast('ยังไม่เปิด Remote OCR · Durable Object ยังไม่พร้อม');else toast('ยังไม่เปิด Remote OCR · Gateway readiness ไม่ผ่าน');render();return;}if(!x.base||x.base!==requestedAiBase||currentAiBase!==requestedAiBase){aiGatewayRevokeConsent();render();toast('ยังไม่เปิด Remote OCR · Gateway เปลี่ยนระหว่างตรวจ กรุณายืนยันใหม่');return;}S.ai.endpoint=x.base;S.ai.remoteOcrConsentBase=x.base;S.ai.remoteOcrConsent=true;if(!(yield persist())){aiGatewayRevokeConsent();return;}render();toast('เปิด Remote OCR แล้ว · ผูกกับ Gateway ที่ตรวจผ่านแล้ว');}).apply(this,arguments));}).catch(function(){aiGatewayRevokeConsent();render();toast('ยังไม่เปิด Remote OCR · ตรวจ Gateway ไม่สำเร็จ');});}
+  else if(a==='aiUseStaging'){S.ai=S.ai||{};var targetAiBase=aiGatewayStagingBase(),oldAiBase=aiGatewayBase();if(oldAiBase!==targetAiBase)aiGatewayRevokeConsent();S.ai.mode='gateway';S.ai.endpoint=targetAiBase;if(!(yield persist()))return;render();toast('ตั้ง Staging Gateway แล้ว · ต้องตรวจ readiness และยืนยันใหม่');}
+  else if(a==='aiUseProduction'){S.ai=S.ai||{};var targetProdBase=aiGatewayProductionBase(),oldProdBase=aiGatewayBase();if(oldProdBase!==targetProdBase)aiGatewayRevokeConsent();S.ai.mode='gateway';S.ai.endpoint=targetProdBase;if(!(yield persist()))return;render();toast('ตั้ง Production Gateway แล้ว · ต้องตรวจ readiness และยืนยันใหม่');}
   else if(a==='copyAppOrigin'){var origin=location.origin,done=false;try{var tmp=document.createElement('textarea');tmp.value=origin;tmp.style.position='fixed';tmp.style.opacity='0';document.body.appendChild(tmp);tmp.focus();tmp.select();done=document.execCommand('copy');tmp.remove();}catch(_){done=false;}if(!done&&navigator.clipboard)navigator.clipboard.writeText(origin).then(function(){toast('คัดลอก Origin แล้ว');},function(){toast(origin);});else toast(done?'คัดลอก Origin แล้ว':origin);}
   else if(a==='aiCheckReady'){aiGatewayReadiness().then(function(x){var d=x.data||{};if(x.ok)toast('Gateway พร้อมใช้งาน · AREA Ledger protocol '+(d.protocol||'?'));else if(x.identityOk===false)toast('Gateway identity/protocol ไม่ตรง AREA Ledger');else if(d.providerConfigured===false)toast('Gateway ทำงานแล้ว · เหลือ Gemini API secret');else if(d.durableState===false)toast('Gateway ยังขาด Durable Object');else toast('Gateway ยังไม่พร้อม · HTTP '+x.status);}).catch(function(){toast('ตรวจ Gateway ไม่สำเร็จ · ใช้ Local OCR ต่อได้');});}
-  else if(a==='aiSmokeTest'){toast('กำลังทดสอบ Cloudflare…');aiGatewaySmokeCheck().then(function(x){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:x.base||'',ok:!!x.ok,healthStatus:+x.health.status||0,readyStatus:+x.ready.status||0,identityOk:x.ready.identityOk===true,componentsOk:x.ready.componentsOk===true,sameBase:!!x.sameBase};persist({metaOnly:true});render();if(x.ok)toast('Cloudflare smoke ผ่าน · บันทึก live evidence แล้ว');else if(!x.health.ok)toast('Cloudflare smoke ไม่ผ่านที่ /health');else if(!x.ready.ok)toast('Cloudflare smoke ไม่ผ่านที่ /ready');else toast('Cloudflare smoke ไม่ผ่าน · endpoint ไม่ตรงกัน');}).catch(function(){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:aiGatewayBase()||aiGatewaySuggestedBase(),ok:false,error:'NETWORK_OR_FETCH'};persist({metaOnly:true});render();toast('Cloudflare smoke ล้มเหลว · ยังใช้ Local OCR ได้');});}
+  else if(a==='aiSmokeTest'){toast('กำลังทดสอบ Cloudflare…');aiGatewaySmokeCheck().then(function(x){return storageRun((function*(){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:x.base||'',ok:!!x.ok,healthStatus:+x.health.status||0,readyStatus:+x.ready.status||0,identityOk:x.ready.identityOk===true,componentsOk:x.ready.componentsOk===true,sameBase:!!x.sameBase};(yield persist({metaOnly:true}));render();if(x.ok)toast('Cloudflare smoke ผ่าน · บันทึก live evidence แล้ว');else if(!x.health.ok)toast('Cloudflare smoke ไม่ผ่านที่ /health');else if(!x.ready.ok)toast('Cloudflare smoke ไม่ผ่านที่ /ready');else toast('Cloudflare smoke ไม่ผ่าน · endpoint ไม่ตรงกัน');}).apply(this,arguments));}).catch(function(){return storageRun((function*(){S.ops=S.ops||{};S.ops.cloudflareSmoke={at:Date.now(),base:aiGatewayBase()||aiGatewaySuggestedBase(),ok:false,error:'NETWORK_OR_FETCH'};(yield persist({metaOnly:true}));render();toast('Cloudflare smoke ล้มเหลว · ยังใช้ Local OCR ได้');}).apply(this,arguments));});}
   else if(a==='openGatewayHealth'){var base=aiGatewayBase()||aiGatewaySuggestedBase();var health=base+'/health';try{window.open(health,'_blank','noopener');}catch(_){location.href=health;}}
-  else if(a==='viewMode'){settingsFormCapture();S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!persist())return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
-  else if(a==='wallpaper'){settingsFormCapture();S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!persist())return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
+  else if(a==='viewMode'){settingsFormCapture();S.ui=S.ui||{};S.ui.viewMode=v==='desktop'?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',S.ui.viewMode);if(!(yield persist()))return;render();toast(S.ui.viewMode==='desktop'?'โหมดเดสท็อป':'โหมดโมบาย');}
+  else if(a==='wallpaper'){settingsFormCapture();S.ui=S.ui||{};S.ui.wallpaper=v==='1';if(!(yield persist()))return;render();toast(S.ui.wallpaper?'เปิดพื้นหลังแอพแล้ว':'ปิดพื้นหลังแอพแล้ว');}
   else if(a==='newQuote'){U.appMenu=false;U.quoteItemCount=1;U.quoteAttachment='';U.sheet={kind:'quote',id:null};render();}
   else if(a==='quoteAddItem'){U.quoteItemCount=Math.min(8,(U.quoteItemCount||1)+1);render();}
   else if(a==='quoteRemoveItem'){U.quoteItemCount=Math.max(1,(U.quoteItemCount||1)-1);render();}
@@ -9778,7 +9802,7 @@ document.addEventListener('click',function(e){
   else if(a==='docView'){U.docKind=el.dataset.kind||'quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
   else if(a==='editDoc'){var editKind=el.dataset.kind||'bill',ed=(docCollection(editKind)||[]).find(function(x){return x.id===id;});if(editKind==='bill'&&ed&&billHasSettlement(ed)){toast('ใบวางบิลนี้มีการรับเงินแล้ว ไม่สามารถแก้ยอดย้อนหลังได้');return;}if(ed&&ed.pid)U.docProjectPid=ed.pid;U.sheet={kind:'bizdoc',docKind:editKind,id:id};render();}
   else if(a==='billPay'){var bp0=(S.bills||[]).find(function(x){return x.id===id;});if(!bp0)return;var sm0=billPaymentSummary(bp0);if(sm0.remain<=0){toast('ใบวางบิลนี้รับเงินครบแล้ว');return;}U.sheet={kind:'billPay',id:id};render();return;}
-  else if(a==='saveBillPayment'){if(U.saveLock){toast('กำลังบันทึกรับเงิน กรุณารอสักครู่');return;}var bp1=(S.bills||[]).find(function(x){return x.id===id;});if(!bp1){toast('ไม่พบใบวางบิล');return;}var sm1=billPaymentSummary(bp1),amt1=Math.round((parseFloat((document.getElementById('payAmount')||{}).value)||0)*100)/100,date1=(document.getElementById('payDate')||{}).value||today(),method1=(document.getElementById('payMethod')||{}).value||'transfer';if(!(amt1>0)){toast('กรอกจำนวนเงินที่รับ');return;}if(isPeriodClosed(date1)){toast('งวด '+periodKey(date1)+' ปิดบัญชีแล้ว');return;}if(amt1-sm1.remain>.01){toast('รับเงินเกินยอดคงเหลือไม่ได้');return;}var rc=paymentReceiptFromBill(bp1,amt1,date1),taxErr1=taxDocValidate('receipt',rc);if(taxErr1){toast(taxErr1);return;}var paySig=[bp1.id,date1,amt1,method1].join('|'),recentPay=(S.receipts||[]).some(function(r){return r.sourceId===bp1.id&&r.paymentSig===paySig;});if(recentPay){toast('รายการรับเงินนี้ถูกบันทึกแล้ว');return;}rc.paymentSig=paySig;rc.createdAt=Date.now();rc.updatedAt=rc.createdAt;U.saveLock=true;var snap=JSON.parse(JSON.stringify(S));S.receipts.push(rc);settleBillReceivable(bp1,rc,amt1,method1,date1);accountingAudit('bill-payment','bill',bp1.id,null,{amount:amt1,date:date1,receiptId:rc.id},'รับชำระและออกใบเสร็จ');if(!persist()){S=snap;U.saveLock=false;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.saveLock=false;U.sheet=null;U.docKind='receipt';U.docId=rc.id;go('quoteprint');toast('บันทึกรับเงิน '+fmt(amt1,1)+' และออกใบเสร็จแล้ว');return;}
+  else if(a==='saveBillPayment'){if(U.saveLock){toast('กำลังบันทึกรับเงิน กรุณารอสักครู่');return;}var bp1=(S.bills||[]).find(function(x){return x.id===id;});if(!bp1){toast('ไม่พบใบวางบิล');return;}var sm1=billPaymentSummary(bp1),amt1=Math.round((parseFloat((document.getElementById('payAmount')||{}).value)||0)*100)/100,date1=(document.getElementById('payDate')||{}).value||today(),method1=(document.getElementById('payMethod')||{}).value||'transfer';if(!(amt1>0)){toast('กรอกจำนวนเงินที่รับ');return;}if(isPeriodClosed(date1)){toast('งวด '+periodKey(date1)+' ปิดบัญชีแล้ว');return;}if(amt1-sm1.remain>.01){toast('รับเงินเกินยอดคงเหลือไม่ได้');return;}var rc=paymentReceiptFromBill(bp1,amt1,date1),taxErr1=taxDocValidate('receipt',rc);if(taxErr1){toast(taxErr1);return;}var paySig=[bp1.id,date1,amt1,method1].join('|'),recentPay=(S.receipts||[]).some(function(r){return r.sourceId===bp1.id&&r.paymentSig===paySig;});if(recentPay){toast('รายการรับเงินนี้ถูกบันทึกแล้ว');return;}rc.paymentSig=paySig;rc.createdAt=Date.now();rc.updatedAt=rc.createdAt;U.saveLock=true;var snap=JSON.parse(JSON.stringify(S));S.receipts.push(rc);settleBillReceivable(bp1,rc,amt1,method1,date1);accountingAudit('bill-payment','bill',bp1.id,null,{amount:amt1,date:date1,receiptId:rc.id},'รับชำระและออกใบเสร็จ');if(!(yield persist())){S=snap;U.saveLock=false;toast('บันทึกไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.saveLock=false;U.sheet=null;U.docKind='receipt';U.docId=rc.id;go('quoteprint');toast('บันทึกรับเงิน '+fmt(amt1,1)+' และออกใบเสร็จแล้ว');return;}
   else if(a==='convertDoc'){
     var target=el.dataset.kind,sourceKind=U.docKind||'quote',src=(docCollection(sourceKind)||[]).find(function(x){return x.id===id;});if(!src){toast('ไม่พบเอกสารต้นทาง');return;}
     if(target==='receipt'&&sourceKind!=='bill'){toast('ใบเสร็จต้องสร้างจากใบวางบิล เพื่อเชื่อมการรับเงินจริงให้ถูกต้อง');return;}
@@ -9791,7 +9815,7 @@ document.addEventListener('click',function(e){
     if(target==='receipt'){
       settleBillReceivable(src,d);
     }
-    if(!persist()){list.splice(list.indexOf(d),1);toast('สร้างเอกสารไม่สำเร็จ กรุณาลองใหม่');return;}U.docKind=target;U.docId=d.id;U.sheet=null;go('quoteprint');toast(target==='bill'?'สร้างใบวางบิลแล้ว':'บันทึกรับเงินและสร้างใบเสร็จแล้ว');
+    if(!(yield persist())){list.splice(list.indexOf(d),1);toast('สร้างเอกสารไม่สำเร็จ กรุณาลองใหม่');return;}U.docKind=target;U.docId=d.id;U.sheet=null;go('quoteprint');toast(target==='bill'?'สร้างใบวางบิลแล้ว':'บันทึกรับเงินและสร้างใบเสร็จแล้ว');
   }
   else if(a==='saveBizDoc'){
     var kind=el.dataset.kind||'bill',list=docCollection(kind),items=[0,1,2].map(function(i){var ld=document.getElementById('dlineDisc'+i);return {description:document.getElementById('ddesc'+i).value.trim(),qty:parseFloat(document.getElementById('dqty'+i).value)||0,unit:document.getElementById('dunit'+i).value.trim()||'งาน',unitPrice:parseFloat(document.getElementById('dprice'+i).value)||0,discount:Math.max(0,parseFloat(ld&&ld.value)||0)};}).filter(function(x){return x.description;});
@@ -9802,7 +9826,7 @@ document.addEventListener('click',function(e){
     var snapDoc=JSON.parse(JSON.stringify(S)),di=list.findIndex(function(x){return x.id===d.id;});if(di>-1)list[di]=d;else list.push(d);
     if(kind==='bill')syncBillReceivable(d);
     accountingAudit(oldDoc?'document-edit':'document-create',kind,d.id,oldDoc||null,d,'');
-    if(!persist()){S=snapDoc;toast('บันทึกเอกสารไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.docKind=kind;U.docId=d.id;go('quoteprint');toast('บันทึก'+docTitle(kind)[0]+'แล้ว');
+    if(!(yield persist())){S=snapDoc;toast('บันทึกเอกสารไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.docKind=kind;U.docId=d.id;go('quoteprint');toast('บันทึก'+docTitle(kind)[0]+'แล้ว');
   }
   else if(a==='quoteView'){U.docKind='quote';U.docId=id;U.quoteId=id;U.sheet=null;go('quoteprint');}
   else if(a==='editQuote'){var eq=(S.quotes||[]).find(function(x){return x.id===id;});if(eq&&eq.pid)U.docProjectPid=eq.pid;U.quoteItemCount=Math.max(1,docItems(eq||{}).length);U.quoteAttachment=eq&&eq.attachment||'';U.sheet={kind:'quote',id:id};render();}
@@ -9822,15 +9846,15 @@ document.addEventListener('click',function(e){
     if((S.quotes||[]).some(function(x){return x.id!==q.id&&String(x.no||'').trim().toUpperCase()===String(q.no||'').trim().toUpperCase();})){toast('เลขใบเสนอราคาซ้ำ กรุณาใช้เลขใหม่');return;}
     var qix=(S.quotes||[]).findIndex(function(x){return x.id===q.id;});if(qix>-1)S.quotes[qix]=q;else S.quotes.push(q);
     U.quoteAttachment='';U.quoteItemCount=1;
-    if(!persist())return;U.sheet=null;U.docKind='quote';U.docId=q.id;U.quoteId=q.id;go('quoteprint');toast('บันทึกใบเสนอราคาแล้ว');
+    if(!(yield persist()))return;U.sheet=null;U.docKind='quote';U.docId=q.id;U.quoteId=q.id;go('quoteprint');toast('บันทึกใบเสนอราคาแล้ว');
   }
-  else if(a==='role'){S.role=v;if(!persist())return;U.view=v==='foreman'?'list':'home';render();}
+  else if(a==='role'){S.role=v;if(!(yield persist()))return;U.view=v==='foreman'?'list':'home';render();}
   else if(a==='saveOpen'){
     var aiEndpointEl=document.getElementById('aiEndpoint'),aiEndpointNext=aiEndpointEl?aiEndpointEl.value.trim():String((S.ai&&S.ai.endpoint)||''),aiBaseNext=aiGatewayNormalizeBase(aiEndpointNext),aiBasePrev=aiGatewayBase();if(aiEndpointNext&&!aiBaseNext){toast('Gateway endpoint ไม่ถูกต้อง · ใช้ HTTPS และห้ามมี user/password/query/hash');return;}
     S.opening=parseFloat(document.getElementById('op').value)||0;S.openCash=parseFloat(document.getElementById('opc').value)||0;S.bank=document.getElementById('bnk').value.trim();S.brand=document.getElementById('brn').value.trim()||'AREA MAIBAB';
     S.business=S.business||{};S.business.legalName=document.getElementById('blegal').value.trim();S.business.legalNameEn=document.getElementById('blegalen').value.trim();S.business.taxId=document.getElementById('btax').value.trim();S.business.phone=document.getElementById('bphone').value.trim();S.business.email=document.getElementById('bemail').value.trim();S.business.address=document.getElementById('baddr').value.trim();S.business.addressEn=document.getElementById('baddren').value.trim();S.business.branch=document.getElementById('bbranch').value;
     S.ai=S.ai||{};S.ai.endpoint=aiEndpointNext;var ait=Number((document.getElementById('aiTimeout')||{}).value);S.ai.timeoutMs=Math.max(5000,Math.min(45000,isFinite(ait)&&ait?ait:45000));if(aiBasePrev!==aiBaseNext)aiGatewayRevokeConsent();
-    if(!persist())return;U.sheet=null;render();toast('บันทึกข้อมูลบริษัทและ Gateway แล้ว');
+    if(!(yield persist()))return;U.sheet=null;render();toast('บันทึกข้อมูลบริษัทและ Gateway แล้ว');
   }
   else if(a==='mprev'){U.month=shiftMonth(U.month,-1);render();}
   else if(a==='mnext'){U.month=shiftMonth(U.month,1);render();}
@@ -9841,7 +9865,7 @@ document.addEventListener('click',function(e){
     if(!done&&navigator.clipboard){navigator.clipboard.writeText(box.value).then(function(){toast('คัดลอกแล้ว');},function(){toast('แตะค้างที่ข้อความแล้วเลือกคัดลอก');});}
     else toast(done?'คัดลอกแล้ว':'แตะค้างที่ข้อความแล้วเลือกคัดลอก');
   }
-});
+}).apply(this,arguments));});
 function quoteFormCalc(){
   if(!document.getElementById('qformTotal'))return;
   var c=Math.max(1,Math.min(8,U.quoteItemCount||1)),sub=0;
@@ -9927,11 +9951,11 @@ async function txRecoverQuota(d,more){
     var reclaimed=await storageArchiveRecoveryCopy(unchanged);
     if(!unchanged())throw Error('ร่างเปลี่ยนระหว่างเตรียมพื้นที่ กรุณาตรวจแล้วบันทึกใหม่');
     U.saveLock=false;
-    if(reclaimed){saveTx(more,true);return;}
+    if(reclaimed){(await saveTx(more,true));return;}
     txSaveFailure(d,expenseBatchSaveMessage());
   }catch(e){U.saveLock=false;txSaveFailure(d,String(e.message||'เตรียมพื้นที่ไม่สำเร็จ')+' · ร่างและข้อมูลเดิมยังอยู่');}
 }
-function saveTx(more,quotaRetried){
+function saveTx(more,quotaRetried){return storageRun((function*(){
   if(S.role!=='owner'&&U.draft&&(U.draft.id||U.draft.type!=='out')){toast('หัวหน้าไซต์เพิ่มรายจ่ายใหม่ได้เท่านั้น');return;}
   if(U.expenseVoiceRecognition||U.expenseVoiceEnding){toast('กำลังรับผลเสียง · รออ่านเสียงเสร็จก่อนบันทึก');return;}
   if(U.saveLock){toast('กำลังบันทึก กรุณารอสักครู่');return;}
@@ -9948,7 +9972,7 @@ function saveTx(more,quotaRetried){
   if(idx>-1)S.tx[idx]=t;else S.tx.push(t);
   S.last={pid:d.pid,cat:(S.last&&S.last.cat)||CAT_OUT[0],pay:(d.paid?d.pay:(S.last&&S.last.pay))||'transfer'};if(d.type==='out')S.last.cat=d.cat;
   accountingAudit(idx>-1?'tx-edit':'tx-create','tx',t.id,prev,t,'');
-  if(!persist()){if(idx>-1)S.tx[idx]=prev;else S.tx=S.tx.filter(function(x){return x.id!==t.id;});S.last=prevLast;S.auditLog=prevAudit;U.saveLock=false;if(!quotaRetried&&U.storageWriteError==='quota'){txRecoverQuota(d,more);return;}txSaveFailure(d,expenseBatchSaveMessage());return;}
+  if(!(yield persist())){if(idx>-1)S.tx[idx]=prev;else S.tx=S.tx.filter(function(x){return x.id!==t.id;});S.last=prevLast;S.auditLog=prevAudit;U.saveLock=false;if(!quotaRetried&&U.storageWriteError==='quota'){txRecoverQuota(d,more);return;}txSaveFailure(d,expenseBatchSaveMessage());return;}
   U.saveLock=false;U.lastSaveSig=txFingerprint(t);U.lastSaveAt=Date.now();if(d.photoDeleteRef&&cloudSyncEnabled())cloudFileDelete(d.photoDeleteRef);if(t.photo&&cloudSyncEnabled())cloudOffloadOneTxPhoto(t.id,true).then(function(ok){if(ok)render();});
   var was=d.id,returnView=U.from;U.draft=null;
   if(more&&!was){U.draft=newDraft(d.type,d.pid);U.draft.cat=d.cat;U.draft.date=d.date;render();window.scrollTo(0,0);focusAmt();toast('บันทึกแล้ว เพิ่มรายการต่อได้เลย');return;}
@@ -9959,7 +9983,7 @@ function saveTx(more,quotaRetried){
   else if(returnView==='home')go('home');
   else go('list');
   toast(was?'บันทึกการแก้ไขแล้ว':'บันทึกรายการแล้ว');
-}
+}).apply(this,arguments));}
 window.addEventListener('storage',function(e){if(e&&e.key===KEY&&committedState&&e.newValue!==committedState){U.storageConflict=true;toast('ข้อมูลถูกอัปเดตจากอีกแท็บ · การบันทึกในแท็บนี้ถูกพักจนกว่าจะโหลดใหม่');}});
 window.addEventListener('error',function(e){try{console.error('AREA Ledger runtime error',e.error||e.message);}catch(x){}});
 window.addEventListener('unhandledrejection',function(e){try{console.error('AREA Ledger promise rejection',e.reason);}catch(x){}});
@@ -9967,16 +9991,16 @@ function boot(){
   try{var gq=new URLSearchParams(location.search);if(gq.get('google')==='connected'){U.googleOauthReturned=true;var cleanUrl=location.origin+location.pathname+location.hash;history.replaceState(history.state||{},'',cleanUrl);}}catch(_){}
   try{var hp=localStorage.getItem('area-ledger-home-pid');if(hp)U.homePid=hp;}catch(err){}
   var done=false;
-  function start(o){
+  function start(o){return storageRun((function*(){
     if(done)return;done=true;
-    var ls=loadLS(),best=ls;
+    var ls=primaryActive?null:loadLS(),best=ls;
     if(o&&(!ls||(o.updatedAt||0)>(ls.updatedAt||0)))best=o;
     if(best){
       S=best;
       /* Keep the exact localStorage bytes when localStorage wins. loadLS()
          migrates a copy, so using migrated JSON as the concurrency baseline
          would falsely look like an external-tab edit on the first save. */
-      committedState=storageCommitBaseline(best,ls);
+      committedState=primaryActive?JSON.stringify(best):storageCommitBaseline(best,ls);
     }
     if(!best&&U.storageReadBlocked){render();toast('อ่านข้อมูลเดิมไม่สำเร็จ · หยุดการบันทึกเพื่อรักษาข้อมูล กรุณาเปิดแอปใหม่หรือใช้ข้อมูลสำรอง');return;}
     /* v441 Cloudflare-only: never synthesize a partial accounting database on a fresh origin.
@@ -10004,10 +10028,10 @@ function boot(){
     expenseBatchDraftLoad();
     mirrorQueue=mirrorQueue.catch(function(){}).then(function(){return storageCompactRecovery();});
     var googlePending=false;try{googlePending=sessionStorage.getItem('area-ledger-google-return-pid')!==null;}catch(_){}if(U.googleOauthReturned||googlePending){U.googleOauthReturned=false;googleWorkspaceResume();}
-    if(best&&best===o&&o!==ls)persist({recovery:true});
+    if(!primaryActive&&best&&best===o&&o!==ls)(yield persist({recovery:true}));
     try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
-  }
-  Promise.all([idbGet(),idbRead('state-backup')]).then(function(vals){var primary=null,backup=null;try{primary=vals[0]?migrate(JSON.parse(vals[0])):null;}catch(e){U.storageReadBlocked=true;}try{backup=vals[1]?migrate(JSON.parse(vals[1])):null;}catch(e){U.storageReadBlocked=true;}var local=loadLS(),recovery=loadRecovery(),best=primary;if(local&&(!best||(local.updatedAt||0)>(best.updatedAt||0)))best=local;if(recovery&&(!best||(recovery.updatedAt||0)>(best.updatedAt||0)))best=recovery;if(backup&&(!best||(backup.updatedAt||0)>(best.updatedAt||0)))best=backup;start(best);});
+  }).apply(this,arguments));}
+  primaryLoad().then(function(primary){return storageRun((function*(){if(primary){(yield start(primary));return;}return Promise.all([idbGet(),idbRead('state-backup')]).then(function(vals){return storageRun((function*(){var primary=null,backup=null;try{primary=vals[0]?migrate(JSON.parse(vals[0])):null;}catch(e){U.storageReadBlocked=true;}try{backup=vals[1]?migrate(JSON.parse(vals[1])):null;}catch(e){U.storageReadBlocked=true;}var local=loadLS(),recovery=loadRecovery(),best=primary;if(local&&(!best||(local.updatedAt||0)>(best.updatedAt||0)))best=local;if(recovery&&(!best||(recovery.updatedAt||0)>(best.updatedAt||0)))best=recovery;if(backup&&(!best||(backup.updatedAt||0)>(best.updatedAt||0)))best=backup;(yield start(best));}).apply(this,arguments));});}).apply(this,arguments));}).catch(function(){U.storageReadBlocked=true;committedState='';render();toast('อ่านพื้นที่จัดเก็บหลักไม่ได้ · หยุดบันทึกเพื่อรักษาข้อมูล กรุณาเปิดแอปใหม่ ไม่ต้องล้าง Safari');});
   /* Wait for bounded IndexedDB reads before deciding whether this is a new install. */
 }
 function pwaUpdatePanel(){
@@ -10027,7 +10051,7 @@ async function pwaCheckUpdate(){
   if(navigator.serviceWorker){var registration=await navigator.serviceWorker.getRegistration();if(registration)await registration.update();}
  }catch(e){U.pwaRemoteBuild=null;var failedLabel=document.getElementById('pwaRemoteBuild');if(failedLabel)failedLabel.textContent='ยังยืนยันไม่ได้';message('ยังตรวจเวอร์ชันไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่ ข้อมูลเดิมยังอยู่');}finally{clearTimeout(timer);U.pwaCheckBusy=false;}
 }
-function pwaCanReload(){var cleanAddDraft=!!U.draft&&U.view==='add'&&!draftDirty(),google=U.googleWorkspace||{};return !U.saveLock&&(!U.draft||cleanAddDraft)&&!U.boqImportBusy&&!U.expenseScanBusy&&!U.expenseBatchBusy&&!U.cloudSyncBusy&&!U.profilePostSaving&&!U.profilePhotoBusy&&!U.expenseVoiceRecognition&&!U.expenseVoiceEnding&&!google.loading&&!google.bulkSyncBusy&&!google.syncBusy&&!U.sheet;}
+function pwaCanReload(){var cleanAddDraft=!!U.draft&&U.view==='add'&&!draftDirty(),google=U.googleWorkspace||{};return !U.primaryWriteBusy&&!U.saveLock&&(!U.draft||cleanAddDraft)&&!U.boqImportBusy&&!U.expenseScanBusy&&!U.expenseBatchBusy&&!U.cloudSyncBusy&&!U.profilePostSaving&&!U.profilePhotoBusy&&!U.expenseVoiceRecognition&&!U.expenseVoiceEnding&&!google.loading&&!google.bulkSyncBusy&&!google.syncBusy&&!U.sheet;}
 
 function pwaApplyPendingUpdate(){if(!U.pwaUpdatePending||!pwaCanReload())return false;U.pwaUpdatePending=false;location.reload();return true;}
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
