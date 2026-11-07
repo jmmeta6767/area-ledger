@@ -50,6 +50,15 @@ jobs:
           node tests/workspace-ux-v1087.cjs
           node tests/full-system-ux.cjs
           QA_COLOR_SCHEME=dark QA_WIDTHS=390 LAYOUT_OUTPUT=layout-evidence/dark-os node tests/full-system-ux.cjs
+      - name: IndexedDB native durability gate (when primary storage is present)
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/layout-runtime/node_modules/playwright
+        run: |
+          if [ -f gateway/public/assets/ledger-primary-store.js ]; then
+            node tests/ledger-primary-store-browser.cjs
+          else
+            echo "Primary storage not yet integrated; existing iPhone layout gate remains unchanged."
+          fi
       - name: Upload before and after layout evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,6 +106,15 @@ jobs:
           node tests/storage-recovery-compaction.cjs
           node tests/profile-workspace-ux.cjs
           node tests/reliability-v1048.cjs
+      - name: IndexedDB application and commit-safety gate (when primary storage is present)
+        run: |
+          if [ -f gateway/public/assets/ledger-primary-store.js ]; then
+            node tests/ledger-primary-store.cjs
+            node tests/primary-app-integration.cjs
+            node tests/primary-await-audit.cjs
+          else
+            echo "Primary storage not yet integrated; existing regression gate remains unchanged."
+          fi
       - name: BOQ provenance regression
         run: node tests/boq-quality-provenance.cjs
       - name: Real document quality verifier regression
