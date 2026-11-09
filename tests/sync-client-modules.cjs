@@ -6,5 +6,10 @@ const source=fs.readFileSync('gateway/client/expense-review.js','utf8').trim();
 const pattern=/\/\* BEGIN expense-review module \*\/[\s\S]*?\/\* END expense-review module \*\//;
 assert(pattern.test(html),'embedded module missing');
 if(process.argv.includes('--write'))fs.writeFileSync(path,html.replace(pattern,source));
-else assert.equal(html.match(pattern)[0],source,'run node tests/sync-client-modules.cjs --write');
+else {
+  // Git checkouts may use CRLF or LF. Compare every source character except
+  // that transport-only difference; substantive module drift must still fail.
+  const lf=text=>text.replace(/\r\n/g,'\n');
+  assert.equal(lf(html.match(pattern)[0]),lf(source),'run node tests/sync-client-modules.cjs --write');
+}
 console.log('PASS expense-review module distribution matches maintained source');
