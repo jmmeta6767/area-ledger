@@ -318,6 +318,68 @@ test('v323 PWA acceptance checks secure runtime and service worker',()=>{assert.
 test('v324 rollback checkpoint preserves storage contract',()=>{const x=c.productionRollbackCheckpoint();assert.equal(x.schema.localStorageKey,'site-ledger-v1');assert.equal(x.schema.indexedDB,'site-ledger-db')});
 test('v325 accounting close certificate fails closed without close record',()=>{c.S.accountingPeriods=[];assert.equal(c.accountingCloseCertificate('2026-09').ok,false)});
 test('v326 daily cash bank control returns liquidity',()=>{assert.equal(typeof c.dailyCashBankControl().liquidity,'number')});
+
+reset();test('V12 submitted handover preserves project financials and does not start retention',()=>{
+ const p=c.S.projects[0];p.contract=495000;p.retAmt=24750;
+ const before=copy(p),ledger=copy(c.S.tx);
+ const form={stage:'submitted',submittedDate:'2026-11-20',letterNo:'SW-001/2569',recipient:'เทศบาล',evidenceRef:'ใบส่งงาน 001'};
+ const r=c.projectHandoverPlan(p,form);
+ assert.equal(r.ok,true);assert.equal(r.project.status,'active');assert(!r.project.deliveryDate);assert(!r.project.retDue);
+ assert.equal(r.project.handover.stage,'submitted');assert.deepEqual(copy(p),before);assert.deepEqual(copy(c.S.tx),ledger);
+ assert.equal(c.projectHandoverPlan(r.project,form).ok,false,'double submit blocked');
+});
+reset();test('V12 acceptance records date and calculates guarantee due two years later',()=>{
+ const p=c.S.projects[0];p.retAmt=24750;p.retDue='';
+ const form={stage:'accepted',submittedDate:'2026-11-20',acceptedDate:'2026-11-24',letterNo:'SW-001/2569',acceptedBy:'คณะกรรมการตรวจรับ'};
+ const r=c.projectHandoverPlan(p,form);assert.equal(r.ok,true);
+ assert.equal(r.project.status,'delivered');assert.equal(r.project.deliveryDate,'2026-11-24');assert.equal(r.project.retDue,'2028-11-24');
+ assert.equal(r.project.contract,p.contract);assert.equal(r.project.retAmt,24750);
+ p.retDue='2030-12-31';assert.equal(c.projectHandoverPlan(p,form).project.retDue,'2030-12-31','explicit due unchanged');
+});
+reset();test('V12 handover rejects missing letter, future or retrograde dates, closed projects',()=>{
+ const p=c.S.projects[0],form={stage:'accepted',submittedDate:'2026-11-20',acceptedDate:'2026-11-24',letterNo:'SW-002',acceptedBy:'กรรมการ'};
+ for(const x of [{letterNo:''},{submittedDate:'2099-01-01'},{acceptedDate:'2026-11-19'},{acceptedDate:'2099-01-01'},{acceptedBy:''}])
+   assert.equal(c.projectHandoverPlan(p,{...form,...x}).ok,false);
+ assert.equal(c.projectHandoverPlan({...p,status:'closed'},form).ok,false);
+});
+reset();test('V12 guarantee dates update only automatically derived unreturned cash guarantee',()=>{
+ c.S.guarantees=[
+  {id:'auto',pid:'p',type:'ประกันสัญญา',method:'เงินสด/โอน',dueDate:'',returned:false},
+  {id:'custom',pid:'p',type:'ประกันผลงาน',method:'เงินสด/โอน',dueDate:'2030-01-01',returned:false},
+  {id:'bank',pid:'p',type:'ประกันสัญญา',method:'หนังสือค้ำประกันธนาคาร',dueDate:'',returned:false},
+  {id:'other',pid:'q',type:'ประกันผลงาน',method:'เงินสด/โอน',dueDate:'',returned:false}
+ ];
+ assert.equal(c.projectHandoverSyncGuaranteeDue('p','','2028-11-24'),1);
+ assert.equal(c.S.guarantees[0].dueDate,'2028-11-24');
+ assert.equal(c.S.guarantees[1].dueDate,'2030-01-01');assert.equal(c.S.guarantees[2].dueDate,'');assert.equal(c.S.guarantees[3].dueDate,'');
+ assert.equal(c.projectHandoverSyncGuaranteeDue('p','','2028-11-24'),0);
+});
+reset();test('V12 handover opens a responsive sheet without saving anything',()=>{
+ assert(html.includes('data-act="projectHandoverOpen"')&&html.includes('data-act="projectHandoverSave"'));
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ const x=c.sheetHtml();
+ assert(x.includes('handoverSubmittedDate')&&x.includes('handoverAcceptedDate')&&x.includes('handoverConfirm'));
+ assert(x.includes('project-sheet'));
+});
+
+reset();test('V12 real click path submits then accepts while preserving accounting transactions',()=>{
+ c.S.role='owner';c.S.projects[0].retAmt=24750;const ledger=copy(c.S.tx);
+ const fields={handoverStage:'submitted',handoverSubmittedDate:'2026-11-20',handoverAcceptedDate:'',
+   handoverLetterNo:'SW-025/2569',handoverRecipient:'หน่วยงานเจ้าของงาน',
+   handoverAcceptedBy:'',handoverEvidence:'หนังสือส่งงาน',handoverNote:'รอตรวจ'};
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ action('projectHandoverSave','p',fields);
+ assert.equal(c.S.projects[0].status,'active');
+ assert.equal(c.S.projects[0].handover.stage,'submitted');
+ assert.equal(c.S.projects[0].deliveryDate,undefined);
+ assert.deepEqual(copy(c.S.tx),ledger);
+ assert(c.S.auditLog.some(x=>x.action==='project-handover'));
+ elements.handoverConfirm={checked:true};
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ action('projectHandoverSave','p',{...fields,handoverStage:'accepted',handoverAcceptedDate:'2026-11-24',handoverAcceptedBy:'คณะกรรมการตรวจรับ'});
+ assert.equal(c.S.projects[0].status,'delivered');assert.equal(c.S.projects[0].retDue,'2028-11-24');
+ assert.deepEqual(copy(c.S.tx),ledger);
+});
 test('v327 project profitability command center returns portfolio',()=>{assert(Array.isArray(c.projectProfitabilityCommandCenter().projects))});
 test('v328 payroll bridge uses existing wage transactions only',()=>{c.S.tx=[{id:'w1',pid:'p',type:'out',amount:500,cat:'ค่าแรง',paid:true,pay:'cash',date:'2026-09-01'}];const x=c.payrollProjectCostBridge('p');assert.equal(x.count,1);assert.equal(x.total,500)});
 test('v329 owner daily brief exposes alerts',()=>{assert(Array.isArray(c.ownerDailyBrief().alerts))});
