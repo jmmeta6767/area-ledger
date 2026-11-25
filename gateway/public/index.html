@@ -1956,6 +1956,34 @@ textarea{resize:vertical}
 .handover-confirm{display:flex;gap:10px;align-items:flex-start;line-height:1.5}.handover-confirm input{width:20px;height:20px;flex:none}
 @media(max-width:390px){.handover-help{font-size:12px}}
 
+
+/* V12 A4 handover letter */
+.handover-print-tools{max-width:210mm;margin:12px auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 10px}
+.handover-print-tools p{width:100%;font-size:12px;color:#805913;margin:2px 0 0}
+.handover-print-link{margin:10px 16px}.handover-print-link .btn{min-height:44px;width:100%}
+.handover-paper{box-sizing:border-box;background:#fff!important;color:#161c27!important;border:1px solid #d7dce2;border-radius:3px;width:210mm;min-height:297mm;margin:12px auto;padding:19mm 19mm 18mm;box-shadow:0 6px 32px #1f3d5b1c;font-family:Tahoma,"Noto Sans Thai",sans-serif;font-size:14px;line-height:1.8}
+.handover-paper h1{text-align:center;font-size:23px;color:#0f2547;margin:10mm 0 14mm;letter-spacing:.2px}
+.handover-brand{text-align:center;border-bottom:1px solid #bdc6d2;padding-bottom:7mm;display:grid;gap:2px}
+.handover-brand b{font-size:18px;color:#14263c}.handover-brand small{font-size:11px;color:#4c5362}
+.handover-letter-meta{display:flex;justify-content:space-between;gap:10mm;margin-bottom:12mm}
+.handover-paper p{margin:6mm 0;font-size:14px;text-align:left;overflow-wrap:anywhere}
+.handover-paper strong{font-weight:700}
+.handover-letter-paragraph{text-indent:10mm}
+.handover-letter-signature{width:85mm;margin:18mm 0 9mm auto;text-align:center}
+.handover-letter-signature p,.handover-letter-signature .handover-sign-line{text-align:center;margin:3mm 0}
+.handover-letter-signature .handover-sign-line{white-space:nowrap;font-size:12px}
+.handover-paper footer{font-size:10px;color:#687383;border-top:1px solid #d8dfe7;margin-top:20mm;padding-top:4mm}
+.handover-draft{padding:5px 12px;text-align:center;font-size:11px;font-weight:700;color:#925c12;background:#fff4d8;border:1px dashed #d6af5f}
+.handover-paper.handover-pdf-export{box-shadow:none!important;border:0!important;margin:0!important;width:192mm!important;min-height:0!important;padding:8mm!important}
+@media(max-width:800px){.handover-paper{width:100%;min-height:0;margin:8px auto;padding:14mm 11mm;font-size:13px}.handover-paper h1{font-size:20px}.handover-paper p{font-size:13px}.handover-letter-signature{width:75mm}}
+@media print{
+ @page{size:A4 portrait;margin:11mm}
+ body[data-view="handoverprint"]{background:#fff!important}
+ body[data-view="handoverprint"] *{visibility:hidden!important}
+ body[data-view="handoverprint"] #handoverLetterPaper,body[data-view="handoverprint"] #handoverLetterPaper *{visibility:visible!important}
+ body[data-view="handoverprint"] #handoverLetterPaper{position:absolute;left:0;top:0;width:188mm;min-height:0;margin:0;padding:4mm 5mm;box-shadow:none!important;border:0!important;background:#fff!important}
+ body[data-view="handoverprint"] .handover-print-tools{display:none!important}
+}
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -8038,6 +8066,57 @@ function exportXlsx(){
   var blob=xlsxBuild([{name:'รายการ',rows:r1},{name:'สรุปโครงการ',rows:r2},{name:'BOQ',rows:r5},{name:'สรุปรายเดือน',rows:r3},{name:'ค่าใช้จ่ายตามหมวด',rows:r4}]);
   saveFile(exportFileName(pid,'xlsx'),blob);
 }
+
+/* V12: A4 handover letter. All project and owner text is escaped; no data is written. */
+function projectHandoverLetterHtml(pid){
+  var p=proj(pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
+  var b=S.business||{},h=p.handover||{},date=validIsoDate(h.submittedDate)?h.submittedDate:'',issued=!!(h.letterNo&&date);
+  var owner=b.legalName||S.brand||'ผู้รับจ้าง (ยังไม่ระบุชื่อ)',client=h.recipient||p.client||'เจ้าของงาน / หน่วยงานที่เกี่ยวข้อง';
+  var lines=[
+    '<article id="handoverLetterPaper" class="handover-paper" lang="th">',
+    !issued?'<div class="handover-draft">ร่างเอกสาร · ยังไม่บันทึกเลขที่หนังสือหรือวันส่ง</div>':'',
+    '<div class="handover-brand"><b>'+esc(owner)+'</b>'+(b.address?'<small>'+esc(b.address)+'</small>':'')+(b.phone?'<small>โทร. '+esc(b.phone)+'</small>':'')+'</div>',
+    '<h1>หนังสือส่งมอบงาน</h1>',
+    '<div class="handover-letter-meta"><span>ที่ '+esc(h.letterNo||'......................................')+'</span><span>วันที่ '+(date?esc(dstr(date)):'......................................')+'</span></div>',
+    '<p><strong>เรื่อง</strong> ขอส่งมอบงานตามสัญญาและขอให้ตรวจรับงาน</p>',
+    '<p><strong>เรียน</strong> '+esc(client)+'</p>',
+    '<p><strong>อ้างถึง</strong> '+(p.contractNo?'สัญญาเลขที่ '+esc(p.contractNo):'สัญญาจ้างของโครงการ')+(p.contractDate?' ลงวันที่ '+esc(dstr(p.contractDate)):'')+'</p>',
+    '<p class="handover-letter-paragraph">ตามที่ '+esc(owner)+' ได้รับจ้างดำเนินงานโครงการ <strong>'+esc(p.name||'ไม่ระบุชื่อโครงการ')+'</strong>'+
+       (p.location?' ณ '+esc(p.location):'')+' ตามสัญญาที่อ้างถึงนั้น</p>',
+    '<p class="handover-letter-paragraph">บัดนี้ ผู้รับจ้างขอยื่นส่งมอบงานตามรายการดังกล่าว เพื่อให้เจ้าของงานหรือผู้มีอำนาจดำเนินการตรวจสอบและนัดตรวจรับตามขั้นตอนของสัญญา ทั้งนี้ การยื่นหนังสือฉบับนี้ยังไม่ถือว่าได้รับการตรวจรับงานแล้ว</p>',
+    h.evidenceRef?'<p><strong>เอกสารประกอบ / หลักฐานอ้างอิง</strong> '+esc(h.evidenceRef)+'</p>':'<p><strong>สิ่งที่ส่งมาด้วย</strong> เอกสารประกอบการตรวจรับ (ถ้ามี)</p>',
+    '<p>จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการตรวจรับงานตามระเบียบและเงื่อนไขแห่งสัญญาต่อไป</p>',
+    '<div class="handover-letter-signature"><p>ขอแสดงความนับถือ</p><div class="handover-sign-line">ลงชื่อ ............................................................</div><p>(............................................................)</p><p>ผู้แทนผู้รับจ้าง / ผู้มีอำนาจลงนาม</p></div>',
+    '<footer>จัดทำจาก AREA Ledger · โปรดตรวจสอบชื่อผู้รับจ้าง เลขสัญญา วันที่ และผู้ลงนามก่อนนำส่งอย่างเป็นทางการ</footer>',
+    '</article>'
+  ];return lines.join('');
+}
+function vHandoverLetter(){
+  var pid=U.handoverPrintPid||U.pid,p=proj(pid);
+  if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
+  var h=p.handover||{},issued=!!(h.letterNo&&validIsoDate(h.submittedDate));
+  return '<div class="handover-print-tools no-print"><button class="btn" data-act="handoverReturn" data-id="'+esc(pid)+'">กลับโครงการ</button>'+
+    '<button class="btn" data-act="doPrint">พิมพ์ / บันทึกเป็น PDF</button>'+
+    '<button class="btn pri" data-act="handoverDownloadPdf" data-id="'+esc(pid)+'">ดาวน์โหลด PDF</button>'+
+    (!issued?'<p>เอกสารนี้ยังเป็นร่าง กรุณาบันทึกเลขที่หนังสือและวันที่ยื่นก่อนใช้เป็นหนังสือทางการ</p>':'')+
+    '</div>'+projectHandoverLetterHtml(pid);
+}
+function downloadHandoverLetterPdf(pid){
+  var p=proj(pid),paper=document.getElementById('handoverLetterPaper');
+  if(!p||!paper){toast('ไม่พบหนังสือส่งงาน');return;}
+  var h=p.handover||{},filename=safeDocFileName('หนังสือส่งงาน-'+(h.letterNo||p.name||today())+'.pdf');
+  loadHtml2Pdf(function(loaded){
+    if(!loaded){toast('ไม่สามารถโหลด PDF Generator เปิดหน้าพิมพ์แทน');try{window.print();}catch(_){}return;}
+    paper.classList.add('handover-pdf-export');
+    var opts={filename:filename,margin:[8,9,8,9],image:{type:'jpeg',quality:.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}};
+    window.html2pdf().set(opts).from(paper).save().then(function(){paper.classList.remove('handover-pdf-export');toast('บันทึก PDF แล้ว');}).catch(function(){
+      paper.classList.remove('handover-pdf-export');toast('สร้าง PDF ไม่สำเร็จ ลองพิมพ์/บันทึกแทน');
+    });
+  });
+}
+
 function vPrint(){
   var pid=U.exportPid||'',list=scopeTx(),i=0,o=0,rv=0,pv=0,cat={},sub={};
   list.forEach(function(t){var b=base(t);
@@ -8579,7 +8658,8 @@ function sheetHtml(){
     if(!hp)b='<h3>ไม่พบโครงการ</h3><button class="btn" data-act="closeSheet">ปิด</button>';
     else{
       b='<div class="project-form-head"><div><small>PROJECT HANDOVER</small><h3>ส่งงาน / ตรวจรับงาน</h3></div><button type="button" data-act="closeSheet" aria-label="ปิด">×</button></div>'+
-        '<div class="handover-summary"><b>'+esc(hp.name)+'</b><small>ยื่นส่งงาน ≠ ตรวจรับงาน ≠ ปิดบัญชีโครงการ</small></div>';
+        '<div class="handover-summary"><b>'+esc(hp.name)+'</b><small>ยื่นส่งงาน ≠ ตรวจรับงาน ≠ ปิดบัญชีโครงการ</small></div>'+
+        '<div class="handover-print-link"><button class="btn" data-act="handoverPrintOpen" data-id="'+esc(hp.id)+'">ดูหนังสือส่งงาน A4 / PDF</button></div>'';
       if(finished){
         b+='<div class="project-form-section"><div class="pf-field span-2"><b>สถานะ: '+(hp.status==='closed'?'ปิดโครงการ':'ส่งมอบแล้ว')+'</b></div>'+
           '<div class="pf-field"><small>วันที่ส่งมอบ/ตรวจรับ</small><b>'+esc(hp.deliveryDate||'ไม่ระบุ')+'</b></div>'+
@@ -9198,7 +9278,7 @@ function render(){
   var mode=(S.ui&&S.ui.viewMode==='desktop')?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',mode);
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
-  var validViews={home:1,profile:1,list:1,add:1,projects:1,project:1,boq:1,due:1,guarantees:1,report:1,print:1,docs:1,procurement:1,doclist:1,quoteprint:1};
+  var validViews={home:1,profile:1,list:1,add:1,projects:1,project:1,boq:1,due:1,guarantees:1,report:1,print:1,handoverprint:1,docs:1,procurement:1,doclist:1,quoteprint:1};
   if(!validViews[U.view])U.view='home';
   if(U.view==='project'&&!proj(U.pid)){U.view='projects';U.pid=null;}
   var v=U.view,title='',body='',back=false;
@@ -9213,6 +9293,7 @@ function render(){
   else if(v==='guarantees'){title='งานประกัน';body=vGuarantees();back=true;}
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
+  else if(v==='handoverprint'){title='หนังสือส่งงาน';body=vHandoverLetter();back=true;}
   else if(v==='docs'){title='เอกสารธุรกิจ';body=vDocs();back=true;}
   else if(v==='procurement'){title='งานพัสดุ';body=vProcurement();back=true;}
   else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
@@ -9225,8 +9306,8 @@ function render(){
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='home'?urgentCount():0),act=t[0]==='boq'?'bottomBoq':(t[0]==='list'?'openList':'go');nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+(t[0]==='profile'?ic(t[1]):areaMenuIcon(t[0],t[1]))+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
-  var nonav=(v==='print'||v==='quoteprint'||!!U.sheet);if(nonav)nav='';
-  var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
+  var nonav=(v==='print'||v==='handoverprint'||v==='quoteprint'||!!U.sheet);if(nonav)nav='';
+  var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='handoverprint'&&v!=='quoteprint';
   document.body.classList.toggle('wallpaper-on',wall);
   document.body.classList.toggle('force-desktop',!!(S.ui&&S.ui.viewMode==='desktop'));
   document.body.classList.toggle('force-mobile',!S.ui||S.ui.viewMode!=='desktop');
@@ -9561,6 +9642,7 @@ document.addEventListener('click',function(e){
   if(a==='openList'){U.sheet=null;U.appMenu=false;U.filter=U.filter||{type:'all',pid:'',cat:'',status:'all',sub:''};go('list');return;}
   if(a==='go'){if(v==='home')navHome();else go(v);return;}
   else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
+  else if(a==='back'&&U.view==='handoverprint'){go('project',{pid:U.handoverPrintPid||U.pid});}
   else if(a==='back'&&U.view==='quoteprint'){U.docListKind=U.docKind||'quote';go('doclist');}
   else if(a==='back'&&U.view==='doclist'){if(U.docProjectPid){var dp=U.docProjectPid;U.docProjectPid='';go('project',{pid:dp});}else go('docs');}
   else if(a==='back'&&U.view==='docs'){go('home');}
@@ -9613,6 +9695,9 @@ document.addEventListener('click',function(e){
   else if(a==='pdfView'){U.printFrom=U.view;go('print');}
   else if(a==='doPrint'){try{window.print();}catch(x){toast('เครื่องนี้สั่งพิมพ์ไม่ได้');}}
   else if(a==='downloadDocPdf'){downloadBusinessDocPdf(el.dataset.kind||U.docKind||'quote',id||U.docId);}
+  else if(a==='handoverDownloadPdf'){downloadHandoverLetterPdf(id||U.handoverPrintPid||U.pid);}
+  else if(a==='handoverPrintOpen'){if(!proj(id)){toast('ไม่พบโครงการ');return;}U.handoverPrintPid=id;U.sheet=null;go('handoverprint',{pid:id});}
+  else if(a==='handoverReturn'){go('project',{pid:id||U.handoverPrintPid||U.pid});}
   else if(a==='openTx'){U.sheet={kind:'tx',id:id};U.confirm=null;render();}
   else if(a==='editDueTx'){var edt=S.tx.find(function(x){return x.id===id;});if(!edt)return;if(accountingPeriodLocked(edt.date,'รายการบัญชี'))return;U.sheet={kind:'dueEdit',id:id};U.confirm=null;render();}
   else if(a==='saveDueTx'){
