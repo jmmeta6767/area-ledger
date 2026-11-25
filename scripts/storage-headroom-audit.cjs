@@ -23,6 +23,9 @@ function analyzeBackupStorage(input, options = {}) {
     estimatedMediaBase64Chars: 0,
     estimatedMediaDecodedBytes: 0,
     embeddedMediaItems: 0,
+    // Counts are advisory only: a reference is not proof the cloud object is recoverable.
+    receiptPhotoPlacement: { embeddedOnly: 0, referenceOnly: 0, both: 0, neither: 0 },
+    referencePresenceDoesNotVerifyCloudObject: true,
     mediaPercentOfStateUtf16: 0,
     byCollection: {}, errors, warnings
   };
@@ -42,6 +45,16 @@ function analyzeBackupStorage(input, options = {}) {
   const raw = JSON.stringify(root.state);
   result.estimatedStateUtf8Bytes = Buffer.byteLength(raw, 'utf8');
   result.estimatedStateUtf16Bytes = raw.length * 2;
+  // Classify only the well-known transaction fields; never return receipt identifiers.
+  if (Array.isArray(root.state.tx)) {
+    for (const tx of root.state.tx) {
+      if (!tx || typeof tx !== 'object' || Array.isArray(tx)) continue;
+      const embedded = typeof tx.photo === 'string' && DATA_URL.test(tx.photo);
+      const referenced = typeof tx.photoRef === 'string' && tx.photoRef.trim().length > 0;
+      const placement = embedded ? (referenced ? 'both' : 'embeddedOnly') : (referenced ? 'referenceOnly' : 'neither');
+      result.receiptPhotoPlacement[placement]++;
+    }
+  }
   const buckets = Object.create(null);
   for (const [collection, value] of Object.entries(root.state)) {
     const group = BUCKETS.has(collection) ? collection : 'other';
