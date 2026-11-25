@@ -411,6 +411,57 @@ reset();test('V12 handover print route and native PDF fallback remain accessible
  assert(html.includes("loadHtml2Pdf(function(loaded)"));
  assert(html.includes("body[data-view=\"handoverprint\"] #handoverLetterPaper"));
 });
+
+reset();test('V12 inspection appointment keeps project active and postpones guarantee start',()=>{
+ const p=c.S.projects[0];p.retAmt=24750;
+ const form={stage:'submitted',submittedDate:'2026-11-20',letterNo:'SW-101',
+  inspectionStatus:'scheduled',inspectionDate:'2026-12-01'};
+ const plan=c.projectHandoverPlan(p,form);
+ assert.equal(plan.ok,true);assert.equal(plan.project.status,'active');assert.equal(plan.project.handover.inspectionStatus,'scheduled');
+ assert.equal(plan.project.handover.inspectionDate,'2026-12-01');assert(!plan.project.deliveryDate);assert(!plan.project.retDue);
+ assert.equal(c.projectHandoverPlan(p,{...form,inspectionDate:'2026-11-18'}).ok,false);
+});
+reset();test('V12 defect correction requires actual inspection date and actionable note',()=>{
+ const p=c.S.projects[0],base={stage:'submitted',submittedDate:'2026-11-19',letterNo:'SW-102',
+  inspectionStatus:'rework',inspectionDate:'2026-11-21',defectNote:'เก็บสีและซ่อมรอยรั่ว'};
+ assert.equal(c.projectHandoverPlan(p,{...base,defectNote:''}).ok,false);
+ assert.equal(c.projectHandoverPlan(p,{...base,inspectionDate:'2099-01-01'}).ok,false);
+ const x=c.projectHandoverPlan(p,base);
+ assert.equal(x.ok,true);assert.equal(x.project.status,'active');assert.equal(x.project.handover.defectNote,base.defectNote);
+ const accepted=c.projectHandoverPlan(x.project,{stage:'accepted',submittedDate:'2026-11-19',
+   acceptedDate:'2026-11-24',letterNo:'SW-102',acceptedBy:'กรรมการตรวจรับ'});
+ assert.equal(accepted.ok,true);assert.equal(accepted.project.status,'delivered');
+ assert.equal(accepted.project.handover.defectNote,base.defectNote,'keep old defect evidence in accepted record');
+});
+reset();test('V12 project handover queue categorizes each stage without changing project status',()=>{
+ const q=c.projectHandoverQueueSummary([
+  {status:'active',handover:null},{status:'active',handover:{stage:'submitted'}},
+  {status:'active',handover:{stage:'submitted',inspectionStatus:'scheduled'}},
+  {status:'active',handover:{stage:'submitted',inspectionStatus:'rework'}},
+  {status:'delivered'},{status:'closed'}
+ ]);
+ assert.deepEqual(copy(q),{notSubmitted:1,pending:1,scheduled:1,rework:1,accepted:1,closed:1});
+ assert.equal(c.projectHandoverWorkflowLabel({status:'active',handover:{stage:'submitted',inspectionStatus:'rework'}}),'ต้องแก้ไขงาน');
+});
+reset();test('V12 provisional closeout reports booked cost, unpaid AR AP and non-final margin',()=>{
+ const p=c.S.projects[0];p.contract=500000;p.retAmt=0;p.budget=0;
+ c.S.guarantees=[];c.S.boq=[];
+ c.S.tx=[{id:'cost-paid',pid:'p',type:'out',amount:300000,cat:'ค่าของ',paid:true,pay:'transfer',date:'2026-11-20'},
+         {id:'cost-owed',pid:'p',type:'out',amount:50000,cat:'ค่าแรง',paid:false,date:'2026-11-21'},
+         {id:'income-owed',pid:'p',type:'in',amount:250000,cat:'ค่างวด',paid:false,date:'2026-11-22'}];
+ const x=c.projectHandoverCloseout('p');
+ assert.equal(x.contract,500000);assert.equal(x.bookedCost,350000);
+ assert.equal(x.grossSpread,150000);assert.equal(x.grossSpreadPct,30);
+ assert.equal(x.receivable,250000);assert.equal(x.payable,50000);
+ assert.equal(c.S.tx.length,3,'closeout is read only');
+});
+reset();test('V12 handover inspection form exposes dates defect notes and project document shortcuts',()=>{
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ const html=c.sheetHtml();
+ assert(html.includes('handoverInspectionStatus')&&html.includes('handoverInspectionDate')&&html.includes('handoverDefectNote'));
+ assert(html.includes('projectDocList')&&html.includes('profilePostNew'));
+ assert(c.vProject().includes('ส่วนต่างมูลค่างาน'));
+});
 test('v327 project profitability command center returns portfolio',()=>{assert(Array.isArray(c.projectProfitabilityCommandCenter().projects))});
 test('v328 payroll bridge uses existing wage transactions only',()=>{c.S.tx=[{id:'w1',pid:'p',type:'out',amount:500,cat:'ค่าแรง',paid:true,pay:'cash',date:'2026-09-01'}];const x=c.payrollProjectCostBridge('p');assert.equal(x.count,1);assert.equal(x.total,500)});
 test('v329 owner daily brief exposes alerts',()=>{assert(Array.isArray(c.ownerDailyBrief().alerts))});
