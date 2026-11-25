@@ -472,6 +472,20 @@ reset();test('V12 handover inspection form exposes dates defect notes and projec
  assert(html.includes('projectDocList')&&html.includes('profilePostNew'));
  assert(c.vProject().includes('ส่วนต่างมูลค่างาน'));
 });
+
+reset();test('V12 portable backup and migration preserve handover inspection and references losslessly',()=>{
+ const p=c.S.projects[0];
+ p.handover={stage:'submitted',submittedDate:'2026-11-20',letterNo:'SW-888',recipient:'หน่วยงานทดสอบ',
+  inspectionStatus:'rework',inspectionDate:'2026-11-23',defectNote:'แก้สี/รอยรั่ว',acceptedBy:'',
+  acceptedDate:'',evidenceRef:'เลขที่รูปงาน 16',note:'ยังไม่ตรวจรับ',updatedAt:123456};
+ const before=copy(p.handover),beforeTx=copy(c.S.tx);
+ const parsed=c.restoreParse(c.backupJson());
+ assert.equal(parsed.ok,true);
+ const restored=c.migrate(parsed.state),project=restored.projects.find(x=>x.id==='p');
+ assert(project,'missing project in portable roundtrip');
+ assert.deepEqual(copy(project.handover),before,'handover dates and evidence refs must not be lost in migration');
+ assert.deepEqual(copy(restored.tx),beforeTx,'financial transactions must remain unchanged by handover backup');
+});
 test('v327 project profitability command center returns portfolio',()=>{assert(Array.isArray(c.projectProfitabilityCommandCenter().projects))});
 test('v328 payroll bridge uses existing wage transactions only',()=>{c.S.tx=[{id:'w1',pid:'p',type:'out',amount:500,cat:'ค่าแรง',paid:true,pay:'cash',date:'2026-09-01'}];const x=c.payrollProjectCostBridge('p');assert.equal(x.count,1);assert.equal(x.total,500)});
 test('v329 owner daily brief exposes alerts',()=>{assert(Array.isArray(c.ownerDailyBrief().alerts))});
