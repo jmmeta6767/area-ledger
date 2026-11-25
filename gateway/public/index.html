@@ -1984,6 +1984,9 @@ textarea{resize:vertical}
  body[data-view="handoverprint"] #handoverLetterPaper{position:absolute;left:0;top:0;width:188mm;min-height:0;margin:0;padding:4mm 5mm;box-shadow:none!important;border:0!important;background:#fff!important}
  body[data-view="handoverprint"] .handover-print-tools{display:none!important}
 }
+
+.handover-linked-evidence{display:flex;gap:8px;flex-wrap:wrap;margin:0 16px 8px}
+.handover-linked-evidence .btn{flex:1;min-width:120px}
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -7552,17 +7555,25 @@ function projectHandoverPlan(p,data){
   data=data||{};
   var stage=String(data.stage||''),submittedDate=String(data.submittedDate||''),acceptedDate=String(data.acceptedDate||''),
     letterNo=String(data.letterNo||'').trim(),recipient=String(data.recipient||'').trim(),
-    acceptedBy=String(data.acceptedBy||'').trim(),evidenceRef=String(data.evidenceRef||'').trim(),note=String(data.note||'').trim();
+    acceptedBy=String(data.acceptedBy||'').trim(),evidenceRef=String(data.evidenceRef||'').trim(),note=String(data.note||'').trim(),
+    inspectionStatus=stage==='accepted'?'passed':String(data.inspectionStatus||'pending'),inspectionDate=String(data.inspectionDate||''),defectNote=String(data.defectNote||'').trim();
   if(['submitted','accepted'].indexOf(stage)<0)return {ok:false,error:'เลือกสถานะส่งงานให้ถูกต้อง'};
   if(!validIsoDate(submittedDate)||submittedDate>today())return {ok:false,error:'วันที่ยื่นส่งงานไม่ถูกต้องหรือเป็นวันอนาคต'};
   if(!letterNo||letterNo.length>120)return {ok:false,error:'ระบุเลขที่หนังสือส่งงานไม่เกิน 120 ตัวอักษร'};
-  if(recipient.length>120||acceptedBy.length>120||evidenceRef.length>300||note.length>600)return {ok:false,error:'ข้อมูลอ้างอิงยาวเกินกำหนด'};
+  if(recipient.length>120||acceptedBy.length>120||evidenceRef.length>300||note.length>600||defectNote.length>1000)return {ok:false,error:'ข้อมูลอ้างอิงยาวเกินกำหนด'};
+  if(!['pending','scheduled','rework','passed'].includes(inspectionStatus)||(stage!=='accepted'&&inspectionStatus==='passed'))return {ok:false,error:'สถานะตรวจรับไม่ถูกต้อง'};
+  if(stage==='submitted'&&inspectionStatus==='scheduled'&&(!validIsoDate(inspectionDate)||inspectionDate<submittedDate))return {ok:false,error:'วันที่นัดตรวจรับต้องไม่ก่อนวันที่ยื่นส่งงาน'};
+  if(stage==='submitted'&&inspectionStatus==='rework'&&(!validIsoDate(inspectionDate)||inspectionDate<submittedDate||inspectionDate>today()||!defectNote))return {ok:false,error:'ระบุวันที่ตรวจและรายการแก้ไขงานที่ต้องทำ'};
+  if(inspectionDate&&(!validIsoDate(inspectionDate)||inspectionDate<submittedDate))return {ok:false,error:'วันตรวจรับไม่ถูกต้องหรือก่อนวันยื่น'};
   if(stage==='accepted'&&(!validIsoDate(acceptedDate)||acceptedDate<submittedDate||acceptedDate>today()))
     return {ok:false,error:'วันที่ตรวจรับต้องไม่ก่อนวันที่ยื่นหรือเป็นวันอนาคต'};
   if(stage==='accepted'&&!acceptedBy)return {ok:false,error:'ระบุผู้ตรวจรับหรือหน่วยงานตรวจรับ'};
   var previous=p.handover||{},record={stage:stage,submittedDate:submittedDate,letterNo:letterNo,recipient:recipient,
-    acceptedBy:stage==='accepted'?acceptedBy:'',acceptedDate:stage==='accepted'?acceptedDate:'',evidenceRef:evidenceRef,note:note};
-  var previousFields={stage:previous.stage||'',submittedDate:previous.submittedDate||'',letterNo:previous.letterNo||'',recipient:previous.recipient||'',acceptedBy:previous.acceptedBy||'',acceptedDate:previous.acceptedDate||'',evidenceRef:previous.evidenceRef||'',note:previous.note||''};
+    acceptedBy:stage==='accepted'?acceptedBy:'',acceptedDate:stage==='accepted'?acceptedDate:'',evidenceRef:evidenceRef,note:note,
+    inspectionStatus:inspectionStatus,inspectionDate:stage==='accepted'?acceptedDate:inspectionDate,
+    defectNote:stage==='accepted'?(p.handover&&p.handover.defectNote||''):defectNote};
+  var previousFields={stage:previous.stage||'',submittedDate:previous.submittedDate||'',letterNo:previous.letterNo||'',recipient:previous.recipient||'',acceptedBy:previous.acceptedBy||'',acceptedDate:previous.acceptedDate||'',evidenceRef:previous.evidenceRef||'',note:previous.note||'',
+    inspectionStatus:previous.inspectionStatus||'pending',inspectionDate:previous.inspectionDate||'',defectNote:previous.defectNote||''};
   if(JSON.stringify(record)===JSON.stringify(previousFields))return {ok:false,error:'บันทึกข้อมูลชุดนี้ไว้แล้ว'};
   var next=Object.assign({},p),oldAuto=validIsoDate(p.deliveryDate)?addYearsIso(p.deliveryDate,2):'',newAuto='';
   record.updatedAt=Date.now();next.handover=record;
@@ -8659,7 +8670,8 @@ function sheetHtml(){
     else{
       b='<div class="project-form-head"><div><small>PROJECT HANDOVER</small><h3>ส่งงาน / ตรวจรับงาน</h3></div><button type="button" data-act="closeSheet" aria-label="ปิด">×</button></div>'+
         '<div class="handover-summary"><b>'+esc(hp.name)+'</b><small>ยื่นส่งงาน ≠ ตรวจรับงาน ≠ ปิดบัญชีโครงการ</small></div>'+
-        '<div class="handover-print-link"><button class="btn" data-act="handoverPrintOpen" data-id="'+esc(hp.id)+'">ดูหนังสือส่งงาน A4 / PDF</button></div>';
+        '<div class="handover-print-link"><button class="btn" data-act="handoverPrintOpen" data-id="'+esc(hp.id)+'">ดูหนังสือส่งงาน A4 / PDF</button></div>'+
+        '<div class="handover-linked-evidence"><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+esc(hp.id)+'">เอกสารโครงการ</button><button class="btn" data-act="profilePostNew" data-id="'+esc(hp.id)+'">เพิ่มภาพหน้างาน</button></div>';
       if(finished){
         b+='<div class="project-form-section"><div class="pf-field span-2"><b>สถานะ: '+(hp.status==='closed'?'ปิดโครงการ':'ส่งมอบแล้ว')+'</b></div>'+
           '<div class="pf-field"><small>วันที่ส่งมอบ/ตรวจรับ</small><b>'+esc(hp.deliveryDate||'ไม่ระบุ')+'</b></div>'+
@@ -8677,6 +8689,13 @@ function sheetHtml(){
           '<div class="pf-field span-2"><label for="handoverRecipient">ผู้รับหนังสือ / หน่วยงาน</label><input id="handoverRecipient" type="text" maxlength="120" value="'+esc(hr.recipient||hp.client||'')+'"></div>'+
           '<div class="pf-field"><label for="handoverAcceptedDate">วันที่ตรวจรับจริง</label><input id="handoverAcceptedDate" type="date" value="'+esc(hr.acceptedDate||'')+'"></div>'+
           '<div class="pf-field"><label for="handoverAcceptedBy">ผู้ตรวจรับ / หน่วยงานตรวจรับ</label><input id="handoverAcceptedBy" type="text" maxlength="120" value="'+esc(hr.acceptedBy||'')+'"></div>'+
+
+          '<div class="pf-field span-2"><label for="handoverInspectionStatus">ติดตามตรวจรับ (กรณียังไม่ผ่าน)</label><select id="handoverInspectionStatus">'+
+            '<option value="pending"'+(!hr.inspectionStatus||hr.inspectionStatus==='pending'?' selected':'')+'>ยื่นแล้ว · รอนัดตรวจรับ</option>'+
+            '<option value="scheduled"'+(hr.inspectionStatus==='scheduled'?' selected':'')+'>นัดตรวจรับแล้ว</option>'+
+            '<option value="rework"'+(hr.inspectionStatus==='rework'?' selected':'')+'>ตรวจแล้ว · มีรายการแก้ไข</option></select></div>'+
+          '<div class="pf-field"><label for="handoverInspectionDate">วันที่นัดตรวจ/ตรวจพบงานแก้ไข</label><input id="handoverInspectionDate" type="date" value="'+esc(hr.inspectionDate||'')+'"></div>'+
+          '<div class="pf-field span-2"><label for="handoverDefectNote">รายละเอียดที่ต้องแก้ไข (ถ้ามี)</label><textarea id="handoverDefectNote" maxlength="1000" rows="3">'+esc(hr.defectNote||'')+'</textarea></div>'+
           '<div class="pf-field span-2"><label for="handoverEvidence">เลขที่หลักฐาน/ใบตรวจรับ</label><input id="handoverEvidence" type="text" maxlength="300" value="'+esc(hr.evidenceRef||'')+'" placeholder="อ้างอิงเอกสารหรือภาพในโครงการ"></div>'+
           '<div class="pf-field span-2"><label for="handoverNote">หมายเหตุ</label><textarea id="handoverNote" maxlength="600" rows="3">'+esc(hr.note||'')+'</textarea></div>'+
           '<div class="pf-field span-2"><label class="handover-confirm"><input id="handoverConfirm" type="checkbox"> ยืนยันว่าได้รับการตรวจรับงานจริง (ใช้เฉพาะขั้นตรวจรับแล้ว)</label></div>'+
@@ -9912,7 +9931,8 @@ document.addEventListener('click',function(e){
     function hv(key){var el=document.getElementById(key);return el?String(el.value||''):'';}
     var inputH={stage:hv('handoverStage'),submittedDate:hv('handoverSubmittedDate'),acceptedDate:hv('handoverAcceptedDate'),
       letterNo:hv('handoverLetterNo'),recipient:hv('handoverRecipient'),acceptedBy:hv('handoverAcceptedBy'),
-      evidenceRef:hv('handoverEvidence'),note:hv('handoverNote')};
+      evidenceRef:hv('handoverEvidence'),note:hv('handoverNote'),inspectionStatus:hv('handoverInspectionStatus'),
+      inspectionDate:hv('handoverInspectionDate'),defectNote:hv('handoverDefectNote')};
     if(inputH.stage==='accepted'&&!(document.getElementById('handoverConfirm')||{}).checked){toast('ยืนยันการตรวจรับงานจริงก่อนบันทึก');return;}
     var planH=projectHandoverPlan(oldH,inputH);if(!planH.ok){toast(planH.error);return;}
     var beforeH=JSON.parse(JSON.stringify(S)),originalH=JSON.parse(JSON.stringify(oldH));
