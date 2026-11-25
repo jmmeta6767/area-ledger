@@ -1946,6 +1946,68 @@ textarea{resize:vertical}
 .nav button.on{font-weight:750}
 @media(prefers-reduced-motion:reduce){.app-topbar-action,.mitem{transition:none}}
 @media(min-width:700px){.mgroup{padding-inline:14px}.mgh{margin-inline:-14px;padding-inline:18px}}
+
+
+/* V12 Handover: iPhone-safe form and action without data media in localStorage. */
+.handover-home-action{margin:9px 0 16px}.handover-home-action button{width:100%;border:1px solid #e8b941;background:#fff4d5;border-radius:13px;min-height:48px;color:#674912;font-weight:800;padding:12px}
+.handover-home-action button:focus-visible{outline:3px solid #194d82;outline-offset:2px}
+.handover-summary{margin:12px 16px;padding:12px;border-radius:12px;background:#eef5fe;color:#193a65;display:grid;gap:5px}.handover-summary small{font-size:12px;line-height:1.4}
+.handover-help{margin:10px 16px;padding:12px 13px;border-radius:12px;background:#fff8e3;color:#695522;line-height:1.65;font-size:13px}
+.handover-confirm{display:flex;gap:10px;align-items:flex-start;line-height:1.5}.handover-confirm input{width:20px;height:20px;flex:none}
+@media(max-width:390px){.handover-help{font-size:12px}}
+
+
+/* V12 A4 handover letter */
+.handover-print-tools{max-width:210mm;margin:12px auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 10px}
+.handover-print-tools p{width:100%;font-size:12px;color:#805913;margin:2px 0 0}
+.handover-print-link{margin:10px 16px}.handover-print-link .btn{min-height:44px;width:100%}
+.handover-paper{box-sizing:border-box;background:#fff!important;color:#161c27!important;border:1px solid #d7dce2;border-radius:3px;width:210mm;min-height:297mm;margin:12px auto;padding:19mm 19mm 18mm;box-shadow:0 6px 32px #1f3d5b1c;font-family:Tahoma,"Noto Sans Thai",sans-serif;font-size:14px;line-height:1.8}
+.handover-paper h1{text-align:center;font-size:23px;color:#0f2547;margin:10mm 0 14mm;letter-spacing:.2px}
+.handover-brand{text-align:center;border-bottom:1px solid #bdc6d2;padding-bottom:7mm;display:grid;gap:2px}
+.handover-brand b{font-size:18px;color:#14263c}.handover-brand small{font-size:11px;color:#4c5362}
+.handover-letter-meta{display:flex;justify-content:space-between;gap:10mm;margin-bottom:12mm}
+.handover-paper p{margin:6mm 0;font-size:14px;text-align:left;overflow-wrap:anywhere}
+.handover-paper strong{font-weight:700}
+.handover-letter-paragraph{text-indent:10mm}
+.handover-letter-signature{width:85mm;margin:18mm 0 9mm auto;text-align:center}
+.handover-letter-signature p,.handover-letter-signature .handover-sign-line{text-align:center;margin:3mm 0}
+.handover-letter-signature .handover-sign-line{white-space:nowrap;font-size:12px}
+.handover-paper footer{font-size:10px;color:#687383;border-top:1px solid #d8dfe7;margin-top:20mm;padding-top:4mm}
+.handover-draft{padding:5px 12px;text-align:center;font-size:11px;font-weight:700;color:#925c12;background:#fff4d8;border:1px dashed #d6af5f}
+.handover-paper.handover-pdf-export{box-shadow:none!important;border:0!important;margin:0!important;width:192mm!important;min-height:0!important;padding:8mm!important}
+
+@media(max-width:800px){
+ .handover-letter-meta{flex-wrap:wrap;gap:2mm}
+ .handover-letter-meta span{max-width:100%;overflow-wrap:anywhere}
+ .handover-letter-signature{max-width:100%;width:75mm}
+ .handover-letter-signature .handover-sign-line{white-space:normal;overflow-wrap:anywhere;font-size:11px}
+}
+
+@media(max-width:800px){.handover-paper{width:100%;min-height:0;margin:8px auto;padding:14mm 11mm;font-size:13px}.handover-paper h1{font-size:20px}.handover-paper p{font-size:13px}.handover-letter-signature{width:75mm}}
+@media print{
+ @page{size:A4 portrait;margin:11mm}
+ body[data-view="handoverprint"]{background:#fff!important}
+ body[data-view="handoverprint"] *{visibility:hidden!important}
+ body[data-view="handoverprint"] #handoverLetterPaper,body[data-view="handoverprint"] #handoverLetterPaper *{visibility:visible!important}
+ body[data-view="handoverprint"] #handoverLetterPaper{position:absolute;left:0;top:0;width:188mm;min-height:0;margin:0;padding:4mm 5mm;box-shadow:none!important;border:0!important;background:#fff!important}
+ body[data-view="handoverprint"] .handover-print-tools{display:none!important}
+}
+
+.handover-linked-evidence{display:flex;gap:8px;flex-wrap:wrap;margin:0 16px 8px}
+.handover-linked-evidence .btn{flex:1;min-width:120px}
+
+/* V12 inspected handover: queue, status and provisional financial closeout */
+.handover-queue-summary,.handover-closeout-panel{border:1px solid #dae2ed;background:#fff;border-radius:17px;padding:13px;margin:10px 0 14px;box-shadow:0 3px 12px #0d366012}
+.handover-queue-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:9px}
+.handover-queue-title b{color:#1a365d;font-size:15px}.handover-queue-title small{color:#69778a;font-size:11px}
+.handover-queue-grid,.handover-closeout-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.handover-closeout-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.handover-queue-grid>div,.handover-closeout-grid>div{padding:10px 8px;border:1px solid #e2e7ed;border-radius:11px;background:#f9fbff;min-width:0}
+.handover-queue-grid small,.handover-closeout-grid small{display:block;font-size:10px;line-height:1.5;color:#465970}
+.handover-queue-grid b,.handover-closeout-grid b{display:block;margin-top:4px;font-size:15px;color:#122d51;overflow-wrap:anywhere}
+.handover-spread{padding:11px;margin-top:10px;border-radius:10px;background:#f1f7f2;color:#245f3b;display:grid;gap:3px}
+.handover-spread b{font-size:13px}.handover-spread small{font-size:11px;color:#466856}
+@media(max-width:390px){.handover-queue-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.handover-closeout-grid b{font-size:13px}}
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -3892,6 +3954,7 @@ body[data-view] :is(.empty,.due-empty,.boq-empty,.profile-empty){border-radius:1
 }
 </style>
 <link rel="stylesheet" href="assets/ledger-reliability.css">
+
 </head>
 <body>
 <div id="app"></div>
@@ -6099,10 +6162,14 @@ function vHome(){
 
 
   h+='<section class="mproj master-ref-project"><button type="button" class="master-ref-photo" data-act="dashSwitch" data-id="__all" aria-label="กลับไปภาพรวมทุกโครงการ" title="กลับไปภาพรวมทุกโครงการ"><span class="master-ref-building"><svg viewBox="0 0 160 150" aria-hidden="true"><rect x="22" y="58" width="116" height="75" rx="2"/><rect x="35" y="31" width="90" height="27"/><path d="M28 58h104M46 58v75M80 58v75M114 58v75M22 91h116"/><rect x="53" y="99" width="24" height="34"/><rect x="88" y="99" width="24" height="34"/></svg></span></button><div class="mbody master-ref-body"><div class="mtag master-ref-tag">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>โครงการ</span></div><h2>'+esc(allMode?'ทุกโครงการ':(active?active.name:'ยังไม่มีโครงการ'))+'</h2><div class="master-ref-actions">'+(active?'<button class="master-ref-detail" data-act="openProj" data-id="'+active.id+'">'+txIcon({type:'out',sub:'เอกสาร',cat:'ค่างานเอกสาร'})+'<span>ดูรายละเอียด</span></button><button class="master-ref-edit" data-act="editProj" data-id="'+active.id+'">แก้ไข</button>':'<button class="master-ref-detail" data-act="go" data-v="projects">ดูโครงการ</button>')+'<button class="master-ref-more" data-act="go" data-v="projects" aria-label="โครงการทั้งหมด">•••</button></div>'+selector+'</div></section>';
+  if(active)h+='<div class="handover-home-action"><button type="button" data-act="projectHandoverOpen" data-id="'+active.id+'">'+(active.status==='delivered'||active.status==='closed'?'ดูข้อมูลส่งมอบงาน':active.handover&&active.handover.stage==='submitted'?'ยื่นส่งงานแล้ว · รอตรวจรับ':'ส่งงาน / บันทึกการตรวจรับ')+'</button></div>';
 
   var projectLifecycle={current:0,closed:0};S.projects.forEach(function(p){var key=projectHubStatusKey(p);if(key==='current')projectLifecycle.current++;else if(key==='closed')projectLifecycle.closed++;});
   h+='<section class="project-lifecycle-overview" aria-label="สถานะโครงการทั้งหมด"><div class="project-lifecycle-heading"><b>สถานะโครงการ</b><small>รวมทุกโครงการ</small></div><div class="project-lifecycle-grid"><button type="button" data-act="projectStatusShortcut" data-v="current" aria-label="ดูโครงการที่กำลังดำเนินการ '+projectLifecycle.current+' โครงการ"><small>กำลังดำเนินการ</small><b>'+projectLifecycle.current+' <span>โครงการ</span></b></button><button type="button" data-act="projectStatusShortcut" data-v="closed" aria-label="ดูโครงการที่ปิดแล้ว '+projectLifecycle.closed+' โครงการ"><small>ปิดโครงการแล้ว</small><b>'+projectLifecycle.closed+' <span>โครงการ</span></b></button></div></section>';
 
+  var hs=projectHandoverQueueSummary(S.projects);
+  h+='<section class="handover-queue-summary" aria-label="ติดตามส่งมอบงาน"><div class="handover-queue-title"><b>ติดตามส่งมอบงาน</b><small>แยกการยื่นเอกสารจากการตรวจรับจริง</small></div>'+
+    '<div class="handover-queue-grid"><div><small>รอตรวจรับ</small><b>'+hs.pending+'</b></div><div><small>มีนัดตรวจ</small><b>'+hs.scheduled+'</b></div><div><small>ต้องแก้ไข</small><b>'+hs.rework+'</b></div><div><small>ตรวจรับแล้ว</small><b>'+hs.accepted+'</b></div></div></section>';
   var cs=allMode?cashSplit():null;
   var dashProjects=allMode?S.projects:(active?[active]:[]),jobValue=dashProjects.reduce(function(a,p){return a+(+p.contract||0);},0),dashCosts=dashProjects.map(function(p){return projectCostWithGuarantees(p.id);}),dashGuaranteeSummary=portfolioGuaranteeSummary(dashProjects),actualCost=dashCosts.reduce(function(a,c){return a+c.total;},0),dashGuarantee=dashGuaranteeSummary.amount,dashGuaranteeAdd=dashCosts.reduce(function(a,c){return a+c.pendingGuaranteeAdd;},0),forecastProfit=jobValue-actualCost,realizedProfit=rec>0?rec-actualCost:null;
   h+='<section class="project-finance-kpis"><div><small>มูลค่างาน</small><b>'+fmt(jobValue)+'</b><span>จากมูลค่าสัญญาในข้อมูลโครงการ</span></div><div><small>ต้นทุน · รวมเงินประกันรอคืน</small><b class="out">'+fmt(actualCost)+'</b><span>รายจ่ายโครงการ + เงินประกันรอคืน '+fmt(dashGuarantee,true)+(dashGuaranteeAdd>0?' · เพิ่มจากทะเบียน '+fmt(dashGuaranteeAdd,true):' · ส่วนที่ลงรายจ่ายแล้วไม่บวกซ้ำ')+'</span></div><div><small>กำไรคาดการณ์</small><b class="'+(forecastProfit>=0?'in':'out')+'">'+fmt(forecastProfit)+'</b><span>มูลค่างานตามสัญญา − ต้นทุนรวมเงินประกันรอคืน</span></div><div class="realized-profit"><small>'+(rec>0?(realizedProfit>=0?'กำไรสุทธิ':'ขาดทุนสุทธิ'):'กำไร/ขาดทุนสุทธิ')+'</small>'+(rec>0?'<b class="'+(realizedProfit!==null&&realizedProfit>=0?'in':'out')+'">'+fmt(realizedProfit||0)+'</b><span>รายรับที่ได้รับจริง − รายจ่ายที่จ่ายจริง</span>':'<b class="pending-profit">รอรับรายได้</b><span>จะแสดงผลเมื่อมีรายรับจริงในโครงการ</span>')+'</div></section>';
@@ -6489,6 +6556,7 @@ function projectHubStatusKey(p){
 }
 function projectHubStatusText(p){
   var st=(p&&p.status)||'active';
+  if((st==='active'||st==='waiting')&&p&&p.handover&&p.handover.stage==='submitted')return projectHandoverWorkflowLabel(p);
   return ({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[st]||'กำลังดำเนินการ';
 }
 function projectHubSearchText(p){
@@ -6565,7 +6633,7 @@ function vProjects(){
       '<div class="bar '+barCls(x)+'"><i style="width:'+Math.min(100,x*100)+'%"></i></div>'+
       '<div class="project-hub-glance"><span class="project-budget-glance"><small>ใช้งบ BOQ</small><b>'+(budget.budget>0?Math.round(x*100)+'%':'—')+'</b><em>'+(budget.budget>0?'ต้นทุน '+fmt(budget.actual)+' / งบ '+fmt(budget.budget)+' · รวมค้างจ่าย':'ยังไม่มีงบ BOQ · เพิ่ม BOQ เพื่อคำนวณ')+'</em></span><span><small>รับแล้ว</small><b class="in">'+fmt(st.recd)+'</b></span><span><small>จ่ายแล้ว</small><b class="out">'+fmt(st.paidOut)+'</b></span></div>'+
       (alerts.length?'<div class="project-hub-alerts">'+alerts.map(function(a){return '<span class="'+a.tone+'">'+esc(a.text)+'</span>';}).join('')+'</div>':'')+
-      '</button><div class="project-hub-actions project-list-actions"><button class="primary" data-act="boqOpenProject" data-id="'+p.id+'">BOQ</button><button data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button data-act="editProj" data-id="'+p.id+'">แก้ไข</button></div></article>';
+      '</button><div class="project-hub-actions project-list-actions"><button class="primary" data-act="boqOpenProject" data-id="'+p.id+'">BOQ</button><button data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button data-act="projectHandoverOpen" data-id="'+p.id+'">'+(p.status==="delivered"||p.status==="closed"?"ดูส่งมอบ":p.handover&&p.handover.stage==="submitted"?"รอตรวจรับ":"ส่งงาน")+'</button></div></article>';
   });
   return h+'</section>';
 }
@@ -7504,11 +7572,101 @@ function contractorPackageHtml(pid){
   });
   return h+'</section>';
 }
+
+/* V12 handover workflow. A submitted letter is not completed acceptance. */
+
+function projectHandoverWorkflowLabel(p){
+  if(!p)return 'ไม่พบโครงการ';
+  if(p.status==='closed')return 'ปิดโครงการแล้ว';
+  if(p.status==='delivered')return 'ตรวจรับ / ส่งมอบแล้ว';
+  var h=p.handover||{};
+  if(h.stage!=='submitted')return 'ยังไม่ยื่นส่งงาน';
+  return ({pending:'ยื่นแล้ว · รอตรวจรับ',scheduled:'นัดตรวจรับแล้ว',rework:'ต้องแก้ไขงาน'})[h.inspectionStatus||'pending']||'รอตรวจรับ';
+}
+function projectHandoverQueueSummary(projects){
+  var out={notSubmitted:0,pending:0,scheduled:0,rework:0,accepted:0,closed:0};
+  (projects||[]).forEach(function(p){
+    if(p.status==='closed'){out.closed++;return;}
+    if(p.status==='delivered'){out.accepted++;return;}
+    var h=p.handover||{};
+    if(h.stage!=='submitted'){out.notSubmitted++;return;}
+    var st=h.inspectionStatus||'pending';
+    if(st==='scheduled')out.scheduled++;else if(st==='rework')out.rework++;else out.pending++;
+  });
+  return out;
+}
+function projectHandoverCloseout(pid){
+  var p=proj(pid);if(!p)return null;
+  var contract=approvedContractValue(pid),pc=projectCostWithGuarantees(pid),receivable=0,payable=0;
+  (S.tx||[]).forEach(function(t){
+    if(t.pid!==pid)return;
+    var due=txOutstandingNet(t);if(!(due>0))return;
+    if(t.type==='in')receivable+=due;else if(t.type==='out')payable+=due;
+  });
+  var spread=contract-(pc.total||0);
+  return {contract:contract,bookedCost:pc.total||0,grossSpread:spread,grossSpreadPct:contract>0?spread/contract*100:null,
+    receivable:receivable,payable:payable,retention:(+p.retAmt||0),retentionDue:p.retDue||''};
+}
+
+function projectHandoverPlan(p,data){
+  if(!p)return {ok:false,error:'ไม่พบโครงการ'};
+  if(p.status==='closed'||p.status==='delivered')return {ok:false,error:'โครงการส่งมอบหรือปิดแล้ว ต้องตรวจสอบหลักฐานก่อนแก้ไข'};
+  data=data||{};
+  var stage=String(data.stage||''),submittedDate=String(data.submittedDate||''),acceptedDate=String(data.acceptedDate||''),
+    letterNo=String(data.letterNo||'').trim(),recipient=String(data.recipient||'').trim(),
+    acceptedBy=String(data.acceptedBy||'').trim(),evidenceRef=String(data.evidenceRef||'').trim(),note=String(data.note||'').trim(),
+    inspectionStatus=stage==='accepted'?'passed':String(data.inspectionStatus||'pending'),inspectionDate=String(data.inspectionDate||''),defectNote=String(data.defectNote||'').trim();
+  if(['submitted','accepted'].indexOf(stage)<0)return {ok:false,error:'เลือกสถานะส่งงานให้ถูกต้อง'};
+  if(!validIsoDate(submittedDate)||submittedDate>today())return {ok:false,error:'วันที่ยื่นส่งงานไม่ถูกต้องหรือเป็นวันอนาคต'};
+  if(!letterNo||letterNo.length>120)return {ok:false,error:'ระบุเลขที่หนังสือส่งงานไม่เกิน 120 ตัวอักษร'};
+  if(recipient.length>120||acceptedBy.length>120||evidenceRef.length>300||note.length>600||defectNote.length>1000)return {ok:false,error:'ข้อมูลอ้างอิงยาวเกินกำหนด'};
+  if(!['pending','scheduled','rework','passed'].includes(inspectionStatus)||(stage!=='accepted'&&inspectionStatus==='passed'))return {ok:false,error:'สถานะตรวจรับไม่ถูกต้อง'};
+  if(stage==='submitted'&&inspectionStatus==='scheduled'&&(!validIsoDate(inspectionDate)||inspectionDate<submittedDate))return {ok:false,error:'วันที่นัดตรวจรับต้องไม่ก่อนวันที่ยื่นส่งงาน'};
+  if(stage==='submitted'&&inspectionStatus==='rework'&&(!validIsoDate(inspectionDate)||inspectionDate<submittedDate||inspectionDate>today()||!defectNote))return {ok:false,error:'ระบุวันที่ตรวจและรายการแก้ไขงานที่ต้องทำ'};
+  if(inspectionDate&&(!validIsoDate(inspectionDate)||inspectionDate<submittedDate))return {ok:false,error:'วันตรวจรับไม่ถูกต้องหรือก่อนวันยื่น'};
+  if(stage==='accepted'&&(!validIsoDate(acceptedDate)||acceptedDate<submittedDate||acceptedDate>today()))
+    return {ok:false,error:'วันที่ตรวจรับต้องไม่ก่อนวันที่ยื่นหรือเป็นวันอนาคต'};
+  if(stage==='accepted'&&!acceptedBy)return {ok:false,error:'ระบุผู้ตรวจรับหรือหน่วยงานตรวจรับ'};
+  var previous=p.handover||{},record={stage:stage,submittedDate:submittedDate,letterNo:letterNo,recipient:recipient,
+    acceptedBy:stage==='accepted'?acceptedBy:'',acceptedDate:stage==='accepted'?acceptedDate:'',evidenceRef:evidenceRef,note:note,
+    inspectionStatus:inspectionStatus,inspectionDate:stage==='accepted'?acceptedDate:inspectionDate,
+    defectNote:stage==='accepted'?(p.handover&&p.handover.defectNote||''):defectNote};
+  var previousFields={stage:previous.stage||'',submittedDate:previous.submittedDate||'',letterNo:previous.letterNo||'',recipient:previous.recipient||'',acceptedBy:previous.acceptedBy||'',acceptedDate:previous.acceptedDate||'',evidenceRef:previous.evidenceRef||'',note:previous.note||'',
+    inspectionStatus:previous.inspectionStatus||'pending',inspectionDate:previous.inspectionDate||'',defectNote:previous.defectNote||''};
+  if(JSON.stringify(record)===JSON.stringify(previousFields))return {ok:false,error:'บันทึกข้อมูลชุดนี้ไว้แล้ว'};
+  var next=Object.assign({},p),oldAuto=validIsoDate(p.deliveryDate)?addYearsIso(p.deliveryDate,2):'',newAuto='';
+  record.updatedAt=Date.now();next.handover=record;
+  if(stage==='accepted'){
+    next.status='delivered';next.deliveryDate=acceptedDate;newAuto=addYearsIso(acceptedDate,2);
+    if((+p.retAmt||0)>0&&!p.retRecv&&(!p.retDue||p.retDue===oldAuto))next.retDue=newAuto;
+  }
+  return {ok:true,project:next,oldAutoDue:oldAuto,newAutoDue:newAuto};
+}
+function projectHandoverSyncGuaranteeDue(pid,oldAuto,newAuto){
+  if(!newAuto)return 0;
+  var count=0;
+  (S.guarantees||[]).forEach(function(g){
+    if(g.pid!==pid||g.returned||g.method==='หนังสือค้ำประกันธนาคาร'||!/ประกันสัญญา|ประกันผลงาน|เงินหัก\s*10%/.test(String(g.type||'')))return;
+    if(g.dueDate&&g.dueDate!==oldAuto)return; // Keep dates set explicitly by the owner.
+    if(g.dueDate!==newAuto){g.dueDate=newAuto;count++;}
+  });
+  return count;
+}
+
 function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
   var s=stats(p.id),pcost=projectCostWithGuarantees(p.id),boqUse=boqSummary(p.id),x=boqUse.pct,boqRemaining=boqUse.budget-boqUse.actual,actualCost=pcost.total,forecastProfit=approvedContractValue(p.id)-actualCost;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div><div class="workflow-section-head"><span>งานประจำวัน</span><small>BOQ · เพิ่มรายการ · แก้ไขโครงการ</small></div>';
-  var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid project-command-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button class="btn" data-act="accountingProjectCost" data-id="'+p.id+'">ต้นทุนบัญชี</button><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+p.id+'">เอกสาร</button><button class="btn" data-act="projectGuarantees" data-id="'+p.id+'">หลักประกัน</button><button class="btn" data-act="govRiskOpen" data-id="'+p.id+'">สัญญา / หนังสือ</button><button class="btn" data-act="profilePostNew" data-id="'+p.id+'">โพสต์หน้างาน</button></div></div>';
+  var hx=projectHandoverCloseout(p.id);
+  if(hx&&S.role==='owner'){
+    h+='<section class="handover-closeout-panel"><div class="handover-queue-title"><b>ยอดค้างและส่วนต่างเมื่อส่งมอบ</b><small>'+esc(projectHandoverWorkflowLabel(p))+'</small></div>'+
+      '<div class="handover-closeout-grid"><div><small>มูลค่าสัญญาอนุมัติ</small><b>'+fmt(hx.contract)+'</b></div><div><small>ต้นทุนที่บันทึก</small><b>'+fmt(hx.bookedCost)+'</b></div>'+
+      '<div><small>ลูกหนี้ค้างรับ</small><b>'+fmt(hx.receivable)+'</b></div><div><small>เจ้าหนี้ค้างจ่าย</small><b>'+fmt(hx.payable)+'</b></div>'+
+      '<div><small>เงินประกันสัญญา</small><b>'+fmt(hx.retention)+'</b></div><div><small>กำหนดคืนเงินประกัน</small><b>'+esc(hx.retentionDue||'ยังไม่ระบุ')+'</b></div></div>'+
+      '<div class="handover-spread"><b>ส่วนต่างมูลค่างาน − ต้นทุนบันทึก: '+fmt(hx.grossSpread)+(hx.grossSpreadPct===null?'':' ('+hx.grossSpreadPct.toFixed(1)+'%)')+'</b>'+
+      '<small>ไม่ใช่กำไรสุดท้ายหรือเงินสดสุทธิ เพราะอาจมีต้นทุนที่จะเกิดเพิ่มเติม และต้องกระทบยอดรายการค้างรับ/ค้างจ่าย</small></div></section>';
+  }
+  var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid project-command-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button class="btn pri" data-act="projectHandoverOpen" data-id="'+p.id+'">'+(p.status==="delivered"||p.status==="closed"?"ดูส่งมอบงาน":p.handover&&p.handover.stage==="submitted"?"รอตรวจรับงาน":"ส่งงาน / ตรวจรับ")+'</button><button class="btn" data-act="accountingProjectCost" data-id="'+p.id+'">ต้นทุนบัญชี</button><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+p.id+'">เอกสาร</button><button class="btn" data-act="projectGuarantees" data-id="'+p.id+'">หลักประกัน</button><button class="btn" data-act="govRiskOpen" data-id="'+p.id+'">สัญญา / หนังสือ</button><button class="btn" data-act="profilePostNew" data-id="'+p.id+'">โพสต์หน้างาน</button></div></div>';
 
   h+=contractorPackageHtml(p.id);
   var cc=contractControl(p.id),cq=contractActionQueue(p.id);
@@ -7987,6 +8145,57 @@ function exportXlsx(){
   var blob=xlsxBuild([{name:'รายการ',rows:r1},{name:'สรุปโครงการ',rows:r2},{name:'BOQ',rows:r5},{name:'สรุปรายเดือน',rows:r3},{name:'ค่าใช้จ่ายตามหมวด',rows:r4}]);
   saveFile(exportFileName(pid,'xlsx'),blob);
 }
+
+/* V12: A4 handover letter. All project and owner text is escaped; no data is written. */
+function projectHandoverLetterHtml(pid){
+  var p=proj(pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
+  var b=S.business||{},h=p.handover||{},date=validIsoDate(h.submittedDate)?h.submittedDate:'',issued=!!(h.letterNo&&date&&b.legalName&&(h.recipient||p.client));
+  var owner=b.legalName||S.brand||'ผู้รับจ้าง (ยังไม่ระบุชื่อ)',client=h.recipient||p.client||'เจ้าของงาน / หน่วยงานที่เกี่ยวข้อง';
+  var lines=[
+    '<article id="handoverLetterPaper" class="handover-paper" lang="th">',
+    !issued?'<div class="handover-draft">ร่างเอกสาร · ข้อมูลเลขหนังสือ วันส่ง ผู้รับ หรือชื่อกิจการยังไม่ครบ</div>':'',
+    '<div class="handover-brand"><b>'+esc(owner)+'</b>'+(b.address?'<small>'+esc(b.address)+'</small>':'')+(b.phone?'<small>โทร. '+esc(b.phone)+'</small>':'')+'</div>',
+    '<h1>หนังสือส่งมอบงาน</h1>',
+    '<div class="handover-letter-meta"><span>ที่ '+esc(h.letterNo||'......................................')+'</span><span>วันที่ '+(date?esc(dstr(date)):'......................................')+'</span></div>',
+    '<p><strong>เรื่อง</strong> ขอส่งมอบงานตามสัญญาและขอให้ตรวจรับงาน</p>',
+    '<p><strong>เรียน</strong> '+esc(client)+'</p>',
+    '<p><strong>อ้างถึง</strong> '+(p.contractNo?'สัญญาเลขที่ '+esc(p.contractNo):'สัญญาจ้างของโครงการ')+(p.contractDate?' ลงวันที่ '+esc(dstr(p.contractDate)):'')+'</p>',
+    '<p class="handover-letter-paragraph">ตามที่ '+esc(owner)+' ได้รับจ้างดำเนินงานโครงการ <strong>'+esc(p.name||'ไม่ระบุชื่อโครงการ')+'</strong>'+
+       (p.location?' ณ '+esc(p.location):'')+' ตามสัญญาที่อ้างถึงนั้น</p>',
+    '<p class="handover-letter-paragraph">บัดนี้ ผู้รับจ้างขอยื่นส่งมอบงานตามรายการดังกล่าว เพื่อให้เจ้าของงานหรือผู้มีอำนาจดำเนินการตรวจสอบและนัดตรวจรับตามขั้นตอนของสัญญา ทั้งนี้ การยื่นหนังสือฉบับนี้ยังไม่ถือว่าได้รับการตรวจรับงานแล้ว</p>',
+    h.evidenceRef?'<p><strong>เอกสารประกอบ / หลักฐานอ้างอิง</strong> '+esc(h.evidenceRef)+'</p>':'<p><strong>สิ่งที่ส่งมาด้วย</strong> เอกสารประกอบการตรวจรับ (ถ้ามี)</p>',
+    '<p>จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการตรวจรับงานตามระเบียบและเงื่อนไขแห่งสัญญาต่อไป</p>',
+    '<div class="handover-letter-signature"><p>ขอแสดงความนับถือ</p><div class="handover-sign-line">ลงชื่อ ............................................................</div><p>(............................................................)</p><p>ผู้แทนผู้รับจ้าง / ผู้มีอำนาจลงนาม</p></div>',
+    '<footer>จัดทำจาก AREA Ledger · โปรดตรวจสอบชื่อผู้รับจ้าง เลขสัญญา วันที่ และผู้ลงนามก่อนนำส่งอย่างเป็นทางการ</footer>',
+    '</article>'
+  ];return lines.join('');
+}
+function vHandoverLetter(){
+  var pid=U.handoverPrintPid||U.pid,p=proj(pid);
+  if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
+  var h=p.handover||{},biz=S.business||{},issued=!!(h.letterNo&&validIsoDate(h.submittedDate)&&biz.legalName&&(h.recipient||p.client));
+  return '<div class="handover-print-tools no-print"><button class="btn" data-act="handoverReturn" data-id="'+esc(pid)+'">กลับโครงการ</button>'+
+    '<button class="btn" data-act="doPrint">พิมพ์ / บันทึกเป็น PDF</button>'+
+    '<button class="btn pri" data-act="handoverDownloadPdf" data-id="'+esc(pid)+'">ดาวน์โหลด PDF</button>'+
+    (!issued?'<p>เอกสารนี้ยังเป็นร่าง กรุณาตรวจสอบเลขหนังสือ วันที่ยื่น ผู้รับ และชื่อกิจการก่อนใช้อย่างเป็นทางการ</p>':'')+
+    '</div>'+projectHandoverLetterHtml(pid);
+}
+function downloadHandoverLetterPdf(pid){
+  var p=proj(pid),paper=document.getElementById('handoverLetterPaper');
+  if(!p||!paper){toast('ไม่พบหนังสือส่งงาน');return;}
+  var h=p.handover||{},filename=safeDocFileName('หนังสือส่งงาน-'+(h.letterNo||p.name||today())+'.pdf');
+  loadHtml2Pdf(function(loaded){
+    if(!loaded){toast('ไม่สามารถโหลด PDF Generator เปิดหน้าพิมพ์แทน');try{window.print();}catch(_){}return;}
+    paper.classList.add('handover-pdf-export');
+    var opts={filename:filename,margin:[8,9,8,9],image:{type:'jpeg',quality:.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy']}};
+    window.html2pdf().set(opts).from(paper).save().then(function(){paper.classList.remove('handover-pdf-export');toast('บันทึก PDF แล้ว');}).catch(function(){
+      paper.classList.remove('handover-pdf-export');toast('สร้าง PDF ไม่สำเร็จ ลองพิมพ์/บันทึกแทน');
+    });
+  });
+}
+
 function vPrint(){
   var pid=U.exportPid||'',list=scopeTx(),i=0,o=0,rv=0,pv=0,cat={},sub={};
   list.forEach(function(t){var b=base(t);
@@ -8522,6 +8731,46 @@ function sheetHtml(){
       '<div class="field"><label for="bqprice">ราคาต่อหน่วย</label><input id="bqprice" type="number" inputmode="decimal" min="0" step="0.01" value="'+(bx?bx.unitPrice:'')+'"></div>'+
       '<div class="field"><label for="bqnote">หมายเหตุ</label><textarea id="bqnote" rows="2">'+esc(bx?bx.note:'')+'</textarea></div>'+
       '<div class="stack"><button class="btn pri" data-act="saveBoq" data-id="'+(bx?bx.id:'')+'" data-pid="'+esc(bpid||'')+'">บันทึก BOQ</button>'+(bx?'<button class="btn dng" data-act="deleteBoq" data-id="'+bx.id+'">ลบรายการ BOQ</button>':'')+'<button class="btn" data-act="closeSheet">ยกเลิก</button></div>';
+
+  }else if(sh.kind==='projectHandover'){
+    var hp=proj(sh.id),hr=hp&&hp.handover||{},finished=hp&&(hp.status==='delivered'||hp.status==='closed');
+    if(!hp)b='<h3>ไม่พบโครงการ</h3><button class="btn" data-act="closeSheet">ปิด</button>';
+    else{
+      b='<div class="project-form-head"><div><small>PROJECT HANDOVER</small><h3>ส่งงาน / ตรวจรับงาน</h3></div><button type="button" data-act="closeSheet" aria-label="ปิด">×</button></div>'+
+        '<div class="handover-summary"><b>'+esc(hp.name)+'</b><small>ยื่นส่งงาน ≠ ตรวจรับงาน ≠ ปิดบัญชีโครงการ</small></div>'+
+        '<div class="handover-print-link"><button class="btn" data-act="handoverPrintOpen" data-id="'+esc(hp.id)+'">ดูหนังสือส่งงาน A4 / PDF</button></div>'+
+        '<div class="handover-linked-evidence"><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+esc(hp.id)+'">เอกสารโครงการ</button><button class="btn" data-act="profilePostNew" data-id="'+esc(hp.id)+'">เพิ่มภาพหน้างาน</button></div>';
+      if(finished){
+        b+='<div class="project-form-section"><div class="pf-field span-2"><b>สถานะ: '+(hp.status==='closed'?'ปิดโครงการ':'ส่งมอบแล้ว')+'</b></div>'+
+          '<div class="pf-field"><small>วันที่ส่งมอบ/ตรวจรับ</small><b>'+esc(hp.deliveryDate||'ไม่ระบุ')+'</b></div>'+
+          '<div class="pf-field"><small>กำหนดคืนเงินประกัน</small><b>'+esc(hp.retDue||'ยังไม่ระบุ')+'</b></div>'+
+          '<div class="pf-field span-2"><small>เลขที่หนังสือส่งงาน</small><b>'+esc(hr.letterNo||'ไม่มีข้อมูล')+'</b></div>'+
+          '<div class="pf-field span-2"><small>ผู้ตรวจรับ/หน่วยงาน</small><b>'+esc(hr.acceptedBy||'ไม่มีข้อมูล')+'</b></div></div>'+
+          '<div class="handover-help">ดูข้อมูลเดิมอย่างเดียว หากข้อมูลไม่ถูกต้องให้ตรวจสอบหลักฐานก่อนแก้ไขจากหน้าโครงการ</div>'+
+          '<div class="project-form-savebar"><button type="button" data-act="closeSheet">ปิด</button></div>';
+      }else{
+        b+='<div class="handover-help">ขั้นที่ 1 ยื่นหนังสือส่งงาน: บันทึกวัน/เลขหนังสือ แต่ยังเป็นโครงการกำลังดำเนินการ<br>ขั้นที่ 2 ตรวจรับแล้ว: ใส่วันตรวจรับจริง จึงเปลี่ยนเป็นส่งมอบแล้วและเริ่มนับเงินประกัน</div>'+
+          '<div class="project-form-section">'+
+          '<div class="pf-field span-2"><label for="handoverStage">สถานะการส่งงาน</label><select id="handoverStage"><option value="submitted"'+(hr.stage==='submitted'?' selected':'')+'>ยื่นหนังสือส่งงาน · รอตรวจรับ</option><option value="accepted">ตรวจรับแล้ว · ส่งมอบงาน</option></select></div>'+
+          '<div class="pf-field"><label for="handoverSubmittedDate">วันที่ยื่นส่งงาน</label><input id="handoverSubmittedDate" type="date" value="'+esc(hr.submittedDate||today())+'"></div>'+
+          '<div class="pf-field"><label for="handoverLetterNo">เลขที่หนังสือส่งงาน</label><input id="handoverLetterNo" type="text" maxlength="120" value="'+esc(hr.letterNo||'')+'" placeholder="เช่น สง.001/2569"></div>'+
+          '<div class="pf-field span-2"><label for="handoverRecipient">ผู้รับหนังสือ / หน่วยงาน</label><input id="handoverRecipient" type="text" maxlength="120" value="'+esc(hr.recipient||hp.client||'')+'"></div>'+
+          '<div class="pf-field"><label for="handoverAcceptedDate">วันที่ตรวจรับจริง</label><input id="handoverAcceptedDate" type="date" value="'+esc(hr.acceptedDate||'')+'"></div>'+
+          '<div class="pf-field"><label for="handoverAcceptedBy">ผู้ตรวจรับ / หน่วยงานตรวจรับ</label><input id="handoverAcceptedBy" type="text" maxlength="120" value="'+esc(hr.acceptedBy||'')+'"></div>'+
+
+          '<div class="pf-field span-2"><label for="handoverInspectionStatus">ติดตามตรวจรับ (กรณียังไม่ผ่าน)</label><select id="handoverInspectionStatus">'+
+            '<option value="pending"'+(!hr.inspectionStatus||hr.inspectionStatus==='pending'?' selected':'')+'>ยื่นแล้ว · รอนัดตรวจรับ</option>'+
+            '<option value="scheduled"'+(hr.inspectionStatus==='scheduled'?' selected':'')+'>นัดตรวจรับแล้ว</option>'+
+            '<option value="rework"'+(hr.inspectionStatus==='rework'?' selected':'')+'>ตรวจแล้ว · มีรายการแก้ไข</option></select></div>'+
+          '<div class="pf-field"><label for="handoverInspectionDate">วันที่นัดตรวจ/ตรวจพบงานแก้ไข</label><input id="handoverInspectionDate" type="date" value="'+esc(hr.inspectionDate||'')+'"></div>'+
+          '<div class="pf-field span-2"><label for="handoverDefectNote">รายละเอียดที่ต้องแก้ไข (ถ้ามี)</label><textarea id="handoverDefectNote" maxlength="1000" rows="3">'+esc(hr.defectNote||'')+'</textarea></div>'+
+          '<div class="pf-field span-2"><label for="handoverEvidence">เลขที่หลักฐาน/ใบตรวจรับ</label><input id="handoverEvidence" type="text" maxlength="300" value="'+esc(hr.evidenceRef||'')+'" placeholder="อ้างอิงเอกสารหรือภาพในโครงการ"></div>'+
+          '<div class="pf-field span-2"><label for="handoverNote">หมายเหตุ</label><textarea id="handoverNote" maxlength="600" rows="3">'+esc(hr.note||'')+'</textarea></div>'+
+          '<div class="pf-field span-2"><label class="handover-confirm"><input id="handoverConfirm" type="checkbox"> ยืนยันว่าได้รับการตรวจรับงานจริง (ใช้เฉพาะขั้นตรวจรับแล้ว)</label></div>'+
+          '</div><div class="handover-help">ช่องหลักฐานบันทึกเลขอ้างอิงเท่านั้น รูป/ไฟล์จริงให้เก็บในระบบเอกสารเดิม ไม่บันทึกไฟล์ดิบลง localStorage</div>'+
+          '<div class="project-form-savebar"><button type="button" data-act="closeSheet">ยกเลิก</button><button class="primary" data-act="projectHandoverSave" data-id="'+esc(hp.id)+'">บันทึกส่งงาน</button></div>';
+      }
+    }
   }else if(sh.kind==='proj'){
     var p=sh.id?proj(sh.id):null,hasContract=!!(p&&(p.contractNo||p.contractDate||p.startDate||p.endDate)),hasGuarantee=!!(p&&(p.retAmt||p.retPaidDate||p.deliveryDate||p.retDue));
     b='<div class="project-form-head"><div><small>PROJECT</small><h3>'+(p?'แก้ไขโครงการ':'เพิ่มโครงการ')+'</h3></div><button type="button" data-act="closeSheet" aria-label="ปิด">×</button></div>'+
@@ -8782,7 +9031,7 @@ function sheetHtml(){
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
-  return '<div class="scrim master-scrim'+(sh.kind==='proj'?' project-edit-scrim mobile-editor-scrim':((sh.kind==='profileEdit'||sh.kind==='feedback'||sh.kind==='expenseBatch')?' mobile-editor-scrim':''))+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='googleWorkspace'?' google-workspace-sheet':'')+(sh.kind==='proj'?' project-sheet':'')+(sh.kind==='profileEdit'?' profile-editor-sheet':'')+(sh.kind==='feedback'?' feedback-editor-sheet':'')+(sh.kind==='expenseBatch'?' expense-review-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
+  return '<div class="scrim master-scrim'+((sh.kind==='proj'||sh.kind==='projectHandover')?' project-edit-scrim mobile-editor-scrim':((sh.kind==='profileEdit'||sh.kind==='feedback'||sh.kind==='expenseBatch')?' mobile-editor-scrim':''))+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='googleWorkspace'?' google-workspace-sheet':'')+((sh.kind==='proj'||sh.kind==='projectHandover')?' project-sheet':'')+(sh.kind==='profileEdit'?' profile-editor-sheet':'')+(sh.kind==='feedback'?' feedback-editor-sheet':'')+(sh.kind==='expenseBatch'?' expense-review-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
 }
 function csvText(){
   var rows=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
@@ -9116,7 +9365,7 @@ function render(){
   var mode=(S.ui&&S.ui.viewMode==='desktop')?'desktop':'mobile';document.documentElement.setAttribute('data-view-mode',mode);
   var foreman=S.role==='foreman';
   /* เมนูหลักคงที่เพื่อให้การนำทางสม่ำเสมอทุกบทบาท */
-  var validViews={home:1,profile:1,list:1,add:1,projects:1,project:1,boq:1,due:1,guarantees:1,report:1,print:1,docs:1,procurement:1,doclist:1,quoteprint:1};
+  var validViews={home:1,profile:1,list:1,add:1,projects:1,project:1,boq:1,due:1,guarantees:1,report:1,print:1,handoverprint:1,docs:1,procurement:1,doclist:1,quoteprint:1};
   if(!validViews[U.view])U.view='home';
   if(U.view==='project'&&!proj(U.pid)){U.view='projects';U.pid=null;}
   var v=U.view,title='',body='',back=false;
@@ -9131,6 +9380,7 @@ function render(){
   else if(v==='guarantees'){title='งานประกัน';body=vGuarantees();back=true;}
   else if(v==='report'){title='รายงาน';body=vReport();back=true;}
   else if(v==='print'){title='รายงานสำหรับพิมพ์';body=vPrint();back=true;}
+  else if(v==='handoverprint'){title='หนังสือส่งงาน';body=vHandoverLetter();back=true;}
   else if(v==='docs'){title='เอกสารธุรกิจ';body=vDocs();back=true;}
   else if(v==='procurement'){title='งานพัสดุ';body=vProcurement();back=true;}
   else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
@@ -9143,8 +9393,8 @@ function render(){
     else{var on=(v===t[0])||(t[0]==='projects'&&v==='project')||(t[0]==='home'&&v==='report'),ub=(t[0]==='home'?urgentCount():0),act=t[0]==='boq'?'bottomBoq':(t[0]==='list'?'openList':'go');nav+='<button class="'+(on?'on':'')+'" data-act="'+act+'" data-v="'+t[0]+'"'+(on?' aria-current="page"':'')+'>'+(t[0]==='profile'?ic(t[1]):areaMenuIcon(t[0],t[1]))+'<span>'+t[2]+'</span>'+(ub?'<i class="nav-alert-badge">'+(ub>9?'9+':ub)+'</i>':'')+'</button>';}
   });
   nav+='</div></nav>';
-  var nonav=(v==='print'||v==='quoteprint'||!!U.sheet);if(nonav)nav='';
-  var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='quoteprint';
+  var nonav=(v==='print'||v==='handoverprint'||v==='quoteprint'||!!U.sheet);if(nonav)nav='';
+  var wall=(!S.ui||S.ui.wallpaper!==false)&&v!=='print'&&v!=='handoverprint'&&v!=='quoteprint';
   document.body.classList.toggle('wallpaper-on',wall);
   document.body.classList.toggle('force-desktop',!!(S.ui&&S.ui.viewMode==='desktop'));
   document.body.classList.toggle('force-mobile',!S.ui||S.ui.viewMode!=='desktop');
@@ -9166,7 +9416,7 @@ function render(){
 
 /* ---------- Mobile/iOS direct navigation ---------- */
 function accountingActionAllowed(action){
-  var ownerActions={apPayOpen:1,apPaySave:1,markPaid:1,editTx:1,delTx:1,saveBillPayment:1,manualJournalSave:1,bankReconcile:1,periodClose:1,periodReopen:1,contractorPackageNew:1,contractorPackageSave:1};
+  var ownerActions={apPayOpen:1,apPaySave:1,markPaid:1,editTx:1,delTx:1,saveBillPayment:1,manualJournalSave:1,bankReconcile:1,periodClose:1,periodReopen:1,contractorPackageNew:1,contractorPackageSave:1,projectHandoverSave:1};
   if(ownerActions[action]&&S.role!=='owner'){toast('เฉพาะเจ้าของบัญชี');return false;}return true;
 }
 function directAction(el){
@@ -9479,6 +9729,7 @@ document.addEventListener('click',function(e){
   if(a==='openList'){U.sheet=null;U.appMenu=false;U.filter=U.filter||{type:'all',pid:'',cat:'',status:'all',sub:''};go('list');return;}
   if(a==='go'){if(v==='home')navHome();else go(v);return;}
   else if(a==='back'&&U.view==='print'){var pf=U.printFrom||'report';U.printFrom=null;go(pf);}
+  else if(a==='back'&&U.view==='handoverprint'){go('project',{pid:U.handoverPrintPid||U.pid});}
   else if(a==='back'&&U.view==='quoteprint'){U.docListKind=U.docKind||'quote';go('doclist');}
   else if(a==='back'&&U.view==='doclist'){if(U.docProjectPid){var dp=U.docProjectPid;U.docProjectPid='';go('project',{pid:dp});}else go('docs');}
   else if(a==='back'&&U.view==='docs'){go('home');}
@@ -9531,6 +9782,9 @@ document.addEventListener('click',function(e){
   else if(a==='pdfView'){U.printFrom=U.view;go('print');}
   else if(a==='doPrint'){try{window.print();}catch(x){toast('เครื่องนี้สั่งพิมพ์ไม่ได้');}}
   else if(a==='downloadDocPdf'){downloadBusinessDocPdf(el.dataset.kind||U.docKind||'quote',id||U.docId);}
+  else if(a==='handoverDownloadPdf'){downloadHandoverLetterPdf(id||U.handoverPrintPid||U.pid);}
+  else if(a==='handoverPrintOpen'){if(!proj(id)){toast('ไม่พบโครงการ');return;}U.handoverPrintPid=id;U.sheet=null;go('handoverprint',{pid:id});}
+  else if(a==='handoverReturn'){go('project',{pid:id||U.handoverPrintPid||U.pid});}
   else if(a==='openTx'){U.sheet={kind:'tx',id:id};U.confirm=null;render();}
   else if(a==='editDueTx'){var edt=S.tx.find(function(x){return x.id===id;});if(!edt)return;if(accountingPeriodLocked(edt.date,'รายการบัญชี'))return;U.sheet={kind:'dueEdit',id:id};U.confirm=null;render();}
   else if(a==='saveDueTx'){
@@ -9733,6 +9987,29 @@ document.addEventListener('click',function(e){
   }
   else if(a==='returnGuarantee'){var rg=(S.guarantees||[]).find(function(g){return g.id===id;});if(!rg){toast('ไม่พบรายการหลักประกัน');return;}if(accountingPeriodLocked(today(),'การรับคืนหลักประกัน'))return;if(rg.returned){U.sheet=null;render();toast('รายการนี้รับคืนแล้ว');return;}var snapRG=JSON.parse(JSON.stringify(S));if(receiveGuaranteeRecord(rg)){if(!persist()){S=snapRG;toast('บันทึกรับคืนไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;render();toast('บันทึกรับหลักประกันคืนแล้ว');}}
   else if(a==='deleteGuarantee'){var dg=(S.guarantees||[]).find(function(g){return g.id===id;});if(dg){var gtx=(S.tx||[]).filter(function(t){return t.id==='guarantee-v2-expense-'+id||t.id==='guarantee-v2-refund-'+id;});if(gtx.some(function(t){return isPeriodClosed(t.date);})){toast('ลบไม่ได้: รายการบัญชีของหลักประกันอยู่ในงวดที่ปิดแล้ว');return;}}if(dg&&dg.legacyPid){toast('รายการเดิมผูกกับโครงการ กรุณาแก้จากข้อมูลโครงการ');return;}if(U.confirm!=='g'+id){U.confirm='g'+id;render();toast('แตะลบอีกครั้งเพื่อยืนยัน');return;}var snapDG=JSON.parse(JSON.stringify(S));S.guarantees=(S.guarantees||[]).filter(function(g){return g.id!==id;});S.tx=S.tx.filter(function(t){return t.id!=='guarantee-v2-expense-'+id&&t.id!=='guarantee-v2-refund-'+id;});if(!persist()){S=snapDG;toast('ลบงานประกันไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}U.sheet=null;U.confirm=null;render();toast('ลบรายการงานประกันและรายการบัญชีที่เชื่อมแล้ว');}
+
+  else if(a==='projectHandoverOpen'){
+    if(!proj(id)){toast('ไม่พบโครงการ');return;}
+    U.sheet={kind:'projectHandover',id:id};render();
+  }
+  else if(a==='projectHandoverSave'){
+    if(S.role!=='owner'){toast('เฉพาะเจ้าของบัญชี');return;}
+    if(!U.sheet||U.sheet.kind!=='projectHandover'||U.sheet.id!==id){toast('กรุณาเปิดฟอร์มส่งงานอีกครั้ง');return;}
+    var oldH=proj(id);if(!oldH){toast('ไม่พบโครงการ');return;}
+    function hv(key){var el=document.getElementById(key);return el?String(el.value||''):'';}
+    var inputH={stage:hv('handoverStage'),submittedDate:hv('handoverSubmittedDate'),acceptedDate:hv('handoverAcceptedDate'),
+      letterNo:hv('handoverLetterNo'),recipient:hv('handoverRecipient'),acceptedBy:hv('handoverAcceptedBy'),
+      evidenceRef:hv('handoverEvidence'),note:hv('handoverNote'),inspectionStatus:hv('handoverInspectionStatus'),
+      inspectionDate:hv('handoverInspectionDate'),defectNote:hv('handoverDefectNote')};
+    if(inputH.stage==='accepted'&&!(document.getElementById('handoverConfirm')||{}).checked){toast('ยืนยันการตรวจรับงานจริงก่อนบันทึก');return;}
+    var planH=projectHandoverPlan(oldH,inputH);if(!planH.ok){toast(planH.error);return;}
+    var beforeH=JSON.parse(JSON.stringify(S)),originalH=JSON.parse(JSON.stringify(oldH));
+    Object.assign(oldH,planH.project);
+    if(inputH.stage==='accepted')projectHandoverSyncGuaranteeDue(id,planH.oldAutoDue,planH.newAutoDue);
+    accountingAudit('project-handover','project',id,originalH,oldH,inputH.stage==='accepted'?'ตรวจรับและส่งมอบงาน':'ยื่นหนังสือส่งงาน');
+    if(!persist()){S=beforeH;toast('บันทึกส่งงานไม่สำเร็จ ข้อมูลเดิมยังอยู่');return;}
+    U.sheet=null;render();toast(inputH.stage==='accepted'?'ตรวจรับ/ส่งมอบแล้ว · เริ่มติดตามเงินประกัน':'บันทึกยื่นส่งงานแล้ว · รอตรวจรับ');
+  }
   else if(a==='saveProj'){
     var n=document.getElementById('pn').value.trim();if(!n){toast('กรอกชื่อโครงการก่อน');return;}
     var sd0=document.getElementById('psd').value,ed0=document.getElementById('ped').value;
