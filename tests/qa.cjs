@@ -380,6 +380,37 @@ reset();test('V12 real click path submits then accepts while preserving accounti
  assert.equal(c.S.projects[0].status,'delivered');assert.equal(c.S.projects[0].retDue,'2028-11-24');
  assert.deepEqual(copy(c.S.tx),ledger);
 });
+
+reset();test('V12 handover letter A4 preview is built only from escaped project data',()=>{
+ c.S.projects[0].name='<img src=x onerror=alert(1)>';
+ c.S.projects[0].contractNo='AB/2569';
+ c.S.business={legalName:'หจก.ผู้รับจ้าง',address:'แม่สาย',phone:'012345678'};
+ c.S.projects[0].handover={stage:'submitted',letterNo:'SW-01/2569',submittedDate:'2026-11-20',
+   recipient:'เจ้าของงาน',evidenceRef:'เอกสาร-1',note:''};
+ const pdf=c.projectHandoverLetterHtml('p');
+ assert(pdf.includes('หนังสือส่งมอบงาน')&&pdf.includes('SW-01/2569')&&pdf.includes('AB/2569'));
+ assert(pdf.includes('&lt;img src=x onerror=alert(1)&gt;'));
+ assert(!pdf.includes('<img src=x onerror=alert(1)>'));
+ assert(pdf.includes('ยังไม่ถือว่าได้รับการตรวจรับงานแล้ว'));
+ assert(!pdf.includes('handover-draft'));
+ const was=c.S.tx.length;c.U.handoverPrintPid='p';const view=c.vHandoverLetter();
+ assert(view.includes('handoverDownloadPdf')&&view.includes('handoverLetterPaper'));
+ assert.equal(c.S.tx.length,was,'PDF view must not post transactions');
+});
+reset();test('V12 draft letter is explicitly marked before submission and uses no fabricated number',()=>{
+ c.S.projects[0].handover=undefined;
+ const x=c.projectHandoverLetterHtml('p');
+ assert(x.includes('handover-draft'));assert(x.includes('ยังไม่บันทึก'));
+ assert(x.includes('หนังสือส่งมอบงาน'));assert(x.includes('ลงชื่อ'));
+});
+reset();test('V12 handover print route and native PDF fallback remain accessible',()=>{
+ assert(html.includes("handoverprint:1"));
+ assert(html.includes("data-act=\"handoverDownloadPdf\""));
+ assert(html.includes("data-act=\"handoverPrintOpen\""));
+ assert(html.includes("function downloadHandoverLetterPdf"));
+ assert(html.includes("loadHtml2Pdf(function(loaded)"));
+ assert(html.includes("body[data-view=\"handoverprint\"] #handoverLetterPaper"));
+});
 test('v327 project profitability command center returns portfolio',()=>{assert(Array.isArray(c.projectProfitabilityCommandCenter().projects))});
 test('v328 payroll bridge uses existing wage transactions only',()=>{c.S.tx=[{id:'w1',pid:'p',type:'out',amount:500,cat:'ค่าแรง',paid:true,pay:'cash',date:'2026-09-01'}];const x=c.payrollProjectCostBridge('p');assert.equal(x.count,1);assert.equal(x.total,500)});
 test('v329 owner daily brief exposes alerts',()=>{assert(Array.isArray(c.ownerDailyBrief().alerts))});
