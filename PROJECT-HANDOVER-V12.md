@@ -1,27 +1,35 @@
-# AREA Ledger V12 — Project Handover Workflow (Staging Candidate)
+# AREA Ledger V12 — Project Handover, Inspection and A4 Letter
 
-## Scope
-This change adds an owner's **ส่งงาน / ตรวจรับ** action from Home, Projects list, and the project detail. The existing project editor and financial records are preserved. A handover is not the same as a financial project close.
+**Scope:** Draft PR #266 based on open Draft #265, with integration target GitHub `main`. It builds no production credentials or database migrations, and is not an authorization to release.
 
-## Stages
-1. **ยื่นหนังสือส่งงาน / submitted:** require submission date and document number. Keep existing project status unchanged (usually `active`); do not set `deliveryDate` or calculate retention maturity.
-2. **ตรวจรับแล้ว / accepted:** require a date on or after submission, the accepting person/agency, and explicit confirmation. Set `status=delivered`, store `deliveryDate`, and (for a pending existing contract guarantee) derive `retDue` from delivery + 2 years using the existing app rule. **Do not set `status=closed`.**
-3. Already delivered or closed projects show a read-only handover overview here. Legacy dates and explicit manual due dates are preserved.
+## User journey
+1. From Dashboard, Projects or Project Detail choose **ส่งงาน / ตรวจรับ**.
+2. Select **ยื่นหนังสือส่งงาน · รอตรวจรับ**, enter actual submission date and registered letter number. This does not count as acceptance and does not close the project.
+3. Use **ดูหนังสือส่งงาน A4 / PDF** to preview a Thai A4 letter built from *saved* project data and company settings. When incomplete the letter is visibly marked **ร่างเอกสาร**. It has a blank signature line. **No signature or legal acceptance is generated.**
+4. Print using native **พิมพ์ / บันทึกเป็น PDF** (works with browser print/share) or **ดาวน์โหลด PDF** using the existing html2pdf library; if library load fails, fallback to native print. Users must inspect the print output before formally filing it.
+5. Set **นัดตรวจรับแล้ว** and a date, or **ตรวจแล้ว · มีรายการแก้ไข** with inspected date and mandatory defect note. Both stay in the submitted/current-project state, with no two-year retention timer.
+6. Only after actual acceptance choose **ตรวจรับแล้ว · ส่งมอบงาน**, enter valid date, inspection party and check explicit acknowledgment. Then project becomes `delivered`, *not* `closed`. The existing guarantee maturity rule (delivery date + two years) applies to eligible outstanding cash guarantees, while explicit owner dates remain untouched.
+7. Dashboard shows counts for pending, scheduled, rework and accepted work. Owner project detail shows financial closeout **as a provisional contract-minus-booked-cost spread** (THB and %) with separate AR, AP and contract guarantee balances. It explicitly warns this is neither final profit nor net cash.
 
-Data written on the project record is `handover={stage,submittedDate,letterNo,recipient,acceptedBy,acceptedDate,evidenceRef,note,updatedAt}`. All content is escaped when rendered. The evidence reference is plain text **not a file upload**; existing documents and real photos stay in their current modules.
+## Storage and accounting invariants
+- The system stores only plain-text references to evidence in `handover.evidenceRef`, *not* attached raw photo/PDF bytes in `site-ledger-v1`. Existing project documents and site-photo modules remain the places for files. New private R2 uploader and physical readback are **pending**; no Google OAuth upload is implied.
+- `handover` fields: `stage` (submitted/accepted), `submittedDate`, `letterNo`, `recipient`, `acceptedBy`, `acceptedDate`, `inspectionStatus` (pending/scheduled/rework/passed), `inspectionDate`, `defectNote`, `evidenceRef`, `note`, `updatedAt`.
+- Validation rejects missing letters, future submission/acceptance dates, date inversions, rework without actual inspection date and note, accidental duplicate submissions and edits to already delivered/closed projects through this flow.
+- Only `accepted` updates `p.deliveryDate` and `p.retDue` when the guarantee due date was previously empty/auto-derived. Custom due dates, returned guarantees, bank letters and other projects are unaffected.
+- Saves use existing `accountingAudit`, `persist()` and full state rollback on failure. **No automatic new income, expense, refund, contractor payment, receipt or cost posting.**
+- `projectHandoverCloseout()` is read-only, based on existing `approvedContractValue`, `projectCostWithGuarantees` and `txOutstandingNet`. It is a *booked-cost gross spread*, not a final project margin until ETC and VAT/overhead adjustments are reviewed.
+- `S.role='owner'` is a UI-level guard only. Real multi-user authorization remains a separate platform hardening task.
+- Existing `site-ledger-v1`, `site-ledger-db`, D1/R2 IDs, restoration and older project records remain unchanged.
 
-## Safety invariants
-- No automatic revenue, paid expense, guarantee refund, receipt, D1 or R2 write; `projectHandoverPlan()` is nonmutating.
-- Only existing owner UI may save (it does **not** constitute server-side role authorization).
-- New due dates are applied only to unreturned cash-like guarantees with missing dates or dates that match the previous auto-derived date; explicit custom due dates, returned guarantees, unrelated projects and bank guarantees are preserved.
-- On failed `persist()`, restore the entire pre-mutation state, including audit log and guarantees. Rejected repeated submissions do not save again.
-- Existing `site-ledger-v1` and `site-ledger-db` keys are unchanged. No migration or delete of historical records.
+## Acceptance and what has not been done
+- `tests/qa.cjs` covers functional handover, acceptance, inspection/rework, pure analytics, HTML escaping, A4 document routes and no finance writes.
+- `tests/handover-mobile.cjs` is added to required Release QA and PR Staging iPhone-layout jobs; tests synthetic Chromium at 320/375/390/430/844 px and creates an A4 PDF artifact. This **does not count as physical iPhone Safari acceptance**.
+- Review PDF typography, multi-page output, Thai accents, offline print fallback, PWA updates, printed signatures, long titles, expected evidence attachment and real Google Workspace consent on an actual device.
+- This work is an **isolated Draft candidate**, not in production. Before integrating with [PR #263](https://github.com/jmmeta6767/area-ledger/pull/263), rebase from freshly fetched main and ensure awaited durable-save compatibility. Do not merge both overlapping shells blindly. Work P0–P8 is tracked by [Issue #264](https://github.com/jmmeta6767/area-ledger/issues/264).
+- Production release remains held pending owner current-device backup with receipt readback, independent review, exact-head required CI and staged live SHA, Cloudflare checks, native Safari acceptance, and one-time release approval. Never bypass these gates.
 
-## QA / release
-- `node tests/qa.cjs` now validates submission, acceptance, date rules, duplicate behavior, custom guarantee due dates, and sheet rendering.
-- Validate on real iPhone Safari and installed PWA at 320–430 CSS px, keyboard, scrolling, offline/reload, storage-quota failure, click double-taps and current owner data with a fresh verified backup.
-- This branch is based on main `d07df1c146db7e477dc4f2ce4d5a0f39b131a52e`; PR #263 is open and overlaps the app shell. Rebase only on **new latest main** before any merge and review conflicts with the storage/async persist candidate.
-- Run exact-head Release QA, iPhone Layout, candidate Staging and required external Cloudflare checks. Never bypass Production Gate. No Production authorization is created by this change.
-
-## Follow-up (out of V1 scope)
-Generate a formal Thai handover letter/PDF, upload independent evidence to private R2 with readback, reminders for pending acceptance, multistage inspection/defect reports, and a reviewed workflow to amend an accepted record.
+## Next increments
+- Private R2/Drive evidence attachment with explicit consent, checksum and readback, no duplicate billing/media
+- Reminder scheduling for inspection and guarantee maturity
+- Controlled correction/amendment of accepted and locked-period records
+- Genuine forecast profit percentage based on explicit remaining cost estimate, not misleading provisional spread
