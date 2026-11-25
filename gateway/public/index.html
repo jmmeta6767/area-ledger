@@ -8659,7 +8659,7 @@ function sheetHtml(){
     else{
       b='<div class="project-form-head"><div><small>PROJECT HANDOVER</small><h3>ส่งงาน / ตรวจรับงาน</h3></div><button type="button" data-act="closeSheet" aria-label="ปิด">×</button></div>'+
         '<div class="handover-summary"><b>'+esc(hp.name)+'</b><small>ยื่นส่งงาน ≠ ตรวจรับงาน ≠ ปิดบัญชีโครงการ</small></div>'+
-        '<div class="handover-print-link"><button class="btn" data-act="handoverPrintOpen" data-id="'+esc(hp.id)+'">ดูหนังสือส่งงาน A4 / PDF</button></div>'';
+        '<div class="handover-print-link"><button class="btn" data-act="handoverPrintOpen" data-id="'+esc(hp.id)+'">ดูหนังสือส่งงาน A4 / PDF</button></div>';
       if(finished){
         b+='<div class="project-form-section"><div class="pf-field span-2"><b>สถานะ: '+(hp.status==='closed'?'ปิดโครงการ':'ส่งมอบแล้ว')+'</b></div>'+
           '<div class="pf-field"><small>วันที่ส่งมอบ/ตรวจรับ</small><b>'+esc(hp.deliveryDate||'ไม่ระบุ')+'</b></div>'+
