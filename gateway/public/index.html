@@ -1946,6 +1946,16 @@ textarea{resize:vertical}
 .nav button.on{font-weight:750}
 @media(prefers-reduced-motion:reduce){.app-topbar-action,.mitem{transition:none}}
 @media(min-width:700px){.mgroup{padding-inline:14px}.mgh{margin-inline:-14px;padding-inline:18px}}
+
+
+/* V12 Handover: iPhone-safe form and action without data media in localStorage. */
+.handover-home-action{margin:9px 0 16px}.handover-home-action button{width:100%;border:1px solid #e8b941;background:#fff4d5;border-radius:13px;min-height:48px;color:#674912;font-weight:800;padding:12px}
+.handover-home-action button:focus-visible{outline:3px solid #194d82;outline-offset:2px}
+.handover-summary{margin:12px 16px;padding:12px;border-radius:12px;background:#eef5fe;color:#193a65;display:grid;gap:5px}.handover-summary small{font-size:12px;line-height:1.4}
+.handover-help{margin:10px 16px;padding:12px 13px;border-radius:12px;background:#fff8e3;color:#695522;line-height:1.65;font-size:13px}
+.handover-confirm{display:flex;gap:10px;align-items:flex-start;line-height:1.5}.handover-confirm input{width:20px;height:20px;flex:none}
+@media(max-width:390px){.handover-help{font-size:12px}}
+
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -3892,15 +3902,7 @@ body[data-view] :is(.empty,.due-empty,.boq-empty,.profile-empty){border-radius:1
 }
 </style>
 <link rel="stylesheet" href="assets/ledger-reliability.css">
-<style>
-/* V12 Handover: iPhone-safe form and action without data media in localStorage. */
-.handover-home-action{margin:9px 0 16px}.handover-home-action button{width:100%;border:1px solid #e8b941;background:#fff4d5;border-radius:13px;min-height:48px;color:#674912;font-weight:800;padding:12px}
-.handover-home-action button:focus-visible{outline:3px solid #194d82;outline-offset:2px}
-.handover-summary{margin:12px 16px;padding:12px;border-radius:12px;background:#eef5fe;color:#193a65;display:grid;gap:5px}.handover-summary small{font-size:12px;line-height:1.4}
-.handover-help{margin:10px 16px;padding:12px 13px;border-radius:12px;background:#fff8e3;color:#695522;line-height:1.65;font-size:13px}
-.handover-confirm{display:flex;gap:10px;align-items:flex-start;line-height:1.5}.handover-confirm input{width:20px;height:20px;flex:none}
-@media(max-width:390px){.handover-help{font-size:12px}}
-</style>
+
 </head>
 <body>
 <div id="app"></div>
