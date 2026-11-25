@@ -44,6 +44,7 @@ jobs:
           node tests/iphone-project-keyboard.cjs
           node tests/iphone-project-create-keyboard.cjs
           node tests/project-mobile-budget.cjs
+          node tests/handover-mobile.cjs
           node tests/reliability-mobile.cjs
           node tests/expense-entry-e2e.cjs
           node tests/ux-ui-v1080-e2e.cjs
