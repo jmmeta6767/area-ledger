@@ -400,10 +400,20 @@ reset();test('V12 handover letter A4 preview is built only from escaped project 
 reset();test('V12 draft letter is explicitly marked before submission and uses no fabricated number',()=>{
  c.S.projects[0].handover=undefined;
  const x=c.projectHandoverLetterHtml('p');
- assert(x.includes('handover-draft'));assert(x.includes('ยังไม่บันทึก'));
+ assert(x.includes('handover-draft'));assert(x.includes('ข้อมูลเลขหนังสือ'));
  assert(x.includes('หนังสือส่งมอบงาน'));assert(x.includes('ลงชื่อ'));
 });
-reset();test('V12 handover print route and native PDF fallback remain accessible',()=>{
+reset();
+reset();test('V12 saved submission without legal business or recipient remains draft PDF',()=>{
+ const p=c.S.projects[0];p.client='';p.handover={stage:'submitted',letterNo:'SW-20',submittedDate:'2026-11-20'};
+ c.S.business={legalName:''};
+ const x=c.projectHandoverLetterHtml('p');
+ assert(x.includes('handover-draft'));
+ c.S.business={legalName:'ผู้รับจ้างที่ตรวจสอบแล้ว'};
+ p.client='หน่วยงานที่ตรวจสอบแล้ว';
+ assert(!c.projectHandoverLetterHtml('p').includes('handover-draft'));
+});
+test('V12 handover print route and native PDF fallback remain accessible',()=>{
  assert(html.includes("handoverprint:1"));
  assert(html.includes("data-act=\"handoverDownloadPdf\""));
  assert(html.includes("data-act=\"handoverPrintOpen\""));
