@@ -361,6 +361,25 @@ reset();test('V12 handover opens a responsive sheet without saving anything',()=
  assert(x.includes('handoverSubmittedDate')&&x.includes('handoverAcceptedDate')&&x.includes('handoverConfirm'));
  assert(x.includes('project-sheet'));
 });
+
+reset();test('V12 real click path submits then accepts while preserving accounting transactions',()=>{
+ c.S.role='owner';c.S.projects[0].retAmt=24750;const ledger=copy(c.S.tx);
+ const fields={handoverStage:'submitted',handoverSubmittedDate:'2026-11-20',handoverAcceptedDate:'',
+   handoverLetterNo:'SW-025/2569',handoverRecipient:'หน่วยงานเจ้าของงาน',
+   handoverAcceptedBy:'',handoverEvidence:'หนังสือส่งงาน',handoverNote:'รอตรวจ'};
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ action('projectHandoverSave','p',fields);
+ assert.equal(c.S.projects[0].status,'active');
+ assert.equal(c.S.projects[0].handover.stage,'submitted');
+ assert.equal(c.S.projects[0].deliveryDate,undefined);
+ assert.deepEqual(copy(c.S.tx),ledger);
+ assert(c.S.auditLog.some(x=>x.action==='project-handover'));
+ elements.handoverConfirm={checked:true};
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ action('projectHandoverSave','p',{...fields,handoverStage:'accepted',handoverAcceptedDate:'2026-11-24',handoverAcceptedBy:'คณะกรรมการตรวจรับ'});
+ assert.equal(c.S.projects[0].status,'delivered');assert.equal(c.S.projects[0].retDue,'2028-11-24');
+ assert.deepEqual(copy(c.S.tx),ledger);
+});
 test('v327 project profitability command center returns portfolio',()=>{assert(Array.isArray(c.projectProfitabilityCommandCenter().projects))});
 test('v328 payroll bridge uses existing wage transactions only',()=>{c.S.tx=[{id:'w1',pid:'p',type:'out',amount:500,cat:'ค่าแรง',paid:true,pay:'cash',date:'2026-09-01'}];const x=c.payrollProjectCostBridge('p');assert.equal(x.count,1);assert.equal(x.total,500)});
 test('v329 owner daily brief exposes alerts',()=>{assert(Array.isArray(c.ownerDailyBrief().alerts))});
