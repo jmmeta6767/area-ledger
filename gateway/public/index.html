@@ -1975,6 +1975,14 @@ textarea{resize:vertical}
 .handover-paper footer{font-size:10px;color:#687383;border-top:1px solid #d8dfe7;margin-top:20mm;padding-top:4mm}
 .handover-draft{padding:5px 12px;text-align:center;font-size:11px;font-weight:700;color:#925c12;background:#fff4d8;border:1px dashed #d6af5f}
 .handover-paper.handover-pdf-export{box-shadow:none!important;border:0!important;margin:0!important;width:192mm!important;min-height:0!important;padding:8mm!important}
+
+@media(max-width:800px){
+ .handover-letter-meta{flex-wrap:wrap;gap:2mm}
+ .handover-letter-meta span{max-width:100%;overflow-wrap:anywhere}
+ .handover-letter-signature{max-width:100%;width:75mm}
+ .handover-letter-signature .handover-sign-line{white-space:normal;overflow-wrap:anywhere;font-size:11px}
+}
+
 @media(max-width:800px){.handover-paper{width:100%;min-height:0;margin:8px auto;padding:14mm 11mm;font-size:13px}.handover-paper h1{font-size:20px}.handover-paper p{font-size:13px}.handover-letter-signature{width:75mm}}
 @media print{
  @page{size:A4 portrait;margin:11mm}
@@ -8141,11 +8149,11 @@ function exportXlsx(){
 /* V12: A4 handover letter. All project and owner text is escaped; no data is written. */
 function projectHandoverLetterHtml(pid){
   var p=proj(pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
-  var b=S.business||{},h=p.handover||{},date=validIsoDate(h.submittedDate)?h.submittedDate:'',issued=!!(h.letterNo&&date);
+  var b=S.business||{},h=p.handover||{},date=validIsoDate(h.submittedDate)?h.submittedDate:'',issued=!!(h.letterNo&&date&&b.legalName&&(h.recipient||p.client));
   var owner=b.legalName||S.brand||'ผู้รับจ้าง (ยังไม่ระบุชื่อ)',client=h.recipient||p.client||'เจ้าของงาน / หน่วยงานที่เกี่ยวข้อง';
   var lines=[
     '<article id="handoverLetterPaper" class="handover-paper" lang="th">',
-    !issued?'<div class="handover-draft">ร่างเอกสาร · ยังไม่บันทึกเลขที่หนังสือหรือวันส่ง</div>':'',
+    !issued?'<div class="handover-draft">ร่างเอกสาร · ข้อมูลเลขหนังสือ วันส่ง ผู้รับ หรือชื่อกิจการยังไม่ครบ</div>':'',
     '<div class="handover-brand"><b>'+esc(owner)+'</b>'+(b.address?'<small>'+esc(b.address)+'</small>':'')+(b.phone?'<small>โทร. '+esc(b.phone)+'</small>':'')+'</div>',
     '<h1>หนังสือส่งมอบงาน</h1>',
     '<div class="handover-letter-meta"><span>ที่ '+esc(h.letterNo||'......................................')+'</span><span>วันที่ '+(date?esc(dstr(date)):'......................................')+'</span></div>',
@@ -8165,11 +8173,11 @@ function projectHandoverLetterHtml(pid){
 function vHandoverLetter(){
   var pid=U.handoverPrintPid||U.pid,p=proj(pid);
   if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
-  var h=p.handover||{},issued=!!(h.letterNo&&validIsoDate(h.submittedDate));
+  var h=p.handover||{},biz=S.business||{},issued=!!(h.letterNo&&validIsoDate(h.submittedDate)&&biz.legalName&&(h.recipient||p.client));
   return '<div class="handover-print-tools no-print"><button class="btn" data-act="handoverReturn" data-id="'+esc(pid)+'">กลับโครงการ</button>'+
     '<button class="btn" data-act="doPrint">พิมพ์ / บันทึกเป็น PDF</button>'+
     '<button class="btn pri" data-act="handoverDownloadPdf" data-id="'+esc(pid)+'">ดาวน์โหลด PDF</button>'+
-    (!issued?'<p>เอกสารนี้ยังเป็นร่าง กรุณาบันทึกเลขที่หนังสือและวันที่ยื่นก่อนใช้เป็นหนังสือทางการ</p>':'')+
+    (!issued?'<p>เอกสารนี้ยังเป็นร่าง กรุณาตรวจสอบเลขหนังสือ วันที่ยื่น ผู้รับ และชื่อกิจการก่อนใช้อย่างเป็นทางการ</p>':'')+
     '</div>'+projectHandoverLetterHtml(pid);
 }
 function downloadHandoverLetterPdf(pid){
