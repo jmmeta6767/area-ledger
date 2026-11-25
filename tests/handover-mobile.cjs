@@ -14,6 +14,9 @@ fs.mkdirSync(out,{recursive:true});
    await page.route('**/*',route=>route.abort());
    await page.evaluate(()=>{Object.defineProperty(window,'visualViewport',{configurable:true,value:Object.assign(new EventTarget(),{width:innerWidth,height:innerHeight,offsetLeft:0,offsetTop:0,scale:1})});});
    await page.setContent(source);
+   // Mobile initial about:blank can report 980px before the HTML viewport meta is parsed.
+   // Match real Safari by refreshing the visual viewport *after* loading the page.
+   await page.evaluate(()=>{visualViewport.width=innerWidth;visualViewport.height=innerHeight;visualViewport.offsetLeft=0;visualViewport.offsetTop=0;visualViewport.dispatchEvent(new Event('resize'));});
    await page.evaluate(()=>{
     S=emptyState();S.role='owner';S.ui.wallpaper=false;
     S.business={legalName:'ห้างหุ้นส่วนจำกัด ทดสอบการส่งงาน',address:'แม่สาย จ.เชียงราย',phone:'0800000000'};
