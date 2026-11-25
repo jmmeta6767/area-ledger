@@ -1987,6 +1987,19 @@ textarea{resize:vertical}
 
 .handover-linked-evidence{display:flex;gap:8px;flex-wrap:wrap;margin:0 16px 8px}
 .handover-linked-evidence .btn{flex:1;min-width:120px}
+
+/* V12 inspected handover: queue, status and provisional financial closeout */
+.handover-queue-summary,.handover-closeout-panel{border:1px solid #dae2ed;background:#fff;border-radius:17px;padding:13px;margin:10px 0 14px;box-shadow:0 3px 12px #0d366012}
+.handover-queue-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:9px}
+.handover-queue-title b{color:#1a365d;font-size:15px}.handover-queue-title small{color:#69778a;font-size:11px}
+.handover-queue-grid,.handover-closeout-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.handover-closeout-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.handover-queue-grid>div,.handover-closeout-grid>div{padding:10px 8px;border:1px solid #e2e7ed;border-radius:11px;background:#f9fbff;min-width:0}
+.handover-queue-grid small,.handover-closeout-grid small{display:block;font-size:10px;line-height:1.5;color:#66768b}
+.handover-queue-grid b,.handover-closeout-grid b{display:block;margin-top:4px;font-size:15px;color:#122d51;overflow-wrap:anywhere}
+.handover-spread{padding:11px;margin-top:10px;border-radius:10px;background:#f1f7f2;color:#245f3b;display:grid;gap:3px}
+.handover-spread b{font-size:13px}.handover-spread small{font-size:11px;color:#466856}
+@media(max-width:390px){.handover-queue-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.handover-closeout-grid b{font-size:13px}}
 </style>
 <style>
 /* Drawer: readable outline icons, accessible targets and independent scrolling. */
@@ -6146,6 +6159,9 @@ function vHome(){
   var projectLifecycle={current:0,closed:0};S.projects.forEach(function(p){var key=projectHubStatusKey(p);if(key==='current')projectLifecycle.current++;else if(key==='closed')projectLifecycle.closed++;});
   h+='<section class="project-lifecycle-overview" aria-label="สถานะโครงการทั้งหมด"><div class="project-lifecycle-heading"><b>สถานะโครงการ</b><small>รวมทุกโครงการ</small></div><div class="project-lifecycle-grid"><button type="button" data-act="projectStatusShortcut" data-v="current" aria-label="ดูโครงการที่กำลังดำเนินการ '+projectLifecycle.current+' โครงการ"><small>กำลังดำเนินการ</small><b>'+projectLifecycle.current+' <span>โครงการ</span></b></button><button type="button" data-act="projectStatusShortcut" data-v="closed" aria-label="ดูโครงการที่ปิดแล้ว '+projectLifecycle.closed+' โครงการ"><small>ปิดโครงการแล้ว</small><b>'+projectLifecycle.closed+' <span>โครงการ</span></b></button></div></section>';
 
+  var hs=projectHandoverQueueSummary(S.projects);
+  h+='<section class="handover-queue-summary" aria-label="ติดตามส่งมอบงาน"><div class="handover-queue-title"><b>ติดตามส่งมอบงาน</b><small>แยกการยื่นเอกสารจากการตรวจรับจริง</small></div>'+
+    '<div class="handover-queue-grid"><div><small>รอตรวจรับ</small><b>'+hs.pending+'</b></div><div><small>มีนัดตรวจ</small><b>'+hs.scheduled+'</b></div><div><small>ต้องแก้ไข</small><b>'+hs.rework+'</b></div><div><small>ตรวจรับแล้ว</small><b>'+hs.accepted+'</b></div></div></section>';
   var cs=allMode?cashSplit():null;
   var dashProjects=allMode?S.projects:(active?[active]:[]),jobValue=dashProjects.reduce(function(a,p){return a+(+p.contract||0);},0),dashCosts=dashProjects.map(function(p){return projectCostWithGuarantees(p.id);}),dashGuaranteeSummary=portfolioGuaranteeSummary(dashProjects),actualCost=dashCosts.reduce(function(a,c){return a+c.total;},0),dashGuarantee=dashGuaranteeSummary.amount,dashGuaranteeAdd=dashCosts.reduce(function(a,c){return a+c.pendingGuaranteeAdd;},0),forecastProfit=jobValue-actualCost,realizedProfit=rec>0?rec-actualCost:null;
   h+='<section class="project-finance-kpis"><div><small>มูลค่างาน</small><b>'+fmt(jobValue)+'</b><span>จากมูลค่าสัญญาในข้อมูลโครงการ</span></div><div><small>ต้นทุน · รวมเงินประกันรอคืน</small><b class="out">'+fmt(actualCost)+'</b><span>รายจ่ายโครงการ + เงินประกันรอคืน '+fmt(dashGuarantee,true)+(dashGuaranteeAdd>0?' · เพิ่มจากทะเบียน '+fmt(dashGuaranteeAdd,true):' · ส่วนที่ลงรายจ่ายแล้วไม่บวกซ้ำ')+'</span></div><div><small>กำไรคาดการณ์</small><b class="'+(forecastProfit>=0?'in':'out')+'">'+fmt(forecastProfit)+'</b><span>มูลค่างานตามสัญญา − ต้นทุนรวมเงินประกันรอคืน</span></div><div class="realized-profit"><small>'+(rec>0?(realizedProfit>=0?'กำไรสุทธิ':'ขาดทุนสุทธิ'):'กำไร/ขาดทุนสุทธิ')+'</small>'+(rec>0?'<b class="'+(realizedProfit!==null&&realizedProfit>=0?'in':'out')+'">'+fmt(realizedProfit||0)+'</b><span>รายรับที่ได้รับจริง − รายจ่ายที่จ่ายจริง</span>':'<b class="pending-profit">รอรับรายได้</b><span>จะแสดงผลเมื่อมีรายรับจริงในโครงการ</span>')+'</div></section>';
@@ -6532,6 +6548,7 @@ function projectHubStatusKey(p){
 }
 function projectHubStatusText(p){
   var st=(p&&p.status)||'active';
+  if((st==='active'||st==='waiting')&&p&&p.handover&&p.handover.stage==='submitted')return projectHandoverWorkflowLabel(p);
   return ({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[st]||'กำลังดำเนินการ';
 }
 function projectHubSearchText(p){
@@ -7549,6 +7566,40 @@ function contractorPackageHtml(pid){
 }
 
 /* V12 handover workflow. A submitted letter is not completed acceptance. */
+
+function projectHandoverWorkflowLabel(p){
+  if(!p)return 'ไม่พบโครงการ';
+  if(p.status==='closed')return 'ปิดโครงการแล้ว';
+  if(p.status==='delivered')return 'ตรวจรับ / ส่งมอบแล้ว';
+  var h=p.handover||{};
+  if(h.stage!=='submitted')return 'ยังไม่ยื่นส่งงาน';
+  return ({pending:'ยื่นแล้ว · รอตรวจรับ',scheduled:'นัดตรวจรับแล้ว',rework:'ต้องแก้ไขงาน'})[h.inspectionStatus||'pending']||'รอตรวจรับ';
+}
+function projectHandoverQueueSummary(projects){
+  var out={notSubmitted:0,pending:0,scheduled:0,rework:0,accepted:0,closed:0};
+  (projects||[]).forEach(function(p){
+    if(p.status==='closed'){out.closed++;return;}
+    if(p.status==='delivered'){out.accepted++;return;}
+    var h=p.handover||{};
+    if(h.stage!=='submitted'){out.notSubmitted++;return;}
+    var st=h.inspectionStatus||'pending';
+    if(st==='scheduled')out.scheduled++;else if(st==='rework')out.rework++;else out.pending++;
+  });
+  return out;
+}
+function projectHandoverCloseout(pid){
+  var p=proj(pid);if(!p)return null;
+  var contract=approvedContractValue(pid),pc=projectCostWithGuarantees(pid),receivable=0,payable=0;
+  (S.tx||[]).forEach(function(t){
+    if(t.pid!==pid)return;
+    var due=txOutstandingNet(t);if(!(due>0))return;
+    if(t.type==='in')receivable+=due;else if(t.type==='out')payable+=due;
+  });
+  var spread=contract-(pc.total||0);
+  return {contract:contract,bookedCost:pc.total||0,grossSpread:spread,grossSpreadPct:contract>0?spread/contract*100:null,
+    receivable:receivable,payable:payable,retention:(+p.retAmt||0),retentionDue:p.retDue||''};
+}
+
 function projectHandoverPlan(p,data){
   if(!p)return {ok:false,error:'ไม่พบโครงการ'};
   if(p.status==='closed'||p.status==='delivered')return {ok:false,error:'โครงการส่งมอบหรือปิดแล้ว ต้องตรวจสอบหลักฐานก่อนแก้ไข'};
@@ -7598,6 +7649,15 @@ function vProject(){
   var p=proj(U.pid);if(!p)return '<div class="empty">ไม่พบโครงการ</div>';
   var s=stats(p.id),pcost=projectCostWithGuarantees(p.id),boqUse=boqSummary(p.id),x=boqUse.pct,boqRemaining=boqUse.budget-boqUse.actual,actualCost=pcost.total,forecastProfit=approvedContractValue(p.id)-actualCost;
   var h='<div style="margin-top:8px" class="muted">'+esc(p.client||'ไม่ระบุลูกค้า')+(p.location?' · '+esc(p.location):'')+' <span class="mini-status">'+esc(({active:'กำลังดำเนินการ',waiting:'รอเริ่มงาน',delivered:'ส่งมอบแล้ว',closed:'ปิดโครงการ'})[p.status||'active']||'กำลังดำเนินการ')+'</span></div><div class="workflow-section-head"><span>งานประจำวัน</span><small>BOQ · เพิ่มรายการ · แก้ไขโครงการ</small></div>';
+  var hx=projectHandoverCloseout(p.id);
+  if(hx&&S.role==='owner'){
+    h+='<section class="handover-closeout-panel"><div class="handover-queue-title"><b>ยอดค้างและส่วนต่างเมื่อส่งมอบ</b><small>'+esc(projectHandoverWorkflowLabel(p))+'</small></div>'+
+      '<div class="handover-closeout-grid"><div><small>มูลค่าสัญญาอนุมัติ</small><b>'+fmt(hx.contract)+'</b></div><div><small>ต้นทุนที่บันทึก</small><b>'+fmt(hx.bookedCost)+'</b></div>'+
+      '<div><small>ลูกหนี้ค้างรับ</small><b>'+fmt(hx.receivable)+'</b></div><div><small>เจ้าหนี้ค้างจ่าย</small><b>'+fmt(hx.payable)+'</b></div>'+
+      '<div><small>เงินประกันสัญญา</small><b>'+fmt(hx.retention)+'</b></div><div><small>กำหนดคืนเงินประกัน</small><b>'+esc(hx.retentionDue||'ยังไม่ระบุ')+'</b></div></div>'+
+      '<div class="handover-spread"><b>ส่วนต่างมูลค่างาน − ต้นทุนบันทึก: '+fmt(hx.grossSpread)+(hx.grossSpreadPct===null?'':' ('+hx.grossSpreadPct.toFixed(1)+'%)')+'</b>'+
+      '<small>ไม่ใช่กำไรสุดท้ายหรือเงินสดสุทธิ เพราะอาจมีต้นทุนที่จะเกิดเพิ่มเติม และต้องกระทบยอดรายการค้างรับ/ค้างจ่าย</small></div></section>';
+  }
   var topBq=boqSummary(p.id);h+='<div class="sec master-detail-card project-boq-shortcut"><div><small>BOQ โครงการ</small><b style="display:block;font-size:1.05rem;margin-top:2px">'+topBq.rows.length+' รายการ · '+fmt(topBq.budget)+'</b></div><div class="project-focus-grid project-command-grid"><button class="btn pri" data-act="boqOpenProject" data-id="'+p.id+'">เปิด BOQ</button><button class="btn" data-act="addToProj" data-id="'+p.id+'">+ รายการ</button><button class="btn" data-act="editProj" data-id="'+p.id+'">แก้ไข</button><button class="btn pri" data-act="projectHandoverOpen" data-id="'+p.id+'">'+(p.status==="delivered"||p.status==="closed"?"ดูส่งมอบงาน":p.handover&&p.handover.stage==="submitted"?"รอตรวจรับงาน":"ส่งงาน / ตรวจรับ")+'</button><button class="btn" data-act="accountingProjectCost" data-id="'+p.id+'">ต้นทุนบัญชี</button><button class="btn" data-act="projectDocList" data-kind="bill" data-id="'+p.id+'">เอกสาร</button><button class="btn" data-act="projectGuarantees" data-id="'+p.id+'">หลักประกัน</button><button class="btn" data-act="govRiskOpen" data-id="'+p.id+'">สัญญา / หนังสือ</button><button class="btn" data-act="profilePostNew" data-id="'+p.id+'">โพสต์หน้างาน</button></div></div>';
 
   h+=contractorPackageHtml(p.id);
