@@ -1,0 +1,26 @@
+# AREA Ledger V12 — execution 1–6, 26 November 2026
+
+Source: protected main d07df1c146db7e477dc4f2ce4d5a0f39b131a52e; integrated candidate #269 f35a217f88403bd6cbb99afef969827033fcc30d. Pure calculator is reviewed separately in #270 (729225ca7e4474957d2bcdf8ea89608ca06a00a2). Do not merge overlapping app candidates independently. Preserve site-ledger-v1, site-ledger-db, existing D1/R2 and financial transactions.
+
+| Step | Implemented in this candidate | External acceptance |
+|---|---|---|
+| 1 OCR | Bounded BOQ transport retry, original quality assertions and identity retained; honor provider retry=0. No model/secret change. | #269 Staging run 45653257868 subsequently succeeded on 26 Nov; new head needs new exact-source proof. |
+| 2 Storage | Inherits #269 primary storage, 94 awaited write sites including new saves. Forecast failure retains form and rolls back; portable backup includes checksum-verified handover originals or fails clearly. | Fresh real current-device backup, receipt readback and isolated owner-data reconciliation still required. |
+| 3 Profit and dashboard | Pure explicit-ETC forecast; owner-confirmed contract/VAT basis, overhead, source, date, revision/history. Accrued paid/unpaid costs, no adding AP balances twice; guarantee principal excluded; cash separate. Approved variations only. Weighted complete/covered portfolio, no inferred zero ETC. A changed cost/contract fingerprint invalidates forecast pending review. | Accounting basis and source completeness must be reviewed by owner; no statutory accounting assertion. |
+| 4 Handover evidence | Owner-initiated PDF/JPEG/PNG/WebP <=2MB, fresh portable-backup revision and consent required; existing authenticated R2, SHA256 and remote readback, local original, resumable pending upload, stale-source rejection. Existing submission/acceptance/inspection/guarantee flow retained. | No real user media uploaded. Native Safari file/camera/PWA and original readback pending. |
+| 5 Reports/Google | Literal-text XLSX via existing local builder, formula-safe CSV, escaped A4 landscape print/PDF; forecast coverage/source/as-of and null values explicit. Adds confirmed ETC metrics to existing project Sheets snapshot. Existing OAuth and manual sync flow retained. | No live OAuth consent, spreadsheet write or Drive upload performed. ChatGPT connector does not establish app OAuth. |
+| 6 QA/release | Required regression and mobile jobs include new modules, transport and browser tests. No production authorization or migration. | Independent review, exact-head CI/Staging, external Cloudflare checks, native iPhone and owner backup/reconciliation required. Remain Draft/HOLD if any fails. |
+
+## Financial basis
+Net contract = approved contract value on the explicit selected basis (VAT-inclusive values divided by 1+explicit rate). Cost uses project outflow entries once, regardless of payment status; VAT remains a cost unless owner confirms recoverability and rate. Refundable guarantee principal is excluded. Booked costs/commitments already in those entries must not be re-entered as ETC. Owner must verify the posted costs reflect actual accrual; this is not automatic recognition of unposted work or deduction of ambiguous advances. Bills are not added a second time. Organization expenses remain separate; allocated overhead must be explicitly entered without duplicating posted costs.
+
+EAC = actual accrued cost + explicit ETC + additional allocated overhead. Forecast profit = net contract - EAC. Forecast margin = profit/net contract*100. A zero/missing contract, missing ETC/overhead, unconfirmed basis, duplicate transaction IDs or changed cost basis returns no numeric forecast. Target margin is optional; 15% is suggestion text only. Provisional legacy spreads retain their formulas and are relabeled to distinguish them from ETC-based forecasts.
+
+## Tests
+- `tests/profit-engine.cjs`: positive/negative/zero/missing inputs, weighted incomplete coverage, formula-safe CSV and 1,000 arithmetic identities.
+- `tests/profit-workspace.cjs`: actual module selectors, VAT/approved changes, unpaid/partial contractor (50k contract, 30k payment, 20k balance), guarantee exclusion, role/source/rollback/history, literal XLSX and CSV, fresh backup/consent, evidence hashing/readback, portable backup failure and pending-upload retry.
+- `tests/profit-workspace-browser.cjs`: actual modules at 320/375/390/430/844/1280px, form/save/portfolio/card/report/evidence UI, axe on views and dialogs, A4 report artifact. Synthetic Chromium, not physical Safari.
+- `tests/ocr-quality-transport.cjs`: bounded temporary 503 retry; no retries for identity/content/auth/schema errors; configured zero provider retries honored.
+- Existing financial/storage/OCR/voice/payroll/Google/privacy suites remain required. No real private financial files in source or test logs.
+
+Rollback: revert candidate code before any release. This work does not migrate owner data. New metadata remains on project records and backup validation covers it; existing transactions and storage keys are preserved. Remote evidence failure can leave an unbound private R2 object; the local original and pending metadata are retained for reviewed retry, never silently deleted.

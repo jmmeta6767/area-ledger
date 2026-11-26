@@ -8,6 +8,8 @@ let fail=false;
 const node=()=>({style:{setProperty(){}},classList:{add(){},remove(){},toggle(){}},setAttribute(){},getAttribute(){},appendChild(){},focus(){},innerHTML:''});
 const c={console,Date,Math,JSON,Number,String,Array,Object,Promise,Set,Map,RegExp,URL,parseFloat,isFinite,isNaN,setTimeout:()=>0,clearTimeout(){},navigator:{},location:{protocol:'https:',origin:'https://ledger.test',hostname:'ledger.test'},history:{pushState(){},replaceState(){}},window:{addEventListener(k,f){(listeners['window:'+k]??=[]).push(f)},scrollTo(){}},document:{addEventListener(k,f){(listeners[k]??=[]).push(f)},getElementById(id){return elements[id]||null},querySelector(){return null},querySelectorAll(){return []},documentElement:node(),body:node(),head:node(),createElement:node},localStorage:{getItem(k){return storage.get(k)||null},setItem(k,v){if(fail&&k==='site-ledger-v1')throw Error('quota');storage.set(k,v)},removeItem(k){storage.delete(k)}},sessionStorage:{getItem(k){return session.get(k)||null},setItem(k,v){session.set(k,v)},removeItem(k){session.delete(k)}}};
 vm.createContext(c);vm.runInContext(code,c);c.toast=x=>toasts.push(x);c.render=()=>{};c.go=()=>{};c.idbPut=async(k,v)=>{writes.push([k,v]);return true};c.idbRead=async()=>null;c.idbDelete=async()=>true;c.idbSet=v=>c.idbPut('state',v);c.window.sheetHtml=c.sheetHtml;c.window.directAction=c.directAction;c.window.accountingExportSheets=c.accountingExportSheets;vm.runInContext(registerCode,c);c.sheetHtml=c.window.sheetHtml;c.businessRegisterAction=c.window.businessRegisterAction;c.accountingExportSheets=c.window.accountingExportSheets;
+// Legacy-backend regression: empty new database. Primary adapter is covered separately.
+c.AreaLedgerPrimaryStore={create:()=>({load:async()=>null})};
 const run=s=>vm.runInContext(s,c),copy=x=>JSON.parse(JSON.stringify(x));let checks=0;
 function test(name,fn){fn();checks++;console.log('PASS',name)}
 const sourceBuild=copy(c.APP_BUILD);
@@ -318,6 +320,174 @@ test('v323 PWA acceptance checks secure runtime and service worker',()=>{assert.
 test('v324 rollback checkpoint preserves storage contract',()=>{const x=c.productionRollbackCheckpoint();assert.equal(x.schema.localStorageKey,'site-ledger-v1');assert.equal(x.schema.indexedDB,'site-ledger-db')});
 test('v325 accounting close certificate fails closed without close record',()=>{c.S.accountingPeriods=[];assert.equal(c.accountingCloseCertificate('2026-09').ok,false)});
 test('v326 daily cash bank control returns liquidity',()=>{assert.equal(typeof c.dailyCashBankControl().liquidity,'number')});
+
+reset();test('V12 submitted handover preserves project financials and does not start retention',()=>{
+ const p=c.S.projects[0];p.contract=495000;p.retAmt=24750;
+ const before=copy(p),ledger=copy(c.S.tx);
+ const form={stage:'submitted',submittedDate:'2026-11-20',letterNo:'SW-001/2569',recipient:'เทศบาล',evidenceRef:'ใบส่งงาน 001'};
+ const r=c.projectHandoverPlan(p,form);
+ assert.equal(r.ok,true);assert.equal(r.project.status,'active');assert(!r.project.deliveryDate);assert(!r.project.retDue);
+ assert.equal(r.project.handover.stage,'submitted');assert.deepEqual(copy(p),before);assert.deepEqual(copy(c.S.tx),ledger);
+ assert.equal(c.projectHandoverPlan(r.project,form).ok,false,'double submit blocked');
+});
+reset();test('V12 acceptance records date and calculates guarantee due two years later',()=>{
+ const p=c.S.projects[0];p.retAmt=24750;p.retDue='';
+ const form={stage:'accepted',submittedDate:'2026-11-20',acceptedDate:'2026-11-24',letterNo:'SW-001/2569',acceptedBy:'คณะกรรมการตรวจรับ'};
+ const r=c.projectHandoverPlan(p,form);assert.equal(r.ok,true);
+ assert.equal(r.project.status,'delivered');assert.equal(r.project.deliveryDate,'2026-11-24');assert.equal(r.project.retDue,'2028-11-24');
+ assert.equal(r.project.contract,p.contract);assert.equal(r.project.retAmt,24750);
+ p.retDue='2030-12-31';assert.equal(c.projectHandoverPlan(p,form).project.retDue,'2030-12-31','explicit due unchanged');
+});
+reset();test('V12 handover rejects missing letter, future or retrograde dates, closed projects',()=>{
+ const p=c.S.projects[0],form={stage:'accepted',submittedDate:'2026-11-20',acceptedDate:'2026-11-24',letterNo:'SW-002',acceptedBy:'กรรมการ'};
+ for(const x of [{letterNo:''},{submittedDate:'2099-01-01'},{acceptedDate:'2026-11-19'},{acceptedDate:'2099-01-01'},{acceptedBy:''}])
+   assert.equal(c.projectHandoverPlan(p,{...form,...x}).ok,false);
+ assert.equal(c.projectHandoverPlan({...p,status:'closed'},form).ok,false);
+});
+reset();test('V12 guarantee dates update only automatically derived unreturned cash guarantee',()=>{
+ c.S.guarantees=[
+  {id:'auto',pid:'p',type:'ประกันสัญญา',method:'เงินสด/โอน',dueDate:'',returned:false},
+  {id:'custom',pid:'p',type:'ประกันผลงาน',method:'เงินสด/โอน',dueDate:'2030-01-01',returned:false},
+  {id:'bank',pid:'p',type:'ประกันสัญญา',method:'หนังสือค้ำประกันธนาคาร',dueDate:'',returned:false},
+  {id:'other',pid:'q',type:'ประกันผลงาน',method:'เงินสด/โอน',dueDate:'',returned:false}
+ ];
+ assert.equal(c.projectHandoverSyncGuaranteeDue('p','','2028-11-24'),1);
+ assert.equal(c.S.guarantees[0].dueDate,'2028-11-24');
+ assert.equal(c.S.guarantees[1].dueDate,'2030-01-01');assert.equal(c.S.guarantees[2].dueDate,'');assert.equal(c.S.guarantees[3].dueDate,'');
+ assert.equal(c.projectHandoverSyncGuaranteeDue('p','','2028-11-24'),0);
+});
+reset();test('V12 handover opens a responsive sheet without saving anything',()=>{
+ assert(html.includes('data-act="projectHandoverOpen"')&&html.includes('data-act="projectHandoverSave"'));
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ const x=c.sheetHtml();
+ assert(x.includes('handoverSubmittedDate')&&x.includes('handoverAcceptedDate')&&x.includes('handoverConfirm'));
+ assert(x.includes('project-sheet'));
+});
+
+reset();test('V12 real click path submits then accepts while preserving accounting transactions',()=>{
+ c.S.role='owner';c.S.projects[0].retAmt=24750;const ledger=copy(c.S.tx);
+ const fields={handoverStage:'submitted',handoverSubmittedDate:'2026-11-20',handoverAcceptedDate:'',
+   handoverLetterNo:'SW-025/2569',handoverRecipient:'หน่วยงานเจ้าของงาน',
+   handoverAcceptedBy:'',handoverEvidence:'หนังสือส่งงาน',handoverNote:'รอตรวจ'};
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ action('projectHandoverSave','p',fields);
+ assert.equal(c.S.projects[0].status,'active');
+ assert.equal(c.S.projects[0].handover.stage,'submitted');
+ assert.equal(c.S.projects[0].deliveryDate,undefined);
+ assert.deepEqual(copy(c.S.tx),ledger);
+ assert(c.S.auditLog.some(x=>x.action==='project-handover'));
+ elements.handoverConfirm={checked:true};
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ action('projectHandoverSave','p',{...fields,handoverStage:'accepted',handoverAcceptedDate:'2026-11-24',handoverAcceptedBy:'คณะกรรมการตรวจรับ'});
+ assert.equal(c.S.projects[0].status,'delivered');assert.equal(c.S.projects[0].retDue,'2028-11-24');
+ assert.deepEqual(copy(c.S.tx),ledger);
+});
+
+reset();test('V12 handover letter A4 preview is built only from escaped project data',()=>{
+ c.S.projects[0].name='<img src=x onerror=alert(1)>';
+ c.S.projects[0].contractNo='AB/2569';
+ c.S.business={legalName:'หจก.ผู้รับจ้าง',address:'แม่สาย',phone:'012345678'};
+ c.S.projects[0].handover={stage:'submitted',letterNo:'SW-01/2569',submittedDate:'2026-11-20',
+   recipient:'เจ้าของงาน',evidenceRef:'เอกสาร-1',note:''};
+ const pdf=c.projectHandoverLetterHtml('p');
+ assert(pdf.includes('หนังสือส่งมอบงาน')&&pdf.includes('SW-01/2569')&&pdf.includes('AB/2569'));
+ assert(pdf.includes('&lt;img src=x onerror=alert(1)&gt;'));
+ assert(!pdf.includes('<img src=x onerror=alert(1)>'));
+ assert(pdf.includes('ยังไม่ถือว่าได้รับการตรวจรับงานแล้ว'));
+ assert(!pdf.includes('handover-draft'));
+ const was=c.S.tx.length;c.U.handoverPrintPid='p';const view=c.vHandoverLetter();
+ assert(view.includes('handoverDownloadPdf')&&view.includes('handoverLetterPaper'));
+ assert.equal(c.S.tx.length,was,'PDF view must not post transactions');
+});
+reset();test('V12 draft letter is explicitly marked before submission and uses no fabricated number',()=>{
+ c.S.projects[0].handover=undefined;
+ const x=c.projectHandoverLetterHtml('p');
+ assert(x.includes('handover-draft'));assert(x.includes('ข้อมูลเลขหนังสือ'));
+ assert(x.includes('หนังสือส่งมอบงาน'));assert(x.includes('ลงชื่อ'));
+});
+reset();
+reset();test('V12 saved submission without legal business or recipient remains draft PDF',()=>{
+ const p=c.S.projects[0];p.client='';p.handover={stage:'submitted',letterNo:'SW-20',submittedDate:'2026-11-20'};
+ c.S.business={legalName:''};
+ const x=c.projectHandoverLetterHtml('p');
+ assert(x.includes('handover-draft'));
+ c.S.business={legalName:'ผู้รับจ้างที่ตรวจสอบแล้ว'};
+ p.client='หน่วยงานที่ตรวจสอบแล้ว';
+ assert(!c.projectHandoverLetterHtml('p').includes('handover-draft'));
+});
+test('V12 handover print route and native PDF fallback remain accessible',()=>{
+ assert(html.includes("handoverprint:1"));
+ assert(html.includes("data-act=\"handoverDownloadPdf\""));
+ assert(html.includes("data-act=\"handoverPrintOpen\""));
+ assert(html.includes("function downloadHandoverLetterPdf"));
+ assert(html.includes("loadHtml2Pdf(function(loaded)"));
+ assert(html.includes("body[data-view=\"handoverprint\"] #handoverLetterPaper"));
+});
+
+reset();test('V12 inspection appointment keeps project active and postpones guarantee start',()=>{
+ const p=c.S.projects[0];p.retAmt=24750;
+ const form={stage:'submitted',submittedDate:'2026-11-20',letterNo:'SW-101',
+  inspectionStatus:'scheduled',inspectionDate:'2026-12-01'};
+ const plan=c.projectHandoverPlan(p,form);
+ assert.equal(plan.ok,true);assert.equal(plan.project.status,'active');assert.equal(plan.project.handover.inspectionStatus,'scheduled');
+ assert.equal(plan.project.handover.inspectionDate,'2026-12-01');assert(!plan.project.deliveryDate);assert(!plan.project.retDue);
+ assert.equal(c.projectHandoverPlan(p,{...form,inspectionDate:'2026-11-18'}).ok,false);
+});
+reset();test('V12 defect correction requires actual inspection date and actionable note',()=>{
+ const p=c.S.projects[0],base={stage:'submitted',submittedDate:'2026-11-19',letterNo:'SW-102',
+  inspectionStatus:'rework',inspectionDate:'2026-11-21',defectNote:'เก็บสีและซ่อมรอยรั่ว'};
+ assert.equal(c.projectHandoverPlan(p,{...base,defectNote:''}).ok,false);
+ assert.equal(c.projectHandoverPlan(p,{...base,inspectionDate:'2099-01-01'}).ok,false);
+ const x=c.projectHandoverPlan(p,base);
+ assert.equal(x.ok,true);assert.equal(x.project.status,'active');assert.equal(x.project.handover.defectNote,base.defectNote);
+ const accepted=c.projectHandoverPlan(x.project,{stage:'accepted',submittedDate:'2026-11-19',
+   acceptedDate:'2026-11-24',letterNo:'SW-102',acceptedBy:'กรรมการตรวจรับ'});
+ assert.equal(accepted.ok,true);assert.equal(accepted.project.status,'delivered');
+ assert.equal(accepted.project.handover.defectNote,base.defectNote,'keep old defect evidence in accepted record');
+});
+reset();test('V12 project handover queue categorizes each stage without changing project status',()=>{
+ const q=c.projectHandoverQueueSummary([
+  {status:'active',handover:null},{status:'active',handover:{stage:'submitted'}},
+  {status:'active',handover:{stage:'submitted',inspectionStatus:'scheduled'}},
+  {status:'active',handover:{stage:'submitted',inspectionStatus:'rework'}},
+  {status:'delivered'},{status:'closed'}
+ ]);
+ assert.deepEqual(copy(q),{notSubmitted:1,pending:1,scheduled:1,rework:1,accepted:1,closed:1});
+ assert.equal(c.projectHandoverWorkflowLabel({status:'active',handover:{stage:'submitted',inspectionStatus:'rework'}}),'ต้องแก้ไขงาน');
+});
+reset();test('V12 provisional closeout reports booked cost, unpaid AR AP and non-final margin',()=>{
+ const p=c.S.projects[0];p.contract=500000;p.retAmt=0;p.budget=0;
+ c.S.guarantees=[];c.S.boq=[];
+ c.S.tx=[{id:'cost-paid',pid:'p',type:'out',amount:300000,cat:'ค่าของ',paid:true,pay:'transfer',date:'2026-11-20'},
+         {id:'cost-owed',pid:'p',type:'out',amount:50000,cat:'ค่าแรง',paid:false,date:'2026-11-21'},
+         {id:'income-owed',pid:'p',type:'in',amount:250000,cat:'ค่างวด',paid:false,date:'2026-11-22'}];
+ const x=c.projectHandoverCloseout('p');
+ assert.equal(x.contract,500000);assert.equal(x.bookedCost,350000);
+ assert.equal(x.grossSpread,150000);assert.equal(x.grossSpreadPct,30);
+ assert.equal(x.receivable,250000);assert.equal(x.payable,50000);
+ assert.equal(c.S.tx.length,3,'closeout is read only');
+});
+reset();test('V12 handover inspection form exposes dates defect notes and project document shortcuts',()=>{
+ c.U.sheet={kind:'projectHandover',id:'p'};
+ const html=c.sheetHtml();
+ assert(html.includes('handoverInspectionStatus')&&html.includes('handoverInspectionDate')&&html.includes('handoverDefectNote'));
+ assert(html.includes('projectDocList')&&html.includes('profilePostNew'));
+ assert(c.vProject().includes('ส่วนต่างมูลค่างาน'));
+});
+
+reset();test('V12 portable backup and migration preserve handover inspection and references losslessly',()=>{
+ const p=c.S.projects[0];
+ p.handover={stage:'submitted',submittedDate:'2026-11-20',letterNo:'SW-888',recipient:'หน่วยงานทดสอบ',
+  inspectionStatus:'rework',inspectionDate:'2026-11-23',defectNote:'แก้สี/รอยรั่ว',acceptedBy:'',
+  acceptedDate:'',evidenceRef:'เลขที่รูปงาน 16',note:'ยังไม่ตรวจรับ',updatedAt:123456};
+ const before=copy(p.handover),beforeTx=copy(c.S.tx);
+ const parsed=c.restoreParse(c.backupJson());
+ assert.equal(parsed.ok,true);
+ const restored=c.migrate(parsed.state),project=restored.projects.find(x=>x.id==='p');
+ assert(project,'missing project in portable roundtrip');
+ assert.deepEqual(copy(project.handover),before,'handover dates and evidence refs must not be lost in migration');
+ assert.deepEqual(copy(restored.tx),beforeTx,'financial transactions must remain unchanged by handover backup');
+});
 test('v327 project profitability command center returns portfolio',()=>{assert(Array.isArray(c.projectProfitabilityCommandCenter().projects))});
 test('v328 payroll bridge uses existing wage transactions only',()=>{c.S.tx=[{id:'w1',pid:'p',type:'out',amount:500,cat:'ค่าแรง',paid:true,pay:'cash',date:'2026-09-01'}];const x=c.payrollProjectCostBridge('p');assert.equal(x.count,1);assert.equal(x.total,500)});
 test('v329 owner daily brief exposes alerts',()=>{assert(Array.isArray(c.ownerDailyBrief().alerts))});

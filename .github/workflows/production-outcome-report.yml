@@ -1,0 +1,46 @@
+name: AREA Ledger Production Outcome Report
+
+on:
+  workflow_run:
+    workflows: ["AREA Ledger Production Cutover v805"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  report:
+    if: ${{ github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read actual deploy job result (no deploy or secrets)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            if (!run) throw new Error('Missing source workflow_run');
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner: context.repo.owner, repo: context.repo.repo, run_id: run.id, per_page: 100
+            });
+            const deploy = jobs.find(job => job.name === 'deploy-production');
+            const authorize = jobs.find(job => job.name === 'authorize');
+            const deployResult = deploy?.conclusion || 'missing';
+            const authResult = authorize?.conclusion || 'missing';
+            await core.summary
+              .addHeading('AREA Ledger production outcome (read-only)')
+              .addTable([
+                [{data:'Field',header:true},{data:'Observed result',header:true}],
+                ['Cutover workflow run', String(run.id)],
+                ['Source SHA', String(run.head_sha || 'unknown')],
+                ['Authorization job', authResult],
+                ['Deploy-production job', deployResult]
+              ])
+              .addRaw(deployResult === 'success'
+                ? '\nWorkflow deploy job succeeded; confirm actual live SHA separately before declaring production current.'
+                : '\nNOT DEPLOYED / NOT VERIFIED: A successful gate-check workflow is not production release proof.')
+              .write();
+            if (deployResult === 'skipped') core.notice('Production deployment NOT performed: deploy-production skipped.');
+            else if (deployResult === 'success') core.notice('Deploy job succeeded; independent live SHA check still required.');
+            else core.warning('Production deployment NOT verified: '+deployResult);
