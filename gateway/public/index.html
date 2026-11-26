@@ -827,7 +827,8 @@ main{max-width:520px;margin:0 auto;padding:0 14px 105px;background:var(--m-bg)}
   animation:urgentPop .28s ease-out;
 }
 .urgent-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-weight:900;font-size:16px}
-.urgent-copy{min-width:0}.urgent-copy b,.urgent-copy small{display:block}.urgent-copy b{font-size:11.5px;line-height:1.25}.urgent-copy small{font-size:8.7px;line-height:1.3;margin-top:2px;color:#69757e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.urgent-alert>strong{font-size:20px;color:#8f99a2}
+.snapshot>details>summary{min-height:44px;padding:10px 0;cursor:pointer}
+.urgent-copy{min-width:0}.urgent-copy b,.urgent-copy small{display:block}.urgent-copy b{font-size:11.5px;line-height:1.25}.urgent-copy small{font-size:8.7px;line-height:1.3;margin-top:2px;color:#52616d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.urgent-alert>strong{font-size:20px;color:#8f99a2}
 .urgent-alert.critical{background:#fff1ef;border-color:#efc3bb}.urgent-alert.critical .urgent-ico{background:#ffe1dc;color:#ae3f27}.urgent-alert.critical .urgent-copy b{color:#9d3523}
 .urgent-alert.urgent{background:#fff6e5;border-color:#efd39a}.urgent-alert.urgent .urgent-ico{background:#ffe8b8;color:#a66400}.urgent-alert.urgent .urgent-copy b{color:#8a5600}
 .urgent-alert.warning{background:#fffaf0;border-color:#eadfbf}.urgent-alert.warning .urgent-ico{background:#fff1cd;color:#9a6b00}
@@ -3962,6 +3963,8 @@ body[data-view] :is(.empty,.due-empty,.boq-empty,.profile-empty){border-radius:1
 <script src="assets/profit-engine.js"></script>
 <script src="assets/profit-workspace.js"></script>
 <script src="assets/handover-evidence.js"></script>
+<script src="assets/operations-workspace.js"></script>
+<link rel="stylesheet" href="assets/operations-workspace.css">
 <script src="assets/ledger-primary-store.js?v=1"></script>
 <script>
 /* ---------- ค่าคงที่ ---------- */
@@ -4412,6 +4415,7 @@ async function cloudOffloadOneTxPhoto(id,silent){
     if(!silent)toast('ข้อมูลเปลี่ยนระหว่างสำรองรูป · หยุดย้ายรูป');return false;
   }
   var thumb=await cloudPhotoThumb(original),hash=expensePhotoFingerprint(original);
+  if(!cloudSyncEnabled()||cloudLedgerKey(false)!==cloudKey||JSON.stringify(S)!==source){return false;}
   var up=await cloudFileUpload(original,'tx',t.id,'receipt-'+(t.date||today())+'-'+t.id+'.jpg');
   if(!up.ok||!up.data||!up.data.key){
     if(!silent)toast('อัปโหลดรูปเข้า R2 ไม่สำเร็จ · รูปเดิมยังอยู่');return false;
@@ -8596,7 +8600,10 @@ function sheetHtml(){
   var sh=U.sheet;if(!sh){U._sk='';return '';}
   var key=sh.kind+(sh.id||''),anim=U._sk!==key;U._sk=key;
   var b='';
-  if(sh.kind==='profitForecast'&&typeof profitForecastFormHtml==='function'){b=profitForecastFormHtml(sh.id);
+  if(sh.kind==='opsReview'&&typeof operationsReviewHtml==='function'){b=operationsReviewHtml();
+  }else if(sh.kind==='opsReadiness'&&typeof operationsReadinessHtml==='function'){b=operationsReadinessHtml();
+  }else if(sh.kind==='opsReceipts'&&typeof receiptBatchHtml==='function'){b=receiptBatchHtml();
+  }else if(sh.kind==='profitForecast'&&typeof profitForecastFormHtml==='function'){b=profitForecastFormHtml(sh.id);
   }else if(sh.kind==='profitReport'&&typeof profitReportHtml==='function'){b=profitReportHtml(sh.id);
   }else if(sh.kind==='profitEvidence'&&typeof profitEvidenceHtml==='function'){b=profitEvidenceHtml(sh.id);
   }else if(sh.kind==='legacyRetentionImport'){
@@ -9064,7 +9071,7 @@ function sheetHtml(){
   }else if(sh.kind==='csv'){
     b='<h3>ข้อมูล CSV</h3><p class="muted" style="margin:4px 0 10px;font-size:.9rem">คัดลอกแล้ววางลงใน Excel หรือ Google Sheets</p><textarea class="csv" id="csvbox" readonly>'+esc(csvText())+'</textarea><div class="stack"><button class="btn pri" data-act="copyCsv">คัดลอก</button><button class="btn" data-act="closeSheet">ปิด</button></div>';
   }
-  return '<div class="scrim master-scrim'+((sh.kind==='proj'||sh.kind==='projectHandover'||sh.kind==='profitForecast'||sh.kind==='profitEvidence')?' project-edit-scrim mobile-editor-scrim':((sh.kind==='profileEdit'||sh.kind==='feedback'||sh.kind==='expenseBatch')?' mobile-editor-scrim':''))+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='googleWorkspace'?' google-workspace-sheet':'')+((sh.kind==='proj'||sh.kind==='projectHandover'||sh.kind==='profitForecast'||sh.kind==='profitEvidence')?' project-sheet':'')+(sh.kind==='profileEdit'?' profile-editor-sheet':'')+(sh.kind==='feedback'?' feedback-editor-sheet':'')+(sh.kind==='expenseBatch'?' expense-review-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
+  return '<div class="scrim master-scrim'+((sh.kind==='proj'||sh.kind==='projectHandover'||sh.kind==='profitForecast'||sh.kind==='profitEvidence'||sh.kind==='opsReceipts')?' project-edit-scrim mobile-editor-scrim':((sh.kind==='profileEdit'||sh.kind==='feedback'||sh.kind==='expenseBatch')?' mobile-editor-scrim':''))+'" data-act="scrim"><div class="sheet master-sheet'+(sh.kind==='settings'?' settings-sheet':'')+(sh.kind==='googleWorkspace'?' google-workspace-sheet':'')+((sh.kind==='proj'||sh.kind==='projectHandover'||sh.kind==='profitForecast'||sh.kind==='profitEvidence'||sh.kind==='opsReceipts')?' project-sheet':'')+(sh.kind==='profileEdit'?' profile-editor-sheet':'')+(sh.kind==='feedback'?' feedback-editor-sheet':'')+(sh.kind==='expenseBatch'?' expense-review-sheet':'')+((sh.kind==='quote'||sh.kind==='bizdoc')?' document-sheet':'')+(sh.kind==='billPay'?' payment-sheet':'')+(sh.kind==='accounting'?' accounting-sheet':'')+(anim?' up':'')+'" role="dialog" aria-modal="true"><div class="master-sheet-handle" aria-hidden="true"></div>'+b+'</div></div>';
 }
 function csvText(){
   var rows=[['วันที่','ประเภท','หมวด','รายละเอียด','โครงการ','คู่ค้า','จำนวนเงิน','ก่อน VAT','VAT','หัก ณ ที่จ่าย','สุทธิ','สถานะ','ช่องทางชำระ','ครบกำหนด','หมายเหตุ']];
@@ -9418,7 +9425,7 @@ function render(){
   else if(v==='procurement'){title='งานพัสดุ';body=vProcurement();back=true;}
   else if(v==='doclist'){title=docKindLabel(U.docListKind||'quote');body=vDocList();back=true;}
   else if(v==='quoteprint'){title=docTitle(U.docKind||'quote')[0];body=vBusinessDoc();back=true;}
-  if(S.role==='owner'&&typeof profitPortfolioHtml==='function'){if(v==='home')body=profitPortfolioHtml()+body;if(v==='project')body=profitCardHtml(U.pid,false)+body;if(v==='report')body+=profitReportHtml('');}
+  if(S.role==='owner'&&typeof profitPortfolioHtml==='function'){if(v==='home')body=profitPortfolioHtml()+(typeof operationsQueueHtml==='function'?operationsQueueHtml(''):'')+body;if(v==='project')body=profitCardHtml(U.pid,false)+(typeof operationsQueueHtml==='function'?operationsQueueHtml(U.pid):'')+body;if(v==='report')body+=profitReportHtml('');}
   var tabs=[['home','home','ภาพรวม'],['boq','documents','BOQ'],['add','plus',''],['projects','build','โครงการ'],['profile','profile','โปรไฟล์']];
   var nav='<nav class="nav" aria-label="เมนูหลัก"><div class="nav-in">';
   tabs.forEach(function(t){
@@ -9456,6 +9463,7 @@ function accountingActionAllowed(action){
 function directAction(el){return storageRun((function*(){
   if(el&&el.getAttribute('data-act')==='primaryEnable'){if((yield primaryEnable())){render();toast('เปิดพื้นที่จัดเก็บใหม่แล้ว · ข้อมูลเดิมยังเก็บไว้');}return true;}
   if(!el)return false;
+  if(typeof operationsAction==='function'&&(yield operationsAction(el)))return true;
   if(typeof profitAction==='function'&&(yield profitAction(el)))return true;
   if(typeof businessRegisterAction==='function'&&(yield businessRegisterAction(el)))return true;
   var a=el.getAttribute('data-act'),v=el.getAttribute('data-v'),id=el.getAttribute('data-id');
@@ -9896,11 +9904,7 @@ document.addEventListener('click',function(e){return storageRun((function*(){
     U.confirm=null;cloudSyncPull(true).then(function(r){if(r.ok){render();toast('ดึงข้อมูลจาก Cloudflare แล้ว');}else toast(r.error==='EMPTY'?'Cloudflare ยังไม่มีข้อมูล':'ดึงข้อมูล Cloudflare ไม่สำเร็จ · ข้อมูลในเครื่องยังอยู่');});
   }
   else if(a==='cloudPhotoOpen'){var ck=String(el.dataset.key||'');var cm=String(el.dataset.mime||'image/jpeg');cloudFileOpen(ck,cm).then(function(ok){if(!ok)toast('เปิดรูปจาก R2 ไม่สำเร็จ');});}
-  else if(a==='cloudFilesMigrate'){
-    var ncf=(S.tx||[]).filter(function(t){return /^data:image\//i.test(String(t.photo||''));}).length;if(!ncf){toast('ไม่มีรูปใบเสร็จในเครื่องที่ต้องย้าย');return;}
-    if(U.confirm!=='cloudFilesMigrate'){U.confirm='cloudFilesMigrate';toast('จะย้ายรูป '+ncf+' รายการเข้า R2 แล้วลดข้อมูลรูปในฐานบัญชี · แตะอีกครั้งเพื่อยืนยัน');render();return true;}
-    U.confirm=null;toast('กำลังย้ายรูปเข้า Cloudflare R2…');cloudOffloadAllTxPhotos().then(function(r){render();toast(r.ok?'ย้ายรูปเข้า R2 แล้ว '+r.moved+'/'+r.total+' รายการ':'ย้ายรูปไม่ได้ · ตรวจ Cloud Sync / R2');});
-  }
+  else if(a==='cloudFilesMigrate'){toast('ส่วนจัดการรูปยังไม่พร้อม กรุณาเปิดแอปใหม่โดยไม่ล้างข้อมูล');return;}
   else if(a==='cloudAcceptance'){
     toast('กำลังตรวจ Cloudflare เต็มระบบ…');cloudFullAcceptance().then(function(r){render();if(r.ok)toast('Cloudflare Full Acceptance: PASS');else if(r.error==='PLATFORM_NOT_READY')toast('Cloudflare ยังไม่พร้อม · ตรวจ D1/R2/OCR/Schema');else if(r.error==='D1_NOT_MATCHED')toast('D1 ยังไม่ตรงกับ Cloud Ledger');else if(r.error==='R2_PROBE_FAILED')toast('R2 probe ไม่ผ่าน');else toast('Cloudflare acceptance ยังไม่ผ่าน · '+r.error);});
   }

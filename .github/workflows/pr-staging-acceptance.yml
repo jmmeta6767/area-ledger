@@ -47,6 +47,7 @@ jobs:
           node tests/project-mobile-budget.cjs
           node tests/handover-mobile.cjs
           node tests/profit-workspace-browser.cjs
+          node tests/operations-workspace-browser.cjs
           node tests/reliability-mobile.cjs
           node tests/expense-entry-e2e.cjs
           node tests/ux-ui-v1080-e2e.cjs
@@ -114,6 +115,7 @@ jobs:
           node tests/qa.cjs
           node tests/profit-engine.cjs
           node tests/profit-workspace.cjs
+          node tests/operations-workspace.cjs
           node tests/ocr-quality-transport.cjs
           node tests/cloud-pull-recovery.cjs
           node tests/storage-recovery-compaction.cjs
