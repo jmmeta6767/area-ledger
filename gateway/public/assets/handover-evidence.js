@@ -56,13 +56,14 @@ async function profitEvidenceUpload(pid,file,consent){
   if(!await persist()){S=before;throw Error('EVIDENCE_SAVE_FAILED');}return true;
  }finally{U.profitEvidenceBusy=false;}
 }
+function profitEvidenceErrorText(error){var code=String(error&&error.message||'');return ({EVIDENCE_CONSENT_REQUIRED:'เลือกไฟล์และยืนยันความยินยอมก่อน',EVIDENCE_NOT_CONNECTED:'เปิดการซิงก์คลังไฟล์ส่วนตัวก่อนอัปโหลด',EVIDENCE_FRESH_BACKUP_REQUIRED:'สร้างสำรองข้อมูลล่าสุดพร้อมตรวจต้นฉบับก่อนอัปโหลด',EVIDENCE_TYPE_OR_SIZE:'เลือก PDF / JPEG / PNG / WebP ไม่เกิน 2 MB',EVIDENCE_CONTENT_INVALID:'ชนิดไฟล์ไม่ตรงกับเนื้อหา กรุณาเลือกไฟล์ต้นฉบับใหม่',EVIDENCE_BACKUP_FAILED:'สำรองต้นฉบับในเครื่องไม่ได้ กรุณาตรวจพื้นที่ว่าง',EVIDENCE_SOURCE_CHANGED:'ข้อมูลหรือบัญชีเปลี่ยนระหว่างทำงาน กรุณาตรวจชุดล่าสุดแล้วลองใหม่',EVIDENCE_UNCOMMITTED_STATE:'มีข้อมูลที่ยังบันทึกไม่ครบ กรุณาบันทึกและสำรองก่อน',EVIDENCE_READBACK_MISMATCH:'ตรวจไฟล์ที่อัปโหลดกลับไม่ตรงต้นฉบับ กรุณาเก็บต้นฉบับแล้วลองใหม่',EVIDENCE_LOCAL_CHANGED:'สำเนาในเครื่องไม่ตรงข้อมูลเดิม กรุณาตรวจต้นฉบับ',EVIDENCE_SAVE_FAILED:'บันทึกการผูกไฟล์ไม่สำเร็จ ข้อมูลโครงการเดิมยังอยู่'})[code]||'อัปโหลดหรือตรวจต้นฉบับไม่สำเร็จ กรุณาเก็บไฟล์ต้นฉบับและตรวจการเชื่อมต่อแล้วลองใหม่';}
 async function profitEvidenceAction(el){
  var a=el.getAttribute('data-act'),pid=el.getAttribute('data-id')||'',p=proj(pid);if(S.role!=='owner'||!p)return true;
  if(a==='profitEvidence'){U.sheet={kind:'profitEvidence',id:pid};render();return true;}
- if(a==='profitEvidenceOpen'){var item=(p.handoverEvidence||[]).find(function(x){return x.sha256===el.getAttribute('data-hash');});if(item){try{var bytes=await profitEvidenceRead(item);await saveFile(item.name,new Blob([bytes],{type:item.mime}));}catch(e){toast('ตรวจต้นฉบับไม่สำเร็จ · '+e.message);}}return true;}
+ if(a==='profitEvidenceOpen'){var item=(p.handoverEvidence||[]).find(function(x){return x.sha256===el.getAttribute('data-hash');});if(item){try{var bytes=await profitEvidenceRead(item);await saveFile(item.name,new Blob([bytes],{type:item.mime}));}catch(e){toast('ตรวจต้นฉบับไม่สำเร็จ · '+profitEvidenceErrorText(e));}}return true;}
  if(a==='profitEvidenceUpload'){
   var input=document.getElementById('profitEvidenceFile'),consent=!!(document.getElementById('profitEvidenceConsent')||{}).checked;
   if(!U.sheet||U.sheet.kind!=='profitEvidence'||U.sheet.id!==pid)return true;
-  try{if(await profitEvidenceUpload(pid,input&&input.files&&input.files[0],consent)){render();toast('เก็บหลักฐานและตรวจไฟล์กลับแล้ว');}}catch(e){toast('ยังไม่ผูกไฟล์หลักฐาน · '+e.message+' · เก็บต้นฉบับไว้แล้วตรวจอีกครั้ง');}return true;
+  try{if(await profitEvidenceUpload(pid,input&&input.files&&input.files[0],consent)){render();toast('เก็บหลักฐานและตรวจไฟล์กลับแล้ว');}}catch(e){toast('ยังไม่ผูกไฟล์หลักฐาน · '+profitEvidenceErrorText(e));}return true;
  }return true;
 }
