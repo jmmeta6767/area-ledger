@@ -39,6 +39,7 @@ async function profitEvidenceUpload(pid,file,consent){
   if(!current())throw Error('EVIDENCE_SOURCE_CHANGED');
   var ownerHash=await profitEvidenceHash(new TextEncoder().encode(cloudKey)),pendingKey='handover-pending-v1:'+ownerHash+':'+pid+':'+hash,pending=await idbRead(pendingKey),revision=p.handover&&p.handover.updatedAt||0,item=null;
   if(pending&&pending.sha256===hash&&pending.size===bytes.length&&pending.mime===file.type&&pending.handoverRevision===revision)item=pending;
+  if(!current())throw Error('EVIDENCE_SOURCE_CHANGED');
   if(!item){
    var upload=await cloudFileUpload(original,'handover',pid+'@'+String(revision),file.name);
    if(!upload.ok||!upload.data||!upload.data.key||upload.data.indexed!==true||upload.data.sha256!==hash||upload.data.size!==bytes.length||upload.data.mime!==file.type)throw Error('EVIDENCE_UPLOAD_UNVERIFIED');
@@ -46,6 +47,7 @@ async function profitEvidenceUpload(pid,file,consent){
    if(!await idbPut(pendingKey,item))throw Error('EVIDENCE_PENDING_SAVE_FAILED');
   }
   // Force remote byte readback even though a verified local copy already exists.
+  if(!current())throw Error('EVIDENCE_SOURCE_CHANGED');
   var headers=cloudHeaders();if(!headers)throw Error('EVIDENCE_NOT_CONNECTED');delete headers['Content-Type'];
   var response=await fetch(gatewayApiUrl('/v1/files/object?key='+encodeURIComponent(item.key)),{headers:headers,cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(30000)});
   if(!response.ok)throw Error('EVIDENCE_READ_FAILED');var remote=new Uint8Array(await response.arrayBuffer());if(remote.length!==bytes.length||await profitEvidenceHash(remote)!==hash)throw Error('EVIDENCE_READBACK_MISMATCH');
