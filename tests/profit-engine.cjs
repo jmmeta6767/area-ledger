@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),e=require('../gateway/public/assets/profit-engine.js');
+const base={pid:'p',netContractValue:500000,actualAccruedCost:300000,estimatedRemainingCost:100000,allocatedOverhead:0,basisConfirmed:true,source:'approved estimate',asOf:'2026-11-26',received:200000,paid:150000};
+let x=e.calculate(base);assert.equal(x.forecastProfit,100000);assert.equal(x.forecastMarginPercent,20);assert.equal(x.currentGrossSpread,200000);assert.equal(x.cashNet,50000);
+x=e.calculate({...base,actualAccruedCost:520000,estimatedRemainingCost:10000});assert.equal(x.forecastProfit,-30000);assert.equal(x.forecastMarginPercent,-6);assert.equal(e.alert(x),'คาดการณ์ขาดทุน');
+for(const change of [{netContractValue:0},{estimatedRemainingCost:null},{estimatedRemainingCost:''},{estimatedRemainingCost:-1},{allocatedOverhead:null},{basisConfirmed:false},{dataIssue:true},{source:''},{actualAccruedCost:NaN}]){x=e.calculate({...base,...change});assert.equal(x.ready,false);assert.equal(x.forecastMarginPercent,null);assert.equal(x.forecastProfit,null);}
+x=e.calculate({...base,estimatedRemainingCost:0,actualAccruedCost:0});assert.equal(x.forecastMarginPercent,100);
+x=e.calculate({...base,actualAccruedCost:500000,estimatedRemainingCost:0});assert.equal(e.alert(x),'คาดการณ์คุ้มทุน');
+const a=e.calculate(base),b=e.calculate({...base,pid:'b',netContractValue:1000000,actualAccruedCost:900000,estimatedRemainingCost:0});let p=e.portfolio([a,b]);assert.equal(p.forecastMarginPercent,200000/1500000*100);assert.notEqual(p.forecastMarginPercent,15);
+p=e.portfolio([a,e.calculate({...base,estimatedRemainingCost:null})]);assert.equal(p.forecastMarginPercent,null);assert.equal(p.coveredMarginPercent,20);assert.equal(p.missing,1);assert.equal(e.portfolio([]).forecastMarginPercent,null);
+assert(e.csv([['=HYPERLINK("x")','\t+cmd','@sum','-formula',-30000]]).includes("'-formula"));assert(e.csv([[-30000]]).includes('"-30000"'));assert(!e.csv([['\t=cmd']]).includes('"\t=cmd"'));
+for(let i=0;i<1000;i++){const c=1+i*123.45,cost=i*93.21,etc=i*2.34,o=i*.19;const r=e.calculate({...base,netContractValue:c,actualAccruedCost:cost,estimatedRemainingCost:etc,allocatedOverhead:o});assert(Math.abs((r.forecastProfit+r.estimateAtCompletion)-c)<1e-8);assert.equal(r.forecastMarginPercent,r.forecastProfit/c*100);}
+assert.equal(JSON.stringify(base),JSON.stringify({...base}));console.log('PASS pure profit: positive/negative/zero/missing basis, explicit zero ETC, weighted coverage, CSV injection and 1000 identities');
