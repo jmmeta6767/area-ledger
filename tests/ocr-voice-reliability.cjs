@@ -113,9 +113,13 @@ test('document total survives request validation, normalization, review and mism
  assert.equal(c.aiGatewayValidateExpense({amount:100}).documentTotal,null);for(const v of [-1,Infinity,'oops',1000000001])assert.throws(()=>c.aiGatewayValidateExpense({documentTotal:v}));
 });
 test('diagnostics are bounded, allowlisted metadata without private receipt fields or provider messages',()=>{
+ // Keep the forbidden receipt amount from accidentally matching wall-clock digits.
+ const originalNow=c.Date.now;c.Date.now=()=>Date.parse('2026-10-14T00:00:00Z');
+ try{
  for(let i=0;i<14;i++)c.recordOcrDiagnostic({ok:false,errorCode:'PROVIDER_HTTP_400',requestId:'request-'+i,imageMeta:{mime:'image/jpeg',bytes:1500,width:900,height:1200},text:'private bill',amount:6430,partner:'private vendor'});
  assert.equal(c.S.ops.ocrDiagnosticHistory.length,10);assert.equal(c.S.ops.ocrDiagnostic.imageWidth,900);const serialized=JSON.stringify(c.S.ops.ocrDiagnosticHistory);assert(!/private bill|private vendor|6430/.test(serialized));
  c.recordOcrDiagnostic({errorCode:'provider leaked key secret'});assert.equal(c.S.ops.ocrDiagnostic.errorCode,'OCR_ERROR');
+ }finally{c.Date.now=originalNow;}
 });
 test('HTTP400 is not blindly retried; failed local OCR preserves the actual provider error',async()=>{
  let calls=0;c.aiGatewayConfig=()=>({mode:'gateway',remoteOcrConsent:true});c.aiGatewayRequest=async()=>{calls++;const e=Error('PROVIDER_IMAGE_INVALID');e.gatewayCode=e.message;throw e;};c.expenseOcrLocal=async()=>({amount:0,source:'local'});
