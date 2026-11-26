@@ -46,6 +46,7 @@ jobs:
           node tests/iphone-project-create-keyboard.cjs
           node tests/project-mobile-budget.cjs
           node tests/handover-mobile.cjs
+          node tests/profit-workspace-browser.cjs
           node tests/reliability-mobile.cjs
           node tests/expense-entry-e2e.cjs
           node tests/ux-ui-v1080-e2e.cjs
@@ -111,6 +112,9 @@ jobs:
       - name: Regression QA
         run: |
           node tests/qa.cjs
+          node tests/profit-engine.cjs
+          node tests/profit-workspace.cjs
+          node tests/ocr-quality-transport.cjs
           node tests/cloud-pull-recovery.cjs
           node tests/storage-recovery-compaction.cjs
           node tests/profile-workspace-ux.cjs
