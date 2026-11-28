@@ -1,3 +1,4 @@
+import {requestOcrFixture} from './ocr-quality-request.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
@@ -43,11 +44,8 @@ if(process.argv[1]&&new URL(import.meta.url).pathname.endsWith(process.argv[1].r
     if(evidence.sourceSha)assert.equal(evidence.deployedBuild.sha,evidence.sourceSha,'wrong deployed source');
     const image=fs.readFileSync(new URL('./fixtures/boq-pr4-field.jpeg',import.meta.url));
     evidence.fixtureSha256=crypto.createHash('sha256').update(image).digest('hex');
-    const rid='pr4-quality-'+crypto.randomBytes(12).toString('hex');
-    const res=await fetch(base+'/v1/ocr/boq',{method:'POST',signal:AbortSignal.timeout(60000),headers:{Origin:base,'Content-Type':'application/json','X-AREA-Gateway-Version':'1','X-AREA-Request-ID':rid},body:JSON.stringify({image:'data:image/jpeg;base64,'+image.toString('base64'),lang:'tha+eng'})});
-    evidence.status=res.status;const data=await res.json();
-    assert(res.ok,'BOQ provider failed: '+JSON.stringify(data));
-    assert.equal(res.headers.get('x-area-request-id'),rid);assert.equal(res.headers.get('x-area-gateway-version'),'1');
+    const {data,requestId,attempts,history}=await requestOcrFixture({base,kind:'boq',id:'pr4-quality',mime:'image/jpeg',imageBase64:image.toString('base64')});
+    evidence.requestId=requestId;evidence.transportAttempts=attempts;evidence.transportHistory=history;
     evidence.actualRows=data.rows;evidence.checks=verifyPr4(data);evidence.ok=true;
   }catch(e){evidence.ok=false;evidence.error=String(e.message||e);process.exitCode=1;}
   fs.writeFileSync('boq-document-quality.json',JSON.stringify(evidence,null,2));

@@ -1,0 +1,68 @@
+/* Owner-reviewed forecasts; separate from transactions, payments and BOQ utilization. */
+function profitNumber(value){if(typeof value==='string'&&!value.trim())return null;var n=Number(value);return Number.isFinite(n)&&n>=0?n:null;}
+function profitAccountingStamp(pid){var p=proj(pid);return backupStateChecksum({contract:p&&p.contract,changes:(S.contractChanges||[]).filter(function(x){return x.pid===pid&&x.status==='approved';}),tx:(S.tx||[]).filter(function(t){return t.pid===pid;}).map(function(t){return {id:t.id,type:t.type,amount:t.amount,vat:t.vat,cat:t.cat,sub:t.sub,organizationExpense:t.organizationExpense,orgTaxTreatment:t.orgTaxTreatment};}),guarantees:(S.guarantees||[]).filter(function(g){return g.pid===pid;})});}
+function profitSource(pid,forecast){
+ var p=proj(pid),f=forecast||p&&p.profitForecast||{},pc=p?projectCostAccounting(pid):{},fm=p?financeMetrics(pid):{},seen=Object.create(null),cost=0,issue=false,excluded=0;
+ var ids=Object.create(null);(S.guarantees||[]).filter(function(g){return g.pid===pid;}).forEach(function(g){var t=guaranteeExpenseTx(g);if(t)ids[t.id]=true;});
+ (S.tx||[]).filter(function(t){return t.pid===pid&&t.type==='out'&&t.organizationExpense!==true;}).forEach(function(t){
+  if(!t.id||seen[t.id]){issue=true;return;}seen[t.id]=true;
+  if(ids[t.id]||/^guarantee-(?:v2-expense-|expense-)/.test(t.id)||t.id==='guarantee-expense-'+pid||t.cat==='ค่าประกัน/ค่างาน'&&/^(ประกันสัญญา|ประกันผลงาน|วางหลักประกัน)$/.test(String(t.sub||'').trim())){excluded+=Number(t.amount)||0;return;}
+  if(t.orgTaxTreatment==='settlement')return;
+  var amount=profitNumber(t.amount);if(amount===null){issue=true;return;}
+  if(t.vat&&f.inputVatRecoverable===true){if(profitNumber(f.vatRate)===null||f.vatRate<=0){issue=true;return;}amount=amount/(1+f.vatRate/100);}
+  cost+=amount;
+ });
+ if(f.accountingStamp&&f.accountingStamp!==profitAccountingStamp(pid))issue=true;
+ var contract=Number(pc.contract),rate=profitNumber(f.vatRate);
+ if(f.contractBasis==='gross'){if(rate===null||rate<=0)issue=true;else contract=contract/(1+rate/100);}
+ else if(f.contractBasis!=='net'){issue=true;contract=NaN;}
+ var x=AreaProfitEngine.calculate({pid:pid,netContractValue:contract,actualAccruedCost:cost,estimatedRemainingCost:f.etc,allocatedOverhead:f.overhead,basisConfirmed:f.basisConfirmed===true,source:f.source,asOf:f.asOf,received:fm.received,paid:fm.cashPaid,targetMargin:f.targetMargin,dataIssue:issue});
+ x.excludedGuaranteePrincipal=excluded;x.payable=Number(pc.ap)||0;x.receivable=Number(pc.ar)||0;x.costBasis=f.inputVatRecoverable?'หัก VAT ซื้อที่ยืนยันว่าขอคืนได้':'รวม VAT ซื้อเป็นต้นทุน';return x;
+}
+function profitValue(x){return x===null?'ยังประเมินไม่ได้':fmt(x);}
+function profitPercent(x){return x===null?'ยังประเมินไม่ได้':Number(x).toLocaleString('th-TH',{maximumFractionDigits:2})+'%';}
+function profitCardHtml(pid,compact){
+ if(S.role!=='owner'||!proj(pid))return '';var x=profitSource(pid),f=proj(pid).profitForecast||{};
+ if(compact)return '<div class="profit-compact"><small>กำไรคาดการณ์เมื่อจบ (%)</small><b>'+profitPercent(x.forecastMarginPercent)+'</b><small>'+esc(AreaProfitEngine.alert(x))+'</small></div>';
+ var h='<section class="profit-panel" aria-label="กำไรคาดการณ์โครงการ"><h2>กำไรคาดการณ์เมื่อจบ (%)</h2><p class="profit-result">'+profitPercent(x.forecastMarginPercent)+'</p><p>'+esc(AreaProfitEngine.alert(x))+'</p>'+(!x.ready?'<p>กรุณาทบทวนฐานต้นทุนและ ETC เมื่อสัญญาหรือรายการต้นทุนเปลี่ยน</p>':'')+'<details><summary>ต้นทุน / เงินสด / ที่มาประมาณการ</summary><dl class="profit-grid">';
+ [['กำไรคาดการณ์',x.forecastProfit],['สัญญาสุทธิ',x.netContractValue],['ต้นทุนที่รับรู้แล้ว',x.actualAccruedCost],['ต้นทุนคงเหลือ ETC',x.estimatedRemainingCost],['ค่าใช้จ่ายส่วนกลางที่จัดสรร',x.allocatedOverhead],['ต้นทุนเมื่อจบ EAC',x.estimateAtCompletion],['เงินสดรับหักจ่าย',x.cashNet],['ลูกหนี้ค้างรับ',x.receivable],['เจ้าหนี้ค้างจ่าย',x.payable]].forEach(function(a){h+='<div><dt>'+a[0]+'</dt><dd>'+profitValue(a[1])+'</dd></div>';});
+ return h+'</dl><p>ส่วนต่างสัญญา − ต้นทุนบันทึก '+profitValue(x.currentGrossSpread)+' · ยังไม่ใช่กำไรสุดท้าย</p><p>'+esc(x.costBasis)+' · เงินประกันที่แยกออกจากต้นทุน '+fmt(x.excludedGuaranteePrincipal)+'</p><p>แหล่งประมาณการ: '+esc(x.source||'ยังไม่ระบุ')+' · ณ '+esc(x.asOf||'ยังไม่ระบุ')+'</p></details><div class="profit-actions"><button class="btn" data-act="profitEdit" data-id="'+esc(pid)+'">ทบทวนต้นทุนคงเหลือ</button><button class="btn" data-act="profitReport" data-id="'+esc(pid)+'">รายงาน / CSV / PDF</button><button class="btn" data-act="profitEvidence" data-id="'+esc(pid)+'">หลักฐานส่งมอบ</button></div>'+(f.history&&f.history.length?'<details><summary>ประวัติประมาณการ '+f.history.length+' ครั้ง</summary>'+f.history.slice().reverse().map(function(v){return '<p>'+esc(v.asOf)+' · ETC '+profitValue(v.etc)+' · '+esc(v.reason||'')+'</p>';}).join('')+'</details>':'')+'</section>';
+}
+function profitPortfolioHtml(){
+ if(S.role!=='owner')return '';var filter=U.profitFilter||'active',ps=(S.projects||[]).filter(function(p){return filter==='all'||filter==='delivered'&&(p.status==='delivered'||p.status==='closed')||filter==='active'&&p.status!=='delivered'&&p.status!=='closed';}),rows=ps.map(function(p){return profitSource(p.id);}),x=AreaProfitEngine.portfolio(rows),org=0;
+ (S.tx||[]).filter(function(t){return t.type==='out'&&t.organizationExpense===true&&t.orgTaxTreatment!=='settlement';}).forEach(function(t){org+=Number(t.amount)||0;});
+ return '<section class="profit-panel" aria-label="ภาพรวมกำไรคาดการณ์"><h2>ภาพรวมกำไรคาดการณ์</h2><div class="profit-actions">'+[['active','กำลังดำเนินการ'],['delivered','ส่งมอบ/ปิดแล้ว'],['all','ทั้งหมด']].map(function(a){return '<button class="btn" data-act="profitFilter" data-v="'+a[0]+'" aria-pressed="'+(filter===a[0])+'">'+a[1]+'</button>';}).join('')+'</div><p class="profit-result">'+profitPercent(x.forecastMarginPercent)+'</p><p>มีประมาณการครบ '+x.covered+' / '+x.count+' โครงการ · ยังขาด '+x.missing+' โครงการ</p>'+(x.missing?'<p>เฉพาะโครงการที่ข้อมูลครบ: '+profitPercent(x.coveredMarginPercent)+' · กำไร '+fmt(x.coveredProfit)+' / สัญญา '+fmt(x.coveredContract)+'</p>':'<p>กำไรคาดการณ์รวม '+profitValue(x.forecastProfit)+'</p>')+'<p>ค่าใช้จ่ายองค์กรบันทึกแยก '+fmt(org)+' · ยังไม่จัดสรรอัตโนมัติ ต้องระบุยอดจัดสรรในแต่ละโครงการเพื่อไม่ให้นับซ้ำ</p><button class="btn" data-act="profitReport">รายงานรวม / ส่งออก</button></section>';
+}
+function profitField(id,label,value,type){return '<div class="pf-field"><label for="'+id+'">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'"'+(type==='number'?' min="0" step="any" inputmode="decimal"':'')+' value="'+esc(value===null||value===undefined?'':String(value))+'"></div>';}
+function profitForecastFormHtml(pid){
+ var p=proj(pid),f=p&&p.profitForecast||{};if(!p||S.role!=='owner')return '<p>เฉพาะเจ้าของบัญชี</p>';
+ return '<div class="project-form-head"><h3 id="profitFormTitle">ประมาณการต้นทุนคงเหลือ</h3><button data-act="closeSheet" aria-label="ปิด">×</button></div><div class="project-form-scroll profit-form"><p>'+esc(p.name)+'</p><p>ETC รวมเฉพาะงานที่ยังไม่รับรู้ต้นทุน ห้ามบวกเจ้าหนี้หรือเงินเบิกที่อยู่ในต้นทุนแล้วซ้ำ</p><div class="pf-field"><label for="profitContractBasis">ฐานมูลค่าสัญญาและงานเพิ่มที่อนุมัติ</label><select id="profitContractBasis"><option value="">เลือกฐานสัญญา</option><option value="net"'+(f.contractBasis==='net'?' selected':'')+'>ยอดไม่รวม VAT / ไม่อยู่ใน VAT</option><option value="gross"'+(f.contractBasis==='gross'?' selected':'')+'>ยอดรวม VAT ตามอัตราที่ระบุ</option></select></div>'+profitField('profitVatRate','อัตรา VAT (%) หากมี',f.vatRate,'number')+'<label><input id="profitInputVat" type="checkbox"'+(f.inputVatRecoverable?' checked':'')+'>ยืนยัน VAT ซื้อที่ทำเครื่องหมายไว้สามารถขอคืนได้</label>'+profitField('profitEtc','ต้นทุนคงเหลือ ETC (บาท) · กรอก 0 เมื่อไม่มี',f.etc,'number')+profitField('profitOverhead','ค่าใช้จ่ายส่วนกลางจัดสรรเพิ่มเติมตลอดโครงการ (บาท) · ไม่รวมที่ลงต้นทุนแล้ว',f.overhead,'number')+profitField('profitAsOf','วันที่ประเมิน',f.asOf||today(),'date')+profitField('profitCompletion','คาดว่าจะเสร็จ',f.completionDate||'','date')+profitField('profitSource','ที่มาประมาณการ / เอกสารอ้างอิง',f.source)+profitField('profitReason','เหตุผลการทบทวน',f.reason)+profitField('profitTarget','เป้ากำไร (%) · ไม่บังคับ',f.targetMargin,'number')+'<p>15% เป็นตัวอย่างสำหรับพิจารณา ยังไม่ได้ตั้งเป็นเป้าของคุณ</p><label><input type="checkbox" id="profitBasisConfirm">ตรวจแล้ว: ต้นทุนรวมค้างจ่าย เงินเบิกไม่ซ้ำ เงินประกันแยกออก และ ETC/ส่วนกลางไม่ซ้ำต้นทุนเดิม</label></div><div class="project-form-savebar"><button data-act="closeSheet">ยกเลิก</button><button class="primary" data-act="profitSave" data-id="'+esc(pid)+'">ยืนยันบันทึกประมาณการ</button></div>';
+}
+function profitReportRows(pid){
+ var rows=[['โครงการ','สถานะประมาณการ','สัญญาสุทธิ','ต้นทุนรับรู้แล้ว','ETC','ส่วนกลางจัดสรร','EAC','กำไรคาดการณ์','กำไรคาดการณ์ %','เงินสดสุทธิ','แหล่งประมาณการ','ณ วันที่','หมายเหตุ']];
+ (S.projects||[]).filter(function(p){return !pid||p.id===pid;}).forEach(function(p){var x=profitSource(p.id);rows.push([p.name,AreaProfitEngine.alert(x),x.netContractValue,x.actualAccruedCost,x.estimatedRemainingCost,x.allocatedOverhead,x.estimateAtCompletion,x.forecastProfit,x.forecastMarginPercent,x.cashNet,x.source,x.asOf,x.ready?'':'ยังประเมินไม่ได้: '+x.issues.join(', ')]);});return rows;
+}
+function profitReportHtml(pid){var rows=profitReportRows(pid);return '<h3>รายงานกำไรคาดการณ์</h3><p>ประมาณการตามต้นทุนและ ETC ที่ระบุ ไม่ใช่กำไรสุทธิทางบัญชีขั้นสุดท้าย · หน่วยบาท</p><div class="profit-report-table"><table>'+rows.map(function(r,i){return '<tr>'+r.map(function(v){return '<'+(i?'td':'th')+'>'+esc(v===null?'ยังประเมินไม่ได้':String(v))+'</'+(i?'td':'th')+'>';}).join('')+'</tr>';}).join('')+'</table></div><div class="stack"><button class="btn" data-act="profitXlsx" data-id="'+esc(pid||'')+'">ดาวน์โหลด Excel (.xlsx)</button><button class="btn" data-act="profitCsv" data-id="'+esc(pid||'')+'">ดาวน์โหลด CSV สำหรับ Excel / Sheets</button><button class="btn" data-act="profitPrint" data-id="'+esc(pid||'')+'">พิมพ์ / บันทึก PDF</button><button class="btn" data-act="closeSheet">ปิด</button></div><p>Google: ใช้เมนูเชื่อม Google เดิมและตรวจสถานะก่อนส่งข้อมูล · รายงานนี้ไม่มีการส่งอัตโนมัติ</p>';}
+async function profitAction(el){
+ var a=el&&el.getAttribute('data-act');if(!a||a.indexOf('profit')!==0)return false;
+ if(S.role!=='owner'){toast('เฉพาะเจ้าของบัญชี');return true;}var pid=el.getAttribute('data-id')||'',p=proj(pid);
+ if(a==='profitFilter'){var f=el.getAttribute('data-v');if(['active','delivered','all'].indexOf(f)>=0)U.profitFilter=f;render();return true;}
+ if(a==='profitEdit'&&p){U.sheet={kind:'profitForecast',id:pid,source:JSON.stringify(S)};render();return true;}
+ if(a==='profitReport'){U.sheet={kind:'profitReport',id:pid};render();return true;}
+ if(a==='profitXlsx'){await saveFile('AREA-profit-'+today()+'.xlsx',xlsxBuild([{name:'กำไรคาดการณ์',rows:profitReportRows(pid)}]));return true;}
+ if(a==='profitCsv'){await saveFile('AREA-profit-'+today()+'.csv',new Blob([AreaProfitEngine.csv(profitReportRows(pid))],{type:'text/csv;charset=utf-8'}));return true;}
+ if(a==='profitPrint'){
+  var win=window.open('','_blank');if(!win){toast('เปิดหน้าพิมพ์ไม่ได้ · อนุญาตป๊อปอัปแล้วลองใหม่');return true;}
+  win.document.write('<!doctype html><html lang="th"><meta charset="utf-8"><title>รายงานกำไรคาดการณ์</title><style>@page{size:A4 landscape;margin:12mm}body{font:12px Tahoma,sans-serif}table{border-collapse:collapse;width:100%}td,th{border:1px solid #888;padding:5px;overflow-wrap:anywhere}button,.stack{display:none}</style><body>'+profitReportHtml(pid)+'</body></html>');win.document.close();win.focus();win.print();return true;
+ }
+ if(a==='profitEvidence')return await profitEvidenceAction(el);
+ if(a!=='profitSave')return typeof profitEvidenceAction==='function'?await profitEvidenceAction(el):true;
+ if(!p||!U.sheet||U.sheet.kind!=='profitForecast'||U.sheet.id!==pid||U.profitSaving)return true;
+ function val(id){var e=document.getElementById(id);return e?e.value:'';}
+ var old=p.profitForecast||{},target=val('profitTarget'),next={version:1,contractBasis:val('profitContractBasis'),vatRate:profitNumber(val('profitVatRate')),inputVatRecoverable:!!(document.getElementById('profitInputVat')||{}).checked,etc:profitNumber(val('profitEtc')),overhead:profitNumber(val('profitOverhead')),asOf:val('profitAsOf'),completionDate:val('profitCompletion'),source:val('profitSource').trim(),reason:val('profitReason').trim(),targetMargin:target===''?null:profitNumber(target),basisConfirmed:!!(document.getElementById('profitBasisConfirm')||{}).checked,revision:(+old.revision||0)+1,accountingStamp:profitAccountingStamp(pid),updatedAt:Date.now()};
+ if(U.sheet.source!==JSON.stringify(S)){toast('ข้อมูลบัญชีเปลี่ยน กรุณาเปิดประมาณการใหม่');return true;}
+ if(!validIsoDate(next.asOf)||next.asOf>today()||next.completionDate&&!validIsoDate(next.completionDate)||!next.reason||!next.source||target!==''&&(next.targetMargin===null||next.targetMargin>100)||next.vatRate!==null&&next.vatRate>100||!profitSource(pid,next).ready){toast('ตรวจฐานสัญญา ETC ส่วนกลาง วันที่ ที่มา เหตุผล และยืนยันก่อนบันทึก');return true;}
+ next.history=(old.history||[]).concat(old.version?[Object.assign({},old,{history:undefined})]:[]);
+ var before=JSON.parse(JSON.stringify(S));U.profitSaving=true;
+ try{p.profitForecast=next;accountingAudit('profit-forecast','project',pid,old,next,next.reason);if(!(await persist())){S=before;toast('บันทึกประมาณการไม่สำเร็จ · แบบร่างยังอยู่');return true;}U.sheet=null;render();toast('บันทึกประมาณการแล้ว · รายการบัญชีเดิมคงเดิม');}finally{U.profitSaving=false;}return true;
+}
